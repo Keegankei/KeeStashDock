@@ -1,0 +1,17 @@
+<!-- Application root. ShutdownMode is OnExplicitShutdown because the product
+     lives in the tray: closing/hiding windows must never terminate the app.
+     MergedDictionaries order contract: [0]=theme palette (swapped by
+     ThemeManager), [1]=shared styles. -->
+<Application x:Class="KeeStashDock.Desktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnExplicitShutdown">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Themes/Theme.Light.xaml"/>
+        <ResourceDictionary Source="Themes/Styles.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

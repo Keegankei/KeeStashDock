@@ -1,0 +1,292 @@
+<!-- Quick panel three-state model.
+     States: Expanded (~15% x 30% of the work area, chat-window style),
+             Shrunk (compact bar: top-bar buttons only),
+             Hidden (tray only; summoned by hotkey or tray).
+     Top bar buttons (spec order): minimize | shrink-or-expand | lock |
+     workbench | settings. The bar doubles as the drag handle; position is
+     persisted. Auto flow: unlocked Expanded collapses after N seconds of
+     "mouse away and no keyboard focus"; unlocked Shrunk grows back after
+     M seconds of hover/focus (both user-tunable in Settings). -->
+<Window x:Class="KeeStashDock.Desktop.Views.QuickPanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:KeeStashDock.Desktop.Localization"
+        xmlns:v="clr-namespace:KeeStashDock.Desktop.Views"
+        Title="KeeStashDock"
+        WindowStyle="None" ResizeMode="CanResize" ShowInTaskbar="False"
+        AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowActivated="False">
+
+  <Window.Resources>
+    <v:NullToVisibilityConverter x:Key="NullToVis"/>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+  </Window.Resources>
+
+  <!-- The near-invisible root background (alpha = 1) is functional, not
+       cosmetic: with AllowsTransparency, FULLY transparent pixels are
+       click-through, so the square window corners outside the 12px rounded
+       border never received WM_NCHITTEST - corner resize was unreachable. -->
+  <Grid Background="#01000000">
+    <!-- Edge glow: an effect on this THIN SIBLING (not on RootBorder itself)
+         avoids rasterizing the whole content subtree through the effect
+         pipeline. Margin/effect are managed in code; hidden when off. -->
+    <Border x:Name="GlowHost" CornerRadius="12" Visibility="Collapsed"
+            Background="{DynamicResource B.PanelBg}"/>
+    <Border x:Name="RootBorder" Background="{DynamicResource B.PanelBg}"
+            BorderBrush="{DynamicResource B.Border}" BorderThickness="1"
+            CornerRadius="12">
+      <Grid>
+        <!-- Optional user background image (ImageBrush set in code); the
+             frosted-glass BlurEffect attaches here so it blurs ONLY the
+             image, never the content above it. -->
+        <Border x:Name="BgImage" CornerRadius="11" Background="Transparent"/>
+        <!-- Theme-colored scrim over the image; opacity is user-set
+             (Settings > background). Transparent when no image. -->
+        <Border x:Name="Scrim" CornerRadius="11" Background="Transparent"/>
+        <Grid>
+          <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>   <!-- top bar (the whole shrunk state) -->
+        <RowDefinition Height="Auto"/>   <!-- expanded: quick input -->
+        <RowDefinition Height="Auto"/>   <!-- expanded: expiry policy row -->
+        <RowDefinition Height="*"/>      <!-- expanded: card list -->
+      </Grid.RowDefinitions>
+
+      <!-- ================= Top bar (drag handle + buttons) ============= -->
+      <DockPanel Grid.Row="0" Margin="10,6,8,4" Background="Transparent"
+                 MouseLeftButtonDown="OnTopBarMouseDown">
+        <StackPanel x:Name="TopBarButtons" DockPanel.Dock="Right" Orientation="Horizontal">
+          <!-- minimize (-> hidden state / tray) -->
+          <Button Style="{StaticResource S.IconButton}" Content="&#xE921;"
+                  Click="OnMinimizeClick" ToolTip="{loc:Tr QuickPanel.Btn.Minimize}"/>
+          <!-- shrink <-> expand (icon flips with state) -->
+          <Button x:Name="ShrinkExpandBtn" Style="{StaticResource S.IconButton}"
+                  Content="&#xE70D;" Margin="2,0,0,0"
+                  Click="OnShrinkExpandClick" ToolTip="{loc:Tr QuickPanel.Btn.Shrink}"/>
+          <!-- lock: pins the CURRENT state (no auto shrink/expand, no hide) -->
+          <ToggleButton x:Name="LockBtn" Width="28" Height="24" Margin="2,0,0,0"
+                        IsChecked="{Binding IsLocked}"
+                        Background="Transparent" BorderThickness="0"
+                        FontFamily="Segoe MDL2 Assets" FontSize="12" Cursor="Hand"
+                        ToolTip="{loc:Tr QuickPanel.Lock}">
+            <ToggleButton.Style>
+              <Style TargetType="ToggleButton">
+                <Setter Property="Content" Value="&#xE785;"/>  <!-- unlock glyph -->
+                <Setter Property="Foreground" Value="{DynamicResource B.TextMuted}"/>
+                <!-- Explicit MDL2 TextBlock: the implicit app-wide TextBlock
+                     style would otherwise swap the icon font away. -->
+                <Setter Property="ContentTemplate">
+                  <Setter.Value>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}" FontFamily="Segoe MDL2 Assets"
+                                 FontSize="12"
+                                 Foreground="{Binding Foreground, RelativeSource=
+                                   {RelativeSource AncestorType=ToggleButton}}"/>
+                    </DataTemplate>
+                  </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                  <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Content" Value="&#xE72E;"/>  <!-- lock glyph -->
+                    <Setter Property="Foreground" Value="{DynamicResource B.Accent}"/>
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </ToggleButton.Style>
+          </ToggleButton>
+          <!-- workbench -->
+          <Button Style="{StaticResource S.IconButton}" Content="&#xE740;" Margin="2,0,0,0"
+                  Click="OnExpandClick" ToolTip="{loc:Tr QuickPanel.Expand}"/>
+          <!-- settings -->
+          <Button Style="{StaticResource S.IconButton}" Content="&#xE713;" Margin="2,0,0,0"
+                  Click="OnSettingsClick" ToolTip="{loc:Tr QuickPanel.Btn.Settings}"/>
+        </StackPanel>
+        <TextBlock x:Name="TitleText" Text="KeeStashDock" FontWeight="SemiBold"
+                   FontSize="13" VerticalAlignment="Center"/>
+      </DockPanel>
+
+      <!-- ============ Expanded: quick input (multi-line) ================
+           Enter = stash, Shift+Enter = newline; box grows with content. -->
+      <Grid x:Name="InputRow" Grid.Row="1" Margin="12,2,12,4">
+        <TextBox x:Name="QuickBox" Style="{StaticResource S.Input}"
+                 MinHeight="34" MaxHeight="110"
+                 AcceptsReturn="True" TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 Text="{Binding QuickInput, UpdateSourceTrigger=PropertyChanged}"
+                 PreviewKeyDown="OnQuickBoxKeyDown"/>
+        <TextBlock x:Name="PlaceholderText" Text="{loc:Tr QuickPanel.Input.Placeholder}"
+                   Margin="12,8,0,0"
+                   Foreground="{DynamicResource B.InputTextMuted}" IsHitTestVisible="False">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+              <Setter Property="Visibility" Value="Collapsed"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=QuickBox}" Value="">
+                  <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </Grid>
+
+      <!-- ============ Expanded: expiry policy for the next stash ======== -->
+      <StackPanel x:Name="ExpireRow" Grid.Row="2" Orientation="Horizontal"
+                  Margin="12,0,12,4">
+        <TextBlock x:Name="ExpireLabel" Text="{loc:Tr Expire.Label}" FontSize="11"
+                   Foreground="{DynamicResource B.TextMuted}"
+                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+        <ComboBox x:Name="ExpireCombo" FontSize="11" MinWidth="96"
+                  SelectedIndex="{Binding ExpireIndex}">
+          <ComboBoxItem Content="{loc:Tr Expire.Never}"/>
+          <ComboBoxItem Content="{loc:Tr Expire.OneDay}"/>
+          <ComboBoxItem Content="{loc:Tr Expire.SevenDays}"/>
+          <ComboBoxItem Content="{loc:Tr Expire.Burn}"/>
+        </ComboBox>
+        <!-- Group filter: what the list shows AND where new stashes land -->
+        <ComboBox FontSize="11" MinWidth="90" Margin="8,0,0,0"
+                  ItemsSource="{Binding GroupNames}"
+                  SelectedIndex="{Binding GroupIndex}"/>
+      </StackPanel>
+
+      <!-- ============ Expanded: recent cards ============================ -->
+      <Grid x:Name="ListArea" Grid.Row="3">
+        <ListBox x:Name="CardList" ItemsSource="{Binding Items}"
+                 Background="Transparent" BorderThickness="0"
+                 HorizontalContentAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 VirtualizingPanel.ScrollUnit="Pixel"
+                 KeyDown="OnListKeyDown"
+                 PreviewMouseMove="OnCardMouseMove"
+                 PreviewMouseLeftButtonDown="OnCardPressDown"
+                 PreviewMouseLeftButtonUp="OnCardPressUp"
+                 MouseRightButtonUp="OnCardRightClick">
+          <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem">
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="Background" Value="Transparent"/>
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="wrap" Background="Transparent" CornerRadius="10">
+                      <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsSelected" Value="True">
+                        <Setter TargetName="wrap" Property="Background"
+                                Value="{DynamicResource B.AccentSoft}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+          </ListBox.ItemContainerStyle>
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <!-- One snippet card. Single click copies (the primary gesture). -->
+              <Border Style="{StaticResource S.Card}"
+                      MouseLeftButtonUp="OnCardClick" Tag="{Binding}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0" Tag="TintP"
+                             Text="{Binding DisplayTitle}" FontWeight="SemiBold"
+                             Foreground="{DynamicResource B.CardTextPrimary}"
+                             TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Grid.Row="1" Tag="TintM"
+                             Text="{Binding Preview}" Margin="0,4,0,4"
+                             Foreground="{DynamicResource B.CardTextMuted}" FontSize="12"
+                             TextWrapping="Wrap" MaxHeight="52"/>
+                  <DockPanel Grid.Row="2">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                HorizontalAlignment="Right">
+                      <Button Style="{StaticResource S.Button}" Padding="4,2"
+                              ToolTip="{loc:Tr QuickPanel.Pin}"
+                              Command="{Binding DataContext.TogglePinCommand,
+                                        RelativeSource={RelativeSource AncestorType=ListBox}}"
+                              CommandParameter="{Binding}">
+                        <!-- Pinned items must read at a glance. TWO stacked
+                             glyphs, not a foreground trigger: the tint
+                             engine writes LOCAL Foreground values on card
+                             text, and a local value beats any style trigger
+                             - a color-swap trigger can silently lose that
+                             fight. The base pin joins the normal muted
+                             tinting; the ACCENT twin sits on top and simply
+                             appears via Visibility while pinned, a channel
+                             nothing else touches. -->
+                        <Grid>
+                          <TextBlock Tag="TintM" Text="&#xE718;"
+                                     FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                     Foreground="{DynamicResource B.CardTextMuted}"/>
+                          <!-- E841 = PinFill: the SOLID sibling of the E718
+                               outline pin (same upright orientation, so it
+                               covers the base glyph exactly). Solid + accent
+                               reads at a glance where a color swap alone
+                               was easy to miss. -->
+                          <TextBlock Text="&#xE841;"
+                                     FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                     Foreground="{DynamicResource B.Accent}"
+                                     Visibility="{Binding IsPinned,
+                                                  Converter={StaticResource BoolToVis}}"/>
+                        </Grid>
+                      </Button>
+                      <Button Style="{StaticResource S.Button}" Padding="4,2"
+                              ToolTip="{loc:Tr QuickPanel.Delete}"
+                              Command="{Binding DataContext.MoveToTrashCommand,
+                                        RelativeSource={RelativeSource AncestorType=ListBox}}"
+                              CommandParameter="{Binding}">
+                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource B.Danger}"/>
+                      </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <Border Style="{StaticResource S.Badge}" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TypeBadge}" FontSize="10"
+                                   Foreground="{DynamicResource B.Accent}"/>
+                      </Border>
+                      <TextBlock Tag="TintM"
+                                 Text="{Binding RelativeTime}" FontSize="10" Margin="6,0,0,0"
+                                 Foreground="{DynamicResource B.CardTextMuted}"
+                                 VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </DockPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Empty-state hint -->
+        <TextBlock x:Name="EmptyHint" Text="{loc:Tr QuickPanel.Empty}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" Foreground="{DynamicResource B.TextMuted}">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+              <Setter Property="Visibility" Value="Collapsed"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Items.Count}" Value="0">
+                  <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Transient toast: "Copied" confirmation -->
+        <Border Background="{DynamicResource B.Accent}" CornerRadius="14"
+                Padding="14,6" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="0,0,0,16"
+                Visibility="{Binding Toast, Converter={StaticResource NullToVis}}">
+          <TextBlock Text="{Binding Toast}" Foreground="{DynamicResource B.OnAccent}"
+                     FontSize="12"/>
+        </Border>
+        </Grid>
+      </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

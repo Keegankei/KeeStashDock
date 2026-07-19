@@ -1,0 +1,12 @@
+<!-- Application service layer: use cases orchestrating Domain and Infrastructure.
+     Desktop view models should delegate business rules to these services. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>KeeStashDock.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KeeStashDock.Domain\KeeStashDock.Domain.csproj" />
+    <ProjectReference Include="..\KeeStashDock.Infrastructure\KeeStashDock.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

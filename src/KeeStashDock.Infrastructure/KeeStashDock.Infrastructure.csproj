@@ -1,0 +1,14 @@
+<!-- Infrastructure layer: disk, SQLite, settings, logging, and backups. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>KeeStashDock.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Microsoft.Data.Sqlite bundles the native e_sqlite3 binary with FTS5. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KeeStashDock.Domain\KeeStashDock.Domain.csproj" />
+  </ItemGroup>
+</Project>

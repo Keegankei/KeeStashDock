@@ -1,0 +1,149 @@
+using System.Security.Cryptography;
+using System.Text;
+using KeeStashDock.Domain.Entities;
+using KeeStashDock.Infrastructure.Logging;
+using KeeStashDock.Infrastructure.Repositories;
+
+namespace KeeStashDock.Core.Services;
+
+/// <summary>
+/// Primary use-case service for stashing and retrieving snippets.
+/// Owns the business rules that must not leak into the UI:
+///   * duplicate detection by content hash (dedupe bumps the existing row),
+///   * automatic type detection for new content,
+///   * expiry timestamp computation from the chosen policy,
+///   * burn-after-read semantics on copy-out.
+/// Raises <see cref="Changed"/> so every open view refreshes consistently.
+/// </summary>
+public sealed class SnippetService
+{
+    private readonly SnippetRepository _repo;
+    private readonly FileLogger _log;
+
+    /// <summary>Fired after any mutation. Views subscribe and reload.</summary>
+    public event Action? Changed;
+
+    public SnippetService(SnippetRepository repo, FileLogger log)
+    {
+        _repo = repo; _log = log;
+    }
+
+    // ----------------------------------------------------------------- add
+
+    /// <summary>
+    /// Stash new content. Returns the affected snippet id.
+    /// Duplicate rule: identical live content is NOT inserted twice - instead
+    /// the existing row's UpdatedAt is bumped so it surfaces to the top.
+    /// </summary>
+    public long Add(string content, SnippetSource source,
+                    ExpirePolicy expire = ExpirePolicy.Never,
+                    string? title = null, long? categoryId = null,
+                    SnippetType? explicitType = null)
+    {
+        content = content.TrimEnd('\r', '\n');
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Snippet content must not be empty.", nameof(content));
+
+        string hash = Sha256(content);
+        var dup = _repo.FindLiveByHash(hash);
+        if (dup is not null)
+        {
+            dup.UpdatedAt = DateTime.UtcNow;   // duplicate -> refresh recency only
+            _repo.Update(dup);
+            Changed?.Invoke();
+            return dup.Id;
+        }
+
+        var now = DateTime.UtcNow;
+        var snippet = new Snippet
+        {
+            Title        = string.IsNullOrWhiteSpace(title) ? null : title!.Trim(),
+            Content      = content,
+            ContentHash  = hash,
+            Type         = explicitType ?? TypeDetector.Detect(content),
+            Source       = source,
+            CategoryId   = categoryId,
+            ExpirePolicy = expire,
+            ExpireAt     = ComputeExpireAt(expire, now),
+            CreatedAt    = now,
+            UpdatedAt    = now,
+        };
+        long id = _repo.Insert(snippet);
+        _log.Debug($"Snippet #{id} stashed ({snippet.Type}, {content.Length} chars)");
+        Changed?.Invoke();
+        return id;
+    }
+
+    // ---------------------------------------------------------------- edit
+
+    public void Update(Snippet s)
+    {
+        s.ContentHash = Sha256(s.Content);
+        s.UpdatedAt = DateTime.UtcNow;
+        _repo.Update(s);
+        Changed?.Invoke();
+    }
+
+    public void TogglePin(Snippet s)
+    {
+        s.IsPinned = !s.IsPinned;
+        _repo.Update(s);
+        Changed?.Invoke();
+    }
+
+    // -------------------------------------------------------------- consume
+
+    /// <summary>
+    /// Registers a copy-out: bumps the usage counter and enforces
+    /// burn-after-read (the snippet moves to trash after its first use, which
+    /// still leaves the 30-day recovery window as a safety net).
+    /// Returns true when the snippet was burned (views should drop the card).
+    /// </summary>
+    public bool RegisterUse(Snippet s)
+    {
+        _repo.IncrementUseCount(s.Id);
+        if (s.ExpirePolicy == ExpirePolicy.BurnAfterRead)
+        {
+            _repo.SoftDelete(s.Id);
+            Changed?.Invoke();
+            return true;
+        }
+        return false;
+    }
+
+    // ---------------------------------------------------------------- trash
+
+    public void AssignCategory(long id, long? categoryId)
+    { _repo.SetCategory(id, categoryId); Changed?.Invoke(); }
+
+    public void MoveToTrash(long id) { _repo.SoftDelete(id); Changed?.Invoke(); }
+    public void RestoreFromTrash(long id) { _repo.Restore(id); Changed?.Invoke(); }
+    public void DeleteForever(long id) { _repo.HardDelete(id); Changed?.Invoke(); }
+
+    public void EmptyTrash()
+    {
+        foreach (var s in _repo.GetTrash()) _repo.HardDelete(s.Id);
+        Changed?.Invoke();
+    }
+
+    // ---------------------------------------------------------------- reads
+
+    public List<Snippet> Recent(int limit = 100) => _repo.GetRecent(limit);
+    public List<Snippet> AllLive() => _repo.GetAllLive();
+    public List<Snippet> ByCategory(long? categoryId) => _repo.GetByCategory(categoryId);
+    public List<Snippet> Trash() => _repo.GetTrash();
+
+    // ------------------------------------------------------------- plumbing
+
+    /// <summary>The workbench editor recomputes ExpireAt when the user
+    /// changes a snippet's retention policy after creation.</summary>
+    public static DateTime? ComputeExpireAt(ExpirePolicy p, DateTime now) => p switch
+    {
+        ExpirePolicy.OneDay    => now.AddDays(1),
+        ExpirePolicy.SevenDays => now.AddDays(7),
+        _                      => null,   // Never & BurnAfterRead have no wall-clock expiry
+    };
+
+    private static string Sha256(string content)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
+}

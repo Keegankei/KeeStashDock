@@ -1,0 +1,37 @@
+# Build output
+bin/
+obj/
+artifacts/
+publish/
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+*.sarif
+*.nupkg
+
+# User and IDE state
+*.user
+*.suo
+*.rsuser
+*.DotSettings.user
+.vs/
+.vscode/
+.idea/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+secrets.json
+
+# Runtime data (contains personal clipboard content and credentials)
+Data/
+**/Data/
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store

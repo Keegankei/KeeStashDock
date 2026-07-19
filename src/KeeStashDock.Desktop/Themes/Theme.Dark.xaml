@@ -1,0 +1,33 @@
+<!-- Dark theme palette - mirror keys of Theme.Light.xaml.
+     Primary text targets at least WCAG AA contrast (7+:1 on card bg),
+     muted text >= 4.5:1, brighter accent, and B.OnAccent so text placed ON
+     the accent color stays readable in both themes. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Color x:Key="C.Accent">#8FB6EA</Color>
+
+  <SolidColorBrush x:Key="B.WindowBg"    Color="#1B1E24"/>
+  <SolidColorBrush x:Key="B.PanelBg"     Color="#F8242830"/>
+  <SolidColorBrush x:Key="B.CardBg"      Color="#2B303A"/>
+  <SolidColorBrush x:Key="B.CardHover"   Color="#39404D"/>
+  <SolidColorBrush x:Key="B.Border"      Color="#4A5263"/>
+  <SolidColorBrush x:Key="B.TextPrimary" Color="#F4F6FA"/>
+  <SolidColorBrush x:Key="B.TextMuted"   Color="#C0C7D4"/>
+  <SolidColorBrush x:Key="B.Accent"      Color="#8FB6EA"/>
+  <SolidColorBrush x:Key="B.AccentSoft"  Color="#3D8FB6EA"/>
+  <SolidColorBrush x:Key="B.OnAccent"    Color="#10141B"/>
+  <!-- Card-scoped text keys for auto-contrast: identical to
+       TextPrimary/TextMuted by default; the quick panel overrides them
+       separately from the chrome text because a translucent card over a
+       wallpaper can need the OPPOSITE scheme from bare panel text. -->
+  <SolidColorBrush x:Key="B.CardTextPrimary" Color="#F4F6FA"/>
+  <SolidColorBrush x:Key="B.CardTextMuted"   Color="#C0C7D4"/>
+  <!-- Input-surface text keys for auto-contrast: text in
+       the quick-input box and the combos sits on B.InputBg, which the panel
+       renders translucently - so it gets its own light/dark decision, like
+       cards do. Defaults match TextPrimary/TextMuted. -->
+  <SolidColorBrush x:Key="B.InputText"      Color="#F4F6FA"/>
+  <SolidColorBrush x:Key="B.InputTextMuted" Color="#C0C7D4"/>
+  <SolidColorBrush x:Key="B.InputBg"     Color="#1E222A"/>
+  <SolidColorBrush x:Key="B.Danger"      Color="#F08A86"/>
+</ResourceDictionary>

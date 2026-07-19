@@ -1,0 +1,50 @@
+<!-- WPF host application.
+     Windows Forms is enabled only for NotifyIcon; no third-party tray package
+     is required because it ships with the Windows Desktop runtime. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <RootNamespace>KeeStashDock.Desktop</RootNamespace>
+    <AssemblyName>KeeStashDock</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The release profile produces a self-contained win-x64 folder. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Implicit Windows Forms and Drawing global usings collide with WPF
+         types. Remove them globally; the tray implementation uses aliases. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MVVM source generators and dependency-injection composition. -->
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KeeStashDock.Core\KeeStashDock.Core.csproj" />
+    <ProjectReference Include="..\KeeStashDock.Infrastructure\KeeStashDock.Infrastructure.csproj" />
+    <ProjectReference Include="..\KeeStashDock.Domain\KeeStashDock.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Editable language packs are copied beside the executable for live reload. -->
+    <None Include="Locales\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the project and dependency notices with every distributable build. -->
+    <None Include="..\..\LICENSE" Link="LICENSE"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\NOTICE" Link="NOTICE"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+  </ItemGroup>
+</Project>

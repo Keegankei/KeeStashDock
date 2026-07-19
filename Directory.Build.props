@@ -1,0 +1,32 @@
+<!--
+  Directory.Build.props
+  =====================
+  Global MSBuild properties applied to every project in the solution.
+  Centralizes compiler settings, assembly identity, and release versioning so
+  individual project files remain small and consistent.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Language and compiler -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Product identity injected into every assembly -->
+    <Product>KeeStashDock</Product>
+    <Company>KeeganKei</Company>
+    <Authors>KeeganKei</Authors>
+    <Copyright>Copyright © 2026 KeeganKei</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+
+    <!-- Semantic version for the current development line -->
+    <Version>1.1.2</Version>
+    <AssemblyVersion>1.1.2.0</AssemblyVersion>
+    <FileVersion>1.1.2.0</FileVersion>
+  </PropertyGroup>
+</Project>

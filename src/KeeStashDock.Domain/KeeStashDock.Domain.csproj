@@ -1,0 +1,7 @@
+<!-- Domain layer: pure C# with no external package or UI dependencies. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>KeeStashDock.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

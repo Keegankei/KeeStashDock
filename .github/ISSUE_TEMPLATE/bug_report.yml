@@ -1,0 +1,95 @@
+name: Bug report
+description: Report a reproducible KeeStashDock defect
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve KeeStashDock. Do not attach real clipboard databases, backups, logs containing private text, or settings files containing API keys.
+
+  - type: input
+    id: version
+    attributes:
+      label: KeeStashDock version
+      description: Use the version shown in Settings or the release archive.
+      placeholder: "1.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2, x64"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Quick panel
+        - Workbench
+        - Clipboard or direct paste
+        - Selection bubble or translation
+        - Database, backup, or import
+        - Theme, layout, or localization
+        - Startup, tray, hotkey, or single instance
+        - Build, packaging, or documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use synthetic text and a minimal sequence of actions.
+      placeholder: |
+        1. Start KeeStashDock...
+        2. Enable...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Paste only the smallest relevant, redacted log excerpt. Remove snippets, paths, names, tokens, and API keys.
+      render: text
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add screenshots, settings involved, frequency, and any workaround.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I tested the latest tagged release.
+          required: true
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I removed personal data and secrets from this report.
+          required: true
+        - label: This is not a security vulnerability; security reports follow SECURITY.md.
+          required: true

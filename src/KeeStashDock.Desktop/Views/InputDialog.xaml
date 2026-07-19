@@ -1,0 +1,21 @@
+<!-- Minimal modal text prompt used for category rename.
+     Deliberately tiny: one line of text in, OK/Cancel out. -->
+<Window x:Class="KeeStashDock.Desktop.Views.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:KeeStashDock.Desktop.Localization"
+        Width="340" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource B.WindowBg}">
+  <StackPanel Margin="16">
+    <TextBlock x:Name="PromptText" Margin="0,0,0,8" TextWrapping="Wrap"/>
+    <TextBox x:Name="ValueBox" Style="{StaticResource S.Input}"
+             KeyDown="OnValueKeyDown"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button Style="{StaticResource S.ButtonPrimary}" MinWidth="72"
+              Click="OnOkClick" Content="{loc:Tr Common.OK}"/>
+      <Button Style="{StaticResource S.Button}" MinWidth="72" Margin="8,0,0,0"
+              Click="OnCancelClick" Content="{loc:Tr Common.Cancel}"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

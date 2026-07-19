@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a focused improvement to KeeStashDock
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or workflow
+      description: Explain the user problem before describing a solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful change and how it should behave.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe current workarounds or simpler options.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Capture and quick panel
+        - Search and organization
+        - Text actions and transforms
+        - Clipboard, paste, or selection
+        - Translation or localization
+        - Backup, portability, or data management
+        - Theme and accessibility
+        - Developer experience or repository maintenance
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Privacy, security, compatibility, and migration impact
+      description: Note any new network access, data collection, Windows integration, schema change, setting, or breaking behavior.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and pull requests.
+          required: true
+        - label: I described the user problem, not only an implementation preference.
+          required: true

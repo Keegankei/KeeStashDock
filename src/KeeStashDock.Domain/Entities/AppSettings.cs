@@ -1,0 +1,181 @@
+namespace KeeStashDock.Domain.Entities;
+
+/// <summary>
+/// Strongly-typed user settings, persisted as JSON in Data/settings.json.
+/// Kept in Domain so both Core services and the Desktop UI can consume it
+/// without circular references. Add new members with sensible defaults only -
+/// missing JSON properties must always deserialize to a valid state
+/// (forward/backward compatibility for the portable app folder).
+/// </summary>
+public sealed class AppSettings
+{
+    // ---- General -------------------------------------------------------
+    /// <summary>BCP-47 language tag of the active UI language. "en-US" is the product default.</summary>
+    public string Language { get; set; } = "en-US";
+
+    /// <summary>Launch KeeStashDock when Windows starts (HKCU Run key).</summary>
+    public bool AutoStart { get; set; } = false;
+
+    // ---- Hotkey --------------------------------------------------------
+    // Stored as Win32 modifier flags + virtual-key code so the hotkey
+    // manager can re-register without any parsing. Default: Alt+Q.
+    public uint HotkeyModifiers { get; set; } = 0x0001;   // MOD_ALT
+    public uint HotkeyVirtualKey { get; set; } = 0x51;    // 'Q'
+
+    // ---- Quick panel ---------------------------------------------------
+    /// <summary>Retired edge-summon setting, retained so older
+    /// settings.json files continue to deserialize cleanly.</summary>
+    public bool EdgeDockEnabled { get; set; } = false;
+
+    /// <summary>"Right" or "Left". This only selects the default
+    /// position of the never-dragged panel (RTL languages default Left).</summary>
+    public string DockEdge { get; set; } = "Right";
+
+    /// <summary>Legacy quick-panel width in device-independent pixels;
+    /// the three-state panel now sizes itself from the work area.</summary>
+    public double PanelWidth { get; set; } = 320;
+
+    // ---- Three-state panel ----------------------------------------------
+    /// <summary>Seconds of "mouse away AND no keyboard focus" after which an
+    /// UNLOCKED expanded panel collapses to the shrunk bar. User-tunable.</summary>
+    public double CollapseDelaySeconds { get; set; } = 2.0;
+
+    /// <summary>Seconds of hover/focus/proximity after which an UNLOCKED
+    /// shrunk bar grows back to the expanded panel. User-tunable.</summary>
+    public double ExpandDelaySeconds { get; set; } = 0.1;
+
+    /// <summary>Persisted top-left corner of the draggable panel (DIPs).
+    /// Null = never dragged; the panel computes a default near the dock edge.</summary>
+    public double? PanelPosX { get; set; }
+    public double? PanelPosY { get; set; }
+
+    /// <summary>User-resized panel size (edge-drag). Null = defaults
+    /// (15% of work-area width x 50% of work-area height).</summary>
+    public double? PanelUserWidth { get; set; }
+    public double? PanelUserHeight { get; set; }
+
+    // ---- Custom background ----------------------------------------------
+    /// <summary>Absolute path of a user-chosen background image for the panel
+    /// and workbench. Null/missing file = plain themed background.</summary>
+    public string? BackgroundImagePath { get; set; }
+
+    /// <summary>Opacity (0.2-1.0) of the theme-colored scrim laid OVER the
+    /// background image. Lower = more image shows through ("see-through"),
+    /// higher = closer to the plain theme. Default 0.30 lets the wallpaper
+    /// show through; the auto-contrast text keeps things readable.</summary>
+    public double BackgroundOverlayOpacity { get; set; } = 0.30;
+
+    /// <summary>Frosted-glass: gaussian blur applied to the background IMAGE
+    /// so content floats on a soft surface. Needs an image to act on.</summary>
+    public bool FrostedGlassEnabled { get; set; }
+
+    /// <summary>Frost blur radius in pixels (1-18). Default 4 (subtle).</summary>
+    public double FrostedGlassRadius { get; set; } = 4;
+
+    /// <summary>Soft glow emitted around the quick panel's edge.</summary>
+    public bool EdgeGlowEnabled { get; set; }
+
+    /// <summary>Glow spread in pixels (4-30). Default 18.</summary>
+    public double EdgeGlowStrength { get; set; } = 18;
+
+    /// <summary>Glow brightness 0.1-1.0 (effect opacity). Default 0.30.</summary>
+    public double EdgeGlowBrightness { get; set; } = 0.30;
+
+    /// <summary>Opacity 0.1-1.0 of the panel controls (cards, input box,
+    /// combos) so they float translucently over a background image.
+    /// Default 0.9 - just enough see-through to feel layered.</summary>
+    public double CardOpacity { get; set; } = 0.9;
+
+    /// <summary>RETIRED (tear-out is now the drag gesture, no timing knob).
+    /// Kept so existing settings.json files still deserialize cleanly.</summary>
+    public double TearOutHoldSeconds { get; set; } = 1.0;
+
+    /// <summary>Foreground scheme of the quick panel's text and buttons:
+    /// "Auto" derives light/dark per surface from the wallpaper brightness;
+    /// "Light"/"Dark" force the chrome scheme; the named presets (Ivory,
+    /// Graphite, Amber, Mint, Sky, Rose) and "Custom" force ONE palette on
+    /// all three surfaces, VSCode-theme style.</summary>
+    public string PanelTextColorMode { get; set; } = "Auto";
+
+    /// <summary>Hex color (#RRGGBB) used when PanelTextColorMode = "Custom".</summary>
+    public string PanelTextCustomColor { get; set; } = "#FFFFFF";
+
+    /// <summary>RETIRED (particle layer removed by design decision).
+    /// Kept so existing settings.json files still deserialize cleanly.</summary>
+    public bool PanelParticlesEnabled { get; set; }
+
+    /// <summary>RETIRED (sheen/divider polish removed by design decision).
+    /// Kept so existing settings.json files still deserialize cleanly.</summary>
+    public bool PanelFancyEnabled { get; set; }
+
+    /// <summary>Retired plain-paste setting, retained so existing
+    /// settings.json files continue to deserialize cleanly.</summary>
+    public bool PlainPasteEnabled { get; set; }
+
+    /// <summary>Selection popup: a "copy to KeeStashDock" bubble appears
+    /// beside text selections anywhere on the desktop; clicking it captures
+    /// the selection as plain text into the panel's current group.</summary>
+    public bool SelectionPopupEnabled { get; set; } = true;
+
+    /// <summary>What the selection bubble DOES when clicked - exactly one:
+    /// "Capture" copies the selection into KeeStashDock; "Translate" shows
+    /// it translated into the app's UI language on a glass card.</summary>
+    public string SelectionAction { get; set; } = "Capture";
+
+    /// <summary>Visual dress of the selection bubble / toasts / translation
+    /// card: "FollowTheme" derives glass from the text-color scheme;
+    /// "Default" is the classic solid accent pill.</summary>
+    public string SelectionBubbleStyle { get; set; } = "Default";
+
+    /// <summary>Engine for selection translation: "Google" (default),
+    /// "Bing", or "Lingva" use keyless endpoints; "DeepL" uses the API key
+    /// stored in <see cref="TranslationApiKey"/>.</summary>
+    public string TranslationEngine { get; set; } = "Google";
+
+    /// <summary>Bubble text glow: the blurred halo twin under the crisp
+    /// text of the whole bubble family. Default OFF: crisp text only.</summary>
+    public bool BubbleTextGlow { get; set; } = false;
+
+    /// <summary>Bubble drop shadow: the soft lift under the glass surface.
+    /// Off = the bubble sits flat on the screen.</summary>
+    public bool BubbleShadow { get; set; } = true;
+
+    /// <summary>Bubble surface opacity, 0.5..1.0. At 1.0 the glass goes
+    /// fully opaque - the cure when the desktop bleeds through the text.</summary>
+    public double BubbleOpacity { get; set; } = 1.0;
+
+    /// <summary>Clipboard history collection master switch (opt-IN: default
+    /// off - watching the clipboard is a privacy decision the user makes).</summary>
+    public bool ClipboardWatchEnabled { get; set; } = false;
+
+
+    /// <summary>Direct paste: clicking a card also pastes it into the
+    /// window that was in the foreground before the panel (opt-in).</summary>
+    public bool DirectPasteEnabled { get; set; } = false;
+
+    /// <summary>Scheduled automatic database backups (Data\Backups).</summary>
+    public bool AutoBackupEnabled { get; set; } = true;
+
+    /// <summary>Hours between automatic backups. Default: daily.</summary>
+    public int AutoBackupIntervalHours { get; set; } = 24;
+
+    /// <summary>Optional translation API key (currently used by the DeepL
+    /// engine, which has no keyless public endpoint).</summary>
+    public string TranslationApiKey { get; set; } = "";
+
+    // ---- Appearance ----------------------------------------------------
+    /// <summary>Application theme: "Light", "Dark", or "System".</summary>
+    public string Theme { get; set; } = "System";
+
+    /// <summary>One-shot flag: the starter groups ("Default" + "Git BASH"
+    /// with its pre-filled high-frequency git commands) have been created.
+    /// Prevents re-seeding after the user renames or deletes them.</summary>
+    public bool DefaultGroupsSeeded { get; set; }
+
+    // ---- Data ----------------------------------------------------------
+    /// <summary>Days a snippet stays in the recycle bin before physical purge.</summary>
+    public int TrashRetentionDays { get; set; } = 30;
+
+    /// <summary>Number of daily database backups to keep.</summary>
+    public int BackupKeepCount { get; set; } = 7;
+}
