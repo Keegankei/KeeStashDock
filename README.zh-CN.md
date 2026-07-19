@@ -15,13 +15,13 @@
 </p>
 
 <p align="center">
-  <img alt="版本 1.1.2" src="https://img.shields.io/badge/version-1.1.2-2f81f7">
-  <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10.0-512bd4">
-  <img alt="Windows 10 与 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4">
-  <img alt="许可证：Apache 2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue">
+  <img alt="版本 1.1.2" src="docs/assets/badges/version.svg">
+  <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
+  <img alt="Windows 10 与 11" src="docs/assets/badges/windows.svg">
+  <img alt="许可证：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-> 当前开发版本：**1.1.2**。最终发布日期应在创建对应 Git 标签和 GitHub Release 时写入。
+> 当前开发版本：**1.1.2**。
 
 KeeStashDock 是一款常驻系统托盘的 Windows 文本效率工具，面向临时文本收纳与高频复用场景。它将速览面板、可搜索工作台、划词操作、剪贴板辅助流程、本地持久化、便携备份、外观定制和多语言支持整合在一个桌面应用中。
 

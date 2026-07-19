@@ -15,13 +15,13 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.1.2" src="https://img.shields.io/badge/version-1.1.2-2f81f7">
-  <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10.0-512bd4">
-  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4">
-  <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue">
+  <img alt="Version 1.1.2" src="docs/assets/badges/version.svg">
+  <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
+  <img alt="Windows 10 and 11" src="docs/assets/badges/windows.svg">
+  <img alt="License: Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-> Current development version: **1.1.2**. Set the final release date when the matching Git tag and GitHub Release are published.
+> Current development version: **1.1.2**. 
 
 KeeStashDock is a Windows tray application for temporary text storage and fast reuse. It combines a compact quick panel, a searchable workbench, selection actions, clipboard-assisted workflows, local persistence, portable backups, and extensive appearance and localization options.
 
@@ -157,13 +157,13 @@ flowchart LR
     Infrastructure --> Domain
 ```
 
-| Project | Responsibility |
-| --- | --- |
-| `KeeStashDock.Domain` | Dependency-free entities, settings model, and persisted enums |
-| `KeeStashDock.Infrastructure` | SQLite schema and repositories, settings storage, file logging, portable paths, and backups |
-| `KeeStashDock.Core` | Snippet, search, housekeeping, import/export, type-detection, and text-transformation use cases |
-| `KeeStashDock.Desktop` | WPF windows and view models, tray lifecycle, hotkeys, clipboard/selection integration, localization, theming, QR, and sticky notes |
-| `KeeStashDock.Tests` | Unit tests plus repository, localization, and packaging policy checks |
+| Project                       | Responsibility                                                                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `KeeStashDock.Domain`         | Dependency-free entities, settings model, and persisted enums                                                                      |
+| `KeeStashDock.Infrastructure` | SQLite schema and repositories, settings storage, file logging, portable paths, and backups                                        |
+| `KeeStashDock.Core`           | Snippet, search, housekeeping, import/export, type-detection, and text-transformation use cases                                    |
+| `KeeStashDock.Desktop`        | WPF windows and view models, tray lifecycle, hotkeys, clipboard/selection integration, localization, theming, QR, and sticky notes |
+| `KeeStashDock.Tests`          | Unit tests plus repository, localization, and packaging policy checks                                                              |
 
 A detailed component and data-flow description is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
