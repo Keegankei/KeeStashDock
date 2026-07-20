@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -129,10 +131,9 @@ public sealed class RepositoryPolicyTests
     public void Repository_HasNoUserSpecificIdeFiles()
     {
         string root = FindRepositoryRoot();
-        string[] forbidden = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+        string[] forbidden = EnumerateRepositoryFiles(root)
             .Where(path => path.EndsWith(".user", StringComparison.OrdinalIgnoreCase)
                         || path.EndsWith(".suo", StringComparison.OrdinalIgnoreCase))
-            .Where(path => !IsUnderIgnoredBuildDirectory(root, path))
             .ToArray();
 
         Assert.AreEqual(0, forbidden.Length, string.Join(Environment.NewLine, forbidden));
@@ -286,10 +287,67 @@ public sealed class RepositoryPolicyTests
             "LICENSE", "NOTICE", ".editorconfig", ".gitattributes", ".gitignore",
         };
 
-        return Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-            .Where(path => !IsUnderIgnoredBuildDirectory(root, path))
+        return EnumerateRepositoryFiles(root)
             .Where(path => extensions.Contains(Path.GetExtension(path))
                         || extensionlessNames.Contains(Path.GetFileName(path)));
+    }
+
+    private static IEnumerable<string> EnumerateRepositoryFiles(string root)
+    {
+        string gitMetadata = Path.Combine(root, ".git");
+        if (!Directory.Exists(gitMetadata) && !File.Exists(gitMetadata))
+        {
+            return Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Where(path => !IsUnderIgnoredBuildDirectory(root, path))
+                .ToArray();
+        }
+
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            },
+        };
+        process.StartInfo.ArgumentList.Add("-c");
+        process.StartInfo.ArgumentList.Add($"safe.directory={root.Replace('\\', '/')}");
+        process.StartInfo.ArgumentList.Add("-C");
+        process.StartInfo.ArgumentList.Add(root);
+        process.StartInfo.ArgumentList.Add("ls-files");
+        process.StartInfo.ArgumentList.Add("-z");
+        process.StartInfo.ArgumentList.Add("--");
+
+        try
+        {
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new AssertFailedException(
+                    $"git ls-files failed with exit code {process.ExitCode}: {error.Trim()}");
+            }
+
+            return output.Split('\0', StringSplitOptions.RemoveEmptyEntries)
+                .Select(relative => Path.Combine(
+                    root,
+                    relative.Replace('/', Path.DirectorySeparatorChar)))
+                .ToArray();
+        }
+        catch (Exception exception) when (exception is not AssertFailedException)
+        {
+            throw new AssertFailedException(
+                "Could not enumerate Git-tracked files for repository policy checks.",
+                exception);
+        }
     }
 
     private static bool IsUnderIgnoredBuildDirectory(string root, string path)
