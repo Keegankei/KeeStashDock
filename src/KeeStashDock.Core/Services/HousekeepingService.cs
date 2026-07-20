@@ -1,4 +1,5 @@
 using KeeStashDock.Domain.Entities;
+using KeeStashDock.Infrastructure.Database;
 using KeeStashDock.Infrastructure.Logging;
 using KeeStashDock.Infrastructure.Repositories;
 using KeeStashDock.Infrastructure.Storage;
@@ -19,31 +20,42 @@ public sealed class HousekeepingService : IDisposable
     private readonly BackupService _backup;
     private readonly SettingsStore _settings;
     private readonly FileLogger _log;
+    private readonly DatabaseMaintenanceCoordinator _maintenance;
     private Timer? _timer;
 
     /// <summary>Raised (on a worker thread) when housekeeping changed data.</summary>
     public event Action? Swept;
 
     public HousekeepingService(SnippetRepository snippets, BackupService backup,
-                               SettingsStore settings, FileLogger log)
+                               SettingsStore settings, FileLogger log,
+                               DatabaseMaintenanceCoordinator maintenance)
     {
-        _snippets = snippets; _backup = backup; _settings = settings; _log = log;
+        _snippets = snippets;
+        _backup = backup;
+        _settings = settings;
+        _log = log;
+        _maintenance = maintenance;
     }
 
     public void Start()
     {
         _timer = new Timer(_ => Sweep(), null,
             dueTime: TimeSpan.FromSeconds(5),      // shortly after startup
-            period:  TimeSpan.FromHours(1));
+            period: TimeSpan.FromHours(1));
     }
 
     private void Sweep()
     {
+        if (!_maintenance.CanStartOperation)
+        {
+            return;
+        }
+
         try
         {
             AppSettings cfg = _settings.Current;
             int expired = _snippets.MoveExpiredToTrash();
-            int purged  = _snippets.PurgeTrash(cfg.TrashRetentionDays);
+            int purged = _snippets.PurgeTrash(cfg.TrashRetentionDays);
             if (cfg.AutoBackupEnabled)
                 _backup.RunAuto(cfg.BackupKeepCount, cfg.AutoBackupIntervalHours);
 

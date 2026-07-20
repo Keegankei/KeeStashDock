@@ -19,6 +19,8 @@ namespace KeeStashDock.Infrastructure.Database;
 /// </summary>
 public sealed class MigrationRunner
 {
+    public const int LatestSupportedVersion = 1;
+
     private readonly Db _db;
     private readonly FileLogger _log;
 
@@ -98,6 +100,14 @@ public sealed class MigrationRunner
     {
         using var conn = _db.Open();
 
+        int userVersion = GetUserVersion(conn);
+        if (userVersion > LatestSupportedVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database user_version {userVersion} is newer than supported " +
+                $"version {LatestSupportedVersion}.");
+        }
+
         using (var init = conn.CreateCommand())
         {
             init.CommandText = """
@@ -109,6 +119,13 @@ public sealed class MigrationRunner
         }
 
         int current = GetVersion(conn);
+        if (current > LatestSupportedVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database schema version {current} is newer than supported " +
+                $"version {LatestSupportedVersion}.");
+        }
+
         foreach (var (version, sql) in Migrations)
         {
             if (version <= current) continue;
@@ -121,8 +138,18 @@ public sealed class MigrationRunner
             cmd.CommandText = "UPDATE schema_version SET version = $v";
             cmd.Parameters.AddWithValue("$v", version);
             cmd.ExecuteNonQuery();
+            cmd.Parameters.Clear();
+            cmd.CommandText = $"PRAGMA user_version = {version}";
+            cmd.ExecuteNonQuery();
             tx.Commit();
             current = version;
+        }
+
+        if (GetUserVersion(conn) != current)
+        {
+            using var command = conn.CreateCommand();
+            command.CommandText = $"PRAGMA user_version = {current}";
+            command.ExecuteNonQuery();
         }
     }
 
@@ -131,5 +158,12 @@ public sealed class MigrationRunner
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT version FROM schema_version LIMIT 1";
         return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    private static int GetUserVersion(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "PRAGMA user_version";
+        return Convert.ToInt32(command.ExecuteScalar());
     }
 }

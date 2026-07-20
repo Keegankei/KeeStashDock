@@ -18,8 +18,14 @@ namespace KeeStashDock.Infrastructure.Database;
 public sealed class Db
 {
     private readonly string _connectionString;
+    private readonly DatabaseMaintenanceCoordinator _maintenance;
 
-    public Db() : this(PortablePaths.DatabaseFile)
+    public Db() : this(PortablePaths.DatabaseFile, new DatabaseMaintenanceCoordinator())
+    {
+    }
+
+    public Db(DatabaseMaintenanceCoordinator maintenance)
+        : this(PortablePaths.DatabaseFile, maintenance)
     {
     }
 
@@ -27,29 +33,65 @@ public sealed class Db
     /// Production uses <see cref="PortablePaths.DatabaseFile"/>; tests use an
     /// isolated temporary path so they never touch portable user data.</summary>
     public Db(string databaseFile)
+        : this(databaseFile, new DatabaseMaintenanceCoordinator())
+    {
+    }
+
+    public Db(string databaseFile, DatabaseMaintenanceCoordinator maintenance)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseFile);
+        ArgumentNullException.ThrowIfNull(maintenance);
+        DatabaseFile = Path.GetFullPath(databaseFile);
+        _maintenance = maintenance;
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = databaseFile,
+            DataSource = DatabaseFile,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Pooling = true,
         }.ToString();
     }
 
+    public string DatabaseFile { get; }
+
     /// <summary>Opens a pooled connection with all pragmas applied.</summary>
     public SqliteConnection Open()
     {
-        var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            PRAGMA journal_mode = WAL;
-            PRAGMA synchronous  = NORMAL;
-            PRAGMA foreign_keys = ON;
-            PRAGMA busy_timeout = 3000;
-            """;
-        cmd.ExecuteNonQuery();
-        return conn;
+        IDisposable operation = _maintenance.EnterOperation();
+        return OpenCore(operation);
+    }
+
+    internal SqliteConnection OpenForMaintenance(DatabaseMaintenanceLease lease)
+    {
+        _maintenance.VerifyLease(lease);
+        return OpenCore(connectionLease: null);
+    }
+
+    private SqliteConnection OpenCore(IDisposable? connectionLease)
+    {
+        var connection = new SqliteConnection(_connectionString);
+        if (connectionLease is not null)
+        {
+            connection.Disposed += (_, _) => connectionLease.Dispose();
+        }
+
+        try
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                PRAGMA journal_mode = WAL;
+                PRAGMA synchronous  = NORMAL;
+                PRAGMA foreign_keys = ON;
+                PRAGMA busy_timeout = 3000;
+                """;
+            command.ExecuteNonQuery();
+            return connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            connectionLease?.Dispose();
+            throw;
+        }
     }
 }

@@ -59,14 +59,19 @@ public partial class App : Application
 
         var sc = new ServiceCollection();
         sc.AddSingleton(Log);
+        sc.AddSingleton<DatabaseMaintenanceCoordinator>();
         sc.AddSingleton<Db>();
         sc.AddSingleton<MigrationRunner>();
+        sc.AddSingleton<DatabaseSchemaValidator>();
         sc.AddSingleton<SnippetRepository>();
         sc.AddSingleton<CategoryRepository>();
         sc.AddSingleton<TagRepository>();
         sc.AddSingleton<GroupIoService>();
         sc.AddSingleton<SettingsStore>();
         sc.AddSingleton<BackupService>();
+        sc.AddSingleton<IDatabaseFileOperations, PhysicalDatabaseFileOperations>();
+        sc.AddSingleton<IApplicationRestarter, DesktopApplicationRestarter>();
+        sc.AddSingleton<DatabaseImportService>();
         sc.AddSingleton<SnippetService>();
         sc.AddSingleton<SearchService>();
         sc.AddSingleton<HousekeepingService>();
@@ -88,10 +93,10 @@ public partial class App : Application
 
         // ---- 7. Shell: tray and global hotkey ----------------------------
         _tray = new TrayIconManager();
-        _tray.ShowPanelRequested     += TogglePanel;
+        _tray.ShowPanelRequested += TogglePanel;
         _tray.ShowWorkbenchRequested += ShowWorkbench;
-        _tray.ShowSettingsRequested  += ShowSettings;
-        _tray.ExitRequested          += ExitApp;
+        _tray.ShowSettingsRequested += ShowSettings;
+        _tray.ExitRequested += ExitApp;
 
         _hotkey = new HotkeyManager();
         bool hotkeyOk = _hotkey.Initialize(
@@ -413,6 +418,8 @@ public partial class App : Application
         _settingsWin ??= new SettingsWindow(
             _services.GetRequiredService<SettingsStore>(),
             _services.GetRequiredService<BackupService>(),
+            _services.GetRequiredService<DatabaseImportService>(),
+            _services.GetRequiredService<IApplicationRestarter>(),
             _hotkey);
         _settingsWin.ShowAndActivate();
     }

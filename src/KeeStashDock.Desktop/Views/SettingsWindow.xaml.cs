@@ -20,14 +20,24 @@ public partial class SettingsWindow : Window
 {
     private readonly SettingsStore _settings;
     private readonly BackupService _backup;
+    private readonly DatabaseImportService _databaseImport;
+    private readonly IApplicationRestarter _restarter;
     private readonly HotkeyManager _hotkey;
     private bool _loading = true;   // suppress handlers during initial population
 
-    public SettingsWindow(SettingsStore settings, BackupService backup,
-                          HotkeyManager hotkey)
+    public SettingsWindow(
+        SettingsStore settings,
+        BackupService backup,
+        DatabaseImportService databaseImport,
+        IApplicationRestarter restarter,
+        HotkeyManager hotkey)
     {
         InitializeComponent();
-        _settings = settings; _backup = backup; _hotkey = hotkey;
+        _settings = settings;
+        _backup = backup;
+        _databaseImport = databaseImport;
+        _restarter = restarter;
+        _hotkey = hotkey;
 
         Closing += (s, e) => { e.Cancel = true; Hide(); };
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
@@ -151,8 +161,8 @@ public partial class SettingsWindow : Window
 
         uint mods = 0;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) mods |= NativeMethods.MOD_CONTROL;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))     mods |= NativeMethods.MOD_ALT;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))   mods |= NativeMethods.MOD_SHIFT;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) mods |= NativeMethods.MOD_ALT;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) mods |= NativeMethods.MOD_SHIFT;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Windows)) mods |= NativeMethods.MOD_WIN;
         if (mods == 0) return;   // bare keys are rejected (design: e.g. F2 hijacks rename)
 
@@ -178,9 +188,9 @@ public partial class SettingsWindow : Window
     {
         var parts = new List<string>(4);
         if ((mods & NativeMethods.MOD_CONTROL) != 0) parts.Add("Ctrl");
-        if ((mods & NativeMethods.MOD_ALT) != 0)     parts.Add("Alt");
-        if ((mods & NativeMethods.MOD_SHIFT) != 0)   parts.Add("Shift");
-        if ((mods & NativeMethods.MOD_WIN) != 0)     parts.Add("Win");
+        if ((mods & NativeMethods.MOD_ALT) != 0) parts.Add("Alt");
+        if ((mods & NativeMethods.MOD_SHIFT) != 0) parts.Add("Shift");
+        if ((mods & NativeMethods.MOD_WIN) != 0) parts.Add("Win");
         parts.Add(KeyInterop.KeyFromVirtualKey((int)vk).ToString());
         return string.Join(" + ", parts);
     }
@@ -327,15 +337,19 @@ public partial class SettingsWindow : Window
     /// new instance would just wake the panel and exit.</summary>
     private void OnRestartClick(object sender, RoutedEventArgs e)
     {
-        string exe = Environment.ProcessPath!;
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        if (_restarter.TryRestart())
         {
-            FileName = "cmd.exe",
-            Arguments = $"/c timeout /t 1 /nobreak >nul & start \"\" \"{exe}\"",
-            WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-            CreateNoWindow = true,
-        });
-        Application.Current.Shutdown();
+            Application.Current.Shutdown();
+        }
+        else
+        {
+            MessageBox.Show(
+                this,
+                "KeeStashDock could not restart automatically. Please exit and start it again.",
+                "KeeStashDock",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     /// <summary>Panel timing fields: parse (invariant OR current culture, so
@@ -519,7 +533,7 @@ public partial class SettingsWindow : Window
             _backup.ExportPackage(dlg.FileName);
     }
 
-    private void OnImportClick(object sender, RoutedEventArgs e)
+    private async void OnImportClick(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog
         { Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg|SQLite database (*.db)|*.db" };
@@ -530,8 +544,27 @@ public partial class SettingsWindow : Window
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
 
-        _backup.ImportPackage(dlg.FileName);
-        MessageBox.Show(this, loc["Settings.Backup.Import.Done"], "KeeStashDock",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+        IsEnabled = false;
+        try
+        {
+            await _databaseImport.ImportAsync(dlg.FileName);
+            Application.Current.Shutdown();
+        }
+        catch (DatabaseImportException exception)
+        {
+            MessageBox.Show(
+                this,
+                exception.Message,
+                "KeeStashDock",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (!_databaseImport.AreOperationsDisabled)
+            {
+                IsEnabled = true;
+            }
+        }
     }
 }
