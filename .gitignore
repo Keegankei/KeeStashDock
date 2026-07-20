@@ -20,6 +20,9 @@ coverage/
 .vscode/
 .idea/
 
+# Local development plans and agent working notes
+.plan/
+
 # Local environment and secrets
 .env
 .env.*
