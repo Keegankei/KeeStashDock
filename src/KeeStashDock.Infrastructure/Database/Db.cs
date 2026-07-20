@@ -19,11 +19,19 @@ public sealed class Db
 {
     private readonly string _connectionString;
 
-    public Db()
+    public Db() : this(PortablePaths.DatabaseFile)
     {
+    }
+
+    /// <summary>Creates a connection factory for an explicit database path.
+    /// Production uses <see cref="PortablePaths.DatabaseFile"/>; tests use an
+    /// isolated temporary path so they never touch portable user data.</summary>
+    public Db(string databaseFile)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseFile);
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = PortablePaths.DatabaseFile,
+            DataSource = databaseFile,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Pooling = true,
         }.ToString();

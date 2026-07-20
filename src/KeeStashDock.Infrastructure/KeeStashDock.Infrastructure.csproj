@@ -7,6 +7,8 @@
   <ItemGroup>
     <!-- Microsoft.Data.Sqlite bundles the native e_sqlite3 binary with FTS5. -->
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- Pin the native SQLite bundle to the release containing SQLite 3.50.2. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KeeStashDock.Domain\KeeStashDock.Domain.csproj" />
