@@ -1,5 +1,5 @@
-using Microsoft.Data.Sqlite;
 using KeeStashDock.Infrastructure.Logging;
+using Microsoft.Data.Sqlite;
 
 namespace KeeStashDock.Infrastructure.Database;
 
@@ -19,7 +19,7 @@ namespace KeeStashDock.Infrastructure.Database;
 /// </summary>
 public sealed class MigrationRunner
 {
-    public const int LatestSupportedVersion = 1;
+    public const int LatestSupportedVersion = 2;
 
     private readonly Db _db;
     private readonly FileLogger _log;
@@ -93,11 +93,15 @@ public sealed class MigrationRunner
                 VALUES (new.id, COALESCE(new.title,''), new.content);
             END;
             """),
-        // (2, "..."), <- future migrations are appended here, never edited.
+        (2, /* -------- V2: atomic use tracking + UTC timestamps -------- */ """
+            ALTER TABLE snippets ADD COLUMN last_used_at TEXT NULL;
+            """),
+        // (3, "..."), <- future migrations are appended here, never edited.
     };
 
     public void Run()
     {
+        EnsureVersionIsSupportedBeforeWrite();
         using var conn = _db.Open();
 
         int userVersion = GetUserVersion(conn);
@@ -135,6 +139,11 @@ public sealed class MigrationRunner
             cmd.Transaction = tx;
             cmd.CommandText = sql;
             cmd.ExecuteNonQuery();
+            if (version == 2)
+            {
+                NormalizeTimestampColumns(conn, tx);
+            }
+
             cmd.CommandText = "UPDATE schema_version SET version = $v";
             cmd.Parameters.AddWithValue("$v", version);
             cmd.ExecuteNonQuery();
@@ -166,4 +175,136 @@ public sealed class MigrationRunner
         command.CommandText = "PRAGMA user_version";
         return Convert.ToInt32(command.ExecuteScalar());
     }
+
+    private void EnsureVersionIsSupportedBeforeWrite()
+    {
+        string path = _db.DatabaseFile;
+        if (!File.Exists(path) || new FileInfo(path).Length == 0)
+        {
+            return;
+        }
+
+        using var connection = new SqliteConnection(
+            new SqliteConnectionStringBuilder
+            {
+                DataSource = path,
+                Mode = SqliteOpenMode.ReadOnly,
+                Pooling = false,
+            }.ToString());
+        connection.Open();
+
+        int userVersion = GetUserVersion(connection);
+        if (userVersion > LatestSupportedVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database user_version {userVersion} is newer than supported " +
+                $"version {LatestSupportedVersion}.");
+        }
+
+        using SqliteCommand tableCheck = connection.CreateCommand();
+        tableCheck.CommandText = """
+            SELECT COUNT(*) FROM sqlite_master
+            WHERE type = 'table' AND name = 'schema_version'
+            """;
+        if (Convert.ToInt32(tableCheck.ExecuteScalar()) == 0)
+        {
+            return;
+        }
+
+        int schemaVersion = GetVersion(connection);
+        if (schemaVersion > LatestSupportedVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database schema version {schemaVersion} is newer than supported " +
+                $"version {LatestSupportedVersion}.");
+        }
+    }
+
+    private void NormalizeTimestampColumns(
+        SqliteConnection connection,
+        SqliteTransaction transaction)
+    {
+        var rows = new List<TimestampRow>();
+        using (SqliteCommand read = connection.CreateCommand())
+        {
+            read.Transaction = transaction;
+            read.CommandText = """
+                SELECT id, created_at, updated_at, expire_at, deleted_at
+                FROM snippets
+                """;
+            using SqliteDataReader reader = read.ExecuteReader();
+            while (reader.Read())
+            {
+                rows.Add(new TimestampRow(
+                    reader.GetInt64(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.IsDBNull(3) ? null : reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetString(4)));
+            }
+        }
+
+        foreach (TimestampRow row in rows)
+        {
+            string createdAt = NormalizeRequired(row.Id, "created_at", row.CreatedAt);
+            string updatedAt = NormalizeRequired(row.Id, "updated_at", row.UpdatedAt);
+            string? expireAt = NormalizeOptional(row.Id, "expire_at", row.ExpireAt);
+            string? deletedAt = NormalizeOptional(row.Id, "deleted_at", row.DeletedAt);
+
+            using SqliteCommand update = connection.CreateCommand();
+            update.Transaction = transaction;
+            update.CommandText = """
+                UPDATE snippets SET
+                    created_at = $created_at,
+                    updated_at = $updated_at,
+                    expire_at = $expire_at,
+                    deleted_at = $deleted_at
+                WHERE id = $id
+                """;
+            update.Parameters.AddWithValue("$created_at", createdAt);
+            update.Parameters.AddWithValue("$updated_at", updatedAt);
+            update.Parameters.AddWithValue(
+                "$expire_at", (object?)expireAt ?? DBNull.Value);
+            update.Parameters.AddWithValue(
+                "$deleted_at", (object?)deletedAt ?? DBNull.Value);
+            update.Parameters.AddWithValue("$id", row.Id);
+            update.ExecuteNonQuery();
+        }
+    }
+
+    private string NormalizeRequired(long id, string column, string value)
+    {
+        if (UtcTimestamp.TryNormalize(value, out string? normalized))
+        {
+            return normalized!;
+        }
+
+        _log.Warn(
+            $"Snippet #{id} has invalid {column} '{value}'; " +
+            $"using {UtcTimestamp.InvalidRequiredFallback}.");
+        return UtcTimestamp.InvalidRequiredFallback;
+    }
+
+    private string? NormalizeOptional(long id, string column, string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (UtcTimestamp.TryNormalize(value, out string? normalized))
+        {
+            return normalized;
+        }
+
+        _log.Warn($"Snippet #{id} has invalid {column} '{value}'; using NULL.");
+        return null;
+    }
+
+    private sealed record TimestampRow(
+        long Id,
+        string CreatedAt,
+        string UpdatedAt,
+        string? ExpireAt,
+        string? DeletedAt);
 }

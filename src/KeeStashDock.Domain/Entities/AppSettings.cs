@@ -9,6 +9,13 @@ namespace KeeStashDock.Domain.Entities;
 /// </summary>
 public sealed class AppSettings
 {
+    public const int DefaultTrashRetentionDays = 30;
+    public const int MaxTrashRetentionDays = 3650;
+    public const int DefaultBackupKeepCount = 7;
+    public const int MaxBackupKeepCount = 100;
+    public const int DefaultAutoBackupIntervalHours = 24;
+    public const int MaxAutoBackupIntervalHours = 24 * 30;
+
     // ---- General -------------------------------------------------------
     /// <summary>BCP-47 language tag of the active UI language. "en-US" is the product default.</summary>
     public string Language { get; set; } = "en-US";
@@ -157,7 +164,7 @@ public sealed class AppSettings
     public bool AutoBackupEnabled { get; set; } = true;
 
     /// <summary>Hours between automatic backups. Default: daily.</summary>
-    public int AutoBackupIntervalHours { get; set; } = 24;
+    public int AutoBackupIntervalHours { get; set; } = DefaultAutoBackupIntervalHours;
 
     /// <summary>Optional translation API key (currently used by the DeepL
     /// engine, which has no keyless public endpoint).</summary>
@@ -173,9 +180,11 @@ public sealed class AppSettings
     public bool DefaultGroupsSeeded { get; set; }
 
     // ---- Data ----------------------------------------------------------
-    /// <summary>Days a snippet stays in the recycle bin before physical purge.</summary>
-    public int TrashRetentionDays { get; set; } = 30;
+    /// <summary>Days a snippet stays in the recycle bin before physical purge.
+    /// Zero is invalid and normalizes to <see cref="DefaultTrashRetentionDays"/>.</summary>
+    public int TrashRetentionDays { get; set; } = DefaultTrashRetentionDays;
 
-    /// <summary>Number of daily database backups to keep.</summary>
-    public int BackupKeepCount { get; set; } = 7;
+    /// <summary>Number of daily database backups to keep. Zero is invalid
+    /// and normalizes to <see cref="DefaultBackupKeepCount"/>.</summary>
+    public int BackupKeepCount { get; set; } = DefaultBackupKeepCount;
 }

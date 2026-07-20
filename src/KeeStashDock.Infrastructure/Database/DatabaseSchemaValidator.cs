@@ -79,6 +79,11 @@ public sealed class DatabaseSchemaValidator
                     "The selected database has an unsupported legacy schema.");
             }
 
+            if (schemaVersion >= 2)
+            {
+                ValidateColumns(connection, "snippets", ["last_used_at"]);
+            }
+
             if (requireCurrentUserVersion &&
                 userVersion != MigrationRunner.LatestSupportedVersion)
             {

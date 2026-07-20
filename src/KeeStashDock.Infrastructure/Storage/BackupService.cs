@@ -1,6 +1,7 @@
-using Microsoft.Data.Sqlite;
+using KeeStashDock.Domain.Entities;
 using KeeStashDock.Infrastructure.Database;
 using KeeStashDock.Infrastructure.Logging;
+using Microsoft.Data.Sqlite;
 
 namespace KeeStashDock.Infrastructure.Storage;
 
@@ -40,7 +41,12 @@ public sealed class BackupService
     {
         try
         {
-            intervalHours = Math.Clamp(intervalHours, 1, 24 * 30);
+            intervalHours = intervalHours <= 0
+                ? AppSettings.DefaultAutoBackupIntervalHours
+                : Math.Min(intervalHours, AppSettings.MaxAutoBackupIntervalHours);
+            keepCount = keepCount <= 0
+                ? AppSettings.DefaultBackupKeepCount
+                : Math.Min(keepCount, AppSettings.MaxBackupKeepCount);
             var existing = Directory.GetFiles(_backupsDirectory,
                                               "keestashdock_*.db");
             DateTime newest = existing.Length == 0
@@ -53,7 +59,7 @@ public sealed class BackupService
 
             var old = Directory.GetFiles(_backupsDirectory, "keestashdock_*.db")
                                .OrderByDescending(File.GetLastWriteTime)
-                               .Skip(Math.Max(1, keepCount));
+                               .Skip(keepCount);
             foreach (string f in old) File.Delete(f);
         }
         catch (Exception ex)

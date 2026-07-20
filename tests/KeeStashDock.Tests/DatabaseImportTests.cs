@@ -69,7 +69,7 @@ public sealed class DatabaseImportTests
         Assert.IsTrue(context.Restarter.WasCalled);
         Assert.IsTrue(context.Coordinator.AreOperationsDisabled);
         Assert.ThrowsExactly<DatabaseOperationsDisabledException>(
-            () => oldRepository.Update(oldObject));
+            () => oldRepository.UpdateContent(oldObject, DateTime.UtcNow));
         Assert.AreEqual("imported", ReadOnlyMarker(context.ActiveFile));
         AssertNoImportTemporaryFiles();
     }

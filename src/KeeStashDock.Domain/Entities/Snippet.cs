@@ -52,6 +52,9 @@ public sealed class Snippet
     /// <summary>How many times the snippet was copied out - powers "frequently used".</summary>
     public int UseCount { get; set; }
 
+    /// <summary>UTC instant of the most recent copy-out. Null = never used.</summary>
+    public DateTime? LastUsedAt { get; set; }
+
     /// <summary>Convenience flag consumed by view models.</summary>
     public bool IsDeleted => DeletedAt is not null;
 

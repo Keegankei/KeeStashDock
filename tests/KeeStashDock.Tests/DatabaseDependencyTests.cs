@@ -76,7 +76,7 @@ public sealed class DatabaseDependencyTests
         Assert.AreEqual(1L, Convert.ToInt64(
             ExecuteScalar(connection, "PRAGMA foreign_keys;"),
             CultureInfo.InvariantCulture));
-        Assert.AreEqual(1L, Convert.ToInt64(
+        Assert.AreEqual((long)MigrationRunner.LatestSupportedVersion, Convert.ToInt64(
             ExecuteScalar(connection, "SELECT version FROM schema_version;"),
             CultureInfo.InvariantCulture));
 
@@ -137,7 +137,7 @@ public sealed class DatabaseDependencyTests
             Convert.ToString(
                 ExecuteScalar(backupConnection, "PRAGMA quick_check;"),
                 CultureInfo.InvariantCulture));
-        Assert.AreEqual(1L, Convert.ToInt64(
+        Assert.AreEqual((long)MigrationRunner.LatestSupportedVersion, Convert.ToInt64(
             ExecuteScalar(backupConnection, "SELECT version FROM schema_version;"),
             CultureInfo.InvariantCulture));
         Assert.AreEqual(1L, Convert.ToInt64(
