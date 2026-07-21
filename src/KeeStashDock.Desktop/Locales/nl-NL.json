@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Typ en druk op Enter om op te bergen…",
   "QuickPanel.Empty": "Nog niets opgeborgen",
   "QuickPanel.Copied": "Gekopieerd ✓",
+  "QuickPanel.DirectPasteFailed": "Gekopieerd, maar het doelvenster kon niet veilig worden geverifieerd",
   "QuickPanel.Pin": "Vastzetten / losmaken",
   "QuickPanel.Delete": "Naar prullenbak",
   "QuickPanel.Expand": "Werkbank openen",

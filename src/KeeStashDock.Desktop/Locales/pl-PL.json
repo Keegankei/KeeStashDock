@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Wpisz i naciśnij Enter, aby zachować…",
   "QuickPanel.Empty": "Nic jeszcze nie zachowano",
   "QuickPanel.Copied": "Skopiowano ✓",
+  "QuickPanel.DirectPasteFailed": "Skopiowano, ale nie udało się bezpiecznie zweryfikować okna docelowego",
   "QuickPanel.Pin": "Przypnij / odepnij",
   "QuickPanel.Delete": "Przenieś do kosza",
   "QuickPanel.Expand": "Otwórz warsztat",

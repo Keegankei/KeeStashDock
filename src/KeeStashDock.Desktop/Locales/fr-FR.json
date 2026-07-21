@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Saisissez puis appuyez sur Entrée pour ranger…",
   "QuickPanel.Empty": "Rien de rangé pour l'instant",
   "QuickPanel.Copied": "Copié ✓",
+  "QuickPanel.DirectPasteFailed": "Copié, mais la fenêtre cible n’a pas pu être vérifiée en toute sécurité",
   "QuickPanel.Pin": "Épingler / détacher",
   "QuickPanel.Delete": "Mettre à la corbeille",
   "QuickPanel.Expand": "Ouvrir l'atelier",

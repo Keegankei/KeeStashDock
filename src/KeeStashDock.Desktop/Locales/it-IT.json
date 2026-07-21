@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Scrivi e premi Invio per conservare…",
   "QuickPanel.Empty": "Non c'è ancora nulla",
   "QuickPanel.Copied": "Copiato ✓",
+  "QuickPanel.DirectPasteFailed": "Copiato, ma non è stato possibile verificare in sicurezza la finestra di destinazione",
   "QuickPanel.Pin": "Fissa / sblocca",
   "QuickPanel.Delete": "Sposta nel cestino",
   "QuickPanel.Expand": "Apri banco di lavoro",

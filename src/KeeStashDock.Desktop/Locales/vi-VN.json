@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Gõ rồi nhấn Enter để cất…",
   "QuickPanel.Empty": "Chưa có gì được cất",
   "QuickPanel.Copied": "Đã sao chép ✓",
+  "QuickPanel.DirectPasteFailed": "Đã sao chép, nhưng không thể xác minh an toàn cửa sổ đích",
   "QuickPanel.Pin": "Ghim / bỏ ghim",
   "QuickPanel.Delete": "Chuyển vào thùng rác",
   "QuickPanel.Expand": "Mở bàn làm việc",

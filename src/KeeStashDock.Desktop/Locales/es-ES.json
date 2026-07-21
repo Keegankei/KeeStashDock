@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Escribe y pulsa Intro para guardar…",
   "QuickPanel.Empty": "Aún no hay nada guardado",
   "QuickPanel.Copied": "Copiado ✓",
+  "QuickPanel.DirectPasteFailed": "Copiado, pero no se pudo verificar de forma segura la ventana de destino",
   "QuickPanel.Pin": "Fijar / soltar",
   "QuickPanel.Delete": "Mover a la papelera",
   "QuickPanel.Expand": "Abrir mesa de trabajo",

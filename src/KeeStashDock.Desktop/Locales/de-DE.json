@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Tippen und Enter drücken zum Ablegen…",
   "QuickPanel.Empty": "Noch nichts abgelegt",
   "QuickPanel.Copied": "Kopiert ✓",
+  "QuickPanel.DirectPasteFailed": "Kopiert, aber das Zielfenster konnte nicht sicher überprüft werden",
   "QuickPanel.Pin": "Anheften / lösen",
   "QuickPanel.Delete": "In den Papierkorb",
   "QuickPanel.Expand": "Werkbank öffnen",

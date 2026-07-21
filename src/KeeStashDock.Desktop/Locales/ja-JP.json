@@ -11,6 +11,7 @@
   "QuickPanel.Input.Placeholder": "入力して Enter で保管…",
   "QuickPanel.Empty": "まだ何も保管されていません",
   "QuickPanel.Copied": "コピーしました ✓",
+  "QuickPanel.DirectPasteFailed": "コピーしましたが、貼り付け先ウィンドウを安全に確認できませんでした",
   "QuickPanel.Pin": "ピン留め / 解除",
   "QuickPanel.Delete": "ごみ箱へ移動",
   "QuickPanel.Expand": "ワークベンチを開く",

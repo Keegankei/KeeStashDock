@@ -11,6 +11,7 @@
   "QuickPanel.Input.Placeholder": "输入内容，按回车暂存…",
   "QuickPanel.Empty": "还没有暂存任何内容",
   "QuickPanel.Copied": "已复制 ✓",
+  "QuickPanel.DirectPasteFailed": "已复制，但无法安全确认目标窗口",
   "QuickPanel.Pin": "钉选 / 取消钉选",
   "QuickPanel.Delete": "移入回收站",
   "QuickPanel.Expand": "打开工作台",

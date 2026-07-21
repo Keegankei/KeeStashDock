@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Введіть і натисніть Enter, щоб зберегти…",
   "QuickPanel.Empty": "Поки нічого не збережено",
   "QuickPanel.Copied": "Скопійовано ✓",
+  "QuickPanel.DirectPasteFailed": "Скопійовано, але не вдалося безпечно перевірити цільове вікно",
   "QuickPanel.Pin": "Закріпити / відкріпити",
   "QuickPanel.Delete": "Перемістити в кошик",
   "QuickPanel.Expand": "Відкрити майстерню",

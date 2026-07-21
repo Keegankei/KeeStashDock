@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Yazın ve saklamak için Enter'a basın…",
   "QuickPanel.Empty": "Henüz bir şey saklanmadı",
   "QuickPanel.Copied": "Kopyalandı ✓",
+  "QuickPanel.DirectPasteFailed": "Kopyalandı, ancak hedef pencere güvenli şekilde doğrulanamadı",
   "QuickPanel.Pin": "Sabitle / çöz",
   "QuickPanel.Delete": "Çöp kutusuna taşı",
   "QuickPanel.Expand": "Çalışma tezgâhını aç",

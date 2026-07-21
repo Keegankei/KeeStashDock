@@ -11,6 +11,7 @@
   "QuickPanel.Input.Placeholder": "輸入內容，按 Enter 暫存…",
   "QuickPanel.Empty": "尚未暫存任何內容",
   "QuickPanel.Copied": "已複製 ✓",
+  "QuickPanel.DirectPasteFailed": "已複製，但無法安全確認目標視窗",
   "QuickPanel.Pin": "釘選 / 取消釘選",
   "QuickPanel.Delete": "移至資源回收筒",
   "QuickPanel.Expand": "開啟工作台",

@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "พิมพ์แล้วกด Enter เพื่อเก็บ…",
   "QuickPanel.Empty": "ยังไม่มีอะไรถูกเก็บไว้",
   "QuickPanel.Copied": "คัดลอกแล้ว ✓",
+  "QuickPanel.DirectPasteFailed": "คัดลอกแล้ว แต่ไม่สามารถยืนยันหน้าต่างเป้าหมายได้อย่างปลอดภัย",
   "QuickPanel.Pin": "ปักหมุด / เลิกปักหมุด",
   "QuickPanel.Delete": "ย้ายไปถังขยะ",
   "QuickPanel.Expand": "เปิดโต๊ะทำงาน",

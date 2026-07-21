@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Digite e pressione Enter para guardar…",
   "QuickPanel.Empty": "Nada guardado ainda",
   "QuickPanel.Copied": "Copiado ✓",
+  "QuickPanel.DirectPasteFailed": "Copiado, mas não foi possível verificar com segurança a janela de destino",
   "QuickPanel.Pin": "Fixar / desafixar",
   "QuickPanel.Delete": "Mover para a lixeira",
   "QuickPanel.Expand": "Abrir bancada",

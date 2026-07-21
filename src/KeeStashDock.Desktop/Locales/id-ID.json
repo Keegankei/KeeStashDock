@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Ketik lalu tekan Enter untuk menyimpan…",
   "QuickPanel.Empty": "Belum ada yang disimpan",
   "QuickPanel.Copied": "Tersalin ✓",
+  "QuickPanel.DirectPasteFailed": "Tersalin, tetapi jendela tujuan tidak dapat diverifikasi dengan aman",
   "QuickPanel.Pin": "Sematkan / lepas",
   "QuickPanel.Delete": "Pindah ke sampah",
   "QuickPanel.Expand": "Buka meja kerja",

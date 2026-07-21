@@ -20,6 +20,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     private readonly SearchService _search;
     private readonly CategoryRepository _categories;
     private List<Category> _cats = new();
+    private CancellationTokenSource? _toastCancellation;
 
     public ObservableCollection<SnippetItemViewModel> Items { get; } = new();
 
@@ -111,7 +112,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     /// <summary>Card click: copy content to clipboard, count the use,
     /// honor burn-after-read, flash a confirmation toast.</summary>
     [RelayCommand]
-    private void Copy(SnippetItemViewModel? item)
+    private async Task Copy(SnippetItemViewModel? item)
     {
         if (item is null) return;
         try
@@ -125,8 +126,11 @@ public sealed partial class QuickPanelViewModel : ObservableObject
             Clipboard.SetDataObject(item.Model.Content, copy: true);
         }
         _snippets.RegisterUse(item.Model);
-        ShowToast();
-        DirectPaste.TryPasteToTarget();   // no-op unless enabled in settings
+        DirectPasteResult pasteResult = await DirectPaste.TryPasteToTargetAsync();
+        string toastKey = pasteResult is DirectPasteResult.Success or DirectPasteResult.Disabled
+            ? "QuickPanel.Copied"
+            : "QuickPanel.DirectPasteFailed";
+        ShowToast(toastKey);
     }
 
     [RelayCommand]
@@ -144,10 +148,33 @@ public sealed partial class QuickPanelViewModel : ObservableObject
         _snippets.MoveToTrash(item.Id);
     }
 
-    public async void ShowToast(string? key = null)
+    public void ShowToast(string? key = null)
     {
+        _toastCancellation?.Cancel();
+        _toastCancellation?.Dispose();
+        var cancellation = new CancellationTokenSource();
+        _toastCancellation = cancellation;
         Toast = Localization.LocalizationService.Instance[key ?? "QuickPanel.Copied"];
-        await Task.Delay(1200);
-        Toast = null;
+        _ = ClearToastAsync(cancellation);
+    }
+
+    private async Task ClearToastAsync(CancellationTokenSource cancellation)
+    {
+        try
+        {
+            await Task.Delay(1200, cancellation.Token);
+            if (ReferenceEquals(_toastCancellation, cancellation))
+                Toast = null;
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer toast owns the timer now.
+        }
+        finally
+        {
+            if (ReferenceEquals(_toastCancellation, cancellation))
+                _toastCancellation = null;
+            cancellation.Dispose();
+        }
     }
 }

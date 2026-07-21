@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "Type and press Enter to stash…",
   "QuickPanel.Empty": "Nothing stashed yet",
   "QuickPanel.Copied": "Copied ✓",
+  "QuickPanel.DirectPasteFailed": "Copied, but the target window could not be verified",
   "QuickPanel.Pin": "Pin / unpin",
   "QuickPanel.Delete": "Move to trash",
   "QuickPanel.Expand": "Open workbench",

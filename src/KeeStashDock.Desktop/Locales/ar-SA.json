@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "اكتب واضغط Enter للحفظ…",
   "QuickPanel.Empty": "لا يوجد شيء محفوظ بعد",
   "QuickPanel.Copied": "تم النسخ ✓",
+  "QuickPanel.DirectPasteFailed": "تم النسخ، ولكن تعذر التحقق بأمان من النافذة الهدف",
   "QuickPanel.Pin": "تثبيت / إلغاء التثبيت",
   "QuickPanel.Delete": "نقل إلى سلة المحذوفات",
   "QuickPanel.Expand": "فتح منضدة العمل",

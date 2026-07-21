@@ -10,6 +10,7 @@
   "QuickPanel.Input.Placeholder": "लिखें और सहेजने के लिए Enter दबाएँ…",
   "QuickPanel.Empty": "अभी कुछ भी सहेजा नहीं गया",
   "QuickPanel.Copied": "कॉपी हो गया ✓",
+  "QuickPanel.DirectPasteFailed": "कॉपी हो गया, लेकिन लक्ष्य विंडो को सुरक्षित रूप से सत्यापित नहीं किया जा सका",
   "QuickPanel.Pin": "पिन करें / हटाएँ",
   "QuickPanel.Delete": "ट्रैश में भेजें",
   "QuickPanel.Expand": "वर्कबेंच खोलें",
