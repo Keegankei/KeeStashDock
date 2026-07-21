@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -20,40 +21,86 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     private readonly SearchService _search;
     private readonly CategoryRepository _categories;
     private readonly TagRepository _tags;
+    private readonly WorkbenchEditorSession _editor = new();
+    private readonly Func<CancellationToken, Task<WorkbenchUnsavedChoice>> _promptAsync;
+    private readonly Action<Action> _dispatch;
+    private SnippetItemViewModel? _selectedItem;
+    private Snippet? _editingModel;
+    private bool _hasSaveError;
 
     /// <summary>Sidebar entries. Virtual ids: -1 All, -2 Pinned, -3 Trash, -4 Uncategorized.</summary>
     public ObservableCollection<NavEntry> Nav { get; } = new();
     public ObservableCollection<SnippetItemViewModel> Items { get; } = new();
 
     [ObservableProperty] private NavEntry? _selectedNav;
-    [ObservableProperty] private SnippetItemViewModel? _selectedItem;
     [ObservableProperty] private string _searchText = string.Empty;
 
-    // Editor pane fields (bound two-way; committed by SaveCommand)
-    [ObservableProperty] private string _editTitle = string.Empty;
-    [ObservableProperty] private string _editContent = string.Empty;
+    public SnippetItemViewModel? SelectedItem
+    {
+        get => _selectedItem;
+        private set => SetProperty(ref _selectedItem, value);
+    }
+
+    public string EditTitle
+    {
+        get => _editor.EditTitle;
+        set => SetEditorValue(_editor.EditTitle, value, v => _editor.EditTitle = v);
+    }
+
+    public string EditContent
+    {
+        get => _editor.EditContent;
+        set => SetEditorValue(_editor.EditContent, value, v => _editor.EditContent = v);
+    }
 
     /// <summary>Editor expiry policy; index maps 1:1 to <see cref="ExpirePolicy"/>.</summary>
-    [ObservableProperty] private int _editExpireIndex;
+    public int EditExpireIndex
+    {
+        get => (int)_editor.EditExpirePolicy;
+        set
+        {
+            int normalized = Math.Clamp(value, 0, 3);
+            if ((int)_editor.EditExpirePolicy == normalized) return;
+            _editor.EditExpirePolicy = (ExpirePolicy)normalized;
+            OnPropertyChanged();
+            NotifyEditorStateChanged();
+        }
+    }
 
     /// <summary>Editor tag row, comma-separated (Chinese comma accepted too).</summary>
-    [ObservableProperty] private string _editTags = string.Empty;
+    public string EditTags
+    {
+        get => _editor.EditTags;
+        set => SetEditorValue(_editor.EditTags, value, v => _editor.EditTags = v);
+    }
 
     public bool IsTrashView => SelectedNav?.Id == -3;
+    public bool IsDirty => _editor.IsDirty;
+    public bool HasExternalConflict =>
+        _editor.ExternalConflict != WorkbenchExternalConflict.None;
+    public bool HasSaveError
+    {
+        get => _hasSaveError;
+        private set => SetProperty(ref _hasSaveError, value);
+    }
+    public bool IsRefreshingItems { get; private set; }
 
     public WorkbenchViewModel(SnippetService snippets, SearchService search,
-                              CategoryRepository categories, TagRepository tags)
+                              CategoryRepository categories, TagRepository tags,
+                              Func<CancellationToken, Task<WorkbenchUnsavedChoice>>? promptAsync = null,
+                              Action<Action>? dispatch = null)
     {
         _snippets = snippets;
         _search = search;
         _categories = categories;
         _tags = tags;
-        _snippets.Changed += () =>
-            Application.Current.Dispatcher.BeginInvoke(ReloadItems);
+        _promptAsync = promptAsync ??
+            (_ => Task.FromResult(WorkbenchUnsavedChoice.Cancel));
+        _dispatch = dispatch ?? DispatchOnUiThread;
+        _snippets.Changed += () => _dispatch(ReloadItems);
         // Sidebar follows the category repo (single source of truth for
         // group hot-updates; panel-side or import-side changes land here too).
-        _categories.Changed += () =>
-            Application.Current.Dispatcher.BeginInvoke(ReloadNav);
+        _categories.Changed += () => _dispatch(ReloadNav);
         ReloadNav();
     }
 
@@ -84,35 +131,88 @@ public sealed partial class WorkbenchViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value) => ReloadItems();
 
-    partial void OnSelectedItemChanged(SnippetItemViewModel? value)
-    {
-        // Load the selection into the editor pane.
-        EditTitle = value?.Model.Title ?? string.Empty;
-        EditContent = value?.Model.Content ?? string.Empty;
-        EditExpireIndex = (int)(value?.Model.ExpirePolicy ?? ExpirePolicy.Never);
-        EditTags = value is null
-            ? string.Empty
-            : string.Join(", ", _tags.GetForSnippet(value.Id));
-    }
-
     public void ReloadItems()
     {
-        List<Snippet> data;
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            data = _search.Search(SearchText);
-        else
-            data = SelectedNav?.Id switch
+        IsRefreshingItems = true;
+        try
+        {
+            List<Snippet> data;
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                data = _search.Search(SearchText);
+            else
+                data = SelectedNav?.Id switch
+                {
+                    -2 => _snippets.AllLive().Where(s => s.IsPinned).ToList(),
+                    -3 => _snippets.Trash(),
+                    -4 => _snippets.ByCategory(null),
+                    > 0 => _snippets.ByCategory(SelectedNav.Id),
+                    _ => _snippets.AllLive(),
+                };
+
+            long? editingId = _editor.ItemId;
+            Items.Clear();
+            foreach (Snippet snippet in data)
+                Items.Add(new SnippetItemViewModel(snippet));
+
+            if (editingId is long id)
             {
-                -2 => _snippets.AllLive().Where(s => s.IsPinned).ToList(),
-                -3 => _snippets.Trash(),
-                -4 => _snippets.ByCategory(null),
-                > 0 => _snippets.ByCategory(SelectedNav.Id),
-                _ => _snippets.AllLive(),
-            };
-        long? keep = SelectedItem?.Id;
-        Items.Clear();
-        foreach (var s in data) Items.Add(new SnippetItemViewModel(s));
-        SelectedItem = Items.FirstOrDefault(i => i.Id == keep) ?? Items.FirstOrDefault();
+                SnippetItemViewModel? refreshed = Items.FirstOrDefault(item => item.Id == id);
+                if (refreshed is null)
+                {
+                    _editor.MarkExternalDeleted();
+                    SelectedItem = null;
+                }
+                else
+                {
+                    _editingModel = refreshed.Model;
+                    _editor.MergeExternal(CreateSnapshot(refreshed.Model));
+                    SelectedItem = refreshed;
+                }
+
+                NotifyEditorBufferChanged();
+                return;
+            }
+
+            CommitSelection(Items.FirstOrDefault());
+        }
+        finally
+        {
+            IsRefreshingItems = false;
+        }
+    }
+
+    public async Task<bool> RequestSelectionChangeAsync(
+        SnippetItemViewModel? requested,
+        CancellationToken cancellationToken = default)
+    {
+        WorkbenchEditSnapshot? requestedSnapshot = requested is null
+            ? null
+            : CreateSnapshot(requested.Model);
+        WorkbenchLeaveResult result = await _editor.RequestSelectionChangeAsync(
+            requestedSnapshot,
+            _promptAsync,
+            PersistSnapshotAsync,
+            cancellationToken);
+        HasSaveError = result == WorkbenchLeaveResult.SaveFailed;
+        NotifyEditorBufferChanged();
+        if (result != WorkbenchLeaveResult.Proceed)
+            return false;
+
+        SelectedItem = requested;
+        _editingModel = requested?.Model;
+        return true;
+    }
+
+    public async Task<WorkbenchLeaveResult> RequestLeaveAsync(
+        CancellationToken cancellationToken = default)
+    {
+        WorkbenchLeaveResult result = await _editor.ResolveUnsavedChangesAsync(
+            _promptAsync,
+            PersistSnapshotAsync,
+            cancellationToken);
+        HasSaveError = result == WorkbenchLeaveResult.SaveFailed;
+        NotifyEditorBufferChanged();
+        return result;
     }
 
     // ------------------------------------------------------------ commands
@@ -126,28 +226,11 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Save()
+    private async Task Save()
     {
-        if (SelectedItem is null) return;
-        var m = SelectedItem.Model;
-        m.Title = string.IsNullOrWhiteSpace(EditTitle) ? null : EditTitle.Trim();
-        m.Content = EditContent;
-
-        // Expiry: recompute the wall-clock instant only when the POLICY changed,
-        // so re-saving content never silently extends an existing countdown.
-        var policy = (ExpirePolicy)Math.Clamp(EditExpireIndex, 0, 3);
-        if (policy != m.ExpirePolicy)
-        {
-            m.ExpirePolicy = policy;
-            m.ExpireAt = SnippetService.ComputeExpireAt(policy, DateTime.UtcNow);
-        }
-
-        // Tags: comma-separated row -> set (both ASCII and CJK commas accepted).
-        _tags.SetForSnippet(m.Id,
-            EditTags.Split(new[] { ',', '\uFF0C', '\u3001' },
-                           StringSplitOptions.RemoveEmptyEntries));
-
-        _snippets.Update(m);
+        WorkbenchLeaveResult result = await _editor.SaveAsync(PersistSnapshotAsync);
+        HasSaveError = result == WorkbenchLeaveResult.SaveFailed;
+        NotifyEditorBufferChanged();
     }
 
     [RelayCommand] private void Delete()
@@ -230,6 +313,107 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         };
         if (result is not null) EditContent = result;
         // null result (invalid JSON / Base64) leaves the buffer untouched.
+    }
+
+    private void CommitSelection(SnippetItemViewModel? item)
+    {
+        SelectedItem = item;
+        _editingModel = item?.Model;
+        HasSaveError = false;
+        if (item is null)
+            _editor.Clear();
+        else
+            _editor.Load(CreateSnapshot(item.Model));
+        NotifyEditorBufferChanged();
+    }
+
+    private WorkbenchEditSnapshot CreateSnapshot(Snippet model) => new(
+        model.Id,
+        model.Title,
+        model.Content,
+        model.ExpirePolicy,
+        _tags.GetForSnippet(model.Id));
+
+    private Task PersistSnapshotAsync(
+        WorkbenchEditSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_editingModel is null || _editingModel.Id != snapshot.ItemId)
+            throw new InvalidOperationException("The edited snippet is no longer selected.");
+
+        Snippet pending = CloneSnippet(_editingModel);
+        pending.Title = snapshot.Title;
+        pending.Content = snapshot.Content;
+        if (snapshot.ExpirePolicy != pending.ExpirePolicy)
+        {
+            pending.ExpirePolicy = snapshot.ExpirePolicy;
+            pending.ExpireAt = SnippetService.ComputeExpireAt(
+                snapshot.ExpirePolicy,
+                DateTime.UtcNow);
+        }
+
+        _tags.SetForSnippet(snapshot.ItemId, snapshot.Tags);
+        _snippets.Update(pending);
+        _editingModel = pending;
+        return Task.CompletedTask;
+    }
+
+    private static Snippet CloneSnippet(Snippet source) => new()
+    {
+        Id = source.Id,
+        Title = source.Title,
+        Content = source.Content,
+        ContentHash = source.ContentHash,
+        Type = source.Type,
+        Source = source.Source,
+        CategoryId = source.CategoryId,
+        IsPinned = source.IsPinned,
+        ExpirePolicy = source.ExpirePolicy,
+        ExpireAt = source.ExpireAt,
+        CreatedAt = source.CreatedAt,
+        UpdatedAt = source.UpdatedAt,
+        DeletedAt = source.DeletedAt,
+        SortWeight = source.SortWeight,
+        UseCount = source.UseCount,
+        LastUsedAt = source.LastUsedAt,
+    };
+
+    private void SetEditorValue(
+        string current,
+        string value,
+        Action<string> assign,
+        [CallerMemberName] string? propertyName = null)
+    {
+        value ??= string.Empty;
+        if (current == value) return;
+        assign(value);
+        OnPropertyChanged(propertyName);
+        NotifyEditorStateChanged();
+    }
+
+    private void NotifyEditorStateChanged()
+    {
+        OnPropertyChanged(nameof(IsDirty));
+        OnPropertyChanged(nameof(HasExternalConflict));
+    }
+
+    private void NotifyEditorBufferChanged()
+    {
+        OnPropertyChanged(nameof(EditTitle));
+        OnPropertyChanged(nameof(EditContent));
+        OnPropertyChanged(nameof(EditExpireIndex));
+        OnPropertyChanged(nameof(EditTags));
+        NotifyEditorStateChanged();
+    }
+
+    private static void DispatchOnUiThread(Action action)
+    {
+        System.Windows.Threading.Dispatcher? dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            action();
+        else
+            dispatcher.BeginInvoke(action);
     }
 
     public sealed record NavEntry(long Id, string Name, string Icon);

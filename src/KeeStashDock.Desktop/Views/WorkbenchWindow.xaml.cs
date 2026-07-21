@@ -21,6 +21,8 @@ public partial class WorkbenchWindow : Window
 {
     private readonly WorkbenchViewModel _vm;
     private readonly GroupIoService _groupIo;
+    private bool _handlingSelection;
+    private bool _handlingClose;
 
     public WorkbenchWindow(SnippetService snippets, SearchService search,
                            CategoryRepository categories, TagRepository tags,
@@ -28,11 +30,16 @@ public partial class WorkbenchWindow : Window
     {
         InitializeComponent();
         _groupIo = groupIo;
-        _vm = new WorkbenchViewModel(snippets, search, categories, tags);
+        _vm = new WorkbenchViewModel(
+            snippets,
+            search,
+            categories,
+            tags,
+            PromptUnsavedChangesAsync);
         DataContext = _vm;
 
         // Tray-resident app: closing the workbench only hides it.
-        Closing += (s, e) => { e.Cancel = true; Hide(); };
+        Closing += OnClosing;
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
 
         LocalizationService.Instance.LanguageChanged += () =>
@@ -49,6 +56,73 @@ public partial class WorkbenchWindow : Window
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
+    }
+
+    public async Task<bool> RequestHideAsync()
+    {
+        WorkbenchLeaveResult result = await _vm.RequestLeaveAsync();
+        if (result != WorkbenchLeaveResult.Proceed)
+            return false;
+
+        Hide();
+        return true;
+    }
+
+    private async void OnClosing(object? sender, CancelEventArgs e)
+    {
+        e.Cancel = true;
+        if (_handlingClose) return;
+        _handlingClose = true;
+        try
+        {
+            await RequestHideAsync();
+        }
+        finally
+        {
+            _handlingClose = false;
+        }
+    }
+
+    private async void OnItemSelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (_handlingSelection || _vm.IsRefreshingItems) return;
+        var requested = ItemList.SelectedItem as SnippetItemViewModel;
+        if (requested?.Id == _vm.SelectedItem?.Id) return;
+
+        _handlingSelection = true;
+        try
+        {
+            ItemList.SelectedItem = _vm.SelectedItem;
+            await _vm.RequestSelectionChangeAsync(requested);
+            ItemList.SelectedItem = _vm.SelectedItem;
+        }
+        finally
+        {
+            _handlingSelection = false;
+        }
+    }
+
+    private Task<WorkbenchUnsavedChoice> PromptUnsavedChangesAsync(
+        CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return Task.FromResult(WorkbenchUnsavedChoice.Cancel);
+
+        var loc = LocalizationService.Instance;
+        MessageBoxResult result = MessageBox.Show(
+            this,
+            loc["Workbench.Editor.UnsavedPrompt"],
+            loc["Common.Confirm"],
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Warning);
+        return Task.FromResult(result switch
+        {
+            MessageBoxResult.Yes => WorkbenchUnsavedChoice.Save,
+            MessageBoxResult.No => WorkbenchUnsavedChoice.Discard,
+            _ => WorkbenchUnsavedChoice.Cancel,
+        });
     }
 
     // The workbench deliberately ignores the custom

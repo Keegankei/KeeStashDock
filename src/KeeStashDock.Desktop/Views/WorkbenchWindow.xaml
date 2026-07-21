@@ -114,7 +114,9 @@
                              Converter={StaticResource BoolToVis}}"/>
       </StackPanel>
 
-      <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
+      <ListBox x:Name="ItemList" ItemsSource="{Binding Items}"
+               SelectedItem="{Binding SelectedItem, Mode=OneWay}"
+               SelectionChanged="OnItemSelectionChanged"
                Background="Transparent" BorderThickness="0"
                HorizontalContentAlignment="Stretch"
                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -214,6 +216,21 @@
             </ContextMenu>
           </Button.ContextMenu>
         </Button>
+      </StackPanel>
+
+      <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+        <TextBlock Text="●" FontSize="11"
+                   Foreground="{DynamicResource B.TextMuted}"
+                   ToolTip="{loc:Tr Workbench.Editor.UnsavedPrompt}"
+                   Visibility="{Binding IsDirty, Converter={StaticResource BoolToVis}}"/>
+        <TextBlock Text="{loc:Tr Workbench.Editor.ExternalConflict}" FontSize="11"
+                   Foreground="{DynamicResource B.Danger}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasExternalConflict, Converter={StaticResource BoolToVis}}"/>
+        <TextBlock Text="{loc:Tr Workbench.Editor.SaveFailed}" FontSize="11"
+                   Foreground="{DynamicResource B.Danger}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasSaveError, Converter={StaticResource BoolToVis}}"/>
       </StackPanel>
 
       <!-- Content editor -->

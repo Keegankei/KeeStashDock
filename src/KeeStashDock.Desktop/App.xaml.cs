@@ -34,6 +34,7 @@ public partial class App : Application
 
     private QuickPanelWindow? _panel;
     private WorkbenchWindow? _workbench;
+    private bool _exitPending;
     private SettingsWindow? _settingsWin;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -424,10 +425,21 @@ public partial class App : Application
         _settingsWin.ShowAndActivate();
     }
 
-    private void ExitApp()
+    private async void ExitApp()
     {
+        if (_exitPending) return;
+        _exitPending = true;
         Log?.Info("Exit requested from tray");
-        Shutdown();
+        try
+        {
+            if (_workbench is not null && !await _workbench.RequestHideAsync())
+                return;
+            Shutdown();
+        }
+        finally
+        {
+            _exitPending = false;
+        }
     }
 
     // ---------------------------------------------------------- lifecycle
