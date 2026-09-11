@@ -39,7 +39,12 @@ A stable release is not ready until the Windows CI workflow is green and the sam
 - Selection capture and every translation engine that can be safely tested
 - Backup creation, export, import safety backup, and restart
 - Group import/export and presets
+- Empty/duplicate edit rejection, draft preservation, and unchanged tags after a failed save
+- Duplicate group creation/rename, numeric suffix suggestions, and imports with whitespace/case name conflicts
+- Upgrade a copy of a v1/v2 database containing duplicate group names; verify group IDs, memberships, and snippet content remain intact
 - Theme switching, custom appearance, high DPI, and Arabic right-to-left layout
+
+The current build upgrades databases to schema v3 on startup. Back up existing user data before an upgrade. Older binaries that support only v1/v2 cannot open a v3 database; testing an older binary requires a separate copy of a pre-upgrade backup.
 
 ## 3. Package
 

@@ -37,13 +37,20 @@ public sealed class TagRepository
     /// mirroring the UNIQUE constraint). Runs in one transaction.</summary>
     public void SetForSnippet(long snippetId, IEnumerable<string> names)
     {
+        using var conn = _db.Open();
+        using var tx = conn.BeginTransaction();
+        SetForSnippet(conn, tx, snippetId, names);
+        tx.Commit();
+    }
+
+    internal static void SetForSnippet(SqliteConnection conn, SqliteTransaction tx,
+                                       long snippetId, IEnumerable<string> names)
+    {
         var clean = names.Select(n => n.Trim())
                          .Where(n => n.Length > 0)
                          .Distinct()
                          .ToList();
 
-        using var conn = _db.Open();
-        using var tx = conn.BeginTransaction();
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
 
@@ -74,6 +81,5 @@ public sealed class TagRepository
             "DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM snippet_tags)";
         cmd.ExecuteNonQuery();
 
-        tx.Commit();
     }
 }

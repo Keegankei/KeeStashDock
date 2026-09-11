@@ -93,6 +93,42 @@ public sealed class DatabaseImportTests
     }
 
     [TestMethod]
+    public void LegacyGroupNames_AreRepairedOnStagingWithoutMergingGroupsOrChangingTheSource()
+    {
+        ImportContext context = CreateContext();
+        CreateDatabase(context.ActiveFile, "original");
+        string source = Path.Combine(_root, "legacy-groups.db");
+        CreateDatabase(source, "legacy content");
+        Execute(source, """
+            DROP TRIGGER trg_category_name_insert;
+            DROP TRIGGER trg_category_name_update;
+            DROP INDEX idx_categories_name_key;
+            ALTER TABLE categories DROP COLUMN name_key;
+            UPDATE schema_version SET version = 2;
+            PRAGMA user_version = 2;
+            INSERT INTO categories(id, name) VALUES
+                (10, ' Team '), (20, 'team'), (30, 'Team (2)'), (40, '  '), (50, 'Group');
+            UPDATE snippets SET category_id = 20;
+            """);
+
+        DatabaseImportResult result = context.Service.Import(source);
+
+        Assert.AreEqual(3, result.ImportedSchemaVersion);
+        Assert.AreEqual(5, ReadOnlyInt(context.ActiveFile, "SELECT COUNT(*) FROM categories"));
+        Assert.AreEqual("Team", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 10"));
+        Assert.AreEqual("team (3)", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 20"));
+        Assert.AreEqual("Team (2)", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 30"));
+        Assert.AreEqual("Group (2)", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 40"));
+        Assert.AreEqual("Group", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 50"));
+        Assert.AreEqual(20, ReadOnlyInt(context.ActiveFile, "SELECT category_id FROM snippets"));
+        Assert.AreEqual("legacy content", ReadOnlyMarker(context.ActiveFile));
+        Assert.AreEqual(2, ReadOnlyInt(source, "SELECT version FROM schema_version"));
+        Assert.AreEqual(" Team ", ReadOnlyText(source, "SELECT name FROM categories WHERE id = 10"));
+        Assert.AreEqual("original", ReadOnlyMarker(result.SafetyBackupFile));
+        AssertNoImportTemporaryFiles();
+    }
+
+    [TestMethod]
     public void SameVolumeMoveFallback_ImportsWithoutOverwriteCopy()
     {
         ImportContext context = CreateContext(
@@ -134,6 +170,9 @@ public sealed class DatabaseImportTests
     [DataRow(InvalidSchemaKind.MissingColumn)]
     [DataRow(InvalidSchemaKind.WrongFtsDefinition)]
     [DataRow(InvalidSchemaKind.FutureVersion)]
+    [DataRow(InvalidSchemaKind.MissingGroupNameIndex)]
+    [DataRow(InvalidSchemaKind.WrongGroupNameIndex)]
+    [DataRow(InvalidSchemaKind.InvalidGroupNameKey)]
     public void InvalidSchemas_AreRejectedBeforeReplacement(InvalidSchemaKind kind)
     {
         ImportContext context = CreateContext();
@@ -424,6 +463,14 @@ public sealed class DatabaseImportTests
                 CREATE TABLE snippets_fts(title TEXT, content TEXT);
                 """,
             InvalidSchemaKind.FutureVersion => "PRAGMA user_version = 999",
+            InvalidSchemaKind.MissingGroupNameIndex => "DROP INDEX idx_categories_name_key",
+            InvalidSchemaKind.WrongGroupNameIndex => """
+                DROP INDEX idx_categories_name_key;
+                CREATE UNIQUE INDEX idx_categories_name_key ON categories(color);
+                """,
+            InvalidSchemaKind.InvalidGroupNameKey => """
+                INSERT INTO categories(name, name_key) VALUES ('Team', 'incorrect key');
+                """,
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
         Execute(path, sql);
@@ -498,6 +545,9 @@ public sealed class DatabaseImportTests
         MissingColumn,
         WrongFtsDefinition,
         FutureVersion,
+        MissingGroupNameIndex,
+        WrongGroupNameIndex,
+        InvalidGroupNameKey,
     }
 
     private sealed record ImportContext(

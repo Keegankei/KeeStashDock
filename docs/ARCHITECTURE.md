@@ -100,18 +100,30 @@ sequenceDiagram
     Source->>UI: Text and metadata
     UI->>Service: Add(...)
     Service->>Service: Trim trailing line breaks and hash content
-    Service->>Repo: FindLiveByHash(hash)
-    Repo->>DB: Query live snippet
+    Service->>Repo: InsertOrRefresh(snippet)
+    Repo->>DB: Begin immediate transaction and query live hash
     alt Duplicate exists
-        Service->>Repo: Update timestamp
+        Repo->>DB: Refresh existing timestamp
     else New content
-        Service->>Service: Detect type and compute expiry
-        Service->>Repo: Insert snippet
+        Repo->>DB: Insert snippet with detected type and expiry
     end
+    Repo->>DB: Commit transaction
     Service-->>UI: Changed event and snippet id
 ```
 
-Empty or whitespace-only snippets are rejected. A duplicate live snippet is refreshed instead of inserted again.
+Empty or whitespace-only snippets are rejected. A duplicate live snippet is refreshed instead of inserted again. The duplicate lookup and insert share an immediate SQLite transaction so concurrent captures and edits cannot bypass the check.
+
+### Editing and draft preservation
+
+Edits use the same trailing-line-break normalization and non-empty rule as capture. An edit that matches another live snippet is rejected without merging or deleting either record. Matching the same record, or content found only in Trash, is allowed. The duplicate check and update run in one immediate transaction; title, body, retention policy, tags, and the FTS index commit or roll back together. Field-scoped writes preserve unrelated pin, category, and usage state.
+
+`WorkbenchEditorSession` retains dirty buffers across refreshes and failed saves. Changing selection or closing the workbench offers Save, Discard, or Cancel. External changes are shown as conflicts. Empty and duplicate-content failures have localized explanations and keep the draft available for correction.
+
+### Group names and import conflicts
+
+Group names are trimmed and must not be blank. `CategoryName` derives a culture-independent uppercase key; lookup, creation, renaming, and import use the same key, backed by a unique database index. A conflicting explicit name is rejected. New default groups and the suggested name for an imported copy use the first available numeric suffix, starting at `(2)`.
+
+Group imports still require an explicit overwrite choice before moving the existing group's contents to Trash. Category change notifications run after the transaction and connection have been released so subscribed views can reload safely.
 
 ### Search
 
@@ -131,11 +143,13 @@ Selection translation is initiated in the desktop layer. The selected text is se
 
 ### Data and backup
 
-The application first attempts to create `Data` beside the executable and verifies actual file writability. It falls back to `%AppData%\KeeStashDock` after access or I/O failure. SQLite's online backup API is used for consistent backups while the application is running. Imports create a safety backup before replacing the active database.
+The application first attempts to create `Data` beside the executable and verifies actual file writability. It falls back to `%AppData%\KeeStashDock` after access or I/O failure. SQLite's online backup API is used for consistent backups while the application is running.
+
+Database imports copy to a staging file, validate integrity and the recognized schema, migrate the staging copy, and validate it again. A maintenance lease drains active connections and blocks new writes. A verified safety backup precedes atomic replacement, with rollback on failure. A restart failure restores the original database and disables further operations until the application exits. Files from unsupported future schemas are rejected before migration.
 
 ## Database schema
 
-Schema version 1 includes:
+The current schema is **version 3**. Version 1 introduced:
 
 - `categories`
 - `snippets`
@@ -143,6 +157,10 @@ Schema version 1 includes:
 - `snippet_tags`
 - `snippets_fts`
 - FTS synchronization triggers
+
+Version 2 added `last_used_at` and normalized persisted timestamps to sortable UTC round-trip text. Usage counting is atomic and independent of workbench edits.
+
+Version 3 adds `categories.name_key`, a unique index, and non-empty-name guards. The migration trims existing names and repairs blanks and duplicates using deterministic numeric suffixes in ID order. Existing names are reserved before repair so a generated suffix cannot take another group's name. Group IDs, snippet membership, and content are preserved. New databases and imported v1/v2 databases follow the same migration path.
 
 Migrations are append-only. A shipped migration must never be edited because existing installations may already record it as applied.
 
@@ -154,6 +172,7 @@ Migrations are append-only. A shipped migration must never be edited because exi
 
 - The application is single-instance to avoid conflicting tray, hotkey, and database ownership.
 - Clipboard history and direct paste are opt-in.
+- Direct paste checks the target window, process identity, and foreground focus before sending input; a changed target cancels the paste.
 - Logging uses a bounded asynchronous queue and rolling files.
 - Translation is an explicit external data boundary.
 - User data directories, logs, database files, backups, API keys, and IDE user settings must never be committed.
@@ -162,10 +181,9 @@ Migrations are append-only. A shipped migration must never be edited because exi
 
 The following items deserve focused future work:
 
-1. Validate imported databases against the expected schema before replacing the active database.
-2. Enforce non-empty edited content and define duplicate-hash behavior on update.
-3. Add uniqueness and conflict rules for category names.
-4. Narrow Desktop dependencies through Core interfaces where doing so reduces coupling.
-5. Add integration tests for SQLite migrations, FTS synchronization, backup/import, and single-instance activation.
-6. Review every localized in-application help page after feature changes; key parity alone cannot detect stale translations.
-7. Define, document, and secure any future plugin model before activating the reserved `Plugins` directory.
+1. Add Windows UI integration coverage for single-instance activation, real clipboard/focus transitions, and workbench window behavior. Current tests exercise the underlying coordinators and editor session without driving real windows.
+2. Narrow Desktop dependencies through Core interfaces where doing so reduces coupling.
+3. Review every localized in-application help page after feature changes; key parity alone cannot detect stale translations or layout problems.
+4. Define, document, and secure any future plugin model before activating the reserved `Plugins` directory.
+
+Existing integration tests cover SQLite version requirements, migrations, FTS/WAL/foreign keys, online backup, guarded database imports and rollback, field-scoped persistence, snippet editing transactions, concurrent deduplication, and group-name conflicts.

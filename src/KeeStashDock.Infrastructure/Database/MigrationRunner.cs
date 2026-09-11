@@ -1,3 +1,4 @@
+using KeeStashDock.Domain.Entities;
 using KeeStashDock.Infrastructure.Logging;
 using Microsoft.Data.Sqlite;
 
@@ -19,7 +20,7 @@ namespace KeeStashDock.Infrastructure.Database;
 /// </summary>
 public sealed class MigrationRunner
 {
-    public const int LatestSupportedVersion = 2;
+    public const int LatestSupportedVersion = 3;
 
     private readonly Db _db;
     private readonly FileLogger _log;
@@ -96,7 +97,10 @@ public sealed class MigrationRunner
         (2, /* -------- V2: atomic use tracking + UTC timestamps -------- */ """
             ALTER TABLE snippets ADD COLUMN last_used_at TEXT NULL;
             """),
-        // (3, "..."), <- future migrations are appended here, never edited.
+        (3, /* -------- V3: normalized unique group names -------- */ """
+            ALTER TABLE categories ADD COLUMN name_key TEXT NOT NULL DEFAULT '';
+            """),
+        // (4, "..."), <- future migrations are appended here, never edited.
     };
 
     public void Run()
@@ -143,6 +147,10 @@ public sealed class MigrationRunner
             {
                 NormalizeTimestampColumns(conn, tx);
             }
+            if (version == 3)
+            {
+                NormalizeCategoryNames(conn, tx);
+            }
 
             cmd.CommandText = "UPDATE schema_version SET version = $v";
             cmd.Parameters.AddWithValue("$v", version);
@@ -160,6 +168,60 @@ public sealed class MigrationRunner
             command.CommandText = $"PRAGMA user_version = {current}";
             command.ExecuteNonQuery();
         }
+    }
+
+    private static void NormalizeCategoryNames(SqliteConnection connection,
+        SqliteTransaction transaction)
+    {
+        var rows = new List<(long Id, string Name)>();
+        using (var read = connection.CreateCommand())
+        {
+            read.Transaction = transaction;
+            read.CommandText = "SELECT id, name FROM categories ORDER BY id";
+            using var reader = read.ExecuteReader();
+            while (reader.Read()) rows.Add((reader.GetInt64(0), reader.GetString(1)));
+        }
+
+        // Reserve existing names so repairing a duplicate never takes the name
+        // of a later group. Only names change: IDs and snippet references survive.
+        var reserved = rows.Where(row => !string.IsNullOrWhiteSpace(row.Name))
+            .Select(row => CategoryName.GetKey(row.Name))
+            .ToHashSet(StringComparer.Ordinal);
+        var used = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            bool empty = string.IsNullOrWhiteSpace(row.Name);
+            string name = empty ? "Group" : CategoryName.Normalize(row.Name);
+            string key = CategoryName.GetKey(name);
+            if (used.Contains(key) || (empty && reserved.Contains(key)))
+                name = CategoryName.GetUnique(name, reserved);
+            key = CategoryName.GetKey(name);
+            used.Add(key);
+            reserved.Add(key);
+
+            using var update = connection.CreateCommand();
+            update.Transaction = transaction;
+            update.CommandText = "UPDATE categories SET name = $name, name_key = $key WHERE id = $id";
+            update.Parameters.AddWithValue("$name", name);
+            update.Parameters.AddWithValue("$key", key);
+            update.Parameters.AddWithValue("$id", row.Id);
+            update.ExecuteNonQuery();
+        }
+
+        using var constraints = connection.CreateCommand();
+        constraints.Transaction = transaction;
+        constraints.CommandText = """
+            CREATE UNIQUE INDEX idx_categories_name_key ON categories(name_key);
+            CREATE TRIGGER trg_category_name_insert BEFORE INSERT ON categories
+            WHEN length(new.name) = 0 OR length(new.name_key) = 0 BEGIN
+                SELECT RAISE(ABORT, 'Group name and name key must not be empty.');
+            END;
+            CREATE TRIGGER trg_category_name_update BEFORE UPDATE OF name, name_key ON categories
+            WHEN length(new.name) = 0 OR length(new.name_key) = 0 BEGIN
+                SELECT RAISE(ABORT, 'Group name and name key must not be empty.');
+            END;
+            """;
+        constraints.ExecuteNonQuery();
     }
 
     private static int GetVersion(SqliteConnection conn)

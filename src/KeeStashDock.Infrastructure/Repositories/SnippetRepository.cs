@@ -19,7 +19,39 @@ public sealed class SnippetRepository
     public long Insert(Snippet s)
     {
         using var conn = _db.Open();
+        return Insert(conn, null, s);
+    }
+
+    /// <summary>Serializes duplicate lookup and insertion against other
+    /// captures and edits so a concurrent capture cannot reintroduce duplicates.</summary>
+    public long InsertOrRefresh(Snippet snippet)
+    {
+        using var conn = _db.Open();
+        using var tx = conn.BeginTransaction(deferred: false);
+        long? existingId = FindOtherLiveId(conn, tx, snippet.ContentHash, 0);
+        long id;
+        if (existingId is long existing)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE snippets SET updated_at = $now WHERE id = $id";
+            cmd.Parameters.AddWithValue("$now", UtcTimestamp.Format(snippet.UpdatedAt));
+            cmd.Parameters.AddWithValue("$id", existing);
+            cmd.ExecuteNonQuery();
+            id = existing;
+        }
+        else
+        {
+            id = Insert(conn, tx, snippet);
+        }
+        tx.Commit();
+        return id;
+    }
+
+    private static long Insert(SqliteConnection conn, SqliteTransaction? tx, Snippet s)
+    {
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = """
             INSERT INTO snippets
                 (title, content, content_hash, type, source, category_id, is_pinned,
@@ -32,10 +64,18 @@ public sealed class SnippetRepository
     }
 
     /// <summary>Updates only fields owned by the workbench editor.</summary>
-    public void UpdateContent(Snippet snippet, DateTime updatedAtUtc)
+    public void UpdateContent(Snippet snippet, DateTime updatedAtUtc,
+                              IReadOnlyList<string>? tags = null)
     {
+        if (string.IsNullOrWhiteSpace(snippet.Content))
+            throw new ArgumentException("Snippet content must not be empty.", nameof(snippet));
         using var conn = _db.Open();
+        using var tx = conn.BeginTransaction(deferred: false);
+        long? duplicateId = FindOtherLiveId(conn, tx, snippet.ContentHash, snippet.Id);
+        if (duplicateId is long existing)
+            throw new DuplicateSnippetContentException(existing);
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = """
             UPDATE snippets SET
                 title = $title,
@@ -56,6 +96,9 @@ public sealed class SnippetRepository
         cmd.Parameters.AddWithValue("$updated_at", UtcTimestamp.Format(updatedAtUtc));
         cmd.Parameters.AddWithValue("$id", snippet.Id);
         EnsureUpdated(cmd.ExecuteNonQuery(), snippet.Id);
+        if (tags is not null)
+            TagRepository.SetForSnippet(conn, tx, snippet.Id, tags);
+        tx.Commit();
     }
 
     public void RefreshRecency(long id, DateTime updatedAtUtc) => ExecRequired(
@@ -208,6 +251,21 @@ public sealed class SnippetRepository
             ("$lim", limit));
 
     // ------------------------------------------------------------- plumbing
+
+    private static long? FindOtherLiveId(SqliteConnection conn, SqliteTransaction tx,
+                                         string hash, long excludingId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = """
+            SELECT id FROM snippets
+            WHERE deleted_at IS NULL AND content_hash = $hash AND id != $id
+            ORDER BY id LIMIT 1
+            """;
+        cmd.Parameters.AddWithValue("$hash", hash);
+        cmd.Parameters.AddWithValue("$id", excludingId);
+        return cmd.ExecuteScalar() is long id ? id : null;
+    }
 
     private static void Bind(SqliteCommand cmd, Snippet s)
     {

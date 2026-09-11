@@ -15,7 +15,7 @@ public sealed class WorkbenchEditorSessionTests
         session.EditTitle = " changed ";
         Assert.IsTrue(session.IsDirty);
         session.EditTitle = "Original";
-        session.EditTags = "beta，alpha, alpha";
+        session.EditTags = "beta\uFF0Calpha, alpha";
         Assert.IsFalse(session.IsDirty);
         session.EditContent = "changed content";
         Assert.IsTrue(session.IsDirty);

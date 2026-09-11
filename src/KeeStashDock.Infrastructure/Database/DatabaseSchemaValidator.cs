@@ -1,3 +1,4 @@
+using KeeStashDock.Domain.Entities;
 using Microsoft.Data.Sqlite;
 
 namespace KeeStashDock.Infrastructure.Database;
@@ -83,9 +84,14 @@ public sealed class DatabaseSchemaValidator
             {
                 ValidateColumns(connection, "snippets", ["last_used_at"]);
             }
+            if (schemaVersion >= 3)
+            {
+                ValidateCategoryNames(connection);
+            }
 
             if (requireCurrentUserVersion &&
-                userVersion != MigrationRunner.LatestSupportedVersion)
+                (userVersion != MigrationRunner.LatestSupportedVersion ||
+                 schemaVersion != MigrationRunner.LatestSupportedVersion))
             {
                 throw new DatabaseValidationException(
                     $"Database migration did not reach schema " +
@@ -108,6 +114,56 @@ public sealed class DatabaseSchemaValidator
             throw new DatabaseValidationException(
                 "The selected file is not a valid, readable KeeStashDock database.",
                 exception);
+        }
+    }
+
+    private static void ValidateCategoryNames(SqliteConnection connection)
+    {
+        ValidateColumns(connection, "categories", ["name_key"]);
+        ValidateNamedObjects(connection, "trigger",
+            ["trg_category_name_insert", "trg_category_name_update"]);
+
+        bool uniqueIndex = false;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA index_list(categories)";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                if (reader.GetString(1) == "idx_categories_name_key")
+                    uniqueIndex = reader.GetInt32(2) == 1 && reader.GetInt32(4) == 0;
+            }
+        }
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA index_xinfo(idx_categories_name_key)";
+            using var reader = command.ExecuteReader();
+            int keyColumns = 0;
+            while (reader.Read())
+            {
+                if (reader.GetInt32(5) == 0) continue;
+                keyColumns++;
+                uniqueIndex &= !reader.IsDBNull(2) && reader.GetString(2) == "name_key" &&
+                    reader.GetString(4) == "BINARY";
+            }
+            uniqueIndex &= keyColumns == 1;
+        }
+        if (!uniqueIndex)
+            throw new DatabaseValidationException("The selected database has no valid unique group-name index.");
+
+        using var readNames = connection.CreateCommand();
+        readNames.CommandText = "SELECT name, name_key FROM categories";
+        using var names = readNames.ExecuteReader();
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        while (names.Read())
+        {
+            if (names.IsDBNull(0) || names.IsDBNull(1))
+                throw new DatabaseValidationException("The selected database contains an invalid group name.");
+            string name = names.GetString(0);
+            string key = names.GetString(1);
+            if (string.IsNullOrWhiteSpace(name) || name != name.Trim() ||
+                key != CategoryName.GetKey(name) || !keys.Add(key))
+                throw new DatabaseValidationException("The selected database contains an invalid or duplicate group name.");
         }
     }
 

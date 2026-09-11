@@ -27,6 +27,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     private SnippetItemViewModel? _selectedItem;
     private Snippet? _editingModel;
     private bool _hasSaveError;
+    private string _saveErrorKey = "Workbench.Editor.SaveFailed";
 
     /// <summary>Sidebar entries. Virtual ids: -1 All, -2 Pinned, -3 Trash, -4 Uncategorized.</summary>
     public ObservableCollection<NavEntry> Nav { get; } = new();
@@ -84,6 +85,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         private set => SetProperty(ref _hasSaveError, value);
     }
     public bool IsRefreshingItems { get; private set; }
+    public string SaveErrorMessage => LocalizationService.Instance[_saveErrorKey];
 
     public WorkbenchViewModel(SnippetService snippets, SearchService search,
                               CategoryRepository categories, TagRepository tags,
@@ -248,7 +250,15 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     private void AddCategory()
     {
         var loc = LocalizationService.Instance;
-        _categories.Insert(new Category { Name = loc["Workbench.NewCategoryName"] });
+        try
+        {
+            _categories.Insert(new Category
+            { Name = _categories.GetUniqueName(loc["Workbench.NewCategoryName"]) });
+        }
+        catch (Exception ex)
+        {
+            ShowCategoryError(ex);
+        }
         // Changed event rebuilds the sidebar (here AND in the quick panel).
     }
 
@@ -256,18 +266,33 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     /// are ignored). The view collects the new name via InputDialog.</summary>
     public void RenameCategory(long id, string newName)
     {
-        if (id <= 0 || string.IsNullOrWhiteSpace(newName)) return;
-        _categories.Rename(id, newName.Trim());   // Changed event refreshes nav
+        if (id <= 0) return;
+        try { _categories.Rename(id, newName); }
+        catch (Exception ex) { ShowCategoryError(ex); }
+    }
+
+    private static void ShowCategoryError(Exception error)
+    {
+        var loc = LocalizationService.Instance;
+        string message = error switch
+        {
+            DuplicateCategoryNameException duplicate =>
+                string.Format(loc["Workbench.Category.DuplicateName"], duplicate.Name),
+            ArgumentException => loc["Workbench.Category.EmptyName"],
+            _ => loc["Workbench.Category.OperationFailed"],
+        };
+        App.Log?.Warn($"Group save failed: {error.GetType().Name}");
+        MessageBox.Show(message, loc["Common.Confirm"],
+            MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     /// <summary>Post-import refresh: rebuild the sidebar and select the
     /// imported/overwritten group so the result is immediately visible.</summary>
     public void RefreshAfterGroupImport(string groupName)
     {
+        long? categoryId = _categories.FindByName(groupName)?.Id;
         ReloadNav();
-        SelectedNav = Nav.FirstOrDefault(n =>
-                string.Equals(n.Name, groupName, StringComparison.OrdinalIgnoreCase))
-            ?? Nav[0];
+        SelectedNav = Nav.FirstOrDefault(n => n.Id == categoryId) ?? Nav[0];
         ReloadItems();
     }
 
@@ -353,8 +378,25 @@ public sealed partial class WorkbenchViewModel : ObservableObject
                 DateTime.UtcNow);
         }
 
-        _tags.SetForSnippet(snapshot.ItemId, snapshot.Tags);
-        _snippets.Update(pending);
+        _saveErrorKey = "Workbench.Editor.SaveFailed";
+        try
+        {
+            _snippets.Update(pending, snapshot.Tags);
+        }
+        catch (DuplicateSnippetContentException)
+        {
+            _saveErrorKey = "Workbench.Editor.DuplicateContent";
+            throw;
+        }
+        catch (ArgumentException ex) when (ex.ParamName == "content")
+        {
+            _saveErrorKey = "Workbench.Editor.EmptyContent";
+            throw;
+        }
+        finally
+        {
+            OnPropertyChanged(nameof(SaveErrorMessage));
+        }
         _editingModel = pending;
         return Task.CompletedTask;
     }
@@ -394,6 +436,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
 
     private void NotifyEditorStateChanged()
     {
+        OnPropertyChanged(nameof(SaveErrorMessage));
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(HasExternalConflict));
     }

@@ -184,15 +184,12 @@ public partial class App : Application
         try
         {
             var cats = _services.GetRequiredService<CategoryRepository>();
-            var existing = cats.GetAll().Select(c => c.Name)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
             string defName = LocalizationService.Instance["Seed.DefaultGroup"];
-            if (!existing.Contains(defName))
+            if (cats.FindByName(defName) is null)
                 cats.Insert(new Domain.Entities.Category
                 { Name = defName, Icon = "\uE8B7", SortOrder = 0 });
 
-            if (!existing.Contains("Git BASH"))
+            if (cats.FindByName("Git BASH") is null)
             {
                 long gitId = cats.Insert(new Domain.Entities.Category
                 { Name = "Git BASH", Icon = "\uE756", SortOrder = 1 });
@@ -224,12 +221,12 @@ public partial class App : Application
 
             settings.Current.DefaultGroupsSeeded = true;
             settings.Save();
-            Log.Info("Starter groups seeded (Default + Git BASH)");
+            Log?.Info("Starter groups seeded (Default + Git BASH)");
         }
         catch (Exception ex)
         {
             // Seeding is convenience, never a startup blocker.
-            Log.Warn($"Starter-group seeding failed: {ex.Message}");
+            Log?.Warn($"Starter-group seeding failed: {ex.Message}");
         }
     }
 

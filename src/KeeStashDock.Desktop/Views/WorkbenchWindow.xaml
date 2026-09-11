@@ -227,7 +227,7 @@
                    Foreground="{DynamicResource B.Danger}"
                    TextWrapping="Wrap"
                    Visibility="{Binding HasExternalConflict, Converter={StaticResource BoolToVis}}"/>
-        <TextBlock Text="{loc:Tr Workbench.Editor.SaveFailed}" FontSize="11"
+        <TextBlock Text="{Binding SaveErrorMessage}" FontSize="11"
                    Foreground="{DynamicResource B.Danger}"
                    TextWrapping="Wrap"
                    Visibility="{Binding HasSaveError, Converter={StaticResource BoolToVis}}"/>

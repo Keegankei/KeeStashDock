@@ -127,7 +127,7 @@ public sealed class WorkbenchEditorSession
         return new WorkbenchEditSnapshot(
             itemId,
             NormalizeTitle(EditTitle),
-            EditContent,
+            EditContent.TrimEnd('\r', '\n'),
             EditExpirePolicy,
             NormalizeTags(EditTags));
     }

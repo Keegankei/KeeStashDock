@@ -40,20 +40,8 @@ public sealed class SnippetService
                     string? title = null, long? categoryId = null,
                     SnippetType? explicitType = null)
     {
-        content = content.TrimEnd('\r', '\n');
-        if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("Snippet content must not be empty.", nameof(content));
-
+        content = NormalizeContent(content);
         string hash = Sha256(content);
-        var dup = _repo.FindLiveByHash(hash);
-        if (dup is not null)
-        {
-            DateTime updatedAt = DateTime.UtcNow;
-            _repo.RefreshRecency(dup.Id, updatedAt);
-            dup.UpdatedAt = updatedAt;
-            Changed?.Invoke();
-            return dup.Id;
-        }
 
         var now = DateTime.UtcNow;
         var snippet = new Snippet
@@ -69,19 +57,34 @@ public sealed class SnippetService
             CreatedAt = now,
             UpdatedAt = now,
         };
-        long id = _repo.Insert(snippet);
-        _log.Debug($"Snippet #{id} stashed ({snippet.Type}, {content.Length} chars)");
+        long id = _repo.InsertOrRefresh(snippet);
+        _log.Debug($"Snippet #{id} recorded ({snippet.Type}, {content.Length} chars)");
         Changed?.Invoke();
         return id;
     }
 
     // ---------------------------------------------------------------- edit
 
-    public void Update(Snippet s)
+    /// <summary>Rejects blank or duplicate content. Editor fields and optional
+    /// tags commit together, and failed saves leave the supplied model intact.</summary>
+    public void Update(Snippet s, IReadOnlyList<string>? tags = null)
     {
-        s.ContentHash = Sha256(s.Content);
+        ArgumentNullException.ThrowIfNull(s);
+        string content = NormalizeContent(s.Content);
+        string hash = Sha256(content);
+        var pending = new Snippet
+        {
+            Id = s.Id,
+            Title = s.Title,
+            Content = content,
+            ContentHash = hash,
+            ExpirePolicy = s.ExpirePolicy,
+            ExpireAt = s.ExpireAt,
+        };
         DateTime updatedAt = DateTime.UtcNow;
-        _repo.UpdateContent(s, updatedAt);
+        _repo.UpdateContent(pending, updatedAt, tags);
+        s.Content = content;
+        s.ContentHash = hash;
         s.UpdatedAt = updatedAt;
         Changed?.Invoke();
     }
@@ -152,4 +155,11 @@ public sealed class SnippetService
 
     private static string Sha256(string content)
         => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
+
+    private static string NormalizeContent(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Snippet content must not be empty.", nameof(content));
+        return content.TrimEnd('\r', '\n');
+    }
 }

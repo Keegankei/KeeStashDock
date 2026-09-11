@@ -6,7 +6,7 @@ namespace KeeStashDock.Tests;
 [TestClass]
 public sealed class TypeDetectorTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("https://example.com/path?q=1")]
     [DataRow("HTTP://EXAMPLE.COM")]
     public void Detect_RecognizesSingleLineHttpLinks(string content)
@@ -14,7 +14,7 @@ public sealed class TypeDetectorTests
         Assert.AreEqual(SnippetType.Link, TypeDetector.Detect(content));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("# Heading\nBody")]
     [DataRow("1. First item")]
     [DataRow("- [ ] Task")]
@@ -23,7 +23,7 @@ public sealed class TypeDetectorTests
         Assert.AreEqual(SnippetType.Markdown, TypeDetector.Detect(content));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("public class Sample { private int value; }")]
     [DataRow("def run():\n    return 42")]
     public void Detect_RecognizesCodeSignals(string content)

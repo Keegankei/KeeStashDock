@@ -86,7 +86,7 @@ KeeStashDock 采用本地优先设计。文本片段、设置、日志和备份�
 
 ### 从源码构建
 
-- Windows，以及 **.NET SDK 10.0.302**；`global.json` 允许使用兼容的后续 10.0 补丁版本
+- Windows，以及 **.NET SDK 10.0.401**；`global.json` 允许使用兼容的后续 10.0.4xx 补丁版本
 - 安装了 .NET 桌面开发工作负载的 Visual Studio、Visual Studio Code、Rider 或 `dotnet` CLI
 - 通过标准 Pull Request 流程贡献时需要 Git
 

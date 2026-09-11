@@ -86,7 +86,7 @@ Translation is the main network-dependent feature: selected text is sent to the 
 
 ### Building from source
 
-- Windows with the **.NET SDK 10.0.302** or a compatible later 10.0 patch selected by `global.json`
+- Windows with the **.NET SDK 10.0.401** or a compatible later 10.0.4xx patch selected by `global.json`
 - Visual Studio with the .NET desktop development workload, Visual Studio Code, Rider, or the `dotnet` CLI
 - Git, when contributing through the normal pull-request workflow
 

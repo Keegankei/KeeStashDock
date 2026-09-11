@@ -169,8 +169,27 @@ public partial class WorkbenchWindow : Window
     /// existing group / import under a new name / cancel), execute, report.</summary>
     private void RunGroupImport(GroupIoService.GroupPackage pkg)
     {
+        try { RunGroupImportCore(pkg); }
+        catch (Exception ex)
+        {
+            var loc = LocalizationService.Instance;
+            string message = ex switch
+            {
+                KeeStashDock.Domain.Entities.DuplicateCategoryNameException duplicate =>
+                    string.Format(loc["Workbench.Category.DuplicateName"], duplicate.Name),
+                ArgumentException => loc["Workbench.Category.EmptyName"],
+                _ => loc["Workbench.Category.OperationFailed"],
+            };
+            App.Log?.Warn($"Group import failed: {ex.GetType().Name}");
+            MessageBox.Show(this, message, loc["Common.Confirm"],
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void RunGroupImportCore(GroupIoService.GroupPackage pkg)
+    {
         var loc = LocalizationService.Instance;
-        string targetName = pkg.Name;
+        string targetName = pkg.Name.Trim();
         long? overwriteId = null;
 
         var existing = _groupIo.FindCategoryByName(targetName);
@@ -190,17 +209,17 @@ public partial class WorkbenchWindow : Window
                 string? renamed = InputDialog.Prompt(this,
                     loc["Workbench.Category.Import"],
                     loc["Workbench.Category.RenamePrompt"],
-                    $"{targetName} (2)");
+                    _groupIo.GetUniqueCategoryName(targetName));
                 if (renamed is null) return;
                 if (_groupIo.FindCategoryByName(renamed) is not null)
                 {
                     MessageBox.Show(this, string.Format(
-                        loc["Workbench.Category.Conflict"], renamed),
+                        loc["Workbench.Category.DuplicateName"], renamed),
                         loc["Common.Confirm"], MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                     return;
                 }
-                targetName = renamed;
+                targetName = renamed.Trim();
             }
         }
 

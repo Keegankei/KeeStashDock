@@ -272,6 +272,10 @@ public sealed class DataPersistenceTests
     private static void DowngradeToVersionOne(string databaseFile)
     {
         Execute(databaseFile, """
+            DROP TRIGGER trg_category_name_insert;
+            DROP TRIGGER trg_category_name_update;
+            DROP INDEX idx_categories_name_key;
+            ALTER TABLE categories DROP COLUMN name_key;
             ALTER TABLE snippets DROP COLUMN last_used_at;
             UPDATE schema_version SET version = 1;
             PRAGMA user_version = 1;
