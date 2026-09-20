@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <!--
       Stay on the compatible SQLitePCLRaw 2.x line while taking the bundle
       release that provides SQLite >= 3.50.2. A 3.x compatibility upgrade is
@@ -15,6 +15,6 @@
       Advisory: https://github.com/advisories/GHSA-2m69-gcr7-jv3q
       Package: https://www.nuget.org/packages/SQLitePCLRaw.bundle_e_sqlite3/2.1.12
     -->
-    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
   </ItemGroup>
 </Project>
