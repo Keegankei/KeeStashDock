@@ -18,7 +18,8 @@ not replace the original image or start translation automatically.
    **Save image as** to reuse it as a PNG.
 4. Click **Recognize text** when needed. English and Simplified Chinese recognition
    runs locally. Review and edit the result; saved text is searchable with the
-   entry. See [model installation and OCR limits](LOCAL_OCR.md).
+   entry. See [model installation and OCR limits](https://github.com/Keegankei/KeeStashDock/blob/main/docs/LOCAL_OCR.md).
+   The same guide is included in the portable package at `OcrModels/README.md`.
 5. Select recognized text to use the existing action bubble. Enable the selection
    popup in Settings, select its **Translate** action, and choose your existing
    translation provider if you want to translate. OCR itself never uploads an

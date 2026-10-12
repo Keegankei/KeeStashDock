@@ -138,3 +138,5 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 ## ライセンス
 
 Copyright © 2026 KeeganKei。[Apache License 2.0](LICENSE) で提供され、帰属表示は [NOTICE](NOTICE) に記載されています。依存ライブラリ、追加ランタイム、モデルにはそれぞれのライセンスが適用されます。[サードパーティの通知](THIRD_PARTY_NOTICES.md)を参照してください。プロジェクトのライセンスは商標権を付与しません。
+
+アプリアイコンはメンテナーの指示に基づいて AI で生成されました。[デザインと生成経緯](docs/assets/README.md)を参照してください。

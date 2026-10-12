@@ -48,6 +48,7 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Group deletion with contents uses recoverable soft deletion.
 - Replaced floating NuGet versions with centrally managed exact versions.
 - Added English, Simplified Chinese, Traditional Chinese, and Japanese README guides with application screenshots, download links, and in-app component setup instructions.
+- Adopted a new AI-generated application icon: a continuous tricolor note-paper ribbon and a vintage quill, with its design provenance recorded in `docs/assets/README.md`.
 - Clarified source-language, licensing, support, security, and release policies.
 - Relicensed KeeStashDock as an OSI-approved open-source project under Apache-2.0.
 

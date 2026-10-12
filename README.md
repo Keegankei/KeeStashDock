@@ -145,3 +145,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, optional helper tests, coding 
 ## License
 
 Copyright © 2026 KeeganKei. Licensed under the [Apache License 2.0](LICENSE); see [NOTICE](NOTICE) for attribution. Dependencies, optional runtimes, and models retain their own licenses, described in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The project license does not grant trademark rights.
+
+The application icon was AI-generated under the maintainer's direction; see its [design and provenance record](docs/assets/README.md).

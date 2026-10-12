@@ -138,3 +138,5 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 ## 授權條款
 
 Copyright © 2026 KeeganKei。專案採用 [Apache License 2.0](LICENSE)，署名請見 [NOTICE](NOTICE)。相依套件、選用執行階段與模型遵循各自授權條款，詳見[第三方聲明](THIRD_PARTY_NOTICES.md)。專案授權不授予商標權。
+
+應用程式圖示由維護者指導 AI 生成，詳見[設計與來源紀錄](docs/assets/README.md)。
