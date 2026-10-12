@@ -12,6 +12,9 @@ namespace KeeStashDock.Desktop;
 /// </summary>
 public static class DirectPaste
 {
+    private static readonly NativeMethods.WinEventProc ForegroundChanged = OnForegroundChanged;
+    private static nint _foregroundHook;
+    private static nint _pastePanelWindow;
     private static readonly DirectPasteCoordinator Coordinator = new(
         new Win32ForegroundWindowService(),
         new Win32InputSender(),
@@ -22,20 +25,59 @@ public static class DirectPaste
     public static SettingsStore? Settings { get; set; }
 
     /// <summary>
-    /// Remembers a valid external foreground window. Invalid, inaccessible,
-    /// zero or same-process windows clear any previously remembered target.
+    /// Remembers the external foreground window, retaining an existing valid
+    /// target only when the registered quick panel itself owns the foreground.
     /// </summary>
-    public static void RememberForeground() => Coordinator.RememberForeground();
+    public static void RememberForeground()
+        => Coordinator.RememberForeground(_pastePanelWindow);
+
+    public static void RegisterPanel(nint windowHandle) => _pastePanelWindow = windowHandle;
+
+    /// <summary>
+    /// Observe actual foreground changes, including keyboard activation and
+    /// switching applications while the always-visible panel stays on screen.
+    /// The callback records window identity only; it never reads window text.
+    /// </summary>
+    public static void StartTracking()
+    {
+        if (_foregroundHook != nint.Zero) return;
+        _foregroundHook = NativeMethods.SetWinEventHook(
+            NativeMethods.EVENT_SYSTEM_FOREGROUND,
+            NativeMethods.EVENT_SYSTEM_FOREGROUND,
+            nint.Zero, ForegroundChanged, 0, 0, NativeMethods.WINEVENT_OUTOFCONTEXT);
+        if (_foregroundHook == nint.Zero)
+            App.Log?.Warn("Direct-paste foreground tracking could not be initialized.");
+        RememberForeground();
+    }
+
+    public static void StopTracking()
+    {
+        if (_foregroundHook != nint.Zero)
+            NativeMethods.UnhookWinEvent(_foregroundHook);
+        _foregroundHook = nint.Zero;
+        _pastePanelWindow = nint.Zero;
+    }
+
+    private static void OnForegroundChanged(
+        nint hook, uint eventType, nint windowHandle, int objectId,
+        int childId, uint eventThread, uint eventTime)
+        => RememberForeground();
 
     /// <summary>
     /// Attempts one verified Ctrl+V operation. The returned result is always
     /// observed by the UI command, so the core workflow has no async-void edge.
     /// </summary>
-    public static Task<DirectPasteResult> TryPasteToTargetAsync(
+    public static async Task<DirectPasteResult> TryPasteToTargetAsync(
         CancellationToken cancellationToken = default)
-        => Settings?.Current.DirectPasteEnabled == true
-            ? Coordinator.PasteAsync(cancellationToken)
-            : Task.FromResult(DirectPasteResult.Disabled);
+    {
+        if (Settings?.Current.DirectPasteEnabled != true)
+            return DirectPasteResult.Disabled;
+
+        DirectPasteResult result = await Coordinator.PasteAsync(cancellationToken);
+        if (result != DirectPasteResult.Success)
+            App.Log?.Debug($"Direct paste was not sent: {result}.");
+        return result;
+    }
 
     private sealed class Win32ForegroundWindowService : IForegroundWindowService
     {
@@ -67,7 +109,8 @@ public static class DirectPaste
         }
 
         public bool SetForegroundWindow(nint windowHandle)
-            => NativeMethods.SetForegroundWindow(windowHandle);
+            => NativeMethods.GetForegroundWindow() == windowHandle ||
+               NativeMethods.SetForegroundWindow(windowHandle);
     }
 
     private sealed class Win32InputSender : IInputSender

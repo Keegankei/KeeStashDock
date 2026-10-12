@@ -27,11 +27,6 @@
        click-through, so the square window corners outside the 12px rounded
        border never received WM_NCHITTEST - corner resize was unreachable. -->
   <Grid Background="#01000000">
-    <!-- Edge glow: an effect on this THIN SIBLING (not on RootBorder itself)
-         avoids rasterizing the whole content subtree through the effect
-         pipeline. Margin/effect are managed in code; hidden when off. -->
-    <Border x:Name="GlowHost" CornerRadius="12" Visibility="Collapsed"
-            Background="{DynamicResource B.PanelBg}"/>
     <Border x:Name="RootBorder" Background="{DynamicResource B.PanelBg}"
             BorderBrush="{DynamicResource B.Border}" BorderThickness="1"
             CornerRadius="12">

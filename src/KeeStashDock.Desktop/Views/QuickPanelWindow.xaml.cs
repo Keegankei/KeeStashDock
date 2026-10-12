@@ -104,7 +104,11 @@ public partial class QuickPanelWindow : Window
         // Borderless windows get no system resize frame; WM_NCHITTEST turns
         // a 6px edge band into live resize handles (item: drag-to-resize).
         SourceInitialized += (_, _) =>
-            ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WndProc);
+        {
+            var source = (HwndSource)PresentationSource.FromVisual(this)!;
+            DirectPaste.RegisterPanel(source.Handle);
+            source.AddHook(WndProc);
+        };
 
         // Per-region tint engine (see ApplyLocalTints): re-sample on layout
         // or content movement, debounced so scrolling costs one pass, not N.
@@ -122,7 +126,7 @@ public partial class QuickPanelWindow : Window
 
         // Scrim color derives from the active palette - refresh on theme swap.
         ThemeManager.Changed += () => { _visualSig = null; ApplyBackground(); };
-        // Hot-apply: picking an image / moving the opacity, frost or glow
+        // Hot-apply: picking an image / moving the opacity or frost
         // sliders takes effect immediately, no re-summon needed (the
         // signature guard below makes unrelated saves - e.g. geometry - free).
         _settings.Changed += () => Dispatcher.Invoke(ApplyBackground);
@@ -145,8 +149,7 @@ public partial class QuickPanelWindow : Window
         var cfg = _settings.Current;
         string sig = $"{cfg.BackgroundImagePath}|{cfg.BackgroundOverlayOpacity:0.##}|" +
                      $"{cfg.FrostedGlassEnabled}|{cfg.FrostedGlassRadius:0.#}|" +
-                     $"{cfg.EdgeGlowEnabled}|{cfg.EdgeGlowStrength:0.#}|" +
-                     $"{cfg.EdgeGlowBrightness:0.##}|{cfg.CardOpacity:0.##}|" +
+                     $"{cfg.CardOpacity:0.##}|" +
                      $"{cfg.PanelTextColorMode}|{cfg.PanelTextCustomColor}";
         if (sig == _visualSig) return;   // unrelated save (e.g. geometry)
         _visualSig = sig;
@@ -190,39 +193,6 @@ public partial class QuickPanelWindow : Window
             BgImage.Effect = null;
             Scrim.Background = Brushes.Transparent;
         }
-
-        // ---- edge glow -------------------------------------------------
-        // The window keeps its size; the visible panel is inset so the glow
-        // has transparent room to render into. Resize hit-testing subtracts
-        // the same inset (see _chromeInset), and the SHRUNK window height
-        // must grow by the same inset - see ShrunkWindowHeight (regression:
-        // with glow on, the fixed 44px window minus 2x16px inset left a
-        // 12px sliver with the whole top bar squeezed out of existence).
-        double insetBefore = _chromeInset;
-        if (cfg.EdgeGlowEnabled)
-        {
-            _chromeInset = 16;
-            var accent = ((SolidColorBrush)FindResource("B.Accent")).Color;
-            GlowHost.Visibility = Visibility.Visible;
-            GlowHost.Margin = new Thickness(_chromeInset);
-            GlowHost.Effect = new DropShadowEffect
-            {
-                ShadowDepth = 0,
-                Color = accent,
-                Opacity = Math.Clamp(cfg.EdgeGlowBrightness, 0.1, 1.0),
-                BlurRadius = Math.Clamp(cfg.EdgeGlowStrength, 4, 30),
-            };
-            RootBorder.Margin = new Thickness(_chromeInset);
-        }
-        else
-        {
-            _chromeInset = 0;
-            GlowHost.Visibility = Visibility.Collapsed;
-            GlowHost.Effect = null;
-            RootBorder.Margin = new Thickness(0);
-        }
-        if (Math.Abs(_chromeInset - insetBefore) > 0.1)
-            ApplyStateVisuals();   // window metrics depend on the inset
 
         // ---- card translucency ----------------------------------------
         // A WINDOW-scoped B.CardBg override wins the DynamicResource lookup
@@ -575,10 +545,6 @@ public partial class QuickPanelWindow : Window
         Resources[mutedKey] = new SolidColorBrush(muted);
     }
 
-    /// <summary>Inset between the WINDOW rect and the VISIBLE panel edge
-    /// (non-zero only while the edge glow reserves room to render).</summary>
-    private double _chromeInset;
-
     // ----------------------------------------- native resize / persistence
 
     private const int WM_NCHITTEST = 0x0084, WM_EXITSIZEMOVE = 0x0232,
@@ -624,10 +590,9 @@ public partial class QuickPanelWindow : Window
         var t = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (t is null) return 0;
         var m = t.TransformToDevice;
-        // The glow inset shifts the VISIBLE edge inward from the window rect.
-        double l = (Left + _chromeInset) * m.M11, tp = (Top + _chromeInset) * m.M22;
-        double r = (Left + ActualWidth - _chromeInset) * m.M11;
-        double b = (Top + ActualHeight - _chromeInset) * m.M22;
+        double l = Left * m.M11, tp = Top * m.M22;
+        double r = (Left + ActualWidth) * m.M11;
+        double b = (Top + ActualHeight) * m.M22;
 
         bool left   = x >= l && x < l + ResizeBorderPx;
         bool right  = x <= r && x > r - ResizeBorderPx;
@@ -680,10 +645,8 @@ public partial class QuickPanelWindow : Window
         _settings.Current.PanelUserHeight
         ?? Math.Max(MinExpandedHeight, SystemParameters.WorkArea.Height * 0.50);
 
-    /// <summary>WINDOW height of the shrunk state: the 44px visible bar PLUS
-    /// the transparent glow inset on both sides. ShrunkHeight alone is only
-    /// correct while the edge glow is off.</summary>
-    private double ShrunkWindowHeight => ShrunkHeight + 2 * _chromeInset;
+    /// <summary>The compact window is exactly the height of its visible bar.</summary>
+    private double ShrunkWindowHeight => ShrunkHeight;
 
     /// <summary>Applies the persisted (or default) top-left position, clamped
     /// into the current work area so a monitor change can never lose the window.</summary>
@@ -828,10 +791,10 @@ public partial class QuickPanelWindow : Window
         if (t is null) return false;
         var m = t.TransformToDevice;
         double marginX = marginDip * m.M11, marginY = marginDip * m.M22;
-        double l = (Left + _chromeInset) * m.M11 - marginX;
-        double tp = (Top + _chromeInset) * m.M22 - marginY;
-        double r = (Left + ActualWidth - _chromeInset) * m.M11 + marginX;
-        double b = (Top + ActualHeight - _chromeInset) * m.M22 + marginY;
+        double l = Left * m.M11 - marginX;
+        double tp = Top * m.M22 - marginY;
+        double r = (Left + ActualWidth) * m.M11 + marginX;
+        double b = (Top + ActualHeight) * m.M22 + marginY;
         return pt.X >= l && pt.X <= r && pt.Y >= tp && pt.Y <= b;
     }
 
@@ -858,26 +821,23 @@ public partial class QuickPanelWindow : Window
 
     // ----------------------------------------------------------- keyboard
 
-    /// <summary>Quick input box. Enter = stash, Shift+Enter = newline
-    /// (AcceptsReturn handles the insertion), Down on the last line jumps
-    /// into the card list, Esc hides the panel. IME note: KeyDown only fires
-    /// for the FINAL key after composition, so Enter used to commit CJK
-    /// composition is not stolen.</summary>
+    /// <summary>Quick input box. Enter stashes; Alt+Enter and Shift+Enter
+    /// insert a newline. Down on the last line jumps into the card list;
+    /// Esc hides the panel. IME-processed keys remain with the IME.</summary>
     private void OnQuickBoxKeyDown(object sender, KeyEventArgs e)
     {
-        // While an IME composition is in progress, leave every key to the IME.
-        if (InputMethod.Current?.ImeState == InputMethodState.On &&
-            e.Key == Key.ImeProcessed) return;
+        QuickInputEnterAction enter = QuickInputKeyboard.HandleEnter(
+            QuickBox, e, Keyboard.Modifiers);
+        if (enter == QuickInputEnterAction.Stash)
+        {
+            _vm.QuickAddCommand.Execute(null);
+            _draft.Clear();
+        }
+        if (enter != QuickInputEnterAction.None || e.Key == Key.ImeProcessed)
+            return;
 
         switch (e.Key)
         {
-            case Key.Enter when Keyboard.Modifiers.HasFlag(ModifierKeys.Shift):
-                break;   // not handled -> TextBox inserts the newline
-            case Key.Enter:
-                _vm.QuickAddCommand.Execute(null);
-                _draft.Clear();
-                e.Handled = true;
-                break;
             case Key.Down when CardList.Items.Count > 0 && CaretOnLastLine():
                 CardList.SelectedIndex = 0;
                 ((ListBoxItem)CardList.ItemContainerGenerator

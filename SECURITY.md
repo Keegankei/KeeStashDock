@@ -35,7 +35,8 @@ Review changes carefully when they affect:
 
 - Clipboard monitoring, direct paste, global hooks, or synthetic keystrokes
 - Selection capture and translation network requests
-- DeepL API-key storage
+- Baidu, DeepL, and Alibaba Cloud credential storage (settings are not encrypted at rest)
+- Offline translation loopback validation, proxy bypass, model downloads, and local service lifecycle
 - SQLite import, backup replacement, and path handling
 - Portable data-directory permissions
 - Log content and exception reporting

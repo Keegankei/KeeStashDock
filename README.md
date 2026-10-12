@@ -32,7 +32,7 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 - **Text actions:** copy, optional direct paste, translate selected text, transform content, tear cards into sticky notes, open recognized paths, and generate QR codes.
 - **Retention controls:** keep snippets forever, expire them after one or seven days, or use burn-after-read behavior with recoverable soft deletion.
 - **Portable local data:** SQLite, settings, logs, drafts, and backups live under a single `Data` directory, with an `%AppData%` fallback when the application folder is not writable.
-- **Customizable interface:** light, dark, or system theme; wallpaper, scrim, blur, glow, opacity, text palettes, live language switching, and right-to-left layout support.
+- **Customizable interface:** light, dark, or system theme; wallpaper, scrim, blur, opacity, text palettes, live language switching, and right-to-left layout support.
 
 ## Feature overview
 
@@ -63,8 +63,14 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 
 ### Translation and localization
 
-- Google, Bing, and Lingva keyless endpoints
-- DeepL API support with a user-provided key
+- Bing's China endpoint (`cn.bing.com`), requiring no user key and selected by default on new installs
+- Google and Lingva keyless alternatives; existing provider choices are preserved
+- Baidu's official translation API with a user-provided App ID and secret key (free usage depends on account quota)
+- DeepL API support with a separate user-provided key
+- Alibaba Cloud TranslateGeneral with a separate AccessKey ID and secret (activate Machine Translation first; account quota and overage billing apply)
+- Local offline translation through a loopback-only Argos / LibreTranslate-compatible engine; the optional setup downloads English/Chinese models once
+- A Settings test button that translates a fixed sample without reading the clipboard
+- Specific timeout, connection, credential, rate-limit, and quota error messages
 - 20 editable JSON language packs
 - Live reload from Settings
 - Right-to-left layout metadata, currently used by Arabic
@@ -73,7 +79,9 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 
 KeeStashDock is local-first. Snippets, settings, logs, and backups are stored on the local machine. Clipboard history and direct paste are opt-in.
 
-Translation is the main network-dependent feature: selected text is sent to the provider chosen in Settings. Google, Bing, Lingva, and DeepL are external services with their own availability and privacy terms. A DeepL key, when configured, is stored in the local `settings.json` file. Do not translate secrets or other sensitive content unless that disclosure is acceptable.
+Cloud translation sends selected text only to the provider chosen in Settings; failures do not automatically forward it to another provider. Bing, Baidu, Alibaba Cloud, Google, Lingva, and DeepL are external services with their own availability and privacy terms. Provider credentials are stored separately, in plain text, in the local `settings.json` file; masking a secret in Settings does not encrypt its storage. Free public endpoints have no guaranteed availability. Do not translate secrets or other sensitive content unless that disclosure is acceptable.
+
+Offline translation sends text only to a loopback address on this computer, bypasses HTTP proxies, and rejects redirects and remote endpoints. The optional bundled helper never downloads models while serving translations. Its first setup requires an internet connection and disk space. See [offline translation setup](docs/OFFLINE_TRANSLATION.md).
 
 ## Requirements
 
@@ -95,9 +103,13 @@ Translation is the main network-dependent feature: selected text is sent to the 
 1. Extract a release into a writable folder.
 2. Start `KeeStashDock.exe`; the application remains available from the system tray.
 3. Press **Alt+Q** to show or hide the quick panel. The shortcut is configurable in Settings.
-4. Enter text and press **Enter** to create a snippet.
+4. Enter text and press **Enter** to create a snippet; use **Alt+Enter** or **Shift+Enter** for a new line at the cursor.
 5. Click a card to copy it, or open the workbench for search, editing, grouping, and recovery.
 6. Review Settings before enabling clipboard history, direct paste, selection translation, or automatic startup.
+
+For Alibaba Cloud, choose **Translate** as the selection action, select **Alibaba Cloud**, and enter your own AccessKey ID and secret. Use a RAM identity with permission for `alimt:TranslateGeneral`; activate the [Machine Translation service](https://help.aliyun.com/zh/machine-translation/developer-reference/api-alimt-2018-10-12-translategeneral) and review [quota and billing](https://help.aliyun.com/zh/machine-translation/product-overview/billing-overview). Click **Test translation** to verify your account and network.
+
+For offline translation, choose **Local offline**, click **Open offline setup folder**, and follow its README to install and start the optional engine. Keep the default address `http://127.0.0.1:5000` unless you changed the local port. The starter models support English and Simplified Chinese; other target languages require a compatible engine with those models. KeeStashDock does not switch to a cloud provider when a model is missing.
 
 ## Build, test, and publish
 
@@ -164,6 +176,7 @@ flowchart LR
 | `KeeStashDock.Core`           | Snippet, search, housekeeping, import/export, type-detection, and text-transformation use cases                                    |
 | `KeeStashDock.Desktop`        | WPF windows and view models, tray lifecycle, hotkeys, clipboard/selection integration, localization, theming, QR, and sticky notes |
 | `KeeStashDock.Tests`          | Unit tests plus repository, localization, and packaging policy checks                                                              |
+| `KeeStashDock.Desktop.Tests`  | Windows WPF keyboard and translation-settings regression tests                                                                     |
 
 A detailed component and data-flow description is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

@@ -112,12 +112,18 @@ public partial class App : Application
         _selectionWatcher = new SelectionWatcher();
         _selectionPopup = new SelectionPopupWindow(settings);
         _translationCard = new TranslationResultWindow(settings);
+        _translationCard.IsVisibleChanged += (_, _) =>
+        {
+            if (!_translationCard.IsVisible) _translationCancellation?.Cancel();
+        };
         MiniToast.Settings = settings;
         DirectPaste.Settings = settings;
+        DirectPaste.StartTracking();
         _clipboardWatcher = new ClipboardWatcher(
             settings, _services.GetRequiredService<SnippetService>());
         _selectionWatcher.SelectionLikely += (x, y) =>
         {
+            _translationCancellation?.Cancel();
             if (!settings.Current.SelectionPopupEnabled) return;
             (_lastSelectionX, _lastSelectionY) = (x, y);
             _translationCard.HideCard();   // a new selection retires old results
@@ -125,6 +131,7 @@ public partial class App : Application
         };
         _selectionWatcher.AnyMouseDown += (_, _) =>
         {
+            _translationCancellation?.Cancel();
             _selectionPopup.HideBubble();
             _translationCard.HideCard();
         };
@@ -158,12 +165,18 @@ public partial class App : Application
     private ClipboardWatcher? _clipboardWatcher;
     private SelectionPopupWindow _selectionPopup = null!;
     private TranslationResultWindow _translationCard = null!;
+    private CancellationTokenSource? _translationCancellation;
     private int _lastSelectionX, _lastSelectionY;
     private bool? _selectionPopupApplied;
 
     private void ApplySelectionPopupSetting(SettingsStore settings)
     {
         bool enable = settings.Current.SelectionPopupEnabled;
+        if (!enable)
+        {
+            _translationCancellation?.Cancel();
+            _translationCard.HideCard();
+        }
         if (_selectionPopupApplied == enable) return;
         _selectionPopupApplied = enable;
         if (enable) _selectionWatcher.Start();
@@ -273,24 +286,52 @@ public partial class App : Application
     /// user asked to READ this text, not to keep it.</summary>
     private async void TranslateSelectionAsync()
     {
-        string? text = await GrabSelectionTextAsync();
-        if (text is null) return;   // failure toasts already shown
+        _translationCancellation?.Cancel();
+        using var request = new CancellationTokenSource();
+        _translationCancellation = request;
+        try
+        {
+            string? text = await GrabSelectionTextAsync(request.Token);
+            if (text is null || request.IsCancellationRequested) return;
 
-        _translationCard.ShowTranslating(_lastSelectionX, _lastSelectionY);
-        var cfg = _services.GetRequiredService<SettingsStore>().Current;
-        string? translated = await TranslationService.TranslateAsync(
-            text, cfg.Language, cfg.TranslationEngine, cfg.TranslationApiKey);
+            _translationCard.ShowTranslating(_lastSelectionX, _lastSelectionY);
+            var cfg = _services.GetRequiredService<SettingsStore>().Current;
+            TranslationResult result = await TranslationService.TranslateDetailedAsync(
+                text, cfg, request.Token);
 
-        if (!_translationCard.IsVisible) return;   // dismissed while waiting
-        if (translated is null) _translationCard.ShowError();
-        else _translationCard.ShowResult(translated);
+            if (request.IsCancellationRequested ||
+                !ReferenceEquals(_translationCancellation, request) ||
+                !_translationCard.IsVisible) return;
+            if (result.IsSuccess)
+            {
+                _translationCard.ShowResult(result.Text!);
+            }
+            else if (result.Failure != TranslationFailure.Cancelled)
+            {
+                // Only diagnostic categories are logged, never text or credentials.
+                Log?.Warn($"Translation failed: provider={result.Provider}, " +
+                    $"failure={result.Failure}, http={result.HttpStatusCode}");
+                _translationCard.ShowError(TranslationService.FailureMessageKey(result));
+            }
+        }
+        catch (OperationCanceledException) when (request.IsCancellationRequested)
+        {
+            // A changed selection or dismissed request has no result to show.
+        }
+        finally
+        {
+            if (ReferenceEquals(_translationCancellation, request))
+                _translationCancellation = null;
+        }
     }
 
     /// <summary>Synthesizes Ctrl+C and reads the selection as plain text.
     /// Null (with the appropriate toast already shown) when nothing was
     /// selected or nothing text-like could be read.</summary>
-    private static async Task<string?> GrabSelectionTextAsync()
+    private static async Task<string?> GrabSelectionTextAsync(
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         uint seqBefore = NativeMethods.GetClipboardSequenceNumber();
 
         NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
@@ -301,12 +342,13 @@ public partial class App : Application
         bool copied = false;
         for (int i = 0; i < 50; i++)                  // up to ~2 s, exits early
         {
-            await Task.Delay(40);
+            await Task.Delay(40, cancellationToken);
             if (NativeMethods.GetClipboardSequenceNumber() != seqBefore)
             { copied = true; break; }
         }
         if (!copied)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             // Sequence never moved: nothing was selected (or the page blocks
             // copying) - genuinely "no selection".
             MiniToast.Show(LocalizationService.Instance["Toast.NoSelection"]);
@@ -318,6 +360,7 @@ public partial class App : Application
         string text = string.Empty;
         for (int i = 0; i < 12 && text.Length == 0; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var data = Clipboard.GetDataObject();
@@ -347,11 +390,12 @@ public partial class App : Application
             }
             catch (System.Runtime.InteropServices.COMException)
             { /* clipboard transiently locked by the source app - retry */ }
-            await Task.Delay(60);
+            await Task.Delay(60, cancellationToken);
         }
 
         if (string.IsNullOrWhiteSpace(text))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             // The copy happened but yielded nothing text-like - tell the
             // truth instead of blaming the (real) selection.
             MiniToast.Show(LocalizationService.Instance["Toast.CaptureFailed"]);
@@ -443,6 +487,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _translationCancellation?.Cancel();
+        DirectPaste.StopTracking();
         _clipboardWatcher?.Dispose();
         _selectionWatcher?.Dispose();
         _hotkey?.Dispose();

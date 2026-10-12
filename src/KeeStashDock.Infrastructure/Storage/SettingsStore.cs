@@ -35,7 +35,7 @@ public sealed class SettingsStore
     public AppSettings Current { get; private set; } = new();
 
     /// <summary>Raised after every successful Save(). Views that render
-    /// settings-derived visuals (background image, frost, glow) subscribe to
+    /// settings-derived visuals (background image, frost, opacity) subscribe to
     /// hot-apply changes; they must be cheap/no-op when nothing they care
     /// about actually changed, because Save() also fires for unrelated
     /// writes such as panel geometry persistence.</summary>
@@ -105,10 +105,6 @@ public sealed class SettingsStore
             Current.BackgroundOverlayOpacity, 0.30, 0.20, 1.0);
         Current.FrostedGlassRadius = NormalizePositiveDouble(
             Current.FrostedGlassRadius, 4, 1, 18);
-        Current.EdgeGlowStrength = NormalizePositiveDouble(
-            Current.EdgeGlowStrength, 18, 4, 30);
-        Current.EdgeGlowBrightness = NormalizePositiveDouble(
-            Current.EdgeGlowBrightness, 0.30, 0.10, 1.0);
         Current.CardOpacity = NormalizePositiveDouble(Current.CardOpacity, 0.9, 0.1, 1.0);
         Current.BubbleOpacity = NormalizePositiveDouble(Current.BubbleOpacity, 1.0, 0.5, 1.0);
 
@@ -122,6 +118,14 @@ public sealed class SettingsStore
         if (string.IsNullOrWhiteSpace(Current.Language))
             Current.Language = "en-US";
         Current.TranslationApiKey ??= string.Empty;
+        Current.TranslationAppId ??= string.Empty;
+        Current.BaiduTranslationApiKey ??= string.Empty;
+        Current.AliyunAccessKeyId ??= string.Empty;
+        Current.AliyunAccessKeySecret ??= string.Empty;
+        if (string.IsNullOrWhiteSpace(Current.OfflineTranslationEndpoint))
+            Current.OfflineTranslationEndpoint = AppSettings.DefaultOfflineTranslationEndpoint;
+        if (string.IsNullOrWhiteSpace(Current.TranslationEngine))
+            Current.TranslationEngine = "Bing";
     }
 
     private static int NormalizePositiveInt(int value, int defaultValue, int maximum)

@@ -13,6 +13,28 @@
         Background="{DynamicResource B.WindowBg}">
 
   <Window.Resources>
+    <Style x:Key="S.TranslationPassword" TargetType="PasswordBox">
+      <Setter Property="Padding" Value="10,7"/>
+      <Setter Property="Background" Value="{DynamicResource B.InputBg}"/>
+      <Setter Property="Foreground" Value="{DynamicResource B.InputText}"/>
+      <Setter Property="CaretBrush" Value="{DynamicResource B.Accent}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource B.Border}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="PasswordBox">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ScrollViewer x:Name="PART_ContentHost"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <!-- Section card -->
     <Style x:Key="S.Section" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource B.CardBg}"/>
@@ -90,7 +112,7 @@
           <TextBlock Style="{StaticResource S.SectionTitle}"
                      Text="{loc:Tr Settings.Behavior}"/>
           <CheckBox x:Name="AutoStartCheck" Margin="0,0,0,6"
-                    Checked="OnBehaviorChanged" Unchecked="OnBehaviorChanged"
+                    Checked="OnAutoStartChanged" Unchecked="OnAutoStartChanged"
                     Foreground="{DynamicResource B.TextPrimary}"
                     Content="{loc:Tr Settings.AutoStart}"/>
           <CheckBox x:Name="SelectionPopupCheck" Margin="0,0,0,8"
@@ -107,8 +129,8 @@
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.SelectionAction}"/>
-            <ComboBox Grid.Column="1" x:Name="SelectionActionCombo" Width="200"
-                      HorizontalAlignment="Left"
+            <ComboBox Grid.Column="1" x:Name="SelectionActionCombo" MaxWidth="200"
+                      HorizontalAlignment="Stretch"
                       SelectionChanged="OnSelectionActionChanged">
               <ComboBoxItem Tag="Capture"
                             Content="{loc:Tr Settings.SelectionAction.Capture}"/>
@@ -117,29 +139,46 @@
             </ComboBox>
           </Grid>
 
-          <!-- Translation engine: only exists while the action is Translate
-               (row collapses otherwise). Engine names are proper nouns -
-               no localization. -->
+          <!-- Translation controls are shown while the action is Translate. -->
           <Grid x:Name="TranslateEngineRow" Style="{StaticResource S.Row}">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
-              <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Margin="0,0,0,6"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.TranslateEngine}"/>
-            <ComboBox Grid.Column="1" x:Name="TranslateEngineCombo" Width="200"
-                      HorizontalAlignment="Left"
+            <ComboBox Grid.Row="1" x:Name="TranslateEngineCombo"
+                      HorizontalAlignment="Stretch"
                       SelectionChanged="OnTranslateEngineChanged">
+              <ComboBoxItem Tag="Bing" Content="{loc:Tr Settings.TranslateEngine.Bing}"/>
+              <ComboBoxItem Tag="Baidu" Content="{loc:Tr Settings.TranslateEngine.Baidu}"/>
+              <ComboBoxItem Tag="Aliyun" Content="{loc:Tr Settings.TranslateEngine.Aliyun}"/>
+              <ComboBoxItem Tag="Offline" Content="{loc:Tr Settings.TranslateEngine.Offline}"/>
               <ComboBoxItem Tag="Google" Content="Google"/>
-              <ComboBoxItem Tag="Bing"   Content="Bing"/>
               <ComboBoxItem Tag="Lingva" Content="Lingva"/>
               <ComboBoxItem Tag="DeepL"  Content="DeepL"/>
             </ComboBox>
           </Grid>
 
-          <!-- API key: only DeepL needs one (the keyless trio above works
-               without it), so the row exists only in that combination. -->
+          <TextBlock x:Name="TranslateEngineHint" Margin="0,0,0,10"
+                     TextWrapping="Wrap" FontSize="11"
+                     Foreground="{DynamicResource B.TextMuted}"
+                     Text="{loc:Tr Settings.TranslateEngine.Hint}"/>
+
+          <Grid x:Name="TranslationAppIdRow" Style="{StaticResource S.Row}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
+                       TextWrapping="Wrap" Text="{loc:Tr Settings.TranslationAppId}"/>
+            <TextBox Grid.Column="1" x:Name="TranslationAppIdBox" Width="260" Style="{StaticResource S.Input}"
+                     HorizontalAlignment="Left" VerticalAlignment="Center"
+                     TextChanged="OnTranslationAppIdChanged"/>
+          </Grid>
+
+          <!-- Credential values are stored separately for each provider. -->
           <Grid x:Name="ApiKeyRow" Style="{StaticResource S.Row}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
@@ -148,10 +187,42 @@
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.ApiKey}"/>
-            <TextBox Grid.Column="1" x:Name="ApiKeyBox" Width="260"
+            <TextBox Grid.Column="1" x:Name="ApiKeyBox" Width="260" Style="{StaticResource S.Input}"
                      HorizontalAlignment="Left" VerticalAlignment="Center"
                      TextChanged="OnApiKeyChanged"/>
           </Grid>
+
+          <StackPanel x:Name="AliyunSettingsPanel" Margin="0,0,0,10">
+            <TextBlock Text="{loc:Tr Settings.AliyunHint}" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+            <TextBlock Text="{loc:Tr Settings.AliyunAccessKeyId}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+            <TextBox x:Name="AliyunAccessKeyIdBox" Style="{StaticResource S.Input}"
+                     TextChanged="OnAliyunCredentialsChanged" Margin="0,0,0,10"/>
+            <TextBlock Text="{loc:Tr Settings.AliyunAccessKeySecret}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+            <PasswordBox x:Name="AliyunAccessKeySecretBox" Style="{StaticResource S.TranslationPassword}"
+                         PasswordChanged="OnAliyunSecretChanged"/>
+          </StackPanel>
+
+          <StackPanel x:Name="OfflineSettingsPanel" Margin="0,0,0,10">
+            <TextBlock Text="{loc:Tr Settings.OfflineHint}" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+            <TextBlock Text="{loc:Tr Settings.OfflineEndpoint}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+            <TextBox x:Name="OfflineEndpointBox" Style="{StaticResource S.Input}"
+                     TextChanged="OnOfflineEndpointChanged" Margin="0,0,0,8"/>
+            <Button x:Name="OfflineSetupButton" Style="{StaticResource S.Button}"
+                    Background="{DynamicResource B.AccentSoft}" Click="OnOfflineSetupClick" HorizontalAlignment="Left">
+              <TextBlock Text="{loc:Tr Settings.OfflineOpenSetup}" TextWrapping="Wrap"/>
+            </Button>
+          </StackPanel>
+
+          <StackPanel x:Name="TranslationTestPanel" Margin="0,0,0,12">
+            <Button x:Name="TranslationTestButton" Style="{StaticResource S.Button}"
+                    Background="{DynamicResource B.AccentSoft}" Click="OnTranslationTestClick" HorizontalAlignment="Left">
+              <TextBlock Text="{loc:Tr Settings.TranslationTest}" TextWrapping="Wrap"/>
+            </Button>
+            <TextBlock x:Name="TranslationTestStatus" TextWrapping="Wrap" Margin="0,6,0,0"
+                       FontSize="11" Foreground="{DynamicResource B.TextMuted}"/>
+          </StackPanel>
 
           <!-- Bubble dress: classic accent pill or theme-following glass.
                Locked together with the bubble toggle, like the action. -->
@@ -163,8 +234,8 @@
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.BubbleStyle}"/>
-            <ComboBox Grid.Column="1" x:Name="BubbleStyleCombo" Width="200"
-                      HorizontalAlignment="Left"
+            <ComboBox Grid.Column="1" x:Name="BubbleStyleCombo" MaxWidth="200"
+                      HorizontalAlignment="Stretch"
                       SelectionChanged="OnBubbleStyleChanged">
               <ComboBoxItem Tag="Default"
                             Content="{loc:Tr Settings.BubbleStyle.Default}"/>
@@ -402,42 +473,6 @@
             </StackPanel>
           </Grid>
 
-          <!-- Edge glow: toggle+spread, then brightness on its own aligned
-               row (six controls on one line used to overflow the window). -->
-          <Grid Style="{StaticResource S.Row}">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
-              <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <CheckBox x:Name="GlowCheck" VerticalAlignment="Center"
-                      Margin="0,0,12,0"
-                      Checked="OnEffectsChanged" Unchecked="OnEffectsChanged"
-                      Content="{loc:Tr Settings.Glow}"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-              <Slider x:Name="GlowSlider" Width="200" Minimum="4" Maximum="30"
-                      VerticalAlignment="Center"
-                      IsSnapToTickEnabled="True" TickFrequency="2"
-                      ValueChanged="OnEffectsChanged"/>
-              <TextBlock x:Name="GlowValue" Style="{StaticResource S.RowValue}"/>
-            </StackPanel>
-          </Grid>
-          <Grid Margin="0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
-              <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Style="{StaticResource S.RowLabel}" FontSize="12"
-                       Margin="22,0,12,0"
-                       Foreground="{DynamicResource B.TextMuted}"
-                       Text="{loc:Tr Settings.Glow.Brightness}"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-              <Slider x:Name="GlowBrightSlider" Width="200" Minimum="10" Maximum="100"
-                      VerticalAlignment="Center"
-                      IsSnapToTickEnabled="True" TickFrequency="5"
-                      ValueChanged="OnEffectsChanged"/>
-              <TextBlock x:Name="GlowBrightValue" Style="{StaticResource S.RowValue}"/>
-            </StackPanel>
-          </Grid>
         </StackPanel>
       </Border>
 

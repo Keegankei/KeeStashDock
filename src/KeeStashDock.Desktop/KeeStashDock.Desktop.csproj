@@ -47,4 +47,13 @@
     <None Include="..\..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Optional engine setup is shipped as source; runtime/models are installed separately. -->
+    <None Include="..\..\tools\offline-translation\*.ps1;..\..\tools\offline-translation\*.cmd;..\..\tools\offline-translation\*.py;..\..\tools\offline-translation\*.json;..\..\tools\offline-translation\*.txt"
+          Link="OfflineTranslation\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\docs\OFFLINE_TRANSLATION.md" Link="OfflineTranslation\README.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+  </ItemGroup>
 </Project>

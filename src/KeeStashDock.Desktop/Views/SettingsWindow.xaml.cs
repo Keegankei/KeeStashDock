@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +9,8 @@ using Microsoft.Win32;
 using KeeStashDock.Desktop.Interop;
 using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Infrastructure.Storage;
+using KeeStashDock.Core.Services;
+using KeeStashDock.Domain.Entities;
 
 namespace KeeStashDock.Desktop.Views;
 
@@ -23,7 +27,12 @@ public partial class SettingsWindow : Window
     private readonly DatabaseImportService _databaseImport;
     private readonly IApplicationRestarter _restarter;
     private readonly HotkeyManager _hotkey;
+    private readonly string _displayDataRoot;
+    private readonly bool _isAppDataFallback;
     private bool _loading = true;   // suppress handlers during initial population
+    private bool _updatingTranslationCredentials;
+    private CancellationTokenSource? _translationTestCancellation;
+    private readonly Func<string, AppSettings, CancellationToken, Task<TranslationResult>> _translate;
 
     public SettingsWindow(
         SettingsStore settings,
@@ -31,6 +40,20 @@ public partial class SettingsWindow : Window
         DatabaseImportService databaseImport,
         IApplicationRestarter restarter,
         HotkeyManager hotkey)
+        : this(settings, backup, databaseImport, restarter, hotkey,
+            PortablePaths.DataRoot, PortablePaths.IsAppDataFallback)
+    {
+    }
+
+    internal SettingsWindow(
+        SettingsStore settings,
+        BackupService backup,
+        DatabaseImportService databaseImport,
+        IApplicationRestarter restarter,
+        HotkeyManager hotkey,
+        string displayDataRoot,
+        bool isAppDataFallback,
+        Func<string, AppSettings, CancellationToken, Task<TranslationResult>>? translate = null)
     {
         InitializeComponent();
         _settings = settings;
@@ -38,8 +61,12 @@ public partial class SettingsWindow : Window
         _databaseImport = databaseImport;
         _restarter = restarter;
         _hotkey = hotkey;
+        _displayDataRoot = displayDataRoot;
+        _isAppDataFallback = isAppDataFallback;
+        _translate = translate ?? TranslationService.TranslateDetailedAsync;
 
-        Closing += (s, e) => { e.Cancel = true; Hide(); };
+        Closing += (s, e) => { e.Cancel = true; CancelTranslationTest(); Hide(); };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) CancelTranslationTest(); };
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
         LocalizationService.Instance.LanguageChanged +=
             () => LocalizationService.Instance.ApplyFlowDirection(this);
@@ -76,11 +103,6 @@ public partial class SettingsWindow : Window
         FrostCheck.IsChecked = cfg.FrostedGlassEnabled;
         FrostSlider.Value = Math.Clamp(cfg.FrostedGlassRadius, 1, 18);
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
-        GlowCheck.IsChecked = cfg.EdgeGlowEnabled;
-        GlowSlider.Value = Math.Clamp(cfg.EdgeGlowStrength, 4, 30);
-        GlowValue.Text = $"{(int)GlowSlider.Value}px";
-        GlowBrightSlider.Value = Math.Clamp(cfg.EdgeGlowBrightness, 0.1, 1.0) * 100;
-        GlowBrightValue.Text = $"{(int)GlowBrightSlider.Value}%";
         CardOpacitySlider.Value = Math.Clamp(cfg.CardOpacity, 0.1, 1.0) * 100;
         CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
         // Retired Light/Dark values from older settings alias to the
@@ -102,8 +124,8 @@ public partial class SettingsWindow : Window
             if (BubbleStyleCombo.Items[i] is ComboBoxItem bs &&
                 (string?)bs.Tag == cfg.SelectionBubbleStyle)
             { BubbleStyleCombo.SelectedIndex = i; break; }
-        TranslateEngineCombo.SelectedIndex = cfg.TranslationEngine switch
-        { "Bing" => 1, "Lingva" => 2, _ => 0 };
+        TranslateEngineCombo.SelectedItem = TranslateEngineCombo.Items
+            .OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == cfg.TranslationEngine);
         BubbleGlowCheck.IsChecked = cfg.BubbleTextGlow;
         BubbleShadowCheck.IsChecked = cfg.BubbleShadow;
         BubbleOpacitySlider.Value = Math.Round(
@@ -114,14 +136,14 @@ public partial class SettingsWindow : Window
         AutoBackupCheck.IsChecked = cfg.AutoBackupEnabled;
         AutoBackupIntervalCombo.SelectedIndex = cfg.AutoBackupIntervalHours switch
         { 6 => 0, 12 => 1, 48 => 3, 168 => 4, _ => 2 };
-        ApiKeyBox.Text = cfg.TranslationApiKey;
+        RefreshTranslationCredentials();
         AutoBackupIntervalCombo.IsEnabled = cfg.AutoBackupEnabled;
         AutoBackupIntervalCombo.Opacity = cfg.AutoBackupEnabled ? 1.0 : 0.4;
         RefreshSelectionActionUi();
 
         string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
-        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {PortablePaths.DataRoot}"
-            + (PortablePaths.IsAppDataFallback
+        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {_displayDataRoot}"
+            + (_isAppDataFallback
                ? $"\n{LocalizationService.Instance["Settings.About.FallbackNote"]}" : "");
     }
 
@@ -131,6 +153,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         if (LangCombo.SelectedItem is not LocalizationService.LanguageInfo lang) return;
+        CancelTranslationTest();
         LocalizationService.Instance.SetLanguage(lang.Tag);   // whole UI hot-switches here
         _settings.Current.Language = lang.Tag;
         _settings.Save();
@@ -143,7 +166,7 @@ public partial class SettingsWindow : Window
     private void PopulateAboutOnly()
     {
         string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
-        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {PortablePaths.DataRoot}";
+        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {_displayDataRoot}";
     }
 
     // ------------------------------------------------------------ hotkey
@@ -197,10 +220,20 @@ public partial class SettingsWindow : Window
 
     // ---------------------------------------------------------- behavior
 
+    private void OnAutoStartChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        // Only this explicit checkbox action may update the Windows startup entry.
+        bool enabled = AutoStartCheck.IsChecked == true;
+        AutoStartHelper.SetEnabled(enabled);
+        _settings.Current.AutoStart = enabled;
+        _settings.Save();
+    }
+
     private void OnBehaviorChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        AutoStartHelper.SetEnabled(AutoStartCheck.IsChecked == true);
+        CancelTranslationTest();
         _settings.Current.SelectionPopupEnabled = SelectionPopupCheck.IsChecked == true;
         RefreshSelectionActionUi();
         _settings.Save();
@@ -211,6 +244,7 @@ public partial class SettingsWindow : Window
     private void OnSelectionActionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading) return;
+        CancelTranslationTest();
         _settings.Current.SelectionAction =
             (SelectionActionCombo.SelectedItem as ComboBoxItem)?.Tag as string
             ?? "Capture";
@@ -267,19 +301,140 @@ public partial class SettingsWindow : Window
 
     private void OnApiKeyChanged(object sender, TextChangedEventArgs e)
     {
-        if (_loading) return;
-        _settings.Current.TranslationApiKey = ApiKeyBox.Text;
+        if (_loading || _updatingTranslationCredentials) return;
+        CancelTranslationTest();
+        string? engine = (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag as string;
+        if (engine == "Baidu")
+            _settings.Current.BaiduTranslationApiKey = ApiKeyBox.Text;
+        else if (engine == "DeepL")
+            _settings.Current.TranslationApiKey = ApiKeyBox.Text;
+        else
+            return;
         _settings.Save();
+    }
+
+    private void OnTranslationAppIdChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loading || _updatingTranslationCredentials) return;
+        CancelTranslationTest();
+        _settings.Current.TranslationAppId = TranslationAppIdBox.Text;
+        _settings.Save();
+    }
+
+    private void RefreshTranslationCredentials()
+    {
+        _updatingTranslationCredentials = true;
+        try
+        {
+            ApiKeyBox.Text = _settings.Current.TranslationEngine switch
+            {
+                "Baidu" => _settings.Current.BaiduTranslationApiKey,
+                "DeepL" => _settings.Current.TranslationApiKey,
+                _ => string.Empty,
+            };
+            TranslationAppIdBox.Text = _settings.Current.TranslationAppId;
+            AliyunAccessKeyIdBox.Text = _settings.Current.AliyunAccessKeyId;
+            AliyunAccessKeySecretBox.Password = _settings.Current.AliyunAccessKeySecret;
+            OfflineEndpointBox.Text = _settings.Current.OfflineTranslationEndpoint;
+        }
+        finally { _updatingTranslationCredentials = false; }
     }
 
     private void OnTranslateEngineChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading) return;
+        CancelTranslationTest();
         _settings.Current.TranslationEngine =
             (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag as string
-            ?? "Google";
+            ?? "Bing";
         _settings.Save();
+        RefreshTranslationCredentials();
         RefreshSelectionActionUi();   // the API-key row follows the engine
+    }
+
+    private void OnAliyunCredentialsChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loading || _updatingTranslationCredentials) return;
+        CancelTranslationTest();
+        _settings.Current.AliyunAccessKeyId = AliyunAccessKeyIdBox.Text;
+        _settings.Save();
+    }
+
+    private void OnAliyunSecretChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading || _updatingTranslationCredentials) return;
+        CancelTranslationTest();
+        _settings.Current.AliyunAccessKeySecret = AliyunAccessKeySecretBox.Password;
+        _settings.Save();
+    }
+
+    private void OnOfflineEndpointChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loading || _updatingTranslationCredentials) return;
+        CancelTranslationTest();
+        _settings.Current.OfflineTranslationEndpoint = OfflineEndpointBox.Text.Trim();
+        _settings.Save();
+    }
+
+    private void OnOfflineSetupClick(object sender, RoutedEventArgs e)
+    {
+        string folder = Path.Combine(AppContext.BaseDirectory, "OfflineTranslation");
+        try
+        {
+            if (!Directory.Exists(folder)) throw new DirectoryNotFoundException();
+            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
+        }
+        catch (Exception exception) when (exception is IOException or Win32Exception
+            or UnauthorizedAccessException or InvalidOperationException)
+        {
+            TranslationTestStatus.Text = LocalizationService.Instance["Settings.OfflineSetupUnavailable"];
+        }
+    }
+
+    private async void OnTranslationTestClick(object sender, RoutedEventArgs e)
+        => await TestTranslationAsync();
+
+    internal async Task TestTranslationAsync()
+    {
+        CancelTranslationTest();
+        using var request = new CancellationTokenSource();
+        _translationTestCancellation = request;
+        TranslationTestButton.IsEnabled = false;
+        TranslationTestStatus.Text = LocalizationService.Instance["Settings.TranslationTesting"];
+        try
+        {
+            // A fixed public sample exercises the provider without reading the clipboard.
+            bool useChineseSample = _settings.Current.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                || (_settings.Current.Language == "zh-TW" && _settings.Current.TranslationEngine == "Aliyun");
+            string sample = useChineseSample
+                ? "\u8FD9\u662F\u4E00\u4E2A\u7FFB\u8BD1\u6D4B\u8BD5\u3002" : "This is a translation test.";
+            TranslationResult result = await _translate(sample, _settings.Current, request.Token);
+            if (request.IsCancellationRequested ||
+                !ReferenceEquals(_translationTestCancellation, request)) return;
+            TranslationTestStatus.Text = result.IsSuccess
+                ? LocalizationService.Instance["Settings.TranslationTestSuccess"]
+                : LocalizationService.Instance[TranslationService.FailureMessageKey(result)];
+        }
+        catch (OperationCanceledException) when (request.IsCancellationRequested)
+        {
+            // Editing settings or closing the window invalidates the test result.
+        }
+        finally
+        {
+            if (ReferenceEquals(_translationTestCancellation, request))
+            {
+                _translationTestCancellation = null;
+                RefreshSelectionActionUi();
+            }
+        }
+    }
+
+    private void CancelTranslationTest()
+    {
+        _translationTestCancellation?.Cancel();
+        _translationTestCancellation = null;
+        TranslationTestStatus.Text = string.Empty;
+        TranslationTestButton.IsEnabled = SelectionPopupCheck.IsChecked == true;
     }
 
     /// <summary>Commits the bubble dress; bubble/toasts restyle live via
@@ -310,12 +465,23 @@ public partial class SettingsWindow : Window
             translate ? Visibility.Visible : Visibility.Collapsed;
         TranslateEngineCombo.IsEnabled = on;
         TranslateEngineCombo.Opacity = on ? 1.0 : 0.4;
-        // API key: only exists for engines that need one (DeepL), and only
-        // while the action is Translate.
-        bool deepl = (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag
-            as string == "DeepL";
-        ApiKeyRow.Visibility = translate && deepl
+        string? engine = (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag as string;
+        TranslateEngineHint.Visibility = translate && engine is not ("Aliyun" or "Offline")
             ? Visibility.Visible : Visibility.Collapsed;
+        AliyunSettingsPanel.Visibility = translate && engine == "Aliyun"
+            ? Visibility.Visible : Visibility.Collapsed;
+        OfflineSettingsPanel.Visibility = translate && engine == "Offline"
+            ? Visibility.Visible : Visibility.Collapsed;
+        AliyunSettingsPanel.IsEnabled = on;
+        OfflineSettingsPanel.IsEnabled = on;
+        TranslationTestPanel.Visibility = translate ? Visibility.Visible : Visibility.Collapsed;
+        TranslationTestButton.IsEnabled = on && _translationTestCancellation is null;
+        ApiKeyRow.Visibility = translate && engine is "DeepL" or "Baidu"
+            ? Visibility.Visible : Visibility.Collapsed;
+        TranslationAppIdRow.Visibility = translate && engine == "Baidu"
+            ? Visibility.Visible : Visibility.Collapsed;
+        TranslationAppIdBox.IsEnabled = on;
+        TranslationAppIdBox.Opacity = on ? 1.0 : 0.4;
         ApiKeyBox.IsEnabled = on;
         ApiKeyBox.Opacity = on ? 1.0 : 0.4;
         BubbleGlowCheck.IsEnabled = on;
@@ -501,22 +667,17 @@ public partial class SettingsWindow : Window
         BgOpacityValue.Text = $"{(int)e.NewValue}%";
     }
 
-    /// <summary>Frost + glow controls share one handler; SettingsStore.Changed
-    /// hot-applies the result to the panel and workbench immediately.</summary>
+    /// <summary>Frost and opacity controls share one handler;
+    /// SettingsStore.Changed hot-applies the result to the panel.</summary>
     private void OnEffectsChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
         var cfg = _settings.Current;
         cfg.FrostedGlassEnabled = FrostCheck.IsChecked == true;
         cfg.FrostedGlassRadius = FrostSlider.Value;
-        cfg.EdgeGlowEnabled = GlowCheck.IsChecked == true;
-        cfg.EdgeGlowStrength = GlowSlider.Value;
-        cfg.EdgeGlowBrightness = GlowBrightSlider.Value / 100.0;
         cfg.CardOpacity = CardOpacitySlider.Value / 100.0;
         _settings.Save();
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
-        GlowValue.Text = $"{(int)GlowSlider.Value}px";
-        GlowBrightValue.Text = $"{(int)GlowBrightSlider.Value}%";
         CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
     }
 

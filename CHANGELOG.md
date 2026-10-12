@@ -8,6 +8,11 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Added
 
+- Alibaba Cloud TranslateGeneral support with independent AccessKey credentials, signed requests, and service activation errors.
+- Local offline translation with a loopback-only Argos / LibreTranslate-compatible service, optional isolated English/Chinese engine setup, and actionable model/service errors.
+- A translation test in Settings using a fixed sample, with cancellation on configuration changes.
+- Baidu official translation API support with user-provided App ID and secret key, and categorized translation failure messages.
+- Windows WPF keyboard regression tests for Alt+Enter, Shift+Enter, selection replacement, undo, and IME handling.
 - Opt-in clipboard history collection.
 - Optional direct paste back to the previously focused application.
 - Scheduled automatic backups with configurable interval and rolling retention.
@@ -21,6 +26,7 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Changed
 
+- New installs default to Bing's China translation endpoint; existing provider choices and DeepL credentials are preserved.
 - Aligned the build SDK with .NET SDK 10.0.401, allowing later 10.0.4xx patches.
 - Group names now use trimmed, culture-independent case keys with a database uniqueness constraint. Schema v3 preserves existing group IDs and content while assigning deterministic suffixes to legacy duplicate or blank names.
 - New default groups and imported-copy name suggestions choose an available numeric suffix.
@@ -34,6 +40,12 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Fixed
 
+- Keep selection-popup changes from rewriting the Windows startup entry; only the startup checkbox changes it.
+- Preserve the remembered direct-paste target across repeated quick-panel activations and track external foreground changes without relaxing identity or focus checks.
+- Handle Alt+Enter's WPF system-key event to insert a newline at the cursor; retain Shift+Enter and plain Enter behavior.
+- Replace the retired Bing token URL with the current China web session flow.
+- Preserve the selected DeepL provider when opening Settings and keep Baidu and DeepL keys separate when switching engines.
+- Cancel dismissed or superseded translations and prevent stale responses from replacing newer results.
 - Reject empty edited content and edits that duplicate another live snippet, with localized messages that preserve the draft.
 - Save snippet fields and tags in one transaction, including FTS changes, so failed saves cannot leave partial edits.
 - Serialize capture deduplication and editing checks to prevent concurrent captures from inserting the same content twice.
@@ -48,4 +60,5 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Removed
 
+- Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.

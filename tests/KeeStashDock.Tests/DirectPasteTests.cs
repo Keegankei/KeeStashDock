@@ -59,6 +59,126 @@ public sealed class DirectPasteTests
     }
 
     [TestMethod]
+    public async Task RepeatedActivationOfRegisteredPanel_PreservesExternalTarget()
+    {
+        TestContext test = CreateContext();
+        nint panel = (nint)200;
+        test.Windows.OwnWindows.Add(panel);
+        test.Coordinator.RememberForeground();
+        test.Windows.ForegroundWindow = panel;
+
+        test.Coordinator.RememberForeground(panel);
+        test.Coordinator.RememberForeground(panel);
+
+        Assert.AreEqual(DirectPasteResult.Success, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(TargetWindow, test.Windows.ForegroundWindow);
+        Assert.AreEqual(1, test.Input.Events.Count(value => value == "Down:V"));
+    }
+
+    [TestMethod]
+    public async Task OtherOwnWindow_StillClearsRememberedTarget()
+    {
+        TestContext test = CreateContext();
+        nint panel = (nint)200;
+        nint settings = (nint)201;
+        test.Windows.OwnWindows.UnionWith([panel, settings]);
+        test.Coordinator.RememberForeground();
+        test.Windows.ForegroundWindow = settings;
+
+        test.Coordinator.RememberForeground(panel);
+
+        Assert.AreEqual(DirectPasteResult.NoTarget, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(0, test.Input.Events.Count);
+    }
+
+    [TestMethod]
+    [DataRow("expired")]
+    [DataRow("closed")]
+    [DataRow("process-changed")]
+    public async Task PanelActivation_DoesNotReviveInvalidTarget(string scenario)
+    {
+        TestContext test = CreateContext();
+        nint panel = (nint)200;
+        test.Windows.OwnWindows.Add(panel);
+        test.Coordinator.RememberForeground();
+        test.Windows.ForegroundWindow = panel;
+        if (scenario == "expired")
+            test.Clock.UtcNow += DirectPasteCoordinator.DefaultTargetLifetime + TimeSpan.FromSeconds(1);
+        else if (scenario == "closed")
+            test.Windows.WindowExists = false;
+        else
+            test.Windows.ProcessId++;
+
+        test.Coordinator.RememberForeground(panel);
+
+        Assert.AreEqual(DirectPasteResult.NoTarget, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(0, test.Input.Events.Count);
+    }
+
+    [TestMethod]
+    public async Task PanelInteraction_DoesNotExtendTargetLifetime()
+    {
+        TestContext test = CreateContext();
+        nint panel = (nint)200;
+        test.Windows.OwnWindows.Add(panel);
+        test.Coordinator.RememberForeground();
+        test.Clock.UtcNow += DirectPasteCoordinator.DefaultTargetLifetime - TimeSpan.FromSeconds(1);
+        test.Windows.ForegroundWindow = panel;
+        test.Coordinator.RememberForeground(panel);
+        test.Clock.UtcNow += TimeSpan.FromSeconds(2);
+
+        Assert.AreEqual(DirectPasteResult.TargetExpired, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(0, test.Input.Events.Count);
+    }
+
+    [TestMethod]
+    public async Task ForegroundEventFromPasteFocus_PreservesInFlightSnapshot()
+    {
+        TestContext test = CreateContext();
+        test.Coordinator.RememberForeground();
+        test.Windows.AfterSetForeground = () =>
+        {
+            test.Clock.UtcNow += TimeSpan.FromMilliseconds(1);
+            test.Coordinator.RememberForeground();
+        };
+
+        Assert.AreEqual(DirectPasteResult.Success, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(1, test.Input.Events.Count(value => value == "Down:V"));
+    }
+
+    [TestMethod]
+    public async Task ExternalForegroundChangeThenKeyboardPanelActivation_UsesNewTarget()
+    {
+        TestContext test = CreateContext();
+        nint panel = (nint)200;
+        nint secondTarget = (nint)101;
+        test.Windows.OwnWindows.Add(panel);
+        test.Coordinator.RememberForeground();
+        test.Windows.ForegroundWindow = secondTarget;
+        test.Coordinator.RememberForeground(panel);
+        test.Windows.ForegroundWindow = panel;
+        test.Coordinator.RememberForeground(panel);
+
+        Assert.AreEqual(DirectPasteResult.Success, await test.Coordinator.PasteAsync());
+        Assert.AreEqual(secondTarget, test.Windows.ForegroundWindow);
+    }
+
+    [TestMethod]
+    public async Task ForegroundEventForAnotherTargetDuringPaste_FailsWithoutInput()
+    {
+        TestContext test = CreateContext(gatedDelay: true);
+        test.Coordinator.RememberForeground();
+        Task<DirectPasteResult> paste = test.Coordinator.PasteAsync();
+        await test.Clock.DelayStarted.Task;
+        test.Windows.ForegroundWindow = (nint)999;
+        test.Coordinator.RememberForeground();
+        test.Clock.ReleaseDelay();
+
+        Assert.AreEqual(DirectPasteResult.TargetChanged, await paste);
+        Assert.AreEqual(0, test.Input.Events.Count);
+    }
+
+    [TestMethod]
     public async Task ClosedTarget_FailsWithoutInputAndClearsTarget()
     {
         TestContext test = CreateContext();
@@ -230,6 +350,8 @@ public sealed class DirectPasteTests
 
     private sealed class FakeForegroundWindowService : IForegroundWindowService
     {
+        public HashSet<nint> OwnWindows { get; } = [];
+        public Action? AfterSetForeground { get; set; }
         public nint ForegroundWindow { get; set; }
         public bool WindowExists { get; set; } = true;
         public bool CanReadProcessId { get; set; } = true;
@@ -242,11 +364,12 @@ public sealed class DirectPasteTests
         public nint GetForegroundWindow() => ForegroundWindow;
 
         public bool IsWindow(nint windowHandle)
-            => WindowExists && windowHandle != nint.Zero;
+            => OwnWindows.Contains(windowHandle) || (WindowExists && windowHandle != nint.Zero);
 
         public bool TryGetWindowProcessId(nint windowHandle, out uint processId)
         {
-            processId = CanReadProcessId ? ProcessId : 0;
+            processId = !CanReadProcessId ? 0 :
+                OwnWindows.Contains(windowHandle) ? CurrentProcessId : ProcessId;
             return CanReadProcessId;
         }
 
@@ -263,6 +386,7 @@ public sealed class DirectPasteTests
             SetForegroundCalls++;
             if (SetForegroundResult)
                 ForegroundWindow = windowHandle;
+            AfterSetForeground?.Invoke();
             return SetForegroundResult;
         }
     }

@@ -143,7 +143,8 @@ public sealed class TranslationResultWindow : Window
 
         Show();
         _hideTimer.Stop();
-        _hideTimer.Start();
+        // The client owns a bounded request timeout. Do not dismiss the card
+        // before it can display a slow response or a useful timeout message.
     }
 
     /// <summary>Swaps in the translation (click-to-copy armed).</summary>
@@ -160,10 +161,10 @@ public sealed class TranslationResultWindow : Window
     }
 
     /// <summary>Swaps in the failure message (not copyable).</summary>
-    public void ShowError()
+    public void ShowError(string messageKey = "Translate.Failed")
     {
         _copyable = false;
-        SetBody(Localization.LocalizationService.Instance["Translate.Failed"]);
+        SetBody(Localization.LocalizationService.Instance[messageKey]);
         _hint.Visibility = Visibility.Collapsed;
         ClampIntoWorkArea();
         _hideTimer.Stop();

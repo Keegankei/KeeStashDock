@@ -26,7 +26,7 @@ flowchart TD
     Infrastructure --> Domain
     Infrastructure --> SQLite
     Infrastructure --> Files
-    Desktop --> Providers
+    Core --> Providers
 ```
 
 ### `KeeStashDock.Domain`
@@ -64,6 +64,7 @@ The application-service layer contains:
 - Scheduled housekeeping
 - Content-type detection
 - Pure text transformations
+- Translation clients with injectable HTTP transport, cancellation, and categorized failures
 
 View models should call these use cases instead of duplicating business rules.
 
@@ -81,7 +82,7 @@ The Windows host contains:
 - Localization and right-to-left layout handling
 - Theme, wallpaper, glass, palette, and contrast behavior
 - QR encoding and shell integration
-- Translation provider clients
+- Selection capture and translation-result presentation
 
 The desktop project currently references all lower layers. A future cleanup can reduce direct Domain and Infrastructure access from view models by adding narrow Core interfaces, but that should be performed incrementally with tests rather than as a cosmetic dependency rewrite.
 
@@ -139,7 +140,13 @@ The search service uses FTS5 for ordinary tokenized queries. Queries containing 
 
 ### Translation
 
-Selection translation is initiated in the desktop layer. The selected text is sent to the configured provider and the translated result is shown in a temporary card. Three providers use keyless public endpoints; DeepL uses the user's API key. Provider failure is expected and should remain a non-fatal UI error.
+Selection translation is initiated in the desktop layer and executed by `TranslationClient` in Core. Bing uses the China web endpoint and its current anonymous session token rather than the retired Edge authentication URL. New installs default to Bing; saved provider choices remain intact. Google and Lingva remain keyless alternatives. Baidu requires a user-provided App ID and secret, while DeepL uses its own separate key. No request falls back to another provider automatically.
+
+Alibaba Cloud uses the official `TranslateGeneral` RPC action at the Hangzhou endpoint, with request signing and separate AccessKey ID/secret settings. Offline translation uses a separate proxy-disabled HTTP client and accepts only a literal loopback endpoint (normalizing `localhost` to loopback). It checks `/languages` before sending text to `/translate`; unsupported target models produce an actionable error. Cloud requests have a 15-second total deadline and local requests have a 60-second deadline for CPU inference. Neither transport follows redirects.
+
+The optional `OfflineTranslation` setup scripts install a separate local runtime and English/Chinese models. Downloads happen only during explicit setup, and the local service runs independently of KeeStashDock. See [offline setup](OFFLINE_TRANSLATION.md). Settings can translate a fixed sample to check configuration, with cancellation when credentials, provider, endpoint, or language changes.
+
+The client applies bounded timeouts, accepts cancellation, and returns categorized failures without remote response bodies or credentials. The UI distinguishes connection, authentication, throttling, quota, and language errors. Dismissing a translation or starting a new one cancels the old request, and stale responses cannot overwrite a newer result. Diagnostics include only provider, failure category, and HTTP status.
 
 ### Data and backup
 
@@ -172,16 +179,16 @@ Migrations are append-only. A shipped migration must never be edited because exi
 
 - The application is single-instance to avoid conflicting tray, hotkey, and database ownership.
 - Clipboard history and direct paste are opt-in.
-- Direct paste checks the target window, process identity, and foreground focus before sending input; a changed target cancels the paste.
+- Direct paste tracks foreground changes and retains an unexpired external target while the registered quick panel is active. Other application-owned windows invalidate it. The paste still checks HWND, process identity, the two-minute capture lifetime, and foreground focus before sending input; a changed target cancels the paste.
 - Logging uses a bounded asynchronous queue and rolling files.
-- Translation is an explicit external data boundary.
+- Cloud translation is an explicit external data boundary. Local offline translation remains on loopback and never falls back to the cloud.
 - User data directories, logs, database files, backups, API keys, and IDE user settings must never be committed.
 
 ## Known architectural risks
 
 The following items deserve focused future work:
 
-1. Add Windows UI integration coverage for single-instance activation, real clipboard/focus transitions, and workbench window behavior. Current tests exercise the underlying coordinators and editor session without driving real windows.
+1. Add Windows UI integration coverage for single-instance activation, real clipboard/focus transitions, and workbench window behavior. Desktop tests currently exercise real WPF text boxes and keyboard event shapes on STA threads, while cross-application paste is covered at the coordinator level.
 2. Narrow Desktop dependencies through Core interfaces where doing so reduces coupling.
 3. Review every localized in-application help page after feature changes; key parity alone cannot detect stale translations or layout problems.
 4. Define, document, and secure any future plugin model before activating the reserved `Plugins` directory.

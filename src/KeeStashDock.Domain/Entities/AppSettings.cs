@@ -15,6 +15,7 @@ public sealed class AppSettings
     public const int MaxBackupKeepCount = 100;
     public const int DefaultAutoBackupIntervalHours = 24;
     public const int MaxAutoBackupIntervalHours = 24 * 30;
+    public const string DefaultOfflineTranslationEndpoint = "http://127.0.0.1:5000";
 
     // ---- General -------------------------------------------------------
     /// <summary>BCP-47 language tag of the active UI language. "en-US" is the product default.</summary>
@@ -79,15 +80,6 @@ public sealed class AppSettings
     /// <summary>Frost blur radius in pixels (1-18). Default 4 (subtle).</summary>
     public double FrostedGlassRadius { get; set; } = 4;
 
-    /// <summary>Soft glow emitted around the quick panel's edge.</summary>
-    public bool EdgeGlowEnabled { get; set; }
-
-    /// <summary>Glow spread in pixels (4-30). Default 18.</summary>
-    public double EdgeGlowStrength { get; set; } = 18;
-
-    /// <summary>Glow brightness 0.1-1.0 (effect opacity). Default 0.30.</summary>
-    public double EdgeGlowBrightness { get; set; } = 0.30;
-
     /// <summary>Opacity 0.1-1.0 of the panel controls (cards, input box,
     /// combos) so they float translucently over a background image.
     /// Default 0.9 - just enough see-through to feel layered.</summary>
@@ -134,10 +126,10 @@ public sealed class AppSettings
     /// "Default" is the classic solid accent pill.</summary>
     public string SelectionBubbleStyle { get; set; } = "Default";
 
-    /// <summary>Engine for selection translation: "Google" (default),
-    /// "Bing", or "Lingva" use keyless endpoints; "DeepL" uses the API key
-    /// stored in <see cref="TranslationApiKey"/>.</summary>
-    public string TranslationEngine { get; set; } = "Google";
+    /// <summary>New installs default to Bing's China endpoint. Existing choices
+    /// are preserved. Cloud credentials are separate for each provider;
+    /// Offline uses a locally installed translation service.</summary>
+    public string TranslationEngine { get; set; } = "Bing";
 
     /// <summary>Bubble text glow: the blurred halo twin under the crisp
     /// text of the whole bubble family. Default OFF: crisp text only.</summary>
@@ -166,9 +158,23 @@ public sealed class AppSettings
     /// <summary>Hours between automatic backups. Default: daily.</summary>
     public int AutoBackupIntervalHours { get; set; } = DefaultAutoBackupIntervalHours;
 
-    /// <summary>Optional translation API key (currently used by the DeepL
-    /// engine, which has no keyless public endpoint).</summary>
+    /// <summary>User-provided DeepL key, never reused for another provider.</summary>
     public string TranslationApiKey { get; set; } = "";
+
+    /// <summary>User-provided Baidu translation application ID.</summary>
+    public string TranslationAppId { get; set; } = "";
+
+    /// <summary>User-provided Baidu secret, separate from the DeepL key.</summary>
+    public string BaiduTranslationApiKey { get; set; } = "";
+
+    /// <summary>User-provided Alibaba Cloud AccessKey ID for TranslateGeneral.</summary>
+    public string AliyunAccessKeyId { get; set; } = "";
+
+    /// <summary>Alibaba Cloud secret, never reused for another provider.</summary>
+    public string AliyunAccessKeySecret { get; set; } = "";
+
+    /// <summary>Loopback-only LibreTranslate-compatible local service address.</summary>
+    public string OfflineTranslationEndpoint { get; set; } = DefaultOfflineTranslationEndpoint;
 
     // ---- Appearance ----------------------------------------------------
     /// <summary>Application theme: "Light", "Dark", or "System".</summary>

@@ -34,6 +34,11 @@ secrets.json
 Data/
 **/Data/
 
+# Optional offline translation runtime and Python bytecode
+/tools/offline-translation/runtime/
+__pycache__/
+*.py[cod]
+
 # OS noise
 Thumbs.db
 desktop.ini

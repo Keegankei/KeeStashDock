@@ -35,8 +35,14 @@ A stable release is not ready until the Windows CI workflow is green and the sam
 - Tray lifecycle and single-instance activation
 - Alt+Q registration and conflict handling
 - Capture, search, edit, copy, direct paste, pin, expiry, Trash, and restore
+- Alt+Enter and Shift+Enter at the cursor and over a selection, plain Enter capture, and CJK IME commit behavior
+- Repeated card clicks and keyboard reactivation of the quick panel, including changing the target application while the panel stays open
 - Clipboard history opt-in and immediate disable behavior
 - Selection capture and every translation engine that can be safely tested
+- Bing China translation, independent Baidu/DeepL credentials, categorized failures, and cancellation when a translation card is dismissed
+- Alibaba Cloud credentials and service activation errors, provider switching without credential cross-contamination, and cancellation of Settings tests
+- Published offline setup files, first-time English/Chinese model installation, start/stop, actual translation with network unavailable, and missing-model/service errors
+- Local endpoint validation (reject remote URLs and redirects), and no cloud request after a local failure
 - Backup creation, export, import safety backup, and restart
 - Group import/export and presets
 - Empty/duplicate edit rejection, draft preservation, and unchanged tags after a failed save

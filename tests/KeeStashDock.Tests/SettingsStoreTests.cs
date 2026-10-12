@@ -117,8 +117,6 @@ public sealed class SettingsStoreTests
               "panelWidth": 1e300,
               "backgroundOverlayOpacity": 50,
               "frostedGlassRadius": 1000,
-              "edgeGlowStrength": 1000,
-              "edgeGlowBrightness": 1000,
               "cardOpacity": 1000,
               "bubbleOpacity": 1000,
               "panelPosX": 1e300,
@@ -136,14 +134,82 @@ public sealed class SettingsStoreTests
         Assert.AreEqual(2000.0, store.Current.PanelWidth);
         Assert.AreEqual(1.0, store.Current.BackgroundOverlayOpacity);
         Assert.AreEqual(18.0, store.Current.FrostedGlassRadius);
-        Assert.AreEqual(30.0, store.Current.EdgeGlowStrength);
-        Assert.AreEqual(1.0, store.Current.EdgeGlowBrightness);
         Assert.AreEqual(1.0, store.Current.CardOpacity);
         Assert.AreEqual(1.0, store.Current.BubbleOpacity);
         Assert.IsNull(store.Current.PanelPosX);
         Assert.IsNull(store.Current.PanelPosY);
         Assert.IsNull(store.Current.PanelUserWidth);
         Assert.AreEqual(4000.0, store.Current.PanelUserHeight);
+    }
+
+    [TestMethod]
+    public void RetiredEdgeGlowFields_DoNotResetExistingSettings()
+    {
+        File.WriteAllText(_settingsFile, """
+            {
+              "theme": "Dark",
+              "edgeGlowEnabled": true,
+              "edgeGlowStrength": 24,
+              "edgeGlowBrightness": 0.8,
+              "bubbleTextGlow": true,
+              "cardOpacity": 0.65
+            }
+            """);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        store.Save();
+
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.IsTrue(store.Current.BubbleTextGlow);
+        Assert.AreEqual(0.65, store.Current.CardOpacity);
+        using JsonDocument saved = JsonDocument.Parse(File.ReadAllText(_settingsFile));
+        Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowEnabled", out _));
+        Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowStrength", out _));
+        Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowBrightness", out _));
+    }
+
+    [TestMethod]
+    public void TranslationDefaultsAndCredentials_PreserveExistingProviderChoice()
+    {
+        var fresh = new SettingsStore(_settingsFile);
+        fresh.Load();
+        Assert.AreEqual("Bing", fresh.Current.TranslationEngine);
+        Assert.AreEqual(AppSettings.DefaultOfflineTranslationEndpoint, fresh.Current.OfflineTranslationEndpoint);
+        Assert.AreEqual(string.Empty, fresh.Current.AliyunAccessKeyId);
+        Assert.AreEqual(string.Empty, fresh.Current.AliyunAccessKeySecret);
+
+        File.WriteAllText(_settingsFile, """
+            { "translationEngine": "DeepL", "translationApiKey": "test-deepl:fx" }
+            """);
+        var existing = new SettingsStore(_settingsFile);
+        existing.Load();
+        Assert.AreEqual("DeepL", existing.Current.TranslationEngine);
+        Assert.AreEqual(string.Empty, existing.Current.BaiduTranslationApiKey);
+        existing.Current.TranslationAppId = "test-app";
+        existing.Current.BaiduTranslationApiKey = "test-baidu";
+        existing.Current.TranslationEngine = "Baidu";
+        existing.Save();
+
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual("Baidu", reloaded.Current.TranslationEngine);
+        Assert.AreEqual("test-app", reloaded.Current.TranslationAppId);
+        Assert.AreEqual("test-baidu", reloaded.Current.BaiduTranslationApiKey);
+        Assert.AreEqual("test-deepl:fx", reloaded.Current.TranslationApiKey);
+
+        reloaded.Current.AliyunAccessKeyId = "test-aliyun-id";
+        reloaded.Current.AliyunAccessKeySecret = "test-aliyun-secret";
+        reloaded.Current.OfflineTranslationEndpoint = "http://127.0.0.1:5010";
+        reloaded.Current.TranslationEngine = "Offline";
+        reloaded.Save();
+        var offline = new SettingsStore(_settingsFile);
+        offline.Load();
+        Assert.AreEqual("Offline", offline.Current.TranslationEngine);
+        Assert.AreEqual("test-aliyun-id", offline.Current.AliyunAccessKeyId);
+        Assert.AreEqual("test-aliyun-secret", offline.Current.AliyunAccessKeySecret);
+        Assert.AreEqual("http://127.0.0.1:5010", offline.Current.OfflineTranslationEndpoint);
+        Assert.AreEqual("test-deepl:fx", offline.Current.TranslationApiKey);
+        Assert.AreEqual("test-baidu", offline.Current.BaiduTranslationApiKey);
     }
 
     [TestMethod]
@@ -156,6 +222,9 @@ public sealed class SettingsStoreTests
         store.Current.AutoBackupIntervalHours = int.MaxValue;
         store.Current.CollapseDelaySeconds = double.NaN;
         store.Current.TranslationApiKey = null!;
+        store.Current.AliyunAccessKeyId = null!;
+        store.Current.AliyunAccessKeySecret = null!;
+        store.Current.OfflineTranslationEndpoint = null!;
 
         store.Save();
 
@@ -177,6 +246,9 @@ public sealed class SettingsStoreTests
         Assert.AreEqual(
             string.Empty,
             persisted.RootElement.GetProperty("translationApiKey").GetString());
+        Assert.AreEqual(string.Empty, store.Current.AliyunAccessKeyId);
+        Assert.AreEqual(string.Empty, store.Current.AliyunAccessKeySecret);
+        Assert.AreEqual(AppSettings.DefaultOfflineTranslationEndpoint, store.Current.OfflineTranslationEndpoint);
     }
 
     private static void AssertSafeDataDefaults(AppSettings settings)

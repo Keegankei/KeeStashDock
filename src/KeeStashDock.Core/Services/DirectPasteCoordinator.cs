@@ -105,10 +105,11 @@ public sealed class DirectPasteCoordinator
     }
 
     /// <summary>
-    /// Captures a valid external foreground target. Any invalid observation
-    /// clears the previous target instead of retaining stale authority.
+    /// Captures a valid external foreground target. The registered paste panel
+    /// may keep an existing, still-valid target while the user interacts with
+    /// it. Other own-process windows and invalid observations clear authority.
     /// </summary>
-    public void RememberForeground()
+    public void RememberForeground(nint pastePanelWindow = default)
     {
         DirectPasteTarget? captured = null;
         try
@@ -117,18 +118,42 @@ public sealed class DirectPasteCoordinator
             if (windowHandle != nint.Zero &&
                 _windows.IsWindow(windowHandle) &&
                 _windows.TryGetWindowProcessId(windowHandle, out uint processId) &&
-                processId != 0 &&
-                processId != _currentProcessId)
+                processId != 0)
             {
-                DateTimeOffset? processStartedAt =
-                    _windows.TryGetProcessStartTimeUtc(processId, out DateTimeOffset startedAt)
-                        ? startedAt
-                        : null;
-                captured = new DirectPasteTarget(
-                    windowHandle,
-                    processId,
-                    _clock.UtcNow,
-                    processStartedAt);
+                DirectPasteTarget? previous = GetTarget();
+                if (processId == _currentProcessId)
+                {
+                    // WM_MOUSEACTIVATE can also be delivered while the panel
+                    // already owns foreground focus. It is not a new target.
+                    if (windowHandle == pastePanelWindow &&
+                        previous is DirectPasteTarget target &&
+                        ValidateTarget(target) == DirectPasteResult.Success)
+                    {
+                        captured = target;
+                    }
+                }
+                else if (Volatile.Read(ref _pasteInProgress) != 0 &&
+                         previous is DirectPasteTarget pending &&
+                         pending.WindowHandle == windowHandle &&
+                         ValidateTarget(pending) == DirectPasteResult.Success)
+                {
+                    // SetForegroundWindow raises a foreground event itself.
+                    // Do not replace the snapshot that the in-flight paste is
+                    // validating merely because its own focus request worked.
+                    captured = pending;
+                }
+                else
+                {
+                    DateTimeOffset? processStartedAt =
+                        _windows.TryGetProcessStartTimeUtc(processId, out DateTimeOffset startedAt)
+                            ? startedAt
+                            : null;
+                    captured = new DirectPasteTarget(
+                        windowHandle,
+                        processId,
+                        _clock.UtcNow,
+                        processStartedAt);
+                }
             }
         }
         catch
