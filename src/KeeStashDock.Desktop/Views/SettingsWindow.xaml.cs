@@ -61,7 +61,8 @@ public partial class SettingsWindow : Window
         bool isAppDataFallback,
         Func<string, AppSettings, CancellationToken, Task<TranslationResult>>? translate = null,
         HotkeyManager? screenshotHotkey = null,
-        Func<Task<bool>>? prepareForShutdown = null)
+        Func<Task<bool>>? prepareForShutdown = null,
+        ComponentInstallerActions? components = null)
     {
         InitializeComponent();
         _settings = settings;
@@ -75,11 +76,12 @@ public partial class SettingsWindow : Window
         _isAppDataFallback = isAppDataFallback;
         _translate = translate ?? TranslationService.TranslateDetailedAsync;
 
-        Closing += (s, e) => { e.Cancel = true; CancelTranslationTest(); Hide(); };
+        ConfigureComponents(components);
+        Closing += (s, e) => { e.Cancel = true; CancelTranslationTest(); _componentCancellation?.Cancel(); Hide(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) CancelTranslationTest(); };
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
         LocalizationService.Instance.LanguageChanged +=
-            () => LocalizationService.Instance.ApplyFlowDirection(this);
+            () => { LocalizationService.Instance.ApplyFlowDirection(this); RefreshComponents(); };
         LocalizationService.Instance.ApplyFlowDirection(this);
 
         PopulateFromSettings();
@@ -437,21 +439,6 @@ public partial class SettingsWindow : Window
         CancelTranslationTest();
         _settings.Current.OfflineTranslationEndpoint = OfflineEndpointBox.Text.Trim();
         _settings.Save();
-    }
-
-    private void OnOfflineSetupClick(object sender, RoutedEventArgs e)
-    {
-        string folder = Path.Combine(AppContext.BaseDirectory, "OfflineTranslation");
-        try
-        {
-            if (!Directory.Exists(folder)) throw new DirectoryNotFoundException();
-            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
-        }
-        catch (Exception exception) when (exception is IOException or Win32Exception
-            or UnauthorizedAccessException or InvalidOperationException)
-        {
-            TranslationTestStatus.Text = LocalizationService.Instance["Settings.OfflineSetupUnavailable"];
-        }
     }
 
     private async void OnTranslationTestClick(object sender, RoutedEventArgs e)

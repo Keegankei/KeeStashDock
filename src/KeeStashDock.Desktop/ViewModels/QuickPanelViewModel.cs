@@ -124,7 +124,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
                 { ShowToast("Screenshot.ImageUnavailable"); return; }
                 writeClipboard = () => ImagePresentation.Copy(png);
             }
-            else writeClipboard = () => Clipboard.SetDataObject(item.Model.Content, copy: true);
+            else writeClipboard = () => ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(item.Model.Content, copy: true));
             if (!await TryWriteClipboardAsync(writeClipboard))
             { ShowToast("Screenshot.CopyFailed"); return; }
         }

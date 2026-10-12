@@ -19,12 +19,23 @@ function Resolve-OfflineRuntime([string] $RuntimeDirectory) {
 function Get-OfflineProcess([string] $RuntimeDirectory) {
     $stateFile = Join-Path $RuntimeDirectory 'service.json'
     if (-not (Test-Path -LiteralPath $stateFile)) { return $null }
-    $state = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
-    $process = Get-Process -Id $state.pid -ErrorAction SilentlyContinue
-    if ($null -eq $process) { return $null }
-    $expectedPath = Join-Path $RuntimeDirectory 'python\pythonw.exe'
-    if ($process.Path -ne $expectedPath -or $process.StartTime.ToUniversalTime().Ticks.ToString() -ne $state.startTicks) {
-        throw 'The saved process identity no longer matches. No process was stopped. Check the service.json file in the offline runtime folder.'
+    try {
+        $state = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
+        if ($null -eq $state -or $null -eq $state.PSObject.Properties['pid'] -or
+            $null -eq $state.PSObject.Properties['startTicks']) { return $null }
+        $servicePid = 0
+        if (-not [int]::TryParse([string]$state.pid, [ref]$servicePid) -or $servicePid -le 0) { return $null }
+        $process = Get-Process -Id $servicePid -ErrorAction SilentlyContinue
+        if ($null -eq $process) { return $null }
+        $expectedPath = Join-Path $RuntimeDirectory 'python\pythonw.exe'
+        if ($process.Path -ne $expectedPath -or $process.StartTime.ToUniversalTime().Ticks.ToString() -ne [string]$state.startTicks) {
+            # A stale PID may have been reused. Ignore it without touching that process;
+            # a successful start writes the new engine's identity over the stale state.
+            return $null
+        }
+        return $process
+    } catch {
+        # A truncated state file or inaccessible/recycled process is not our engine.
+        return $null
     }
-    return $process
 }

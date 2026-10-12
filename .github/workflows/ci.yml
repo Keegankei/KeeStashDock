@@ -27,6 +27,30 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Python for offline helper tests
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Test offline helper safety
+        run: python -B tools/offline-translation/test_runtime.py
+
+      - name: Test offline process identity
+        shell: pwsh
+        run: ./tools/offline-translation/test_process.ps1
+
+      - name: Test native runtime setup decisions
+        shell: pwsh
+        run: ./tools/native-runtime/test_setup.ps1
+
+      - name: Test cleanup safety
+        shell: pwsh
+        run: ./tools/Test-Clean.ps1
+
+      - name: Install verified local OCR models
+        shell: pwsh
+        run: ./tools/ocr/Setup.ps1
+
       - name: Restore solution
         run: dotnet restore KeeStashDock.sln
 
@@ -46,3 +70,7 @@ jobs:
           --no-restore
           -p:PublishProfile=FolderProfile
           --output artifacts/publish
+
+      - name: Verify portable package
+        shell: pwsh
+        run: ./tools/Verify-Publish.ps1 -Path artifacts/publish

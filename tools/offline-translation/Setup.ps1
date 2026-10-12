@@ -20,6 +20,10 @@ if (-not (Test-Path -LiteralPath $pythonZip) -or (Get-FileHash -LiteralPath $pyt
 if ((Get-FileHash -LiteralPath $pythonZip -Algorithm SHA256).Hash -ne $pythonHash) {
     throw 'Python archive checksum mismatch. Delete the downloaded archive and retry setup on a trusted connection.'
 }
+# From this point setup may replace runtime files. A cancelled/failed repair must
+# not leave a success marker that allows an incomplete engine to be started.
+$installedMarker = Join-Path $taskRuntime 'installed.json'
+if (Test-Path -LiteralPath $installedMarker) { Remove-Item -LiteralPath $installedMarker -Force }
 $pythonDirectory = Join-Path $taskRuntime 'python'
 Expand-Archive -LiteralPath $pythonZip -DestinationPath $pythonDirectory -Force
 # Embeddable Python ignores global/user site packages and PYTHONPATH.

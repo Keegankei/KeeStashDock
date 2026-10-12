@@ -25,6 +25,7 @@ foreach ($name in $files.Keys) {
     $temporary = Join-Path $Destination ('.download-' + [Guid]::NewGuid().ToString('N'))
     try {
         $uri = "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/$revision/$name"
+        Write-Host "Downloading $name..."
         Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $temporary -TimeoutSec 90
         if ((Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash -ne $files[$name]) {
             throw "The downloaded $name did not match its expected SHA256."

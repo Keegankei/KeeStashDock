@@ -32,6 +32,7 @@ body:
         - Quick panel
         - Workbench
         - Clipboard or direct paste
+        - Screenshots or local OCR
         - Selection bubble or translation
         - Database, backup, or import
         - Theme, layout, or localization
@@ -85,7 +86,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I tested the latest tagged release.
+        - label: I tested the latest release or current development build.
           required: true
         - label: I searched existing issues for duplicates.
           required: true

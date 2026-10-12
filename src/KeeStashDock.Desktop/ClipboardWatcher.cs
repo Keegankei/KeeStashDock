@@ -17,10 +17,9 @@ namespace KeeStashDock.Desktop;
 ///     opts in;
 ///   - only plain text is read; images/files are ignored.
 ///
-/// Self-noise: the app itself writes the clipboard constantly (card copy,
-/// capture wash, translation copy). No suppression plumbing is needed -
-/// SnippetService.Add dedupes identical content, so copying an existing
-/// card merely bumps it (which is exactly what a history should do).
+/// Copies of existing entries are excluded by clipboard sequence, including
+/// events delivered while OLE is writing. Otherwise burn-after-read content
+/// could be captured again after its original entry has moved to trash.
 /// </summary>
 public sealed class ClipboardWatcher : IDisposable
 {
@@ -28,13 +27,15 @@ public sealed class ClipboardWatcher : IDisposable
     private readonly SnippetService _snippets;
     private HwndSource? _source;
     private bool _listening;
-    private string? _lastCaptured;
+    private uint? _lastCapturedSequence;
+    private readonly Func<uint> _getSequence;
+    private readonly Func<string?> _readText;
+    private readonly ClipboardWriteGuard _ownWrites;
 
     public ClipboardWatcher(SettingsStore settings, SnippetService snippets)
+        : this(settings, snippets, NativeMethods.GetClipboardSequenceNumber,
+            () => Clipboard.ContainsText() ? Clipboard.GetText() : null, ClipboardWriteGuard.Shared)
     {
-        _settings = settings;
-        _snippets = snippets;
-
         // HWND_MESSAGE parent: a windowless message sink, never visible,
         // never in alt-tab, alive for the whole app session.
         _source = new HwndSource(new HwndSourceParameters("KeeStashDockClipboardSink")
@@ -47,6 +48,17 @@ public sealed class ClipboardWatcher : IDisposable
 
         Refresh();
         _settings.Changed += Refresh;
+    }
+
+    // Tests supply clipboard events without reading or changing the user's clipboard.
+    internal ClipboardWatcher(SettingsStore settings, SnippetService snippets,
+        Func<uint> getSequence, Func<string?> readText, ClipboardWriteGuard ownWrites)
+    {
+        _settings = settings;
+        _snippets = snippets;
+        _getSequence = getSequence;
+        _readText = readText;
+        _ownWrites = ownWrites;
     }
 
     /// <summary>(Un)subscribes the listener to match the master switch -
@@ -71,15 +83,16 @@ public sealed class ClipboardWatcher : IDisposable
         return IntPtr.Zero;
     }
 
-    private void TryCollect()
+    internal void TryCollect()
     {
         if (!_settings.Current.ClipboardWatchEnabled) return;
+        uint sequence = _getSequence();
+        if (_ownWrites.IsOwnWrite(sequence) || _lastCapturedSequence == sequence) return;
 
-        string text;
+        string? text;
         try
         {
-            if (!Clipboard.ContainsText()) return;
-            text = Clipboard.GetText();
+            text = _readText();
         }
         catch
         {
@@ -88,18 +101,20 @@ public sealed class ClipboardWatcher : IDisposable
             try
             {
                 System.Threading.Thread.Sleep(80);
-                if (!Clipboard.ContainsText()) return;
-                text = Clipboard.GetText();
+                text = _readText();
             }
             catch { return; }
         }
 
         if (string.IsNullOrWhiteSpace(text)) return;
         if (text.Length > 100_000) return;         // guard: no accidental books
-        if (text == _lastCaptured) return;         // WM_CLIPBOARDUPDATE fires in pairs
-        _lastCaptured = text;
-
-        try { _snippets.Add(text, SnippetSource.Clipboard); }
+        // Re-check after reading: OLE may pump another clipboard event while data is retrieved.
+        if (_getSequence() != sequence || _ownWrites.IsOwnWrite(sequence)) return;
+        try
+        {
+            _snippets.Add(text, SnippetSource.Clipboard);
+            _lastCapturedSequence = sequence;
+        }
         catch { /* collection must never disturb the desktop */ }
     }
 

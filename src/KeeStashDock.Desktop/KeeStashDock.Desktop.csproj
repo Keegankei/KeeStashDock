@@ -41,6 +41,8 @@
 
   <ItemGroup>
     <!-- Setup is explicit; OCR never downloads models while recognizing an image. -->
+    <None Include="..\..\tools\native-runtime\Setup.ps1" Link="NativeRuntime\Setup.ps1"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="$(PkgTesseractOCR)\x64\tesseract.exe" Link="x64\tesseract.exe"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\tools\ocr\Setup.ps1" Link="OcrModels\Setup.ps1"
@@ -50,6 +52,8 @@
     <None Include="..\..\docs\SCREENSHOTS.md" Link="Screenshots.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\LOCAL_OCR.md" Link="OcrModels\README.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\third_party\dotnet\*" Link="Licenses\dotnet\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\third_party\ocr\*" Link="Licenses\OCR\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
@@ -68,6 +72,7 @@
   <ItemGroup>
     <!-- Optional engine setup is shipped as source; runtime/models are installed separately. -->
     <None Include="..\..\tools\offline-translation\*.ps1;..\..\tools\offline-translation\*.cmd;..\..\tools\offline-translation\*.py;..\..\tools\offline-translation\*.json;..\..\tools\offline-translation\*.txt"
+          Exclude="..\..\tools\offline-translation\test_*.*"
           Link="OfflineTranslation\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\OFFLINE_TRANSLATION.md" Link="OfflineTranslation\README.md"

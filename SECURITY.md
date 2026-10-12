@@ -34,9 +34,11 @@ The maintainer will acknowledge a complete report, reproduce and assess the issu
 Review changes carefully when they affect:
 
 - Clipboard monitoring, direct paste, global hooks, or synthetic keystrokes
+- Screenshot capture, local OCR child processes, image decoding, and downloaded model integrity
 - Selection capture and translation network requests
 - Baidu, DeepL, and Alibaba Cloud credential storage (settings are not encrypted at rest)
 - Offline translation loopback validation, proxy bypass, model downloads, and local service lifecycle
+- Native runtime download signatures, administrator prompts, setup cancellation, and restart handling
 - SQLite import, backup replacement, and path handling
 - Portable data-directory permissions
 - Log content and exception reporting

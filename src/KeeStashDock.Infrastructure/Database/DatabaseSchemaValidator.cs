@@ -101,6 +101,10 @@ public sealed class DatabaseSchemaValidator
                     $"{MigrationRunner.LatestSupportedVersion}.");
             }
 
+            // Legacy migrations repair historical timestamp formats first. Validate the
+            // resulting values before installing a package that the application must read.
+            if (requireCurrentUserVersion) ValidateEntryValues(connection);
+
             ValidateNamedObjects(connection, "index", RequiredIndexes);
             ValidateNamedObjects(connection, "trigger", RequiredFtsTriggers);
             ValidateFtsDefinition(connection);
@@ -112,11 +116,51 @@ public sealed class DatabaseSchemaValidator
         {
             throw;
         }
-        catch (SqliteException exception)
+        catch (Exception exception) when (exception is SqliteException or InvalidCastException or OverflowException or FormatException)
         {
             throw new DatabaseValidationException(
                 "The selected file is not a valid, readable KeeStashDock database.",
                 exception);
+        }
+    }
+
+    private static void ValidateEntryValues(SqliteConnection connection)
+    {
+        using (var invalid = connection.CreateCommand())
+        {
+            invalid.CommandText = """
+                SELECT COUNT(*) FROM snippets WHERE
+                    typeof(content) != 'text' OR typeof(content_hash) != 'text' OR
+                    (title IS NOT NULL AND typeof(title) != 'text') OR
+                    typeof(type) != 'integer' OR type NOT BETWEEN 0 AND 5 OR
+                    typeof(source) != 'integer' OR source NOT BETWEEN 0 AND 5 OR
+                    typeof(expire_policy) != 'integer' OR expire_policy NOT BETWEEN 0 AND 3 OR
+                    typeof(is_pinned) != 'integer' OR is_pinned NOT IN (0, 1) OR
+                    typeof(sort_weight) != 'integer' OR sort_weight NOT BETWEEN -2147483648 AND 2147483647 OR
+                    typeof(use_count) != 'integer' OR use_count NOT BETWEEN 0 AND 2147483647
+                """;
+            if (Convert.ToInt64(invalid.ExecuteScalar()) != 0)
+                throw new DatabaseValidationException("The database contains unreadable entry values.");
+            invalid.CommandText = """
+                SELECT COUNT(*) FROM categories WHERE
+                    typeof(icon) != 'text' OR typeof(color) != 'text' OR
+                    typeof(sort_order) != 'integer' OR sort_order NOT BETWEEN -2147483648 AND 2147483647
+                """;
+            if (Convert.ToInt64(invalid.ExecuteScalar()) != 0)
+                throw new DatabaseValidationException("The database contains unreadable group values.");
+        }
+        using var timestamps = connection.CreateCommand();
+        timestamps.CommandText = "SELECT created_at, updated_at, expire_at, deleted_at, last_used_at FROM snippets";
+        using var rows = timestamps.ExecuteReader();
+        while (rows.Read())
+        {
+            for (int column = 0; column < rows.FieldCount; column++)
+            {
+                if (column >= 2 && rows.IsDBNull(column)) continue;
+                if (rows.IsDBNull(column) || rows.GetValue(column) is not string value ||
+                    !UtcTimestamp.TryNormalize(value, out _))
+                    throw new DatabaseValidationException("The database contains an unreadable entry timestamp.");
+            }
         }
     }
 

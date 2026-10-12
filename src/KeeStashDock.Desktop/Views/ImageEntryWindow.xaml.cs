@@ -156,7 +156,7 @@ public partial class ImageEntryWindow : Window
     private void OnCopyText(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(OcrText.Text)) return;
-        try { Clipboard.SetDataObject(OcrText.Text, true); RegisterUse(); ShowStatus("QuickPanel.Copied"); }
+        try { ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(OcrText.Text, true)); RegisterUse(); ShowStatus("QuickPanel.Copied"); }
         catch (System.Runtime.InteropServices.COMException) { ShowStatus("Screenshot.CopyFailed"); }
     }
 

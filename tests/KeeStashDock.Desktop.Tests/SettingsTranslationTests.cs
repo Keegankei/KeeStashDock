@@ -75,10 +75,12 @@ public sealed class SettingsTranslationTests
             string? testedSample = null;
             int shutdownPreparations = 0;
             var pendingShutdown = new TaskCompletionSource<bool>();
+            var componentInstaller = new ComponentSettingsScenarios();
             window = new SettingsWindow(
                 settings, backup, importer, restarter, hotkey,
                 displayDataRoot: root, isAppDataFallback: false, screenshotHotkey: screenshotHotkey,
                 prepareForShutdown: () => { shutdownPreparations++; return pendingShutdown.Task; },
+                components: componentInstaller.Actions,
                 translate: (text, cfg, token) =>
                 {
                     testedProvider = cfg.TranslationEngine;
@@ -221,6 +223,7 @@ public sealed class SettingsTranslationTests
             pendingShutdown.SetResult(false);
             Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             Assert.IsTrue(window.IsEnabled, "Cancelling a draft decision must abort restart and restore Settings.");
+            componentInstaller.Verify(window);
             ImageEntryWindowScenarios.Verify(root);
         }
         finally

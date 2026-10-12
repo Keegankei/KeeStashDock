@@ -50,7 +50,7 @@ public sealed partial class SnippetRepository
         return id;
     }
 
-    private static long Insert(SqliteConnection conn, SqliteTransaction? tx, Snippet s)
+    internal static long Insert(SqliteConnection conn, SqliteTransaction? tx, Snippet s)
     {
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
@@ -268,7 +268,7 @@ public sealed partial class SnippetRepository
 
     // ------------------------------------------------------------- plumbing
 
-    private static long? FindOtherLiveId(SqliteConnection conn, SqliteTransaction tx,
+    internal static long? FindOtherLiveId(SqliteConnection conn, SqliteTransaction tx,
                                          string hash, long excludingId)
     {
         using var cmd = conn.CreateCommand();

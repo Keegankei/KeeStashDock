@@ -195,6 +195,31 @@ public sealed class DatabaseImportTests
     }
 
     [TestMethod]
+    [DataRow("UPDATE snippets SET created_at = 'not a timestamp'")]
+    [DataRow("UPDATE snippets SET expire_at = 'not a timestamp'")]
+    [DataRow("UPDATE snippets SET last_used_at = 'not a timestamp'")]
+    [DataRow("UPDATE snippets SET use_count = 2147483648")]
+    [DataRow("UPDATE snippets SET type = 999")]
+    [DataRow("UPDATE snippets SET source = 999")]
+    [DataRow("UPDATE snippets SET content = x'010203'")]
+    [DataRow("UPDATE schema_version SET version = 9223372036854775807")]
+    public void UnreadableEntryValuesAreRejectedBeforeImportReplacesTheActiveDatabase(string damage)
+    {
+        ImportContext context = CreateContext();
+        CreateDatabase(context.ActiveFile, "original");
+        string source = Path.Combine(_root, "invalid-values.db");
+        CreateDatabase(source, "candidate");
+        Execute(source, damage);
+
+        Assert.ThrowsExactly<DatabaseImportException>(() => context.Service.Import(source));
+
+        Assert.AreEqual("original", ReadOnlyMarker(context.ActiveFile));
+        Assert.IsFalse(context.Restarter.WasCalled);
+        Assert.IsFalse(context.Coordinator.AreOperationsDisabled);
+        AssertNoImportTemporaryFiles();
+    }
+
+    [TestMethod]
     public void ActiveDatabasePath_CannotBeImportedIntoItself()
     {
         ImportContext context = CreateContext();

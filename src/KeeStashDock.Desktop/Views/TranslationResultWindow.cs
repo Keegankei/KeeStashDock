@@ -85,8 +85,7 @@ public sealed class TranslationResultWindow : Window
         _surface.MouseLeftButtonUp += (_, e) =>
         {
             e.Handled = true;
-            if (!_copyable) return;   // still translating / error state
-            try { Clipboard.SetDataObject(_resultText, copy: true); } catch { }
+            if (!TryCopyResult(text => Clipboard.SetDataObject(text, copy: true))) return;
             HideCard();
             MiniToast.Show(Localization.LocalizationService.Instance["QuickPanel.Copied"]);
         };
@@ -105,6 +104,21 @@ public sealed class TranslationResultWindow : Window
             SetWindowLong(h, GWL_EXSTYLE,
                 GetWindowLong(h, GWL_EXSTYLE) | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
         };
+    }
+
+    internal bool TryCopyResult(Action<string> copy)
+    {
+        if (!_copyable) return false;
+        try { copy(_resultText); return true; }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Keep the result available for another click instead of reporting a copy that failed.
+            _hint.Text = Localization.LocalizationService.Instance["Screenshot.CopyFailed"];
+            _hint.Visibility = Visibility.Visible;
+            _hideTimer.Stop();
+            _hideTimer.Start();
+            return false;
+        }
     }
 
     private void ApplyStyle()

@@ -11,8 +11,15 @@ The first version supports printed English and Simplified Chinese using official
 Tesseract `tessdata_fast` models. Handwriting, rotated text, tiny fonts, complex
 tables, and Traditional Chinese are not guaranteed. Always review recognized text.
 
-Models are optional local assets, not committed binaries. Install them explicitly
-before building a distributable:
+Models are local assets, not committed binaries. Standard release packages include
+them. If they are missing or damaged, open Settings and use **Install / repair OCR**.
+Installation runs in the background, shows progress and failures, and can be
+cancelled. Models installed through the app go to
+`%LOCALAPPDATA%\KeeStashDock\OcrModels`, so a read-only application directory does
+not prevent installation. Recognition prefers a complete valid user model set,
+then the models bundled with the executable. It never downloads during recognition.
+
+For maintainers, prepare models before building a distributable:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
@@ -22,17 +29,29 @@ The script downloads `eng.traineddata`, `chi_sim.traineddata`, and their Apache 
 license from the official `tesseract-ocr/tessdata_fast` repository at fixed commit
 `87416418657359cb625c412a48b6e1d6d41c29bd`, checks each SHA256, and places them in
 `tools/ocr/models`. Builds and publishes copy these assets to `OcrModels` beside
-the executable. A package without models can install them by running its
-`OcrModels/Setup.ps1`. GitHub access is needed only for this explicit setup step;
-recognition works offline afterwards. No Windows language packs or global Python
+the executable. The same setup script ships as `OcrModels/Setup.ps1` for
+manual diagnostics; ordinary users can use the Settings installation button.
+GitHub access is needed only for this explicit setup step;
+recognition works offline afterwards. The Settings installer also checks the native
+engine and, when needed, downloads Microsoft's signed Visual C++ x64 runtime.
+Windows may request administrator permission; a required restart is reported
+before setup continues. No Windows language packs or global Python
 installation are required.
+
+Cancelling setup or reaching its timeout stops the app's setup worker and ordinary
+child processes. A Microsoft runtime installation already authorized through
+Windows may continue with administrator privileges; cancellation does not undo
+that installation. Let it finish, and if Settings reports **Restart required**,
+restart Windows before retrying component setup. This does not change the
+separate OCR recognition cancel button, which stops the recognition process.
 
 ## Engine and limits
 
 The pinned `TesseractOCR` NuGet package is version 5.5.2. Its bundled Windows x64
 CLI reports Tesseract 5.5.0 and Leptonica 1.85.0. This package's native DLLs require
-the Microsoft Visual C++ 2015–2022 x64 runtime; if the engine cannot start, install
-the runtime from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+the Microsoft Visual C++ v14 x64 runtime. If the engine cannot start, use the OCR
+**Install / repair** button in Settings; it obtains the verified installer from
+[Microsoft](https://aka.ms/vc14/vc_redist.x64.exe) when required.
 
 The app runs one hidden OCR child process at a time with a 45-second deadline.
 Images are sent through stdin and UTF-8 results are read from stdout. Cancellation

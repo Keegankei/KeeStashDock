@@ -99,6 +99,7 @@ Offline translation sends text only to a loopback address on this computer, bypa
 - Windows 10 22H2 may still run, but support is best-effort because Microsoft ended standard support on 2025-10-14; use an ESU-covered system where applicable.
 - x64 processor for the supplied `win-x64` publish profile
 - No separately installed .NET runtime when using the self-contained publish output
+- Microsoft Visual C++ v14 x64 Redistributable for native OCR and the optional offline translation engine; see [OCR setup](docs/LOCAL_OCR.md)
 
 ### Building from source
 
@@ -117,7 +118,7 @@ Offline translation sends text only to a loopback address on this computer, bypa
 
 For Alibaba Cloud, choose **Translate** as the selection action, select **Alibaba Cloud**, and enter your own AccessKey ID and secret. Use a RAM identity with permission for `alimt:TranslateGeneral`; activate the [Machine Translation service](https://help.aliyun.com/zh/machine-translation/developer-reference/api-alimt-2018-10-12-translategeneral) and review [quota and billing](https://help.aliyun.com/zh/machine-translation/product-overview/billing-overview). Click **Test translation** to verify your account and network.
 
-For offline translation, choose **Local offline**, click **Open offline setup folder**, and follow its README to install and start the optional engine. Keep the default address `http://127.0.0.1:5000` unless you changed the local port. The starter models support English and Simplified Chinese; other target languages require a compatible engine with those models. KeeStashDock does not switch to a cloud provider when a model is missing.
+In Settings, use **Install / repair OCR** if a package lacks OCR models. For offline translation, choose **Local offline** and use **Install / repair offline translation**. The app downloads the verified components in the background and starts the local engine after installation. Settings shows progress, cancellation, and start/stop controls. Missing native runtime prerequisites are installed from Microsoft's signed download; Windows may ask for administrator permission or a restart. Cancelling app setup does not undo an already authorized Windows runtime installation. Keep the default address `http://127.0.0.1:5000` unless you changed the local port. The starter models support English and Simplified Chinese; other target languages require a compatible engine with those models. KeeStashDock does not switch to a cloud provider when a model is missing.
 
 ## Build, test, and publish
 
@@ -132,15 +133,19 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 Create the supported portable Windows package:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
 dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
   --no-restore `
   -p:PublishProfile=FolderProfile `
   --output artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
 ```
 
-The GitHub Actions workflow performs restore, Release build, tests, and a publish smoke check on Windows.
+The OCR setup step downloads and verifies the English/Simplified Chinese models before packaging. Use a fresh output folder; never package an installation that contains your `Data` directory. `Verify-Publish.ps1` checks the native engine, models, locales, licenses, offline setup files, and accidental private state. The optional translation runtime is installed separately.
+
+GitHub Actions performs Release build, .NET tests, Python helper safety tests, and this complete publish smoke check on Windows.
 
 ## Data layout
 

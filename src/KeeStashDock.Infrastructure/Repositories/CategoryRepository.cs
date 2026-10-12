@@ -6,7 +6,7 @@ namespace KeeStashDock.Infrastructure.Repositories;
 
 /// <summary>CRUD for categories. Deleting a category detaches its snippets
 /// (FK is ON DELETE SET NULL) so no content is ever lost by group removal.</summary>
-public sealed class CategoryRepository
+public sealed partial class CategoryRepository
 {
     private readonly Db _db;
     public CategoryRepository(Db db) => _db = db;

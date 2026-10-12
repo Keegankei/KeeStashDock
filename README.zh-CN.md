@@ -99,6 +99,7 @@ KeeStashDock 采用本地优先设计。文本片段、截图、识别文字、�
 - Windows 10 22H2 可能仍可运行，但微软已于 2025-10-14 结束常规支持，因此项目仅提供尽力支持；适用时应使用已加入 ESU 的系统。
 - 使用现有 `win-x64` 发布配置时需要 x64 处理器
 - 使用自包含发布目录时，无须单独安装 .NET 运行时
+- 原生 OCR 和可选离线翻译引擎需要 Microsoft Visual C++ v14 x64 运行库，详见 [OCR 安装说明](docs/LOCAL_OCR.md)
 
 ### 从源码构建
 
@@ -117,7 +118,7 @@ KeeStashDock 采用本地优先设计。文本片段、截图、识别文字、�
 
 **阿里云翻译：** 在设置中将划词动作改为“翻译”，选择“阿里云”，填写自己的 AccessKey ID 和 Secret。先开通[机器翻译服务](https://help.aliyun.com/zh/machine-translation/developer-reference/api-alimt-2018-10-12-translategeneral)，使用具有 `alimt:TranslateGeneral` 权限的 RAM 身份，并确认[免费额度及超额计费规则](https://help.aliyun.com/zh/machine-translation/product-overview/billing-overview)。点击“测试翻译”会发送固定示例，不读取剪贴板。
 
-**本地离线翻译：** 选择“本地离线”，点击“打开离线安装目录”，按目录内 README 安装并启动引擎。默认地址为 `http://127.0.0.1:5000`。初始模型支持英语与简体中文；其他目标语言需要在兼容引擎中安装相应模型，模型缺失时不会自动切换到云端。
+**本地 OCR 与离线翻译：** 若发布包缺少 OCR 模型，可在设置中点击“安装 / 修复 OCR”。翻译引擎选择“本地离线”后，点击“安装 / 修复离线翻译”；软件会在后台下载校验所需组件，并在安装完成后启动引擎。设置中可查看进度、取消操作及启动 / 停止服务，无需手动运行 PowerShell。若缺少原生运行库，软件会下载经微软签名校验的官方安装程序；Windows 可能要求管理员授权或重启。取消软件内的安装任务不会撤销已授权启动的 Windows 运行库安装；若提示需要重启，请重启电脑后继续安装组件。默认地址为 `http://127.0.0.1:5000`。初始模型支持英语与简体中文；其他目标语言需要在兼容引擎中安装相应模型，模型缺失时不会自动切换到云端。
 
 ## 构建、测试与发布
 
@@ -132,15 +133,19 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 生成受支持的 Windows 绿色便携发布目录：
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
 dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
   --no-restore `
   -p:PublishProfile=FolderProfile `
   --output artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
 ```
 
-GitHub Actions 会在 Windows 环境完成还原、Release 构建、测试和发布冒烟检查。
+OCR 安装步骤会下载并校验英语、简体中文模型。请使用新的发布目录，勿将含个人 `Data` 目录的安装文件夹直接打包。`Verify-Publish.ps1` 会检查原生 OCR 引擎、模型、语言包、许可证、离线翻译安装脚本，以及误带的个人数据。本地翻译运行环境仍由用户单独安装。
+
+GitHub Actions 会在 Windows 环境完成 Release 构建、.NET 测试、Python 离线服务安全测试及完整发布检查。
 
 ## 数据目录
 

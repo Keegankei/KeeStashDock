@@ -27,13 +27,16 @@ public sealed class LocalOcrService
     private static readonly SemaphoreSlim RecognitionGate = new(1, 1);
     private readonly string _baseDirectory;
     private readonly TimeSpan _timeout;
+    private readonly string? _localDataDirectory;
 
-    public LocalOcrService() : this(AppContext.BaseDirectory, TimeSpan.FromSeconds(45)) { }
+    public LocalOcrService() : this(AppContext.BaseDirectory, TimeSpan.FromSeconds(45),
+        ComponentInstallService.DefaultLocalDataDirectory) { }
 
-    internal LocalOcrService(string baseDirectory, TimeSpan timeout)
+    internal LocalOcrService(string baseDirectory, TimeSpan timeout, string? localDataDirectory = null)
     {
         _baseDirectory = baseDirectory;
         _timeout = timeout;
+        _localDataDirectory = localDataDirectory;
     }
 
     public async Task<OcrRecognitionResult> RecognizeAsync(byte[] pngBytes,
@@ -42,9 +45,9 @@ public sealed class LocalOcrService
         OcrFailure validation = ValidateImage(pngBytes);
         if (validation != OcrFailure.None) return new("", validation);
         if (cancellationToken.IsCancellationRequested) return new("", OcrFailure.Cancelled);
-        string models = Path.Combine(_baseDirectory, "OcrModels");
-        if (!File.Exists(Path.Combine(models, "eng.traineddata")) ||
-            !File.Exists(Path.Combine(models, "chi_sim.traineddata")))
+        string models = _localDataDirectory is null ? Path.Combine(_baseDirectory, "OcrModels")
+            : ComponentInstallService.ResolveOcrModelsDirectory(_baseDirectory, _localDataDirectory);
+        if (!ComponentInstallService.HasOcrModels(models))
             return new("", OcrFailure.MissingModels);
         string executable = Path.Combine(_baseDirectory, "x64", "tesseract.exe");
         if (!Environment.Is64BitProcess || !File.Exists(executable)) return new("", OcrFailure.EngineUnavailable);

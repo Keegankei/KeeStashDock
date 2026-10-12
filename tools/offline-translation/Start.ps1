@@ -7,7 +7,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $taskRuntime 'installed.json'))) {
 }
 $existingProcess = Get-OfflineProcess $taskRuntime
 if ($null -ne $existingProcess) {
-    Write-Host 'The offline engine is already running. Use Stop.ps1 before changing its port.'
+    $existingReady = $false
+    try {
+        $existingHealth = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 2
+        $existingReady = $existingHealth.service -eq 'keestashdock-offline' -and $existingHealth.pid -eq $existingProcess.Id
+    } catch { }
+    if (-not $existingReady) {
+        throw 'The offline engine is running but is not ready at the requested port. Stop it from Settings or Stop.ps1, then start it again with the desired port.'
+    }
+    Write-Host "The offline engine is already ready at http://127.0.0.1:$Port."
     return
 }
 $server = Join-Path $PSScriptRoot 'server.py'

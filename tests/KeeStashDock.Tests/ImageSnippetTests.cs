@@ -195,9 +195,46 @@ public sealed class ImageSnippetTests
         Snippet imported = _service.ByCategory(categories.FindByName("Imported")!.Id).Single(s => s.IsImage);
         CollectionAssert.AreEqual(png, _service.GetImage(imported.Id));
         Assert.AreEqual("", imported.Content);
+        Assert.AreEqual(SnippetSource.Import, imported.Source);
         Assert.IsTrue(_service.ByCategory(categories.FindByName("Imported")!.Id).Any(s => s.Type == SnippetType.Code));
         File.WriteAllText(file, """{"version":1,"name":"Legacy","items":[{"title":null,"content":"legacy package"}]}""");
         Assert.AreEqual(1, groups.ImportGroup(groups.ReadPackage(file), "Legacy", null));
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void GroupImportWriteFailureRollsBackCategoryEntriesAndImageAssets(bool overwrite)
+    {
+        var categories = new CategoryRepository(_db);
+        long originalCategory = categories.Insert(new Category { Name = "Original" });
+        long destination = categories.Insert(new Category { Name = "Destination" });
+        long original = _service.Add("keep original", SnippetSource.Manual, categoryId: destination);
+        long duplicate = _service.Add("existing elsewhere", SnippetSource.Manual, categoryId: originalCategory);
+        var groups = new GroupIoService(_service, categories);
+        byte[] png = Png();
+        var package = new GroupIoService.GroupPackage(2, "Destination",
+            [new(null, "existing elsewhere"), new(null, "", SnippetType.Image, png, png), new(null, "fail write")]);
+        Execute("""
+            CREATE TRIGGER fail_group_import BEFORE INSERT ON snippets
+            WHEN NEW.content = 'fail write'
+            BEGIN SELECT RAISE(ABORT, 'Simulated storage failure'); END;
+            """);
+        int snippetNotifications = 0, categoryNotifications = 0;
+        _service.Changed += () => snippetNotifications++;
+        categories.Changed += () => categoryNotifications++;
+
+        Assert.ThrowsExactly<SqliteException>(() =>
+            groups.ImportGroup(package, overwrite ? "Destination" : "New destination", overwrite ? destination : null));
+
+        Assert.AreEqual(original, _service.ByCategory(destination).Single().Id);
+        Assert.AreEqual(duplicate, _service.ByCategory(originalCategory).Single().Id);
+        Assert.HasCount(0, _service.Trash());
+        Assert.HasCount(2, categories.GetAll());
+        Assert.HasCount(2, _service.AllLive());
+        Assert.AreEqual(0L, Scalar("SELECT COUNT(*) FROM snippet_images"));
+        Assert.AreEqual(0, snippetNotifications);
+        Assert.AreEqual(0, categoryNotifications);
     }
 
     [TestMethod]

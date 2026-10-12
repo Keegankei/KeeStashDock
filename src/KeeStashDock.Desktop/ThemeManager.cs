@@ -62,7 +62,9 @@ public static class ThemeManager
         window.SourceInitialized += (_, _) => ApplyWindowChrome(window);
         if (new WindowInteropHelper(window).Handle != IntPtr.Zero)
             ApplyWindowChrome(window);
-        Changed += () => ApplyWindowChrome(window);
+        void OnThemeChanged() => ApplyWindowChrome(window);
+        Changed += OnThemeChanged;
+        window.Closed += (_, _) => Changed -= OnThemeChanged;
     }
 
     private static bool IsSystemDark()

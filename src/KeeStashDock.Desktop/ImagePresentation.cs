@@ -41,6 +41,6 @@ internal static class ImagePresentation
         data.SetImage(Decode(png));
         using var stream = new MemoryStream(png, writable: false);
         data.SetData("PNG", stream);
-        Clipboard.SetDataObject(data, copy: true);
+        ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(data, copy: true));
     }
 }

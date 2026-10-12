@@ -22,13 +22,43 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 A change to the WPF application should also pass a publish smoke check:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
 dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
   --no-restore `
   -p:PublishProfile=FolderProfile `
   --output artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
 ```
+
+The optional translation helper has standard-library-only safety tests (Python 3.11 or later):
+
+```powershell
+python -B tools/offline-translation/test_runtime.py
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/test_process.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
+```
+
+OCR model setup is an explicit, hash-verified download. Plain source builds do not
+need models; the complete release package and CI publish check do. Use a fresh
+publish directory rather than a running installation or a directory with `Data`.
+
+## Cleaning local outputs
+
+Preview the cleanup before running it:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Clean.ps1 -WhatIf
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Clean.ps1
+```
+
+The default removes `src`/`tests` build intermediates and `TestResults`.
+Use `-IncludeIdeState` for Visual Studio cache and `-IncludeBuildOutputs` for
+old `artifacts`/`publish` outputs. The script skips outputs containing `Data`, standalone databases,
+or a running program and checks that deletion targets stay inside this checkout.
+It does not remove downloaded OCR models or the optional offline runtime.
 
 ## Architecture rules
 

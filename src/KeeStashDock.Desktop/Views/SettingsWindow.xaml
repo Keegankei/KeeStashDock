@@ -35,6 +35,14 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <Style x:Key="S.ComponentButton" TargetType="Button" BasedOn="{StaticResource S.Button}">
+      <Style.Triggers>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.45"/>
+          <Setter Property="Cursor" Value="Arrow"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
     <!-- Section card -->
     <Style x:Key="S.Section" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource B.CardBg}"/>
@@ -115,6 +123,43 @@
           <TextBlock x:Name="ScreenshotHotkeyStatus" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
                      Foreground="{DynamicResource B.Danger}" Visibility="Collapsed"
                      Text="{loc:Tr Screenshot.HotkeyConflict}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- ============ Optional local components ============ -->
+      <Border Style="{StaticResource S.Section}">
+        <StackPanel>
+          <TextBlock Style="{StaticResource S.SectionTitle}" Text="{loc:Tr Components.Title}"/>
+          <TextBlock Text="{loc:Tr Components.Hint}" TextWrapping="Wrap" FontSize="11"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,12"/>
+          <TextBlock Text="{loc:Tr Components.Ocr}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          <TextBlock x:Name="OcrComponentStatus" FontSize="11" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6"/>
+          <Button x:Name="OcrSetupButton" Style="{StaticResource S.ComponentButton}" HorizontalAlignment="Left"
+                  Background="{DynamicResource B.AccentSoft}" Click="OnOcrSetupClick">
+            <TextBlock Text="{loc:Tr Components.Install}" TextWrapping="Wrap"/>
+          </Button>
+          <TextBlock Text="{loc:Tr Components.Offline}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,16,0,0"/>
+          <TextBlock x:Name="OfflineComponentStatus" FontSize="11" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6"/>
+          <WrapPanel>
+            <Button x:Name="OfflineSetupButton" Style="{StaticResource S.ComponentButton}" Margin="0,0,8,6"
+                    Background="{DynamicResource B.AccentSoft}" Click="OnOfflineSetupClick">
+              <TextBlock Text="{loc:Tr Components.Install}" TextWrapping="Wrap"/>
+            </Button>
+            <Button x:Name="OfflineStartButton" Style="{StaticResource S.ComponentButton}" Margin="0,0,8,6" Click="OnOfflineStartClick">
+              <TextBlock Text="{loc:Tr Components.Start}" TextWrapping="Wrap"/>
+            </Button>
+            <Button x:Name="OfflineStopButton" Style="{StaticResource S.ComponentButton}" Margin="0,0,0,6" Click="OnOfflineStopClick">
+              <TextBlock Text="{loc:Tr Components.Stop}" TextWrapping="Wrap"/>
+            </Button>
+          </WrapPanel>
+          <ProgressBar x:Name="ComponentProgress" IsIndeterminate="True" Height="4" Margin="0,8,0,6" Visibility="Collapsed"/>
+          <TextBlock x:Name="ComponentOperationStatus" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource B.TextMuted}"/>
+          <TextBox x:Name="ComponentDiagnostic" Style="{StaticResource S.Input}" IsReadOnly="True" TextWrapping="Wrap"
+                   MaxHeight="110" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0" Visibility="Collapsed"/>
+          <Button x:Name="ComponentCancelButton" Style="{StaticResource S.ComponentButton}" HorizontalAlignment="Left"
+                  Margin="0,8,0,0" Visibility="Collapsed" Click="OnCancelComponentClick" Content="{loc:Tr Common.Cancel}"/>
         </StackPanel>
       </Border>
 
@@ -221,10 +266,6 @@
             <TextBlock Text="{loc:Tr Settings.OfflineEndpoint}" TextWrapping="Wrap" Margin="0,0,0,4"/>
             <TextBox x:Name="OfflineEndpointBox" Style="{StaticResource S.Input}"
                      TextChanged="OnOfflineEndpointChanged" Margin="0,0,0,8"/>
-            <Button x:Name="OfflineSetupButton" Style="{StaticResource S.Button}"
-                    Background="{DynamicResource B.AccentSoft}" Click="OnOfflineSetupClick" HorizontalAlignment="Left">
-              <TextBlock Text="{loc:Tr Settings.OfflineOpenSetup}" TextWrapping="Wrap"/>
-            </Button>
           </StackPanel>
 
           <StackPanel x:Name="TranslationTestPanel" Margin="0,0,0,12">

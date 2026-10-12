@@ -73,32 +73,8 @@ public sealed class GroupIoService
     public int ImportGroup(GroupPackage pkg, string targetName, long? overwriteCategoryId)
     {
         ValidatePackage(pkg);
-        targetName = CategoryName.Normalize(targetName);
-        long categoryId;
-        if (overwriteCategoryId is long existing)
-        {
-            if (!_categories.GetAll().Any(category => category.Id == existing))
-                throw new InvalidOperationException("The group selected for replacement no longer exists.");
-            categoryId = existing;
-            foreach (var old in _snippets.ByCategory(existing)) _snippets.MoveToTrash(old.Id);
-        }
-        else
-        {
-            categoryId = _categories.Insert(new Category { Name = targetName });
-        }
-
-        int placed = 0;
-        foreach (var item in pkg.Items)
-        {
-            if (item.Type != SnippetType.Image && string.IsNullOrWhiteSpace(item.Content)) continue;
-            long id = item.Type == SnippetType.Image
-                ? _snippets.AddImage(item.ImagePng!, item.ThumbnailPng!, title: item.Title, ocrText: item.Content)
-                : _snippets.Add(item.Content, SnippetSource.Import, title: item.Title,
-                    explicitType: pkg.Version == 1 ? null : item.Type);
-            _snippets.AssignCategory(id, categoryId);
-            placed++;
-        }
-        return placed;
+        return _snippets.ImportGroup(_categories, targetName, overwriteCategoryId,
+            pkg.Items, detectTypes: pkg.Version == 1);
     }
 
     private static GroupPackage ValidatePackage(GroupPackage? pkg)

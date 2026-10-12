@@ -11,7 +11,6 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 - Region screenshots saved as image entries, with preview, image copy/save, and editable searchable OCR text.
 - Configurable screenshot shortcut (Ctrl+Alt+S by default), independent enable/disable, and registration conflict handling that preserves the existing shortcut.
 - On-demand local English/Simplified Chinese OCR with explicit model setup, cancellation, and the existing selection action bubble for translation.
-
 - Alibaba Cloud TranslateGeneral support with independent AccessKey credentials, signed requests, and service activation errors.
 - Local offline translation with a loopback-only Argos / LibreTranslate-compatible service, optional isolated English/Chinese engine setup, and actionable model/service errors.
 - A translation test in Settings using a fixed sample, with cancellation on configuration changes.
@@ -26,13 +25,16 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 - Twenty interface language packs and an expanded in-application help guide.
 - Separate group deletion actions for preserving or trashing contained snippets.
 - Repository governance, automation, and test infrastructure.
+- One-click installation/repair of local OCR and offline translation in Settings, with progress, cancellation, and engine start/stop controls.
+- A hidden native-engine probe and verified Microsoft Visual C++ runtime setup when the prerequisite is missing, including administrator and restart handling. Cancellation stops the app setup worker; an already authorized Windows runtime installation may continue.
+- Portable-package verification for OCR models/native binaries, localization, offline setup scripts, third-party notices, and accidental private state.
+- Safe opt-in cleanup of generated build outputs and IDE caches, with CI checks that preserve user data and standalone databases.
 - Apache License 2.0 terms, attribution notice, and project license metadata.
 
 ### Changed
 
 - Schema v4 stores original PNGs and thumbnails with their entries so database backups, imports, Trash recovery, and permanent deletion retain consistent image data. Older text databases migrate forward.
 - Version 2 group packages include images and recognized text; version 1 text packages remain readable.
-
 - New installs default to Bing's China translation endpoint; existing provider choices and DeepL credentials are preserved.
 - Aligned the build SDK with .NET SDK 10.0.401, allowing later 10.0.4xx patches.
 - Group names now use trimmed, culture-independent case keys with a database uniqueness constraint. Schema v3 preserves existing group IDs and content while assigning deterministic suffixes to legacy duplicate or blank names.
@@ -47,6 +49,21 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Fixed
 
+- Reject corrupted local OCR model files by size and checksum, falling back to verified bundled models.
+- Reuse an available local translation service and start the installed engine only after a connection failure.
+- Finish component setup when its script exits even if the detached translation server keeps output pipes open.
+- Preserve the Windows runtime installer's restart-required exit code instead of reporting a generic failure.
+
+- Make complete group imports transactional, preserving existing groups, entries, images, and deduplicated memberships when an import fails.
+- Mark imported image entries with the import source, and reject malformed persisted timestamps, field types, enum values, and out-of-range counters before replacing a database.
+- Safely ignore background log writes after the logger closes during shutdown.
+- Track the clipboard sequence of app-owned copies so clipboard history cannot recapture burn-after-read entries or turn copied OCR text into duplicate snippets.
+- Release theme-event subscriptions when image windows close, allowing their original image buffers to be collected.
+- Report translation-result clipboard failures instead of showing a false success message.
+- Ignore stale/reused offline service process IDs without stopping unrelated processes, verify an existing service at the requested port, and invalidate the installation marker before a repair changes runtime files.
+- Preserve the Windows installer restart-required result and ask users to restart before continuing component setup.
+- Include verified OCR models in documented/CI release builds, run offline helper tests in CI, and keep development test scripts out of user packages.
+- Ship dependency license texts and notices for managed/runtime dependencies alongside the existing native OCR notices.
 - Keep selection-popup changes from rewriting the Windows startup entry; only the startup checkbox changes it.
 - Preserve the remembered direct-paste target across repeated quick-panel activations and track external foreground changes without relaxing identity or focus checks.
 - Handle Alt+Enter's WPF system-key event to insert a newline at the cursor; retain Shift+Enter and plain Enter behavior.

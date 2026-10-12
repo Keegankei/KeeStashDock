@@ -161,7 +161,7 @@ public sealed class StickyNoteWindow : Window
             try { DragMove(); } catch (InvalidOperationException) { return; }
             if (Math.Abs(Left - x) < 2 && Math.Abs(Top - y) < 2)
             {
-                try { Clipboard.SetDataObject(content, copy: true); } catch { }
+                try { ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(content, copy: true)); } catch { }
                 MiniToast.Show(loc["QuickPanel.Copied"]);
             }
         };

@@ -278,8 +278,8 @@ public sealed class RepositoryPolicyTests
     {
         var extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            ".bat", ".cs", ".csproj", ".gitattributes", ".gitignore", ".json",
-            ".manifest", ".md", ".props", ".sln", ".targets", ".txt", ".xaml",
+            ".bat", ".cmd", ".cs", ".csproj", ".gitattributes", ".gitignore", ".json",
+            ".manifest", ".md", ".props", ".ps1", ".py", ".sln", ".targets", ".txt", ".xaml",
             ".xml", ".yaml", ".yml",
         };
         var extensionlessNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -321,6 +321,9 @@ public sealed class RepositoryPolicyTests
         process.StartInfo.ArgumentList.Add(root);
         process.StartInfo.ArgumentList.Add("ls-files");
         process.StartInfo.ArgumentList.Add("-z");
+        process.StartInfo.ArgumentList.Add("--cached");
+        process.StartInfo.ArgumentList.Add("--others");
+        process.StartInfo.ArgumentList.Add("--exclude-standard");
         process.StartInfo.ArgumentList.Add("--");
 
         try
@@ -340,6 +343,8 @@ public sealed class RepositoryPolicyTests
                 .Select(relative => Path.Combine(
                     root,
                     relative.Replace('/', Path.DirectorySeparatorChar)))
+                .Where(File.Exists)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
         catch (Exception exception) when (exception is not AssertFailedException)
@@ -354,10 +359,17 @@ public sealed class RepositoryPolicyTests
     {
         string relative = NormalizeRelative(root, path);
         string[] parts = relative.Split('/');
-        return parts.Any(part => part.Equals(".git", StringComparison.OrdinalIgnoreCase)
+        return relative.StartsWith("tools/offline-translation/runtime/", StringComparison.OrdinalIgnoreCase)
+            || relative.StartsWith("tools/ocr/models/", StringComparison.OrdinalIgnoreCase)
+            || parts.Any(part => part.Equals(".git", StringComparison.OrdinalIgnoreCase)
                               || part.Equals("bin", StringComparison.OrdinalIgnoreCase)
                               || part.Equals("obj", StringComparison.OrdinalIgnoreCase)
                               || part.Equals("artifacts", StringComparison.OrdinalIgnoreCase)
+                              || part.Equals("publish", StringComparison.OrdinalIgnoreCase)
+                              || part.Equals(".vs", StringComparison.OrdinalIgnoreCase)
+                              || part.Equals(".plan", StringComparison.OrdinalIgnoreCase)
+                              || part.Equals(".agents", StringComparison.OrdinalIgnoreCase)
+                              || part.Equals("__pycache__", StringComparison.OrdinalIgnoreCase)
                               || part.Equals("TestResults", StringComparison.OrdinalIgnoreCase));
     }
 

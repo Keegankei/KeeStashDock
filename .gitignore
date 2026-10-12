@@ -22,6 +22,8 @@ coverage/
 
 # Local development plans and agent working notes
 .plan/
+.agents/
+.codex/
 
 # Local environment and secrets
 .env
@@ -29,12 +31,26 @@ coverage/
 !.env.example
 *.local
 secrets.json
+*.pfx
+*.p12
+*.key
 
 # Runtime data (contains personal clipboard content and credentials)
 Data/
 **/Data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.log
+*.log.*
 
-# Optional offline translation runtime and Python bytecode
+# Downloaded translation/OCR assets and Python bytecode
 /tools/offline-translation/runtime/
 /tools/ocr/models/
 __pycache__/
@@ -44,5 +60,3 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
-
-# Optional local OCR model assets

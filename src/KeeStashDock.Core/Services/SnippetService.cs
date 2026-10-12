@@ -90,6 +90,34 @@ public sealed class SnippetService
         return id;
     }
 
+    /// <summary>Commits a complete imported group before notifying open views.</summary>
+    internal int ImportGroup(CategoryRepository categories, string targetName, long? overwriteCategoryId,
+        IReadOnlyList<GroupIoService.GroupItem> items, bool detectTypes)
+    {
+        var entries = new List<SnippetImportEntry>();
+        DateTime now = DateTime.UtcNow;
+        foreach (var item in items)
+        {
+            bool image = item.Type == SnippetType.Image;
+            if (!image && string.IsNullOrWhiteSpace(item.Content)) continue;
+            string content = image ? item.Content.TrimEnd('\r', '\n') : NormalizeContent(item.Content);
+            entries.Add(new SnippetImportEntry(new Snippet
+            {
+                Title = string.IsNullOrWhiteSpace(item.Title) ? null : item.Title.Trim(),
+                Content = content,
+                ContentHash = image ? PngImageValidator.ImageHash(item.ImagePng!) : Sha256(content),
+                Type = image ? SnippetType.Image : detectTypes ? TypeDetector.Detect(content) : item.Type,
+                Source = SnippetSource.Import,
+                ExpirePolicy = ExpirePolicy.Never,
+                CreatedAt = now,
+                UpdatedAt = now,
+            }, item.ImagePng, item.ThumbnailPng));
+        }
+        int placed = categories.ImportGroup(targetName, overwriteCategoryId, entries);
+        Changed?.Invoke();
+        return placed;
+    }
+
     public byte[]? GetImage(long id) => _repo.GetImage(id);
     public byte[]? GetImageThumbnail(long id) => _repo.GetImageThumbnail(id);
 

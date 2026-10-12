@@ -91,6 +91,32 @@ internal static class ImageEntryWindowScenarios
         pending.SetResult(new OcrRecognitionResult("Late closed output", OcrFailure.None));
         PumpUntil(() => pending.Task.IsCompleted);
         Assert.AreEqual(string.Empty, snippets.GetById(id)!.Content);
+
+        var translation = new TranslationResultWindow(new SettingsStore(Path.Combine(isolatedRoot, "translation-copy.json")));
+        translation.ShowResult("Translated sample");
+        Assert.IsFalse(translation.TryCopyResult(_ => throw new System.Runtime.InteropServices.COMException("Clipboard busy")));
+        string? copiedResult = null;
+        Assert.IsTrue(translation.TryCopyResult(value => copiedResult = value));
+        Assert.AreEqual("Translated sample", copiedResult, "A failed copy must leave the translation available for retry.");
+        translation.HideCard();
+        translation.Close();
+
+        WeakReference closedWindow = CreateClosedTrackedWindow();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Assert.IsFalse(closedWindow.IsAlive, "Theme updates must not retain closed windows and their image buffers.");
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference CreateClosedTrackedWindow()
+    {
+        var closed = new Window();
+        ThemeManager.TrackWindowChrome(closed);
+        var reference = new WeakReference(closed);
+        closed.Close();
+        return reference;
     }
 
     private static void PumpUntil(Func<bool> complete)

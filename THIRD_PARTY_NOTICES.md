@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-KeeStashDock itself is licensed under Apache-2.0. It depends on third-party software that remains subject to its own license terms. The following list covers the direct dependencies declared by this repository at version 1.1.2. Transitive dependencies are resolved by NuGet and must be included in the release-time dependency and license review.
+KeeStashDock itself is licensed under Apache-2.0. It depends on third-party software that remains subject to its own license terms. The following list covers the direct dependencies and resolved runtime dependency families reviewed for development version 1.1.2. Refresh this inventory against the resolved NuGet and self-contained runtime assets before each release.
 
 ## Runtime dependencies
 
@@ -10,6 +10,23 @@ KeeStashDock itself is licensed under Apache-2.0. It depends on third-party soft
 | [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite/10.0.10) | 10.0.10 | SQLite provider and native SQLite bundle | MIT |
 | [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/10.0.10) | 10.0.10 | Dependency-injection container | MIT |
 | [TesseractOCR](https://www.nuget.org/packages/TesseractOCR/5.5.2) | 5.5.2 | Distribution of native offline OCR engine | Apache-2.0 |
+
+## Resolved .NET and SQLite runtime components
+
+| Component | Reviewed version | License / attribution |
+| --- | --- | --- |
+| Microsoft.Data.Sqlite.Core | 10.0.10 | MIT; .NET Foundation and Contributors, Microsoft Corporation |
+| Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.10 | MIT; .NET Foundation and Contributors |
+| Microsoft.Extensions.Logging.Abstractions (through OCR distribution) | 10.0.3 | MIT; .NET Foundation and Contributors |
+| SQLitePCLRaw core / provider.e_sqlite3 / bundle_e_sqlite3 / lib.e_sqlite3 | 2.1.12 | Apache-2.0; Copyright 2014-2024 SourceGear, LLC |
+| Native SQLite, distributed by SQLitePCLRaw | Resolved bundled native build | Public domain; [SQLite copyright](https://www.sqlite.org/copyright.html) |
+| .NET and Windows Desktop runtime in the self-contained win-x64 package | 10.0.10 at review; SDK-dependent | MIT with upstream third-party notices; .NET Foundation and Contributors |
+
+Complete Community Toolkit, .NET, and SQLitePCLRaw license texts and upstream
+notices are retained in `third_party/dotnet` and copied to `Licenses/dotnet`.
+That directory's README records their exact package/tag provenance. The framework
+runtime patch is selected by the SDK; review its actual version and refresh
+notices if it changes. Development test dependencies do not ship with the app.
 
 ## Local OCR engine and models
 
@@ -21,7 +38,7 @@ outputs. This software is based in part on the work of the Independent JPEG Grou
 
 | Component | Shipped version | License |
 | --- | --- | --- |
-| TesseractOCR wrapper/distribution | 5.5.2 | Apache-2.0; Copyright 2012-2019 Charles Weld, 2021-2025 Kees van Spelde |
+| TesseractOCR wrapper/distribution | 5.5.2 | Apache-2.0; Copyright 2012-2021 Charles Weld, 2021-2023 Kees van Spelde |
 | Tesseract native engine | 5.5.0 | Apache-2.0; contributors listed in the bundled AUTHORS file |
 | Leptonica | 1.85.0 | BSD-2-Clause; Copyright 2001-2020 Leptonica |
 | GIFLIB | 5.2.1 | MIT |
@@ -40,6 +57,14 @@ control; preinstalled distributions must include the `OcrModels/LICENSE` file.
 | Component | Version | Purpose | License |
 | --- | ---: | --- | --- |
 | [MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk/4.3.2) | 4.3.2 | Test framework, runner, and test tooling | MIT |
+
+## Optional Microsoft native runtime prerequisite
+
+Settings may download and install Microsoft's Visual C++ v14 x64 Redistributable
+when the native engine probe fails. The app requires a valid Microsoft Corporation
+Authenticode signature before launching it. This separate Microsoft component is
+not relicensed under Apache-2.0 and its installer is not stored in this repository.
+See Microsoft's [supported runtime downloads and license guidance](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
 
 ## Optional offline translation engine
 

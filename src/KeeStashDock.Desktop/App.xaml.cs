@@ -291,7 +291,7 @@ public partial class App : Application
         if (text is null) return;   // failure toasts already shown
 
         // Wash formatting: clipboard now holds ONLY plain text.
-        try { Clipboard.SetDataObject(text, copy: true); } catch { }
+        try { ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(text, copy: true)); } catch { }
 
         long? category = _panel?.CurrentCategoryId;
         long id = _services.GetRequiredService<SnippetService>()
@@ -609,6 +609,7 @@ public partial class App : Application
         _preparingShutdown = true;
         try
         {
+            if (_settingsWin is not null) await _settingsWin.CancelComponentOperationAsync();
             foreach (var imageWindow in _imageWindows.Values.ToArray())
             {
                 imageWindow.Close();

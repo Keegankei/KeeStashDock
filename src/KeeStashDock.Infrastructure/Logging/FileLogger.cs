@@ -37,7 +37,12 @@ public sealed class FileLogger : IDisposable
     {
         string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {msg}";
         // TryAdd: if the queue is full (pathological), drop rather than block the UI.
-        _queue.TryAdd(line);
+        try { _queue.TryAdd(line); }
+        catch (InvalidOperationException) when (_queue.IsAddingCompleted)
+        {
+            // Background operations may finish after shutdown has closed the queue.
+            // Late logging must not turn an otherwise safe cancellation into a crash.
+        }
     }
 
     private void WriterLoop()

@@ -7,8 +7,8 @@ and Leptonica 1.85.0, with the codecs listed below. Files were retrieved on
 
 TesseractOCR wrapper/distribution attribution:
 
-- Copyright 2012-2019 Charles Weld
-- Copyright 2021-2025 Kees van Spelde
+- Copyright 2012-2021 Charles Weld
+- Copyright 2021-2023 Kees van Spelde
 - Licensed under Apache License 2.0, reproduced in `tesseract-LICENSE.txt`
 - [Upstream source](https://github.com/Sicos1977/TesseractOCR)
 
