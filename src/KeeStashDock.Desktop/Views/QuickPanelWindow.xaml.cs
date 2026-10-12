@@ -52,6 +52,7 @@ public partial class QuickPanelWindow : Window
     private readonly DispatcherTimer _clock;
 
     private PanelState _state = PanelState.Expanded;
+    private int _visibilityTransition;
     private DateTime? _idleSince;    // expanded: engagement lost at this instant
     private DateTime? _hoverSince;   // shrunk: engagement gained at this instant
     private bool _expandArmed;       // shrunk must lose engagement once before
@@ -135,6 +136,12 @@ public partial class QuickPanelWindow : Window
         // sliders takes effect immediately, no re-summon needed (the
         // signature guard below makes unrelated saves - e.g. geometry - free).
         _settings.Changed += () => Dispatcher.Invoke(ApplyBackground);
+        Closed += (_, _) =>
+        {
+            _visibilityTransition++;
+            _clock.Stop();
+            _tintTimer.Stop();
+        };
     }
 
     /// <summary>Signature of the last applied visual settings; skips the
@@ -713,11 +720,18 @@ public partial class QuickPanelWindow : Window
         ApplyBackground();   // picks up settings changes made while hidden
         ApplyStateVisuals();
         ApplyPosition();
+        int transition = ++_visibilityTransition;
+        BeginAnimation(OpacityProperty, null);
         Opacity = 0;
         Show();
         var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
         { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-        fade.Completed += (_, _) => { BeginAnimation(OpacityProperty, null); Opacity = 1; };
+        fade.Completed += (_, _) =>
+        {
+            if (transition != _visibilityTransition) return;
+            BeginAnimation(OpacityProperty, null);
+            Opacity = 1;
+        };
         BeginAnimation(OpacityProperty, fade);
 
         ResetTimers();
@@ -728,9 +742,15 @@ public partial class QuickPanelWindow : Window
     public void HidePanel()
     {
         _clock.Stop();
-        var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(120));
+        int transition = ++_visibilityTransition;
+        double opacity = Opacity;
+        BeginAnimation(OpacityProperty, null);
+        Opacity = opacity;
+        var fade = new DoubleAnimation(opacity, 0, TimeSpan.FromMilliseconds(120));
         fade.Completed += (_, _) =>
         {
+            // A completion queued by a replaced fade must not hide a newer summon.
+            if (transition != _visibilityTransition) return;
             BeginAnimation(OpacityProperty, null);
             Opacity = 1;
             Hide();

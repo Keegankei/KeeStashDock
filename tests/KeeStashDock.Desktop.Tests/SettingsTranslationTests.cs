@@ -17,7 +17,7 @@ namespace KeeStashDock.Desktop.Tests;
 public sealed class SettingsTranslationTests
 {
     [STATestMethod]
-    public void SavedDeepLSelection_ProviderSwitchesPreserveIndependentCredentialsAndVisibility()
+    public void DesktopWindowWorkflows_PreserveSettingsDraftsAndVisibility()
     {
         string parent = Path.Combine(Path.GetTempPath(), "KeeStashDock.Tests", "SettingsTranslation");
         string root = Path.Combine(parent, Guid.NewGuid().ToString("N"));
@@ -54,8 +54,9 @@ public sealed class SettingsTranslationTests
             var settings = new SettingsStore(settingsFile);
             settings.Load();
 
-            // Load only WPF resources. The product App, its startup hooks and
-            // PortablePaths are never initialized, and no window is shown.
+            // Load WPF resources without product App startup, global hooks or real
+            // user data. The nested panel scenario briefly shows its own window
+            // and claims an empty, test-only portable draft directory.
             application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             application.Resources.MergedDictionaries.Add(LoadResource("Theme.Light.xaml"));
             application.Resources.MergedDictionaries.Add(LoadResource("Styles.xaml"));

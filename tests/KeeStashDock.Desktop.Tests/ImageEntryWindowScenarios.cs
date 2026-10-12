@@ -28,16 +28,28 @@ internal static class ImageEntryWindowScenarios
 
     private static void VerifyCore(string isolatedRoot)
     {
+        QuickPanelWindowScenarios.Verify(isolatedRoot);
         using var log = new FileLogger(Path.Combine(isolatedRoot, "image-logs"));
         var db = new Db(Path.Combine(isolatedRoot, "image-editor.db"), new DatabaseMaintenanceCoordinator());
         new MigrationRunner(db, log).Run();
         var snippets = new SnippetService(new SnippetRepository(db), log);
-        var bitmap = BitmapSource.Create(600, 300, 96, 96, PixelFormats.Bgr24, null, new byte[600 * 300 * 3], 600 * 3);
-        byte[] png = ScreenshotCaptureService.EncodeCrop(bitmap, new Int32Rect(0, 0, 600, 300)).PngBytes;
+        var sourcePixels = Enumerable.Range(0, 800 * 500 * 3).Select(index => (byte)(index * 13 % 251)).ToArray();
+        var bitmap = BitmapSource.Create(800, 500, 168, 168, PixelFormats.Bgr24, null, sourcePixels, 800 * 3);
+        var cropBounds = new Int32Rect(100, 80, 600, 300);
+        byte[] png = ScreenshotCaptureService.EncodeCrop(bitmap, cropBounds).PngBytes;
         byte[] thumbnail = ImagePresentation.Thumbnail(png);
         var dimensions = PngImageValidator.Validate(thumbnail, thumbnail: true);
         Assert.IsTrue(Math.Max(dimensions.Width, dimensions.Height) <= 320);
         long id = snippets.AddImage(png, thumbnail);
+        var savedImage = new FormatConvertedBitmap(ImagePresentation.Decode(snippets.GetImage(id)!), PixelFormats.Bgr24, null, 0);
+        var expectedPixels = new byte[600 * 300 * 3];
+        var savedPixels = new byte[expectedPixels.Length];
+        bitmap.CopyPixels(cropBounds, expectedPixels, 600 * 3, 0);
+        savedImage.CopyPixels(savedPixels, 600 * 3, 0);
+        Assert.AreEqual(600, savedImage.PixelWidth);
+        Assert.AreEqual(300, savedImage.PixelHeight);
+        CollectionAssert.AreEqual(expectedPixels, savedPixels,
+            "Saving a cropped screenshot must retain every original pixel, independent of DPI and thumbnail scaling.");
         string hash = snippets.GetById(id)!.ContentHash;
         TaskCompletionSource<OcrRecognitionResult>? pending = null;
         CancellationToken token = default;

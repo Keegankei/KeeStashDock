@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -71,6 +73,38 @@ public sealed class ComponentInstallServiceTests
         Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.Ocr));
         CollectionAssert.AreEqual(new[] { ComponentInstallPhase.Checking, ComponentInstallPhase.Downloading,
             ComponentInstallPhase.Installing }, progress.Phases.ToArray());
+    }
+
+    [TestMethod]
+    [DataRow(ComponentKind.Ocr)]
+    [DataRow(ComponentKind.OfflineTranslation)]
+    public async Task FreshInstallFromReadOnlyProgramDirectoryUsesWritableUserDirectory(ComponentKind component)
+    {
+        WriteOfflineScripts();
+        WriteScript("NativeRuntime", "Setup.ps1", "param([AllowEmptyString()][string]$ProbeExecutable)");
+        WriteSuccessfulOcrSetup();
+        var directory = new DirectoryInfo(_baseDirectory);
+        DirectorySecurity originalAccess = directory.GetAccessControl();
+        DirectorySecurity readOnlyAccess = directory.GetAccessControl();
+        using var identity = WindowsIdentity.GetCurrent();
+        readOnlyAccess.AddAccessRule(new FileSystemAccessRule(identity.User!,
+            FileSystemRights.Write, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+            PropagationFlags.None, AccessControlType.Deny));
+        directory.SetAccessControl(readOnlyAccess);
+        try
+        {
+            Assert.ThrowsExactly<UnauthorizedAccessException>(() =>
+                File.WriteAllText(Path.Combine(_baseDirectory, "must-not-write.txt"), "fixture"));
+
+            ComponentInstallResult result = await CreateService().InstallAsync(component);
+
+            Assert.IsTrue(result.IsSuccess, result.Detail);
+            Assert.AreEqual(ComponentStatus.Ready, CreateService().GetStatus(component));
+            Assert.IsTrue(Directory.Exists(component == ComponentKind.Ocr ? OcrDirectory : OfflineDirectory));
+            Assert.IsFalse(Directory.Exists(Path.Combine(_baseDirectory, "OfflineTranslation", "runtime")));
+            Assert.IsFalse(File.Exists(Path.Combine(_baseDirectory, "OcrModels", "eng.traineddata")));
+        }
+        finally { directory.SetAccessControl(originalAccess); }
     }
 
     [TestMethod]
@@ -376,6 +410,9 @@ public sealed class ComponentInstallServiceTests
             AssertProcessExited(childId);
             Assert.IsFalse(File.Exists(lateWrite));
             Assert.IsFalse(File.Exists(Path.Combine(OcrDirectory, "parent-late.txt")));
+            WriteSuccessfulOcrSetup();
+            ComponentInstallResult retry = await CreateService().InstallAsync(ComponentKind.Ocr);
+            Assert.IsTrue(retry.IsSuccess, "A completed cancellation or timeout must permit a fresh install: " + retry.Detail);
         }
         finally
         {
@@ -439,6 +476,14 @@ public sealed class ComponentInstallServiceTests
             [IO.File]::AppendAllText((Join-Path $RuntimeDirectory 'order.txt'), "start`n")
             """);
     }
+
+    private void WriteSuccessfulOcrSetup()
+        => WriteScript("OcrModels", "Setup.ps1", """
+            param([Parameter(Mandatory=$true)][string]$Destination)
+            [IO.Directory]::CreateDirectory($Destination) | Out-Null
+            [IO.File]::WriteAllText((Join-Path $Destination 'eng.traineddata'), 'fixture')
+            [IO.File]::WriteAllText((Join-Path $Destination 'chi_sim.traineddata'), 'fixture')
+            """);
 
     private void WriteScript(string folder, string name, string content)
         => WriteFile(Path.Combine(_baseDirectory, folder, name), content);

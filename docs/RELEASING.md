@@ -39,7 +39,7 @@ A stable release is not ready until the Windows CI workflow is green and the sam
 
 - First launch and portable-data creation
 - `%AppData%` fallback from a non-writable application folder
-- Tray lifecycle and single-instance activation
+- Tray lifecycle and single-instance activation; launching again must keep an already visible panel open
 - Alt+Q and Ctrl+Alt+S registration, remapping, disable, and conflict handling
 - Screenshot cancellation, negative monitor coordinates, mixed display scales, and capture from both panel and workbench
 - Image preview/copy/save, local OCR success/cancel/timeout, editable text, and the shared translation bubble
@@ -80,6 +80,23 @@ dotnet list src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj package --inclu
 Refresh the bundled dependency licenses when package or self-contained runtime
 versions change. An advisory check covers only its queried feeds and does not
 replace the native OCR/runtime review.
+
+## Local acceptance coverage
+
+The 2026-10-12 local acceptance run extends the automated checks with:
+
+- Read-only program-directory ACLs for OCR and offline component installation, using isolated setup fixtures and a writable user directory.
+- Successful retry immediately after a cancelled or timed-out component operation.
+- Screenshot pixel preservation across negative monitor coordinates, reverse drags, and independently scaled overlays from 100% to 200%.
+- Native quick-panel show/hide/re-show transitions and cross-process single-instance notifications with isolated mutex and pipe names.
+- Startup of the published executable from a path containing spaces, an apostrophe, and an ampersand; a replacement process waits for the isolated parent to exit before opening its database.
+
+These checks do not establish clean-machine UAC behavior or real mixed-DPI mouse
+capture. The published-process check terminates only its disposable parent; it
+does not replace an end-to-end Settings-button restart test. Native UI automation
+could not enumerate the taskbar-hidden quick panel on this host, so that button
+flow remains manual. Keep the clean-machine and physical-display checks above as
+release gates rather than treating simulated coverage as a stable-release sign-off.
 
 ## 3. Package
 

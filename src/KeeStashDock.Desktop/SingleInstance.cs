@@ -16,9 +16,19 @@ public sealed class SingleInstance : IDisposable
     private const string MutexName = @"Local\KeeStashDock_SingleInstance";
     private const string PipeName  = "KeeStashDock_ActivationPipe";
 
+    private readonly string _mutexName;
+    private readonly string _pipeName;
     private Mutex? _mutex;
     private bool _ownsMutex;     // true ONLY in the primary instance
     private CancellationTokenSource? _cts;
+
+    public SingleInstance() : this(MutexName, PipeName) { }
+
+    internal SingleInstance(string mutexName, string pipeName)
+    {
+        _mutexName = mutexName;
+        _pipeName = pipeName;
+    }
 
     /// <summary>Raised on a worker thread when another launch asks us to show the panel.</summary>
     public event Action? ActivationRequested;
@@ -26,7 +36,7 @@ public sealed class SingleInstance : IDisposable
     /// <summary>Returns true if this process is the primary instance.</summary>
     public bool TryClaim()
     {
-        _mutex = new Mutex(initiallyOwned: true, MutexName, out bool createdNew);
+        _mutex = new Mutex(initiallyOwned: true, _mutexName, out bool createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)
         {
@@ -40,11 +50,11 @@ public sealed class SingleInstance : IDisposable
         return true;
     }
 
-    private static void NotifyExistingInstance()
+    private void NotifyExistingInstance()
     {
         try
         {
-            using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+            using var client = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
             client.Connect(timeout: 1500);
             using var w = new StreamWriter(client);
             w.Write("SHOW");
@@ -60,7 +70,7 @@ public sealed class SingleInstance : IDisposable
             try
             {
                 await using var server = new NamedPipeServerStream(
-                    PipeName, PipeDirection.In, maxNumberOfServerInstances: 1);
+                    _pipeName, PipeDirection.In, maxNumberOfServerInstances: 1);
                 await server.WaitForConnectionAsync(ct);
                 using var r = new StreamReader(server);
                 string? msg = await r.ReadToEndAsync(ct);

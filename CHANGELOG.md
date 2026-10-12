@@ -49,6 +49,8 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Fixed
 
+- Keep the quick panel visible when the executable is launched again; repeated launches no longer toggle it closed or replace its direct-paste target.
+- Ignore superseded visibility-animation callbacks so rapid hide/show requests cannot leave the quick panel hidden or transparent.
 - Keep Trash searches scoped to deleted entries and check current entry state before restoring or permanently deleting from the workbench.
 - Preserve unsaved editor drafts when filters hide an existing entry; synchronize image-window permissions and clean text after external edits, deletion, or restore.
 - Import consistent database snapshots including committed WAL content, even when the source database is open or has uncheckpointed changes after an unexpected exit.

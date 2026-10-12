@@ -65,7 +65,7 @@ public partial class App : Application
             Shutdown();                      // existing instance was notified
             return;
         }
-        _instance.ActivationRequested += () => Dispatcher.Invoke(TogglePanel);
+        _instance.ActivationRequested += () => Dispatcher.Invoke(ShowPanel);
 
         // ---- 2. Crash handlers ------------------------------------------
         DispatcherUnhandledException += OnDispatcherException;
@@ -573,13 +573,16 @@ public partial class App : Application
     {
         if (_capturingScreenshot) return;
         if (Panel.IsVisible) Panel.HidePanel();
-        else
-        {
-            // Whatever the user was working in right now is where a card
-            // click should paste back to.
-            DirectPaste.RememberForeground();
-            Panel.ShowPanel();
-        }
+        else ShowPanel();
+    }
+
+    private void ShowPanel()
+    {
+        // A second executable launch summons the panel; it must not hide an
+        // already visible panel or replace its remembered direct-paste target.
+        if (_capturingScreenshot) return;
+        if (!Panel.IsVisible) DirectPaste.RememberForeground();
+        Panel.ShowPanel();
     }
 
     private void ShowWorkbench()

@@ -60,7 +60,9 @@ public sealed class ScreenshotCaptureTests
 
     [STATestMethod]
     [DataRow(1.0)]
+    [DataRow(1.25)]
     [DataRow(1.5)]
+    [DataRow(1.75)]
     [DataRow(2.0)]
     public void OverlayHighlightsTheSamePhysicalPixelsAtEachMonitorScale(double scale)
     {
@@ -79,5 +81,76 @@ public sealed class ScreenshotCaptureTests
         rendered.CopyPixels(new Int32Rect(700, 500, 1, 1), outside, 4, 0);
         Assert.AreEqual((byte)255, inside[0], "The selected physical region remains undimmed.");
         Assert.IsTrue(outside[0] < 160, "The rest of each monitor must be dimmed.");
+    }
+
+    [STATestMethod]
+    [DataRow(1.0, 1.5)]
+    [DataRow(1.25, 2.0)]
+    [DataRow(2.0, 1.75)]
+    public void CrossMonitorSelectionKeepsEachSideAlignedAtDifferentScales(double leftScale, double rightScale)
+    {
+        var leftBounds = new Drawing.Rectangle(-600, -240, 600, 480);
+        var rightBounds = new Drawing.Rectangle(0, 0, 800, 600);
+        var desktop = Drawing.Rectangle.Union(leftBounds, rightBounds);
+        var selected = ScreenshotSelection.Clamp(new(-240, -120), new(320, 360), desktop);
+        Assert.AreEqual(new Drawing.Rectangle(-240, -120, 560, 480), selected);
+
+        // Physical pixels in the same drag must align on both independently scaled overlays.
+        AssertOverlayPixel(leftBounds, selected, leftScale, new(400, 300), undimmed: true);
+        AssertOverlayPixel(leftBounds, selected, leftScale, new(200, 300), undimmed: false);
+        AssertOverlayPixel(rightBounds, selected, rightScale, new(160, 240), undimmed: true);
+        AssertOverlayPixel(rightBounds, selected, rightScale, new(500, 240), undimmed: false);
+    }
+
+    [STATestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void CropAcrossOffsetMonitorOriginsPreservesEveryOriginalPixel(bool reverseDrag)
+    {
+        var desktop = new Drawing.Rectangle(-4, -2, 8, 6);
+        Drawing.Point start = new(-2, -1), end = new(3, 3);
+        var selected = reverseDrag
+            ? ScreenshotSelection.Clamp(end, start, desktop)
+            : ScreenshotSelection.Clamp(start, end, desktop);
+        var pixels = new byte[desktop.Width * desktop.Height * 3];
+        for (int y = 0; y < desktop.Height; y++)
+            for (int x = 0; x < desktop.Width; x++)
+            {
+                int offset = (y * desktop.Width + x) * 3;
+                pixels[offset] = (byte)(x * 23);
+                pixels[offset + 1] = (byte)(y * 31);
+                pixels[offset + 2] = (byte)(x + y * desktop.Width);
+            }
+        var source = BitmapSource.Create(desktop.Width, desktop.Height, 168, 168,
+            PixelFormats.Bgr24, null, pixels, desktop.Width * 3);
+        var cropBounds = new Int32Rect(selected.X - desktop.X, selected.Y - desktop.Y,
+            selected.Width, selected.Height);
+        var captured = ScreenshotCaptureService.EncodeCrop(source, cropBounds);
+        var decoded = new FormatConvertedBitmap(ImagePresentation.Decode(captured.PngBytes), PixelFormats.Bgr24, null, 0);
+        Assert.AreEqual(5, captured.PixelWidth);
+        Assert.AreEqual(4, captured.PixelHeight);
+        var expected = new byte[captured.PixelWidth * captured.PixelHeight * 3];
+        var actual = new byte[expected.Length];
+        source.CopyPixels(cropBounds, expected, captured.PixelWidth * 3, 0);
+        decoded.CopyPixels(actual, captured.PixelWidth * 3, 0);
+        CollectionAssert.AreEqual(expected, actual, "Monitor origins and source DPI must not shift, rescale or drop crop pixels.");
+    }
+
+    private static void AssertOverlayPixel(Drawing.Rectangle bounds, Drawing.Rectangle selected,
+        double scale, Drawing.Point pixel, bool undimmed)
+    {
+        var white = Enumerable.Repeat((byte)255, bounds.Width * bounds.Height * 3).ToArray();
+        var source = BitmapSource.Create(bounds.Width, bounds.Height, 96, 96,
+            PixelFormats.Bgr24, null, white, bounds.Width * 3);
+        var surface = new ScreenshotCaptureService.SelectionSurface(bounds, source, "Drag to capture");
+        surface.ShowSelection(selected);
+        surface.Measure(new Size(bounds.Width / scale, bounds.Height / scale));
+        surface.Arrange(new Rect(0, 0, bounds.Width / scale, bounds.Height / scale));
+        var rendered = new RenderTargetBitmap(bounds.Width, bounds.Height, 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        rendered.Render(surface);
+        var actual = new byte[4];
+        rendered.CopyPixels(new Int32Rect(pixel.X, pixel.Y, 1, 1), actual, 4, 0);
+        if (undimmed) Assert.AreEqual((byte)255, actual[0], "Selected pixels must remain undimmed across monitor boundaries.");
+        else Assert.IsTrue(actual[0] < 160, "Pixels outside the shared drag must stay dimmed.");
     }
 }
