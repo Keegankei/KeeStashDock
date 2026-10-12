@@ -88,6 +88,8 @@
               </Style>
             </ToggleButton.Style>
           </ToggleButton>
+          <Button Style="{StaticResource S.IconButton}" Content="&#xE722;" Margin="2,0,0,0"
+                  Click="OnCaptureClick" ToolTip="{loc:Tr Screenshot.Capture}"/>
           <!-- workbench -->
           <Button Style="{StaticResource S.IconButton}" Content="&#xE740;" Margin="2,0,0,0"
                   Click="OnExpandClick" ToolTip="{loc:Tr QuickPanel.Expand}"/>
@@ -192,10 +194,14 @@
                              Text="{Binding DisplayTitle}" FontWeight="SemiBold"
                              Foreground="{DynamicResource B.CardTextPrimary}"
                              TextTrimming="CharacterEllipsis"/>
-                  <TextBlock Grid.Row="1" Tag="TintM"
+                  <StackPanel Grid.Row="1">
+                  <Image Source="{Binding Thumbnail}" Height="96" Stretch="Uniform" Margin="0,6,0,4"
+                         Visibility="{Binding IsImage, Converter={StaticResource BoolToVis}}"/>
+                  <TextBlock Tag="TintM"
                              Text="{Binding Preview}" Margin="0,4,0,4"
                              Foreground="{DynamicResource B.CardTextMuted}" FontSize="12"
                              TextWrapping="Wrap" MaxHeight="52"/>
+                  </StackPanel>
                   <DockPanel Grid.Row="2">
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                                 HorizontalAlignment="Right">

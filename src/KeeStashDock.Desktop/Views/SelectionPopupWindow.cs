@@ -157,27 +157,7 @@ public sealed class SelectionPopupWindow : Window
     /// (straight from the mouse hook), clamped into the work area.</summary>
     public void ShowAt(int deviceX, int deviceY)
     {
-        double dpi = 1.0;
-        var t = PresentationSource.FromVisual(this)?.CompositionTarget;
-        if (t is not null) dpi = t.TransformToDevice.M11;
-        else
-        {
-            var main = Application.Current?.Windows.Count > 0
-                ? Application.Current.Windows[0] : null;
-            var mt = main is null ? null
-                : PresentationSource.FromVisual(main)?.CompositionTarget;
-            if (mt is not null) dpi = mt.TransformToDevice.M11;
-        }
-
-        var wa = SystemParameters.WorkArea;
-        // Above-right of the release point; flip below when out of room.
-        double x = deviceX / dpi + 10;
-        double y = deviceY / dpi - 44;
-        if (y < wa.Top) y = deviceY / dpi + 18;
-        Left = Math.Clamp(x, wa.Left, wa.Right - 170);
-        Top = Math.Clamp(y, wa.Top, wa.Bottom - 44);
-
-        Show();
+        PopupPlacement.ShowNear(this, deviceX, deviceY, preferAbove: true);
         _hideTimer.Stop();
         _hideTimer.Start();
     }

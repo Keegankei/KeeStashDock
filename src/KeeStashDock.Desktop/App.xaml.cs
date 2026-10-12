@@ -1,4 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using KeeStashDock.Domain.Entities;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using KeeStashDock.Core.Services;
@@ -31,6 +34,14 @@ public partial class App : Application
     private SingleInstance _instance = null!;
     private TrayIconManager _tray = null!;
     private HotkeyManager _hotkey = null!;
+    private HotkeyManager _screenshotHotkey = null!;
+    private readonly ScreenshotCaptureService _screenshotCapture = new();
+    private readonly LocalOcrService _localOcr = new();
+    private readonly Dictionary<long, ImageEntryWindow> _imageWindows = new();
+    private readonly CancellationTokenSource _shutdownCancellation = new();
+    private bool _capturingScreenshot;
+    private bool _preparingShutdown;
+    private TextBox? _internalSelectionSource;
 
     private QuickPanelWindow? _panel;
     private WorkbenchWindow? _workbench;
@@ -98,6 +109,7 @@ public partial class App : Application
         _tray.ShowWorkbenchRequested += ShowWorkbench;
         _tray.ShowSettingsRequested += ShowSettings;
         _tray.ExitRequested += ExitApp;
+        _tray.CaptureRequested += CaptureScreenshot;
 
         _hotkey = new HotkeyManager();
         bool hotkeyOk = _hotkey.Initialize(
@@ -105,6 +117,13 @@ public partial class App : Application
         if (!hotkeyOk)
             Log.Warn("Global hotkey registration failed (combination in use by another app)");
         _hotkey.HotkeyPressed += TogglePanel;
+        _screenshotHotkey = new HotkeyManager();
+        bool screenshotHotkeyOk = settings.Current.ScreenshotHotkeyEnabled
+            ? _screenshotHotkey.Initialize(settings.Current.ScreenshotHotkeyModifiers, settings.Current.ScreenshotHotkeyVirtualKey)
+            : _screenshotHotkey.Initialize(0, 0);
+        if (!screenshotHotkeyOk)
+            _tray.ShowInfo("KeeStashDock", LocalizationService.Instance["Screenshot.HotkeyConflict"]);
+        _screenshotHotkey.HotkeyPressed += CaptureScreenshot;
 
         // Selection popup: a mouse hook spots select-like gestures anywhere
         // on the desktop and offers a "copy to KeeStashDock" bubble beside
@@ -123,6 +142,8 @@ public partial class App : Application
             settings, _services.GetRequiredService<SnippetService>());
         _selectionWatcher.SelectionLikely += (x, y) =>
         {
+            if (_capturingScreenshot) return;
+            _internalSelectionSource = null;
             _translationCancellation?.Cancel();
             if (!settings.Current.SelectionPopupEnabled) return;
             (_lastSelectionX, _lastSelectionY) = (x, y);
@@ -131,6 +152,7 @@ public partial class App : Application
         };
         _selectionWatcher.AnyMouseDown += (_, _) =>
         {
+            _internalSelectionSource = null;
             _translationCancellation?.Cancel();
             _selectionPopup.HideBubble();
             _translationCard.HideCard();
@@ -156,7 +178,9 @@ public partial class App : Application
                 _services.GetRequiredService<SettingsStore>(),
                 _services.GetRequiredService<CategoryRepository>(),
                 onExpandRequested: ShowWorkbench,
-                onSettingsRequested: ShowSettings);
+                onSettingsRequested: ShowSettings,
+                onCaptureRequested: () => CaptureScreenshotFrom(_panel?.CurrentCategoryId, _panel?.CurrentExpirePolicy ?? ExpirePolicy.Never),
+                onImageRequested: ShowImageEntry);
             return _panel;
         }
     }
@@ -171,7 +195,7 @@ public partial class App : Application
 
     private void ApplySelectionPopupSetting(SettingsStore settings)
     {
-        bool enable = settings.Current.SelectionPopupEnabled;
+        bool enable = settings.Current.SelectionPopupEnabled && !_capturingScreenshot;
         if (!enable)
         {
             _translationCancellation?.Cancel();
@@ -263,7 +287,7 @@ public partial class App : Application
     ///      DIFFERENT message from "no selection".</summary>
     private async void CaptureSelectionAsync()
     {
-        string? text = await GrabSelectionTextAsync();
+        string? text = await GetSelectedTextAsync();
         if (text is null) return;   // failure toasts already shown
 
         // Wash formatting: clipboard now holds ONLY plain text.
@@ -291,7 +315,7 @@ public partial class App : Application
         _translationCancellation = request;
         try
         {
-            string? text = await GrabSelectionTextAsync(request.Token);
+            string? text = await GetSelectedTextAsync(request.Token);
             if (text is null || request.IsCancellationRequested) return;
 
             _translationCard.ShowTranslating(_lastSelectionX, _lastSelectionY);
@@ -431,8 +455,117 @@ public partial class App : Application
         return html.Trim();
     }
 
+    private Task<string?> GetSelectedTextAsync(CancellationToken cancellationToken = default)
+    {
+        TextBox? source = _internalSelectionSource;
+        if (source is null) return GrabSelectionTextAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        string? selected = source.IsVisible ? source.SelectedText : null;
+        return Task.FromResult(string.IsNullOrWhiteSpace(selected) ? null : selected);
+    }
+
+    private void ShowInternalSelection(TextBox source)
+    {
+        var settings = _services.GetRequiredService<SettingsStore>().Current;
+        if (!settings.SelectionPopupEnabled || _capturingScreenshot || string.IsNullOrWhiteSpace(source.SelectedText)) return;
+        _translationCancellation?.Cancel();
+        _translationCard.HideCard();
+        _internalSelectionSource = source;
+        Rect caret = source.GetRectFromCharacterIndex(source.SelectionStart + source.SelectionLength);
+        Point local = caret.IsEmpty ? Mouse.GetPosition(source) : caret.BottomRight;
+        Point point = source.PointToScreen(local);
+        if (!double.IsFinite(point.X) || !double.IsFinite(point.Y)) return;
+        (_lastSelectionX, _lastSelectionY) = ((int)point.X, (int)point.Y);
+        _selectionPopup.ShowAt(_lastSelectionX, _lastSelectionY);
+    }
+
+    private void DismissInternalSelection()
+    {
+        if (_internalSelectionSource is null) return;
+        _internalSelectionSource = null;
+        _translationCancellation?.Cancel();
+        _selectionPopup.HideBubble();
+        _translationCard.HideCard();
+    }
+
+    private void ShowImageEntry(long id)
+    {
+        if (_imageWindows.TryGetValue(id, out var existing))
+        { existing.Show(); existing.Activate(); return; }
+        try
+        {
+            var snippets = _services.GetRequiredService<SnippetService>();
+            Snippet? model = snippets.GetById(id);
+            byte[]? png = snippets.GetImage(id);
+            if (model is null || png is null) { MiniToast.Show(LocalizationService.Instance["Screenshot.ImageUnavailable"]); return; }
+            var window = new ImageEntryWindow(snippets, _localOcr, model, png);
+            window.SelectionRequested += ShowInternalSelection;
+            window.DismissActions += DismissInternalSelection;
+            window.Closed += (_, _) => _imageWindows.Remove(id);
+            _imageWindows.Add(id, window);
+            window.Show();
+            window.Activate();
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or InvalidOperationException or ArgumentException or NotSupportedException)
+        { MiniToast.Show(LocalizationService.Instance["Screenshot.ImageUnavailable"]); }
+    }
+
+    private void CaptureScreenshot()
+        => CaptureScreenshotFrom(_workbench?.IsActive == true ? _workbench.CurrentCategoryId : _panel?.CurrentCategoryId,
+            _workbench?.IsActive == true ? ExpirePolicy.Never : _panel?.CurrentExpirePolicy ?? ExpirePolicy.Never);
+
+    private async void CaptureScreenshotFrom(long? categoryId, ExpirePolicy expire)
+    {
+        if (_capturingScreenshot || _preparingShutdown || _shutdownCancellation.IsCancellationRequested ||
+            !_services.GetRequiredService<DatabaseMaintenanceCoordinator>().CanStartOperation) return;
+        _capturingScreenshot = true;
+        var settings = _services.GetRequiredService<SettingsStore>();
+        var visible = Windows.OfType<Window>().Where(window => window.IsVisible &&
+            window is not SelectionPopupWindow && window is not TranslationResultWindow).ToArray();
+        nint previousForeground = NativeMethods.GetForegroundWindow();
+        bool saved = false;
+        _translationCancellation?.Cancel();
+        _internalSelectionSource = null;
+        _selectionPopup.HideBubble();
+        _translationCard.HideCard();
+        _selectionWatcher.Stop();
+        try
+        {
+            foreach (Window window in visible) window.Hide();
+            // Let the desktop compositor remove our windows before freezing the screen.
+            await Task.Delay(180, _shutdownCancellation.Token);
+            CapturedScreenshot? captured = await _screenshotCapture.CaptureAsync(_shutdownCancellation.Token);
+            if (captured is null) return;
+            byte[] preview = ImagePresentation.Thumbnail(captured.PngBytes);
+            var snippets = _services.GetRequiredService<SnippetService>();
+            long id = snippets.AddImage(captured.PngBytes, preview, categoryId, expire);
+            if (categoryId is long group) snippets.AssignCategory(id, group);
+            saved = true;
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception)
+        { MiniToast.Show(LocalizationService.Instance["Screenshot.CaptureFailed"]); }
+        finally
+        {
+            if (!_shutdownCancellation.IsCancellationRequested)
+            {
+                foreach (Window window in visible)
+                    if (Windows.OfType<Window>().Contains(window))
+                    {
+                        if (window is QuickPanelWindow quickPanel) quickPanel.ShowPanel();
+                        else window.Show();
+                    }
+                if (previousForeground != nint.Zero) NativeMethods.SetForegroundWindow(previousForeground);
+                if (settings.Current.SelectionPopupEnabled) _selectionWatcher.Start();
+                if (saved) { Panel.ShowPanel(); MiniToast.Show(LocalizationService.Instance["Screenshot.Saved"]); }
+            }
+            _capturingScreenshot = false;
+        }
+    }
+
     private void TogglePanel()
     {
+        if (_capturingScreenshot) return;
         if (Panel.IsVisible) Panel.HidePanel();
         else
         {
@@ -451,7 +584,11 @@ public partial class App : Application
             _services.GetRequiredService<CategoryRepository>(),
             _services.GetRequiredService<TagRepository>(),
             _services.GetRequiredService<SettingsStore>(),
-            _services.GetRequiredService<GroupIoService>());
+            _services.GetRequiredService<GroupIoService>(),
+            onImageRequested: ShowImageEntry,
+            onInternalSelection: ShowInternalSelection,
+            onDismissSelection: DismissInternalSelection,
+            onCaptureRequested: () => CaptureScreenshotFrom(_workbench?.CurrentCategoryId, ExpirePolicy.Never));
         _workbench.ShowAndActivate();
     }
 
@@ -462,8 +599,29 @@ public partial class App : Application
             _services.GetRequiredService<BackupService>(),
             _services.GetRequiredService<DatabaseImportService>(),
             _services.GetRequiredService<IApplicationRestarter>(),
-            _hotkey);
+            _hotkey, _screenshotHotkey, prepareForShutdown: PrepareForShutdownAsync);
         _settingsWin.ShowAndActivate();
+    }
+
+    private async Task<bool> PrepareForShutdownAsync()
+    {
+        if (_preparingShutdown || _capturingScreenshot) return false;
+        _preparingShutdown = true;
+        try
+        {
+            foreach (var imageWindow in _imageWindows.Values.ToArray())
+            {
+                imageWindow.Close();
+                if (_imageWindows.ContainsValue(imageWindow)) return false;
+                await imageWindow.RecognitionCompletion;
+            }
+            if (_workbench is not null && !await _workbench.RequestHideAsync()) return false;
+            _translationCancellation?.Cancel();
+            _selectionPopup.HideBubble();
+            _translationCard.HideCard();
+            return true;
+        }
+        finally { _preparingShutdown = false; }
     }
 
     private async void ExitApp()
@@ -473,8 +631,8 @@ public partial class App : Application
         Log?.Info("Exit requested from tray");
         try
         {
-            if (_workbench is not null && !await _workbench.RequestHideAsync())
-                return;
+            if (!await PrepareForShutdownAsync()) return;
+            _shutdownCancellation.Cancel();
             Shutdown();
         }
         finally
@@ -492,6 +650,8 @@ public partial class App : Application
         _clipboardWatcher?.Dispose();
         _selectionWatcher?.Dispose();
         _hotkey?.Dispose();
+        _screenshotHotkey?.Dispose();
+        _shutdownCancellation.Cancel();
         _tray?.Dispose();
         (_services?.GetService<HousekeepingService>())?.Dispose();
         _instance?.Dispose();

@@ -13,6 +13,7 @@ public enum SnippetType
     Code      = 2,
     Link      = 3,
     FilePath  = 4,
+    Image     = 5,
 }
 
 /// <summary>
@@ -25,6 +26,7 @@ public enum SnippetSource
     Plugin    = 2,   // reserved persisted value for extension-originated content
     DragDrop  = 3,   // dropped from another application / Explorer
     Import    = 4,   // brought in by a group package (.ksdgrp) or preset
+    Screenshot = 5,
 }
 
 /// <summary>

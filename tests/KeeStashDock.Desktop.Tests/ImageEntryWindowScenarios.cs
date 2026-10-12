@@ -1,0 +1,107 @@
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using KeeStashDock.Core.Services;
+using KeeStashDock.Desktop.Views;
+using KeeStashDock.Infrastructure.Database;
+using KeeStashDock.Infrastructure.Logging;
+using KeeStashDock.Infrastructure.Repositories;
+using KeeStashDock.Infrastructure.Storage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace KeeStashDock.Desktop.Tests;
+
+// Runs in the existing isolated STA Application; WPF permits only one Application per process.
+internal static class ImageEntryWindowScenarios
+{
+    internal static void Verify(string isolatedRoot)
+    {
+        SynchronizationContext? previous = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
+        try { VerifyCore(isolatedRoot); }
+        finally { SynchronizationContext.SetSynchronizationContext(previous); }
+    }
+
+    private static void VerifyCore(string isolatedRoot)
+    {
+        using var log = new FileLogger(Path.Combine(isolatedRoot, "image-logs"));
+        var db = new Db(Path.Combine(isolatedRoot, "image-editor.db"), new DatabaseMaintenanceCoordinator());
+        new MigrationRunner(db, log).Run();
+        var snippets = new SnippetService(new SnippetRepository(db), log);
+        var bitmap = BitmapSource.Create(600, 300, 96, 96, PixelFormats.Bgr24, null, new byte[600 * 300 * 3], 600 * 3);
+        byte[] png = ScreenshotCaptureService.EncodeCrop(bitmap, new Int32Rect(0, 0, 600, 300)).PngBytes;
+        byte[] thumbnail = ImagePresentation.Thumbnail(png);
+        var dimensions = PngImageValidator.Validate(thumbnail, thumbnail: true);
+        Assert.IsTrue(Math.Max(dimensions.Width, dimensions.Height) <= 320);
+        long id = snippets.AddImage(png, thumbnail);
+        string hash = snippets.GetById(id)!.ContentHash;
+        TaskCompletionSource<OcrRecognitionResult>? pending = null;
+        CancellationToken token = default;
+        var window = new ImageEntryWindow(snippets, (_, ct) =>
+        {
+            token = ct;
+            return pending?.Task ?? Task.FromResult(new OcrRecognitionResult("Recognized screenshot text", OcrFailure.None));
+        }, snippets.GetById(id)!, png);
+        TextBox text = (TextBox)window.FindName("OcrText");
+        Button recognize = (Button)window.FindName("RecognizeButton");
+        recognize.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.AreEqual("Recognized screenshot text", snippets.GetById(id)!.Content);
+        Assert.AreEqual(1, snippets.AllLive().Count, "OCR must update the image entry instead of making a text card.");
+        Assert.AreEqual(hash, snippets.GetById(id)!.ContentHash);
+        CollectionAssert.AreEqual(png, snippets.GetImage(id));
+
+        string? offered = null;
+        window.SelectionRequested += source => offered = source.SelectedText;
+        text.Select(0, 10);
+        text.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
+        { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+        Assert.AreEqual("Recognized", offered, "Internal selection must offer the existing bubble without copying the clipboard.");
+
+        text.Text = string.Empty;
+        Assert.IsTrue(window.SaveText(), "An image can retain an empty OCR field.");
+        pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        recognize.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        ((Button)window.FindName("CancelRecognitionButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.IsTrue(token.IsCancellationRequested);
+        pending.SetResult(new OcrRecognitionResult("Late cancelled output", OcrFailure.None));
+        PumpUntil(() => recognize.IsEnabled);
+        Assert.AreEqual(string.Empty, text.Text);
+        Assert.AreEqual(string.Empty, snippets.GetById(id)!.Content);
+
+        var changed = snippets.GetById(id)!;
+        changed.Content = "Changed in another editor";
+        snippets.Update(changed);
+        text.Text = "Unsaved old editor";
+        Assert.IsFalse(window.SaveText(), "A stale image editor must not overwrite a newer edit.");
+        Assert.AreEqual("Changed in another editor", snippets.GetById(id)!.Content);
+        text.Text = string.Empty;
+        window.Close();
+
+        changed.Content = string.Empty;
+        snippets.Update(changed);
+        pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var closing = new ImageEntryWindow(snippets, (_, ct) => { token = ct; return pending.Task; }, changed, png);
+        ((Button)closing.FindName("RecognizeButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        closing.Close();
+        Assert.IsTrue(token.IsCancellationRequested, "Closing the preview must cancel its OCR process.");
+        pending.SetResult(new OcrRecognitionResult("Late closed output", OcrFailure.None));
+        PumpUntil(() => pending.Task.IsCompleted);
+        Assert.AreEqual(string.Empty, snippets.GetById(id)!.Content);
+    }
+
+    private static void PumpUntil(Func<bool> complete)
+    {
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(10) };
+        DateTime deadline = DateTime.UtcNow.AddSeconds(5);
+        timer.Tick += (_, _) => { if (complete() || DateTime.UtcNow >= deadline) frame.Continue = false; };
+        timer.Start();
+        try { Dispatcher.PushFrame(frame); }
+        finally { timer.Stop(); }
+        Assert.IsTrue(complete(), "The image editor operation did not complete.");
+    }
+}

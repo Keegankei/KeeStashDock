@@ -113,7 +113,7 @@ public sealed class DatabaseImportTests
 
         DatabaseImportResult result = context.Service.Import(source);
 
-        Assert.AreEqual(3, result.ImportedSchemaVersion);
+        Assert.AreEqual(MigrationRunner.LatestSupportedVersion, result.ImportedSchemaVersion);
         Assert.AreEqual(5, ReadOnlyInt(context.ActiveFile, "SELECT COUNT(*) FROM categories"));
         Assert.AreEqual("Team", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 10"));
         Assert.AreEqual("team (3)", ReadOnlyText(context.ActiveFile, "SELECT name FROM categories WHERE id = 20"));

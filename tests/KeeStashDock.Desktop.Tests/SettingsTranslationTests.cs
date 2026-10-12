@@ -26,7 +26,17 @@ public sealed class SettingsTranslationTests
         SettingsWindow? window = null;
         Application? application = null;
         FileLogger? logger = null;
-        using var hotkey = new HotkeyManager();
+        var registeredKeys = new Dictionary<int, (uint Modifiers, uint Key)>();
+        bool Register(int id, uint modifiers, uint key)
+        {
+            if (registeredKeys.Values.Contains((modifiers, key))) return false;
+            registeredKeys.Add(id, (modifiers, key));
+            return true;
+        }
+        using var hotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
+        using var screenshotHotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
+        Assert.IsTrue(hotkey.Initialize(1, 0x51));
+        Assert.IsTrue(screenshotHotkey.Initialize(3, 0x53));
 
         try
         {
@@ -63,9 +73,12 @@ public sealed class SettingsTranslationTests
             CancellationToken testToken = default;
             string? testedProvider = null;
             string? testedSample = null;
+            int shutdownPreparations = 0;
+            var pendingShutdown = new TaskCompletionSource<bool>();
             window = new SettingsWindow(
                 settings, backup, importer, restarter, hotkey,
-                displayDataRoot: root, isAppDataFallback: false,
+                displayDataRoot: root, isAppDataFallback: false, screenshotHotkey: screenshotHotkey,
+                prepareForShutdown: () => { shutdownPreparations++; return pendingShutdown.Task; },
                 translate: (text, cfg, token) =>
                 {
                     testedProvider = cfg.TranslationEngine;
@@ -176,6 +189,39 @@ public sealed class SettingsTranslationTests
             Assert.IsFalse(appId.IsEnabled);
             Assert.IsFalse(aliyunPanel.IsEnabled);
             Assert.IsFalse(Named<Button>(window, "TranslationTestButton").IsEnabled);
+
+            // Both actions use an in-memory registrar: no global shortcut or
+            // actual user's settings/registry are changed by this test.
+            CheckBox captureEnabled = Named<CheckBox>(window, "ScreenshotHotkeyCheck");
+            Assert.IsTrue(captureEnabled.IsChecked);
+            Assert.IsFalse(window.TryApplyHotkey(true, 1, 0x51));
+            Assert.AreEqual(0x53u, settings.Current.ScreenshotHotkeyVirtualKey);
+            Assert.IsFalse(window.TryApplyHotkey(false, 3, 0x53));
+            Assert.AreEqual(0x51u, settings.Current.HotkeyVirtualKey);
+            Assert.IsTrue(window.TryApplyHotkey(true, 3, 0x54));
+            Assert.AreEqual(0x54u, settings.Current.ScreenshotHotkeyVirtualKey);
+            captureEnabled.IsChecked = false;
+            Assert.IsFalse(screenshotHotkey.IsRegistered);
+            Assert.IsFalse(settings.Current.ScreenshotHotkeyEnabled);
+            Assert.IsTrue(window.TryApplyHotkey(true, 3, 0x55));
+            Assert.IsFalse(screenshotHotkey.IsRegistered, "Editing a disabled shortcut must not activate it.");
+            captureEnabled.IsChecked = true;
+            Assert.IsTrue(settings.Current.ScreenshotHotkeyEnabled);
+            Assert.IsTrue(screenshotHotkey.IsRegistered);
+            var hotkeyReload = new SettingsStore(settingsFile);
+            hotkeyReload.Load();
+            Assert.AreEqual(0x55u, hotkeyReload.Current.ScreenshotHotkeyVirtualKey);
+            Assert.IsTrue(hotkeyReload.Current.ScreenshotHotkeyEnabled);
+            Button restart = Named<Button>(window, "RestartButton");
+            restart.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.AreEqual(1, shutdownPreparations);
+            Assert.IsFalse(window.IsEnabled);
+            restart.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.AreEqual(1, shutdownPreparations, "A pending editor decision must block duplicate restart actions.");
+            pendingShutdown.SetResult(false);
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            Assert.IsTrue(window.IsEnabled, "Cancelling a draft decision must abort restart and restore Settings.");
+            ImageEntryWindowScenarios.Verify(root);
         }
         finally
         {
@@ -188,6 +234,7 @@ public sealed class SettingsTranslationTests
             }
             application?.Shutdown();
             logger?.Dispose();
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             string resolvedRoot = Path.GetFullPath(root);
             Assert.AreEqual(Path.GetFullPath(parent), Path.GetDirectoryName(resolvedRoot));
             Assert.IsTrue(Guid.TryParseExact(Path.GetFileName(resolvedRoot), "N", out _));

@@ -8,6 +8,10 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Added
 
+- Region screenshots saved as image entries, with preview, image copy/save, and editable searchable OCR text.
+- Configurable screenshot shortcut (Ctrl+Alt+S by default), independent enable/disable, and registration conflict handling that preserves the existing shortcut.
+- On-demand local English/Simplified Chinese OCR with explicit model setup, cancellation, and the existing selection action bubble for translation.
+
 - Alibaba Cloud TranslateGeneral support with independent AccessKey credentials, signed requests, and service activation errors.
 - Local offline translation with a loopback-only Argos / LibreTranslate-compatible service, optional isolated English/Chinese engine setup, and actionable model/service errors.
 - A translation test in Settings using a fixed sample, with cancellation on configuration changes.
@@ -25,6 +29,9 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 - Apache License 2.0 terms, attribution notice, and project license metadata.
 
 ### Changed
+
+- Schema v4 stores original PNGs and thumbnails with their entries so database backups, imports, Trash recovery, and permanent deletion retain consistent image data. Older text databases migrate forward.
+- Version 2 group packages include images and recognized text; version 1 text packages remain readable.
 
 - New installs default to Bing's China translation endpoint; existing provider choices and DeepL credentials are preserved.
 - Aligned the build SDK with .NET SDK 10.0.401, allowing later 10.0.4xx patches.

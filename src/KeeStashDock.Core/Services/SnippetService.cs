@@ -3,6 +3,7 @@ using System.Text;
 using KeeStashDock.Domain.Entities;
 using KeeStashDock.Infrastructure.Logging;
 using KeeStashDock.Infrastructure.Repositories;
+using KeeStashDock.Infrastructure.Storage;
 
 namespace KeeStashDock.Core.Services;
 
@@ -40,6 +41,7 @@ public sealed class SnippetService
                     string? title = null, long? categoryId = null,
                     SnippetType? explicitType = null)
     {
+        if (explicitType == SnippetType.Image) throw new ArgumentException("Use AddImage for image entries.", nameof(explicitType));
         content = NormalizeContent(content);
         string hash = Sha256(content);
 
@@ -63,15 +65,45 @@ public sealed class SnippetService
         return id;
     }
 
+    /// <summary>Stores an immutable original PNG and a bounded thumbnail. OCR remains optional text.</summary>
+    public long AddImage(byte[] png, byte[] thumbnailPng, long? categoryId = null,
+                         ExpirePolicy expire = ExpirePolicy.Never, string? title = null,
+                         string ocrText = "")
+    {
+        var now = DateTime.UtcNow;
+        var snippet = new Snippet
+        {
+            Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim(),
+            Content = (ocrText ?? string.Empty).TrimEnd('\r', '\n'),
+            ContentHash = PngImageValidator.ImageHash(png),
+            Type = SnippetType.Image,
+            Source = SnippetSource.Screenshot,
+            CategoryId = categoryId,
+            ExpirePolicy = expire,
+            ExpireAt = ComputeExpireAt(expire, now),
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        long id = _repo.InsertImageOrRefresh(snippet, png, thumbnailPng);
+        _log.Debug($"Image snippet #{id} recorded");
+        Changed?.Invoke();
+        return id;
+    }
+
+    public byte[]? GetImage(long id) => _repo.GetImage(id);
+    public byte[]? GetImageThumbnail(long id) => _repo.GetImageThumbnail(id);
+
     // ---------------------------------------------------------------- edit
 
-    /// <summary>Rejects blank or duplicate content. Editor fields and optional
+    /// <summary>Rejects blank or duplicate text; image OCR may be empty. Editor fields and optional
     /// tags commit together, and failed saves leave the supplied model intact.</summary>
     public void Update(Snippet s, IReadOnlyList<string>? tags = null)
     {
         ArgumentNullException.ThrowIfNull(s);
-        string content = NormalizeContent(s.Content);
-        string hash = Sha256(content);
+        Snippet stored = _repo.FindById(s.Id)
+            ?? throw new InvalidOperationException($"Snippet #{s.Id} no longer exists.");
+        string content = stored.IsImage ? (s.Content ?? string.Empty).TrimEnd('\r', '\n') : NormalizeContent(s.Content);
+        string hash = stored.IsImage ? stored.ContentHash : Sha256(content);
         var pending = new Snippet
         {
             Id = s.Id,
@@ -137,6 +169,7 @@ public sealed class SnippetService
 
     // ---------------------------------------------------------------- reads
 
+    public Snippet? GetById(long id) => _repo.FindById(id);
     public List<Snippet> Recent(int limit = 100) => _repo.GetRecent(limit);
     public List<Snippet> AllLive() => _repo.GetAllLive();
     public List<Snippet> ByCategory(long? categoryId) => _repo.GetByCategory(categoryId);

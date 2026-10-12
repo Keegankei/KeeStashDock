@@ -47,6 +47,8 @@ public partial class QuickPanelWindow : Window
     private readonly DraftGuard _draft = new();
     private readonly Action _onExpandRequested;
     private readonly Action _onSettingsRequested;
+    private readonly Action? _onCaptureRequested;
+    private readonly Action<long>? _onImageRequested;
     private readonly DispatcherTimer _clock;
 
     private PanelState _state = PanelState.Expanded;
@@ -69,12 +71,15 @@ public partial class QuickPanelWindow : Window
     public QuickPanelWindow(SnippetService snippets, SearchService search,
                             SettingsStore settings,
                             Infrastructure.Repositories.CategoryRepository categories,
-                            Action onExpandRequested, Action onSettingsRequested)
+                            Action onExpandRequested, Action onSettingsRequested,
+                            Action? onCaptureRequested = null, Action<long>? onImageRequested = null)
     {
         InitializeComponent();
         _settings = settings;
         _onExpandRequested = onExpandRequested;
         _onSettingsRequested = onSettingsRequested;
+        _onCaptureRequested = onCaptureRequested;
+        _onImageRequested = onImageRequested;
         _vm = new QuickPanelViewModel(snippets, search, categories);
         _vm.DraftChanged += _draft.OnTextChanged;
         DataContext = _vm;
@@ -635,6 +640,8 @@ public partial class QuickPanelWindow : Window
     /// <summary>The group new captures land in (null = uncategorized);
     /// mirrors the panel's group combo for the selection-capture flow.</summary>
     public long? CurrentCategoryId => _vm.SelectedCategoryId;
+    public Domain.Entities.ExpirePolicy CurrentExpirePolicy => (Domain.Entities.ExpirePolicy)Math.Clamp(_vm.ExpireIndex, 0, 3);
+    private void OnCaptureClick(object sender, RoutedEventArgs e) => _onCaptureRequested?.Invoke();
 
     // ------------------------------------------------------------ geometry
 
@@ -883,7 +890,8 @@ public partial class QuickPanelWindow : Window
 
         // File-path cards open their target on click (copy stays available
         // via Enter in the keyboard flow); other cards copy as before.
-        if (item.Model.Type == Domain.Entities.SnippetType.FilePath)
+        if (item.IsImage) _onImageRequested?.Invoke(item.Id);
+        else if (item.Model.Type == Domain.Entities.SnippetType.FilePath)
             TryOpenPath(item.Model.Content);
         else
             _vm.CopyCommand.Execute(item);
@@ -913,6 +921,7 @@ public partial class QuickPanelWindow : Window
             CardList, e.OriginalSource as DependencyObject) as ListBoxItem;
         if (container?.DataContext is not SnippetItemViewModel item) return;
 
+        if (item.IsImage) return;
         _pressItem = item;
         _pressContainer = container;
         _dragStart = e.GetPosition(this);
@@ -953,6 +962,20 @@ public partial class QuickPanelWindow : Window
 
         var loc = LocalizationService.Instance;
         var menu = new ContextMenu();
+
+        if (item.IsImage)
+        {
+            var openImage = new MenuItem { Header = loc["Screenshot.Open"] };
+            openImage.Click += (_, _) => _onImageRequested?.Invoke(item.Id);
+            var copyImage = new MenuItem { Header = loc["Screenshot.CopyImage"] };
+            copyImage.Click += (_, _) => _vm.CopyCommand.Execute(item);
+            menu.Items.Add(openImage);
+            menu.Items.Add(copyImage);
+            menu.PlacementTarget = container;
+            menu.IsOpen = true;
+            e.Handled = true;
+            return;
+        }
 
         var qr = new MenuItem { Header = loc["QuickPanel.Menu.Qr"] };
         qr.Click += (_, _) =>

@@ -105,6 +105,8 @@
         <Button Style="{StaticResource S.ButtonPrimary}" Margin="0,6,6,0"
                 Command="{Binding NewSnippetCommand}"
                 Content="{loc:Tr Workbench.NewSnippet}"/>
+        <Button Style="{StaticResource S.IconButton}" Margin="0,6,6,0" Content="&#xE722;"
+                Click="OnCaptureScreenshot" ToolTip="{loc:Tr Screenshot.Capture}"/>
         <!-- Trash-only bulk action -->
         <Button Style="{StaticResource S.Button}" Margin="0,6,0,0"
                 Foreground="{DynamicResource B.Danger}"
@@ -127,6 +129,8 @@
               <StackPanel>
                 <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold"
                            TextTrimming="CharacterEllipsis"/>
+                <Image Source="{Binding Thumbnail}" Height="90" Stretch="Uniform" Margin="0,5,0,5"
+                       Visibility="{Binding IsImage, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="{Binding Preview}" Margin="0,3,0,3" FontSize="12"
                            Foreground="{DynamicResource B.TextMuted}"
                            TextWrapping="Wrap" MaxHeight="40"/>
@@ -148,6 +152,13 @@
 
     <!-- ============ Right: editor pane ============ -->
     <DockPanel Grid.Column="2">
+      <Button DockPanel.Dock="Top" Style="{StaticResource S.Button}" Click="OnOpenImage" Margin="0,0,0,8"
+              Visibility="{Binding SelectedItem.IsImage, Converter={StaticResource BoolToVis}}">
+        <StackPanel>
+          <Image Source="{Binding SelectedItem.Thumbnail}" Height="90" Stretch="Uniform"/>
+          <TextBlock Text="{loc:Tr Screenshot.Open}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+        </StackPanel>
+      </Button>
       <!-- Title row -->
       <TextBox DockPanel.Dock="Top" Style="{StaticResource S.Input}"
                FontSize="15" FontWeight="SemiBold"
@@ -234,7 +245,7 @@
       </StackPanel>
 
       <!-- Content editor -->
-      <TextBox Style="{StaticResource S.Input}" Margin="0,8,0,0"
+      <TextBox x:Name="ContentEditor" Style="{StaticResource S.Input}" Margin="0,8,0,0"
                AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"
                VerticalScrollBarVisibility="Auto" FontSize="13"
                Padding="10,8"

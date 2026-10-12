@@ -103,6 +103,18 @@
           <TextBlock x:Name="HotkeyStatus" FontSize="11" Margin="0,4,0,0"
                      Foreground="{DynamicResource B.Danger}" Visibility="Collapsed"
                      Text="{loc:Tr Settings.Hotkey.Conflict}"/>
+          <CheckBox x:Name="ScreenshotHotkeyCheck" Margin="0,14,0,6"
+                    Checked="OnScreenshotHotkeyEnabledChanged" Unchecked="OnScreenshotHotkeyEnabledChanged">
+            <TextBlock Text="{loc:Tr Screenshot.HotkeyEnabled}" TextWrapping="Wrap"/>
+          </CheckBox>
+          <TextBlock Text="{loc:Tr Screenshot.HotkeyHint}" FontSize="11" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,6"/>
+          <TextBox x:Name="ScreenshotHotkeyBox" Style="{StaticResource S.Input}"
+                   IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                   PreviewKeyDown="OnScreenshotHotkeyRecord"/>
+          <TextBlock x:Name="ScreenshotHotkeyStatus" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.Danger}" Visibility="Collapsed"
+                     Text="{loc:Tr Screenshot.HotkeyConflict}"/>
         </StackPanel>
       </Border>
 
@@ -513,7 +525,7 @@
                     Margin="0,0,0,8" Click="OnImportClick"
                     Content="{loc:Tr Settings.Backup.Import}"/>
             <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left"
-                    Click="OnRestartClick" Content="{loc:Tr Settings.Restart}"/>
+                    x:Name="RestartButton" Click="OnRestartClick" Content="{loc:Tr Settings.Restart}"/>
           </StackPanel>
         </StackPanel>
       </Border>

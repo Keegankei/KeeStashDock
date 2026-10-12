@@ -1,12 +1,12 @@
 namespace KeeStashDock.Domain.Entities;
 
 /// <summary>
-/// The core aggregate of KeeStashDock: one stashed piece of text.
+/// The core aggregate of KeeStashDock: one text or screenshot entry.
 ///
 /// Design notes
 /// ------------
 /// * All timestamps are stored as UTC (converted for display only).
-/// * <see cref="ContentHash"/> is a SHA-256 hex digest of <see cref="Content"/>,
+/// * <see cref="ContentHash"/> identifies text or the immutable original image,
 ///   used for duplicate detection at insert time.
 /// * Soft delete: <see cref="DeletedAt"/> non-null means "in the recycle bin".
 ///   Rows are physically purged by the housekeeping service 30 days later.
@@ -20,13 +20,14 @@ public sealed class Snippet
     /// <summary>Optional human-friendly title. Null =&gt; UI shows a content preview.</summary>
     public string? Title { get; set; }
 
-    /// <summary>The stashed text itself. Never null; empty content is rejected upstream.</summary>
+    /// <summary>Text content, or optional editable OCR text for an image entry.</summary>
     public string Content { get; set; } = string.Empty;
 
-    /// <summary>SHA-256 of Content (lowercase hex). Maintained by SnippetService.</summary>
+    /// <summary>Text SHA-256, or image: plus original PNG SHA-256. OCR edits retain image identity.</summary>
     public string ContentHash { get; set; } = string.Empty;
 
     public SnippetType Type { get; set; } = SnippetType.PlainText;
+    public bool IsImage => Type == SnippetType.Image;
     public SnippetSource Source { get; set; } = SnippetSource.Manual;
 
     /// <summary>FK to Category. Null =&gt; "Uncategorized" virtual group.</summary>

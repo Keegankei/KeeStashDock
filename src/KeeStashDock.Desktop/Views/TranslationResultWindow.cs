@@ -35,6 +35,7 @@ public sealed class TranslationResultWindow : Window
     private readonly TextBlock _hint;
     private string _resultText = string.Empty;
     private bool _copyable;
+    private int _anchorX, _anchorY;
 
     public TranslationResultWindow(SettingsStore settings)
     {
@@ -126,22 +127,8 @@ public sealed class TranslationResultWindow : Window
         _hint.Visibility = Visibility.Collapsed;
         _copyable = false;
 
-        double dpi = 1.0;
-        var t = PresentationSource.FromVisual(this)?.CompositionTarget;
-        if (t is not null) dpi = t.TransformToDevice.M11;
-        else
-        {
-            var main = Application.Current?.Windows.Count > 0
-                ? Application.Current.Windows[0] : null;
-            var mt = main is null ? null
-                : PresentationSource.FromVisual(main)?.CompositionTarget;
-            if (mt is not null) dpi = mt.TransformToDevice.M11;
-        }
-        var wa = SystemParameters.WorkArea;
-        Left = Math.Clamp(deviceX / dpi + 10, wa.Left, wa.Right - 260);
-        Top = Math.Clamp(deviceY / dpi + 16, wa.Top, wa.Bottom - 120);
-
-        Show();
+        (_anchorX, _anchorY) = (deviceX, deviceY);
+        PopupPlacement.ShowNear(this, deviceX, deviceY, preferAbove: false);
         _hideTimer.Stop();
         // The client owns a bounded request timeout. Do not dismiss the card
         // before it can display a slow response or a useful timeout message.
@@ -179,9 +166,7 @@ public sealed class TranslationResultWindow : Window
     {
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
-            var wa = SystemParameters.WorkArea;
-            if (Left + ActualWidth > wa.Right) Left = Math.Max(wa.Left, wa.Right - ActualWidth);
-            if (Top + ActualHeight > wa.Bottom) Top = Math.Max(wa.Top, wa.Bottom - ActualHeight);
+            if (IsVisible) PopupPlacement.PlaceNear(this, _anchorX, _anchorY, preferAbove: false);
         });
     }
 

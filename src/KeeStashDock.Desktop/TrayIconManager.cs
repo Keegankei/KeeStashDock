@@ -20,6 +20,7 @@ public sealed class TrayIconManager : IDisposable
     public event Action? ShowWorkbenchRequested;
     public event Action? ShowSettingsRequested;
     public event Action? ExitRequested;
+    public event Action? CaptureRequested;
 
     public TrayIconManager()
     {
@@ -44,6 +45,7 @@ public sealed class TrayIconManager : IDisposable
         var menu = new WF.ContextMenuStrip();
         menu.Items.Add(loc["App.Tray.Show"],      null, (_, _) => ShowPanelRequested?.Invoke());
         menu.Items.Add(loc["App.Tray.Workbench"], null, (_, _) => ShowWorkbenchRequested?.Invoke());
+        menu.Items.Add(loc["Screenshot.Capture"], null, (_, _) => CaptureRequested?.Invoke());
         menu.Items.Add(loc["App.Tray.Settings"],  null, (_, _) => ShowSettingsRequested?.Invoke());
         menu.Items.Add(new WF.ToolStripSeparator());
         menu.Items.Add(loc["App.Tray.Exit"],      null, (_, _) => ExitRequested?.Invoke());

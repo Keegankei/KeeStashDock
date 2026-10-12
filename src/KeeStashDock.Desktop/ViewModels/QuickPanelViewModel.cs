@@ -92,7 +92,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
                 ? _snippets.ByCategory(cat)
                 : _snippets.Recent(100);
         Items.Clear();
-        foreach (var s in data) Items.Add(new SnippetItemViewModel(s));
+        foreach (var s in data) Items.Add(new SnippetItemViewModel(s, _snippets.GetImageThumbnail));
     }
 
     /// <summary>Enter in the quick input box: stash and clear.</summary>
@@ -117,20 +117,42 @@ public sealed partial class QuickPanelViewModel : ObservableObject
         if (item is null) return;
         try
         {
-            Clipboard.SetDataObject(item.Model.Content, copy: true);
+            Action writeClipboard;
+            if (item.IsImage)
+            {
+                if (_snippets.GetImage(item.Id) is not byte[] png)
+                { ShowToast("Screenshot.ImageUnavailable"); return; }
+                writeClipboard = () => ImagePresentation.Copy(png);
+            }
+            else writeClipboard = () => Clipboard.SetDataObject(item.Model.Content, copy: true);
+            if (!await TryWriteClipboardAsync(writeClipboard))
+            { ShowToast("Screenshot.CopyFailed"); return; }
         }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-            // Clipboard can be transiently locked by another process; one retry
-            // covers virtually all real-world cases.
-            Clipboard.SetDataObject(item.Model.Content, copy: true);
-        }
+        catch (Exception ex) when (ex is System.IO.IOException or InvalidOperationException or
+            ArgumentException or NotSupportedException)
+        { ShowToast("Screenshot.CopyFailed"); return; }
         _snippets.RegisterUse(item.Model);
-        DirectPasteResult pasteResult = await DirectPaste.TryPasteToTargetAsync();
+        DirectPasteResult pasteResult = item.IsImage ? DirectPasteResult.Disabled
+            : await DirectPaste.TryPasteToTargetAsync();
         string toastKey = pasteResult is DirectPasteResult.Success or DirectPasteResult.Disabled
             ? "QuickPanel.Copied"
             : "QuickPanel.DirectPasteFailed";
         ShowToast(toastKey);
+    }
+
+    /// <summary>A busy clipboard gets one delayed retry; a second lock is a normal copy failure.</summary>
+    internal static async Task<bool> TryWriteClipboardAsync(Action write, Func<Task>? retryDelay = null)
+    {
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            try { write(); return true; }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                if (attempt == 1) return false;
+                await (retryDelay?.Invoke() ?? Task.Delay(80));
+            }
+        }
+        return false;
     }
 
     [RelayCommand]

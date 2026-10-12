@@ -21,15 +21,29 @@ public partial class WorkbenchWindow : Window
 {
     private readonly WorkbenchViewModel _vm;
     private readonly GroupIoService _groupIo;
+    private readonly Action<long>? _onImageRequested;
+    private readonly Action? _onCaptureRequested;
+    private readonly Action<TextBox>? _onInternalSelection;
+    private readonly Action? _onDismissSelection;
     private bool _handlingSelection;
     private bool _handlingClose;
 
     public WorkbenchWindow(SnippetService snippets, SearchService search,
                            CategoryRepository categories, TagRepository tags,
-                           SettingsStore settings, GroupIoService groupIo)
+                           SettingsStore settings, GroupIoService groupIo,
+                           Action<long>? onImageRequested = null, Action<TextBox>? onInternalSelection = null,
+                           Action? onDismissSelection = null, Action? onCaptureRequested = null)
     {
         InitializeComponent();
         _groupIo = groupIo;
+        _onImageRequested = onImageRequested;
+        _onInternalSelection = onInternalSelection;
+        _onDismissSelection = onDismissSelection;
+        _onCaptureRequested = onCaptureRequested;
+        ContentEditor.AddHandler(MouseLeftButtonUpEvent, new MouseButtonEventHandler((_, _) => OfferEditorSelection()), true);
+        ContentEditor.KeyUp += (_, _) => OfferEditorSelection();
+        PreviewMouseDown += (_, _) => _onDismissSelection?.Invoke();
+        Deactivated += (_, _) => _onDismissSelection?.Invoke();
         _vm = new WorkbenchViewModel(
             snippets,
             search,
@@ -49,6 +63,23 @@ public partial class WorkbenchWindow : Window
         };
         LocalizationService.Instance.ApplyFlowDirection(this);
     }
+
+    private void OfferEditorSelection()
+    {
+        if (_vm.SelectedItem?.IsImage == true && !string.IsNullOrWhiteSpace(ContentEditor.SelectedText))
+            _onInternalSelection?.Invoke(ContentEditor);
+        else _onDismissSelection?.Invoke();
+    }
+
+    private async void OnOpenImage(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedItem is not { IsImage: true } item) return;
+        if (await _vm.RequestLeaveAsync() == WorkbenchLeaveResult.Proceed)
+            _onImageRequested?.Invoke(item.Id);
+    }
+
+    public long? CurrentCategoryId => _vm.SelectedNav?.Id > 0 ? _vm.SelectedNav.Id : null;
+    private void OnCaptureScreenshot(object sender, RoutedEventArgs e) => _onCaptureRequested?.Invoke();
 
     public void ShowAndActivate()
     {
@@ -289,7 +320,12 @@ public partial class WorkbenchWindow : Window
                 FileName = $"{entry.Name}.ksdgrp",
             };
             if (dlg.ShowDialog(this) != true) return;
-            _groupIo.ExportGroup(entry.Id, entry.Name, dlg.FileName);
+            try { _groupIo.ExportGroup(entry.Id, entry.Name, dlg.FileName); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, loc["Screenshot.ExportFailed"], loc["Common.Confirm"],
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         };
 
         menu.Items.Add(rename);

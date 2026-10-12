@@ -83,6 +83,18 @@ public sealed class SettingsStore
 
     public void ValidateAndNormalize()
     {
+        if (Current.ScreenshotHotkeyModifiers == 0 ||
+            (Current.ScreenshotHotkeyModifiers & ~0x0fu) != 0 ||
+            Current.ScreenshotHotkeyVirtualKey is 0 or > 0xfe or 0x10 or 0x11 or 0x12 or 0x5b or 0x5c or >= 0xa0 and <= 0xa5)
+        {
+            Current.ScreenshotHotkeyModifiers = 3;
+            Current.ScreenshotHotkeyVirtualKey = 0x53;
+        }
+        // An existing user's panel shortcut takes priority over the new action.
+        if (Current.ScreenshotHotkeyModifiers == Current.HotkeyModifiers &&
+            Current.ScreenshotHotkeyVirtualKey == Current.HotkeyVirtualKey)
+            Current.ScreenshotHotkeyEnabled = false;
+
         Current.TrashRetentionDays = NormalizePositiveInt(
             Current.TrashRetentionDays,
             AppSettings.DefaultTrashRetentionDays,

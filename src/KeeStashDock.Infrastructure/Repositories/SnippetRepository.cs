@@ -9,7 +9,7 @@ namespace KeeStashDock.Infrastructure.Repositories;
 /// dependency graph tiny and every query auditable. All timestamps round-trip
 /// as ISO-8601 UTC strings ("O" format) - SQLite has no native date type.
 /// </summary>
-public sealed class SnippetRepository
+public sealed partial class SnippetRepository
 {
     private readonly Db _db;
     public SnippetRepository(Db db) => _db = db;
@@ -18,6 +18,7 @@ public sealed class SnippetRepository
 
     public long Insert(Snippet s)
     {
+        if (s.IsImage) throw new ArgumentException("Image entries require an image asset.", nameof(s));
         using var conn = _db.Open();
         return Insert(conn, null, s);
     }
@@ -26,6 +27,7 @@ public sealed class SnippetRepository
     /// captures and edits so a concurrent capture cannot reintroduce duplicates.</summary>
     public long InsertOrRefresh(Snippet snippet)
     {
+        if (snippet.IsImage) throw new ArgumentException("Image entries require an image asset.", nameof(snippet));
         using var conn = _db.Open();
         using var tx = conn.BeginTransaction(deferred: false);
         long? existingId = FindOtherLiveId(conn, tx, snippet.ContentHash, 0);
@@ -67,11 +69,23 @@ public sealed class SnippetRepository
     public void UpdateContent(Snippet snippet, DateTime updatedAtUtc,
                               IReadOnlyList<string>? tags = null)
     {
-        if (string.IsNullOrWhiteSpace(snippet.Content))
-            throw new ArgumentException("Snippet content must not be empty.", nameof(snippet));
         using var conn = _db.Open();
         using var tx = conn.BeginTransaction(deferred: false);
-        long? duplicateId = FindOtherLiveId(conn, tx, snippet.ContentHash, snippet.Id);
+        string hash = snippet.ContentHash;
+        bool isImage;
+        using (var read = conn.CreateCommand())
+        {
+            read.Transaction = tx;
+            read.CommandText = "SELECT type, content_hash FROM snippets WHERE id = $id";
+            read.Parameters.AddWithValue("$id", snippet.Id);
+            using var reader = read.ExecuteReader();
+            if (!reader.Read()) throw new InvalidOperationException($"Snippet #{snippet.Id} no longer exists.");
+            isImage = reader.GetInt32(0) == (int)SnippetType.Image;
+            if (isImage) hash = reader.GetString(1);
+        }
+        if (!isImage && string.IsNullOrWhiteSpace(snippet.Content))
+            throw new ArgumentException("Snippet content must not be empty.", nameof(snippet));
+        long? duplicateId = isImage ? null : FindOtherLiveId(conn, tx, hash, snippet.Id);
         if (duplicateId is long existing)
             throw new DuplicateSnippetContentException(existing);
         using var cmd = conn.CreateCommand();
@@ -88,7 +102,7 @@ public sealed class SnippetRepository
             """;
         cmd.Parameters.AddWithValue("$title", (object?)snippet.Title ?? DBNull.Value);
         cmd.Parameters.AddWithValue("$content", snippet.Content);
-        cmd.Parameters.AddWithValue("$hash", snippet.ContentHash);
+        cmd.Parameters.AddWithValue("$hash", hash);
         cmd.Parameters.AddWithValue("$expire_policy", (int)snippet.ExpirePolicy);
         cmd.Parameters.AddWithValue(
             "$expire_at",
@@ -225,6 +239,8 @@ public sealed class SnippetRepository
 
     public List<Snippet> GetTrash()
         => Query("SELECT * FROM snippets WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC");
+
+    public Snippet? FindById(long id) => Query("SELECT * FROM snippets WHERE id = $id", ("$id", id)).FirstOrDefault();
 
     public Snippet? FindLiveByHash(string hash)
         => Query("SELECT * FROM snippets WHERE deleted_at IS NULL AND content_hash = $h LIMIT 1",

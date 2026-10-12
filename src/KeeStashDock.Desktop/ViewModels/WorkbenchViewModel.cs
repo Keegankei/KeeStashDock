@@ -154,7 +154,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
             long? editingId = _editor.ItemId;
             Items.Clear();
             foreach (Snippet snippet in data)
-                Items.Add(new SnippetItemViewModel(snippet));
+                Items.Add(new SnippetItemViewModel(snippet, _snippets.GetImageThumbnail));
 
             if (editingId is long id)
             {

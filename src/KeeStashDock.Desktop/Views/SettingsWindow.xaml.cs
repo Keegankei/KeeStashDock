@@ -27,6 +27,9 @@ public partial class SettingsWindow : Window
     private readonly DatabaseImportService _databaseImport;
     private readonly IApplicationRestarter _restarter;
     private readonly HotkeyManager _hotkey;
+    private readonly HotkeyManager? _screenshotHotkey;
+    private readonly Func<Task<bool>> _prepareForShutdown;
+    private bool _shutdownPending;
     private readonly string _displayDataRoot;
     private readonly bool _isAppDataFallback;
     private bool _loading = true;   // suppress handlers during initial population
@@ -39,9 +42,12 @@ public partial class SettingsWindow : Window
         BackupService backup,
         DatabaseImportService databaseImport,
         IApplicationRestarter restarter,
-        HotkeyManager hotkey)
+        HotkeyManager hotkey,
+        HotkeyManager? screenshotHotkey = null,
+        Func<Task<bool>>? prepareForShutdown = null)
         : this(settings, backup, databaseImport, restarter, hotkey,
-            PortablePaths.DataRoot, PortablePaths.IsAppDataFallback)
+            PortablePaths.DataRoot, PortablePaths.IsAppDataFallback, screenshotHotkey: screenshotHotkey,
+            prepareForShutdown: prepareForShutdown)
     {
     }
 
@@ -53,7 +59,9 @@ public partial class SettingsWindow : Window
         HotkeyManager hotkey,
         string displayDataRoot,
         bool isAppDataFallback,
-        Func<string, AppSettings, CancellationToken, Task<TranslationResult>>? translate = null)
+        Func<string, AppSettings, CancellationToken, Task<TranslationResult>>? translate = null,
+        HotkeyManager? screenshotHotkey = null,
+        Func<Task<bool>>? prepareForShutdown = null)
     {
         InitializeComponent();
         _settings = settings;
@@ -61,6 +69,8 @@ public partial class SettingsWindow : Window
         _databaseImport = databaseImport;
         _restarter = restarter;
         _hotkey = hotkey;
+        _screenshotHotkey = screenshotHotkey;
+        _prepareForShutdown = prepareForShutdown ?? (() => Task.FromResult(true));
         _displayDataRoot = displayDataRoot;
         _isAppDataFallback = isAppDataFallback;
         _translate = translate ?? TranslationService.TranslateDetailedAsync;
@@ -89,6 +99,12 @@ public partial class SettingsWindow : Window
                                  ?? langs.FirstOrDefault(l => l.Tag == "en-US");
 
         HotkeyBox.Text = FormatHotkey(cfg.HotkeyModifiers, cfg.HotkeyVirtualKey);
+        ScreenshotHotkeyCheck.IsChecked = cfg.ScreenshotHotkeyEnabled;
+        ScreenshotHotkeyCheck.IsEnabled = _screenshotHotkey is not null;
+        ScreenshotHotkeyBox.Text = FormatHotkey(cfg.ScreenshotHotkeyModifiers, cfg.ScreenshotHotkeyVirtualKey);
+        ScreenshotHotkeyBox.IsEnabled = _screenshotHotkey is not null;
+        ScreenshotHotkeyStatus.Visibility = cfg.ScreenshotHotkeyEnabled && _screenshotHotkey is { IsRegistered: false }
+            ? Visibility.Visible : Visibility.Collapsed;
         AutoStartCheck.IsChecked = AutoStartHelper.IsEnabled();
         CollapseDelayBox.Text = cfg.CollapseDelaySeconds.ToString("0.#",
             System.Globalization.CultureInfo.InvariantCulture);
@@ -171,40 +187,87 @@ public partial class SettingsWindow : Window
 
     // ------------------------------------------------------------ hotkey
 
-    /// <summary>Hotkey recorder: focus the box, press the desired combination.
-    /// Requires at least one modifier; Rebind failure (combination owned by
-    /// another app) reverts and shows the conflict warning - the promised
-    /// "conflict detection" behavior.</summary>
+    /// <summary>Record a modified key combination without stealing normal typing keys.</summary>
     private void OnHotkeyRecord(object sender, KeyEventArgs e)
     {
-        e.Handled = true;
-        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
-               or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin) return;
+        if (TryReadHotkey(e, out uint mods, out uint vk))
+            TryApplyHotkey(screenshot: false, mods, vk);
+    }
 
-        uint mods = 0;
+    private void OnScreenshotHotkeyRecord(object sender, KeyEventArgs e)
+    {
+        if (TryReadHotkey(e, out uint mods, out uint vk))
+            TryApplyHotkey(screenshot: true, mods, vk);
+    }
+
+    private static bool TryReadHotkey(KeyEventArgs e, out uint mods, out uint vk)
+    {
+        mods = vk = 0;
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (key == Key.Tab && Keyboard.Modifiers is ModifierKeys.None or ModifierKeys.Shift)
+            return false; // Keep keyboard navigation available.
+        e.Handled = true;
+        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
+            or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin or Key.ImeProcessed or Key.DeadCharProcessed)
+            return false;
+
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) mods |= NativeMethods.MOD_CONTROL;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) mods |= NativeMethods.MOD_ALT;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) mods |= NativeMethods.MOD_SHIFT;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Windows)) mods |= NativeMethods.MOD_WIN;
-        if (mods == 0) return;   // bare keys are rejected (design: e.g. F2 hijacks rename)
+        vk = (uint)KeyInterop.VirtualKeyFromKey(key);
+        return mods != 0 && vk is > 0 and <= 0xfe;
+    }
 
-        uint vk = (uint)KeyInterop.VirtualKeyFromKey(key);
-        bool ok = _hotkey.Rebind(mods, vk);
-        HotkeyStatus.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
-        if (ok)
+    internal bool TryApplyHotkey(bool screenshot, uint mods, uint vk)
+    {
+        var cfg = _settings.Current;
+        bool overlaps = screenshot
+            ? mods == cfg.HotkeyModifiers && vk == cfg.HotkeyVirtualKey
+            : cfg.ScreenshotHotkeyEnabled && mods == cfg.ScreenshotHotkeyModifiers && vk == cfg.ScreenshotHotkeyVirtualKey;
+        HotkeyManager? manager = screenshot ? _screenshotHotkey : _hotkey;
+        bool valid = mods != 0 && (mods & ~0x0fu) == 0 && vk is > 0 and <= 0xfe;
+        bool ok = valid && !overlaps && manager is not null &&
+            (screenshot && !cfg.ScreenshotHotkeyEnabled || manager.Rebind(mods, vk));
+        (screenshot ? ScreenshotHotkeyStatus : HotkeyStatus).Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
+        if (!ok) return false; // Rebind preserves the previous working registration.
+        if (screenshot)
         {
-            _settings.Current.HotkeyModifiers = mods;
-            _settings.Current.HotkeyVirtualKey = vk;
-            _settings.Save();
-            HotkeyBox.Text = FormatHotkey(mods, vk);
+            cfg.ScreenshotHotkeyModifiers = mods;
+            cfg.ScreenshotHotkeyVirtualKey = vk;
+            ScreenshotHotkeyBox.Text = FormatHotkey(mods, vk);
         }
         else
         {
-            // Re-register the previous working combination.
-            _hotkey.Rebind(_settings.Current.HotkeyModifiers,
-                           _settings.Current.HotkeyVirtualKey);
+            cfg.HotkeyModifiers = mods;
+            cfg.HotkeyVirtualKey = vk;
+            HotkeyBox.Text = FormatHotkey(mods, vk);
         }
+        _settings.Save();
+        return true;
+    }
+
+    private void OnScreenshotHotkeyEnabledChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        var cfg = _settings.Current;
+        bool enabled = ScreenshotHotkeyCheck.IsChecked == true;
+        bool conflict = enabled &&
+            (cfg.ScreenshotHotkeyModifiers == cfg.HotkeyModifiers && cfg.ScreenshotHotkeyVirtualKey == cfg.HotkeyVirtualKey ||
+             _screenshotHotkey?.Initialize(cfg.ScreenshotHotkeyModifiers, cfg.ScreenshotHotkeyVirtualKey) != true);
+        if (conflict)
+        {
+            _loading = true;
+            ScreenshotHotkeyCheck.IsChecked = cfg.ScreenshotHotkeyEnabled;
+            _loading = false;
+            ScreenshotHotkeyStatus.Visibility = Visibility.Visible;
+            return;
+        }
+        if (!enabled) _screenshotHotkey?.Disable();
+        cfg.ScreenshotHotkeyEnabled = enabled;
+        ScreenshotHotkeyBox.IsEnabled = _screenshotHotkey is not null;
+        ScreenshotHotkeyStatus.Visibility = Visibility.Collapsed;
+        _settings.Save();
     }
 
     private static string FormatHotkey(uint mods, uint vk)
@@ -501,20 +564,25 @@ public partial class SettingsWindow : Window
     /// shut down. Order matters - launching the exe directly first would hit
     /// the single-instance mutex while this process is still alive, and the
     /// new instance would just wake the panel and exit.</summary>
-    private void OnRestartClick(object sender, RoutedEventArgs e)
+    private async void OnRestartClick(object sender, RoutedEventArgs e)
     {
-        if (_restarter.TryRestart())
+        if (_shutdownPending) return;
+        _shutdownPending = true;
+        IsEnabled = false;
+        try
         {
-            Application.Current.Shutdown();
+            // Save/cancel editor drafts and stop OCR before scheduling a relaunch.
+            if (!await _prepareForShutdown()) return;
+            if (_restarter.TryRestart()) Application.Current.Shutdown();
+            else
+                MessageBox.Show(this,
+                    "KeeStashDock could not restart automatically. Please exit and start it again.",
+                    "KeeStashDock", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        else
+        finally
         {
-            MessageBox.Show(
-                this,
-                "KeeStashDock could not restart automatically. Please exit and start it again.",
-                "KeeStashDock",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            _shutdownPending = false;
+            if (!_databaseImport.AreOperationsDisabled) IsEnabled = true;
         }
     }
 
@@ -696,36 +764,35 @@ public partial class SettingsWindow : Window
 
     private async void OnImportClick(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog
-        { Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg|SQLite database (*.db)|*.db" };
-        if (dlg.ShowDialog(this) != true) return;
-
-        var loc = LocalizationService.Instance;
-        if (MessageBox.Show(this, loc["Settings.Backup.Import.Confirm"], loc["Common.Confirm"],
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-            return;
-
-        IsEnabled = false;
+        if (_shutdownPending) return;
+        _shutdownPending = true;
         try
         {
+            var dlg = new OpenFileDialog
+            { Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg|SQLite database (*.db)|*.db" };
+            if (dlg.ShowDialog(this) != true) return;
+
+            var loc = LocalizationService.Instance;
+            if (MessageBox.Show(this, loc["Settings.Backup.Import.Confirm"], loc["Common.Confirm"],
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
+            IsEnabled = false;
+            // This must finish before ImportAsync can replace the active database.
+            if (!await _prepareForShutdown()) return;
             await _databaseImport.ImportAsync(dlg.FileName);
             Application.Current.Shutdown();
         }
         catch (DatabaseImportException exception)
         {
-            MessageBox.Show(
-                this,
-                exception.Message,
-                "KeeStashDock",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            MessageBox.Show(this, exception.Message, "KeeStashDock",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
-            if (!_databaseImport.AreOperationsDisabled)
-            {
-                IsEnabled = true;
-            }
+            _shutdownPending = false;
+            if (!_databaseImport.AreOperationsDisabled) IsEnabled = true;
         }
     }
+
 }

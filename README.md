@@ -23,10 +23,11 @@
 
 > Current development version: **1.1.2**. 
 
-KeeStashDock is a Windows tray application for temporary text storage and fast reuse. It combines a compact quick panel, a searchable workbench, selection actions, clipboard-assisted workflows, local persistence, portable backups, and extensive appearance and localization options.
+KeeStashDock is a Windows tray application for text snippets, screenshot entries, and fast reuse. It combines a compact quick panel, a searchable workbench, selection actions, clipboard-assisted workflows, local persistence, portable backups, and extensive appearance and localization options.
 
 ## Highlights
 
+- **Screenshot entries:** capture a region with a button or configurable **Ctrl+Alt+S** shortcut, keep the original image, and recognize English/Simplified Chinese text locally on demand.
 - **Fast capture and recall:** stash text from the quick input, selected text, drag-and-drop, optional clipboard history, imported groups, or built-in command presets.
 - **Organized retrieval:** browse recent, pinned, uncategorized, grouped, and trashed snippets; use SQLite FTS5 search with a CJK-compatible fallback.
 - **Text actions:** copy, optional direct paste, translate selected text, transform content, tear cards into sticky notes, open recognized paths, and generate QR codes.
@@ -38,6 +39,7 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 
 ### Capture
 
+- Region screenshots saved as image entries in the current group; Escape or right-click cancels
 - Quick input from the dock panel
 - Selection bubble with either **Capture** or **Translate** action
 - Optional text-only clipboard history, disabled by default
@@ -50,7 +52,7 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 - Categories, tags, pinning, source/type metadata, usage counts, and custom ordering
 - Views for All, Pinned, Uncategorized, individual groups, and Trash
 - Full-text search through SQLite FTS5, with `LIKE` fallback for CJK queries
-- Group export and import through `.ksdgrp` JSON packages
+- Group export and import through `.ksdgrp` JSON packages, including image assets and recognized text
 - Soft deletion and scheduled housekeeping
 
 ### Reuse and transform
@@ -60,6 +62,12 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 - Sticky-note tear-out from panel cards
 - QR generation for text up to 1,800 characters
 - File-path recognition and open-in-shell behavior
+
+### Screenshot entries and OCR
+
+Each image entry keeps its original PNG, thumbnail, and editable recognized text together. Open it to preview or copy the image, save a PNG copy, or click **Recognize text**. Recognition runs locally on demand and supports printed English and Simplified Chinese in the first version. It does not start translation automatically. Select recognized text to use the existing action bubble; its Capture/Translate choice and translation provider follow Settings.
+
+Images travel with database backups, group exports, Trash recovery, and permanent deletion. Legacy text databases and version 1 group packages remain importable; image group packages use version 2 and require this app version or later. See [screenshot workflow and upgrade notes](docs/SCREENSHOTS.md) and [local OCR setup](docs/LOCAL_OCR.md).
 
 ### Translation and localization
 
@@ -77,7 +85,7 @@ KeeStashDock is a Windows tray application for temporary text storage and fast r
 
 ## Privacy and data handling
 
-KeeStashDock is local-first. Snippets, settings, logs, and backups are stored on the local machine. Clipboard history and direct paste are opt-in.
+KeeStashDock is local-first. Text, screenshot images, recognized text, settings, logs, and backups are stored on the local machine. OCR never uploads images or automatically translates recognized text. Clipboard history and direct paste are opt-in.
 
 Cloud translation sends selected text only to the provider chosen in Settings; failures do not automatically forward it to another provider. Bing, Baidu, Alibaba Cloud, Google, Lingva, and DeepL are external services with their own availability and privacy terms. Provider credentials are stored separately, in plain text, in the local `settings.json` file; masking a secret in Settings does not encrypt its storage. Free public endpoints have no guaranteed availability. Do not translate secrets or other sensitive content unless that disclosure is acceptable.
 
@@ -104,7 +112,7 @@ Offline translation sends text only to a loopback address on this computer, bypa
 2. Start `KeeStashDock.exe`; the application remains available from the system tray.
 3. Press **Alt+Q** to show or hide the quick panel. The shortcut is configurable in Settings.
 4. Enter text and press **Enter** to create a snippet; use **Alt+Enter** or **Shift+Enter** for a new line at the cursor.
-5. Click a card to copy it, or open the workbench for search, editing, grouping, and recovery.
+5. Click a text card to copy it or an image card to open it. Use the screenshot button or **Ctrl+Alt+S** to capture a region; configure or disable that shortcut in Settings. Open the workbench for search, editing, grouping, and recovery.
 6. Review Settings before enabling clipboard history, direct paste, selection translation, or automatic startup.
 
 For Alibaba Cloud, choose **Translate** as the selection action, select **Alibaba Cloud**, and enter your own AccessKey ID and secret. Use a RAM identity with permission for `alimt:TranslateGeneral`; activate the [Machine Translation service](https://help.aliyun.com/zh/machine-translation/developer-reference/api-alimt-2018-10-12-translategeneral) and review [quota and billing](https://help.aliyun.com/zh/machine-translation/product-overview/billing-overview). Click **Test translation** to verify your account and network.

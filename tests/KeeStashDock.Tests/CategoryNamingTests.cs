@@ -174,7 +174,7 @@ public sealed class CategoryNamingTests
         var groups = new GroupIoService(snippets, _categories);
         long existing = _categories.Insert(new Category { Name = "Team" });
         long snippetId = snippets.Add("keep me", SnippetSource.Manual, categoryId: existing);
-        var unsupported = new GroupIoService.GroupPackage(2, "Team", []);
+        var unsupported = new GroupIoService.GroupPackage(3, "Team", []);
         var malformed = new GroupIoService.GroupPackage(1, "Team", [null!]);
 
         Assert.ThrowsExactly<InvalidDataException>(() => groups.ImportGroup(unsupported, "Team", existing));
@@ -190,7 +190,7 @@ public sealed class CategoryNamingTests
         string path = Path.Combine(_root, "group.ksdgrp");
         File.WriteAllText(path, """{"version":1,"name":" Team ","items":[]}""");
         Assert.AreEqual("Team", groups.ReadPackage(path).Name);
-        File.WriteAllText(path, """{"version":2,"name":"Team","items":[]}""");
+        File.WriteAllText(path, """{"version":3,"name":"Team","items":[]}""");
         Assert.ThrowsExactly<InvalidDataException>(() => groups.ReadPackage(path));
     }
 

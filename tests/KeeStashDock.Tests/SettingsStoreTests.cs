@@ -251,6 +251,43 @@ public sealed class SettingsStoreTests
         Assert.AreEqual(AppSettings.DefaultOfflineTranslationEndpoint, store.Current.OfflineTranslationEndpoint);
     }
 
+    [TestMethod]
+    public void ScreenshotShortcut_DefaultsAndDisabledChoiceRoundTrip()
+    {
+        File.WriteAllText(_settingsFile, """{"theme":"Dark"}""");
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.IsTrue(store.Current.ScreenshotHotkeyEnabled);
+        Assert.AreEqual(3u, store.Current.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x53u, store.Current.ScreenshotHotkeyVirtualKey);
+        store.Current.ScreenshotHotkeyEnabled = false;
+        store.Current.ScreenshotHotkeyModifiers = 6;
+        store.Current.ScreenshotHotkeyVirtualKey = 0x54;
+        store.Save();
+        var reload = new SettingsStore(_settingsFile);
+        reload.Load();
+        Assert.IsFalse(reload.Current.ScreenshotHotkeyEnabled);
+        Assert.AreEqual(6u, reload.Current.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x54u, reload.Current.ScreenshotHotkeyVirtualKey);
+    }
+
+    [TestMethod]
+    public void ScreenshotShortcut_InvalidOrDuplicateSettingsAreMadeSafe()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.ScreenshotHotkeyModifiers = uint.MaxValue;
+        store.Current.ScreenshotHotkeyVirtualKey = 0;
+        store.ValidateAndNormalize();
+        Assert.AreEqual(3u, store.Current.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x53u, store.Current.ScreenshotHotkeyVirtualKey);
+        store.Current.HotkeyModifiers = 3;
+        store.Current.HotkeyVirtualKey = 0x53;
+        store.ValidateAndNormalize();
+        Assert.IsFalse(store.Current.ScreenshotHotkeyEnabled, "Keep the user's existing panel shortcut when the new default collides.");
+        Assert.AreEqual(3u, store.Current.HotkeyModifiers);
+        Assert.AreEqual(0x53u, store.Current.HotkeyVirtualKey);
+    }
+
     private static void AssertSafeDataDefaults(AppSettings settings)
     {
         Assert.AreEqual(

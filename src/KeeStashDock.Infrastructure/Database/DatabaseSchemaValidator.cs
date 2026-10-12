@@ -1,4 +1,5 @@
 using KeeStashDock.Domain.Entities;
+using KeeStashDock.Infrastructure.Storage;
 using Microsoft.Data.Sqlite;
 
 namespace KeeStashDock.Infrastructure.Database;
@@ -89,6 +90,8 @@ public sealed class DatabaseSchemaValidator
                 ValidateCategoryNames(connection);
             }
 
+            if (schemaVersion >= 4) ValidateImages(connection);
+
             if (requireCurrentUserVersion &&
                 (userVersion != MigrationRunner.LatestSupportedVersion ||
                  schemaVersion != MigrationRunner.LatestSupportedVersion))
@@ -114,6 +117,63 @@ public sealed class DatabaseSchemaValidator
             throw new DatabaseValidationException(
                 "The selected file is not a valid, readable KeeStashDock database.",
                 exception);
+        }
+    }
+
+    private static void ValidateImages(SqliteConnection connection)
+    {
+        ValidateColumns(connection, "snippet_images", ["snippet_id", "png", "thumbnail_png", "width", "height"]);
+        using (var foreignKey = connection.CreateCommand())
+        {
+            foreignKey.CommandText = "PRAGMA foreign_key_list(snippet_images)";
+            using var rows = foreignKey.ExecuteReader();
+            bool valid = false;
+            while (rows.Read())
+                valid |= rows.GetString(2) == "snippets" && rows.GetString(3) == "snippet_id" &&
+                         rows.GetString(4) == "id" && rows.GetString(6).Equals("CASCADE", StringComparison.OrdinalIgnoreCase);
+            if (!valid) throw new DatabaseValidationException("Image assets lack cascading snippet ownership.");
+        }
+        using (var missing = connection.CreateCommand())
+        {
+            missing.CommandText = """
+                SELECT COUNT(*) FROM snippets s LEFT JOIN snippet_images i ON i.snippet_id = s.id
+                WHERE (s.type = 5 AND i.snippet_id IS NULL) OR (s.type != 5 AND i.snippet_id IS NOT NULL)
+                """;
+            if (Convert.ToInt64(missing.ExecuteScalar()) != 0)
+                throw new DatabaseValidationException("An image entry is missing its original image or has an incompatible type.");
+        }
+        using (var lengths = connection.CreateCommand())
+        {
+            lengths.CommandText = """
+                SELECT COUNT(*) FROM snippet_images WHERE
+                  typeof(png) != 'blob' OR typeof(thumbnail_png) != 'blob' OR
+                  length(png) NOT BETWEEN 1 AND 50331648 OR
+                  length(thumbnail_png) NOT BETWEEN 1 AND 1048576
+                """;
+            if (Convert.ToInt64(lengths.ExecuteScalar()) != 0)
+                throw new DatabaseValidationException("An image asset exceeds the supported size or has an invalid format.");
+        }
+        using var read = connection.CreateCommand();
+        read.CommandText = """
+            SELECT i.png, i.thumbnail_png, i.width, i.height, s.content_hash
+            FROM snippet_images i JOIN snippets s ON s.id = i.snippet_id
+            """;
+        using var images = read.ExecuteReader();
+        while (images.Read())
+        {
+            try
+            {
+                byte[] png = (byte[])images.GetValue(0);
+                var dimensions = PngImageValidator.Validate(png);
+                PngImageValidator.Validate((byte[])images.GetValue(1), thumbnail: true);
+                if (dimensions.Width != images.GetInt32(2) || dimensions.Height != images.GetInt32(3) ||
+                    PngImageValidator.ImageHash(png) != images.GetString(4))
+                    throw new InvalidDataException("Image dimensions or identity do not match the original PNG.");
+            }
+            catch (Exception exception) when (exception is InvalidDataException or InvalidCastException or OverflowException)
+            {
+                throw new DatabaseValidationException("The database contains a damaged or unsupported image asset.", exception);
+            }
         }
     }
 

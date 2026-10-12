@@ -36,6 +36,7 @@ Data/
 
 # Optional offline translation runtime and Python bytecode
 /tools/offline-translation/runtime/
+/tools/ocr/models/
 __pycache__/
 *.py[cod]
 
@@ -43,3 +44,5 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Optional local OCR model assets

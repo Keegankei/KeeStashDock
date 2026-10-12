@@ -20,7 +20,7 @@ namespace KeeStashDock.Infrastructure.Database;
 /// </summary>
 public sealed class MigrationRunner
 {
-    public const int LatestSupportedVersion = 3;
+    public const int LatestSupportedVersion = 4;
 
     private readonly Db _db;
     private readonly FileLogger _log;
@@ -100,7 +100,17 @@ public sealed class MigrationRunner
         (3, /* -------- V3: normalized unique group names -------- */ """
             ALTER TABLE categories ADD COLUMN name_key TEXT NOT NULL DEFAULT '';
             """),
-        // (4, "..."), <- future migrations are appended here, never edited.
+        (4, /* -------- V4: image entries stored with their database lifecycle -------- */ """
+            CREATE TABLE IF NOT EXISTS snippet_images (
+                snippet_id INTEGER PRIMARY KEY REFERENCES snippets(id) ON DELETE CASCADE,
+                png BLOB NOT NULL CHECK(length(png) BETWEEN 1 AND 50331648),
+                thumbnail_png BLOB NOT NULL CHECK(length(thumbnail_png) BETWEEN 1 AND 1048576),
+                width INTEGER NOT NULL CHECK(width BETWEEN 1 AND 16384),
+                height INTEGER NOT NULL CHECK(height BETWEEN 1 AND 16384),
+                CHECK(width * height <= 40000000)
+            );
+            """),
+        // Future migrations are appended here, never edited.
     };
 
     public void Run()

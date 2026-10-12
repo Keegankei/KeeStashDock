@@ -1,29 +1,23 @@
 using System.Text.Json;
 using KeeStashDock.Domain.Entities;
 using KeeStashDock.Infrastructure.Repositories;
+using KeeStashDock.Infrastructure.Storage;
 
 namespace KeeStashDock.Core.Services;
 
-/// <summary>
-/// Group-level exchange. Two import granularities exist in the app:
-///  - FULL package (.ksdpkg, BackupService): whole-database replace;
-///  - GROUP package (.ksdgrp, THIS service): one category + its snippets as
-///    portable JSON, imported ADDITIVELY. Name conflicts are decided by the
-///    caller (overwrite the existing group's contents, or import under a
-///    new name) - the service just executes the chosen mode.
-/// Built-in presets (e.g. common git commands) reuse the same pipeline: a
-/// preset is simply an in-memory GroupPackage.
-/// Duplicate rule inherited from SnippetService.Add: identical live content
-/// is never duplicated - the existing snippet is MOVED into the target group.
-/// </summary>
+/// <summary>Portable group exchange. Version 1 text packages remain readable; version 2 retains image assets.</summary>
 public sealed class GroupIoService
 {
-    public sealed record GroupItem(string? Title, string Content);
+    public sealed record GroupItem(string? Title, string Content,
+        SnippetType Type = SnippetType.PlainText, byte[]? ImagePng = null, byte[]? ThumbnailPng = null);
     public sealed record GroupPackage(int Version, string Name, List<GroupItem> Items);
+    public const long MaxPackageBytes = 128L * 1024 * 1024;
+    private const long MaxAssetBytes = 80L * 1024 * 1024;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
@@ -37,42 +31,46 @@ public sealed class GroupIoService
         _categories = categories;
     }
 
-    // ------------------------------------------------------------- export
-
     public void ExportGroup(long categoryId, string groupName, string targetFile)
     {
-        var items = _snippets.ByCategory(categoryId)
-            .Select(s => new GroupItem(s.Title, s.Content))
-            .ToList();
-        var pkg = new GroupPackage(1, groupName, items);
-        File.WriteAllText(targetFile, JsonSerializer.Serialize(pkg, JsonOpts));
+        var items = new List<GroupItem>();
+        long assetBytes = 0;
+        foreach (var snippet in _snippets.ByCategory(categoryId))
+        {
+            byte[]? image = snippet.IsImage ? _snippets.GetImage(snippet.Id) : null;
+            byte[]? thumbnail = snippet.IsImage ? _snippets.GetImageThumbnail(snippet.Id) : null;
+            assetBytes += (image?.LongLength ?? 0) + (thumbnail?.LongLength ?? 0);
+            if (assetBytes > MaxAssetBytes)
+                throw new InvalidDataException("The group is too large for a group package. Use a full database package.");
+            items.Add(new GroupItem(snippet.Title, snippet.Content, snippet.Type, image, thumbnail));
+        }
+        var pkg = ValidatePackage(new GroupPackage(2, groupName, items));
+        string destination = Path.GetFullPath(targetFile);
+        string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (var output = File.Create(temporary)) JsonSerializer.Serialize(output, pkg, JsonOpts);
+            if (new FileInfo(temporary).Length > MaxPackageBytes)
+                throw new InvalidDataException("The group package exceeds the supported size.");
+            File.Move(temporary, destination, overwrite: true);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
-    // ------------------------------------------------------------- import
-
-    /// <summary>Parses a .ksdgrp file. Throws on malformed input; the caller
-    /// turns that into a user-facing message.</summary>
     public GroupPackage ReadPackage(string file)
     {
-        var pkg = JsonSerializer.Deserialize<GroupPackage>(
-            File.ReadAllText(file), JsonOpts);
-        pkg = ValidatePackage(pkg);
+        if (new FileInfo(file).Length > MaxPackageBytes)
+            throw new InvalidDataException("The group package exceeds the supported size.");
+        using var input = File.OpenRead(file);
+        var pkg = ValidatePackage(JsonSerializer.Deserialize<GroupPackage>(input, JsonOpts));
         return pkg with { Name = CategoryName.Normalize(pkg.Name) };
     }
 
-    /// <summary>Case-insensitive category lookup for conflict detection.</summary>
-    public Category? FindCategoryByName(string name)
-        => _categories.FindByName(name);
-
+    public Category? FindCategoryByName(string name) => _categories.FindByName(name);
     public string GetUniqueCategoryName(string baseName) => _categories.GetUniqueName(baseName);
 
-    /// <summary>Imports a package into a category and returns the number of
-    /// items placed. <paramref name="overwriteCategoryId"/> non-null =
-    /// replace that group's contents (existing snippets go to the trash, so
-    /// an accidental overwrite is recoverable); null = create a NEW category
-    /// named <paramref name="targetName"/>.</summary>
-    public int ImportGroup(GroupPackage pkg, string targetName,
-                           long? overwriteCategoryId)
+    /// <summary>Validates every asset before mutating a group, including overwrite imports.</summary>
+    public int ImportGroup(GroupPackage pkg, string targetName, long? overwriteCategoryId)
     {
         ValidatePackage(pkg);
         targetName = CategoryName.Normalize(targetName);
@@ -82,8 +80,7 @@ public sealed class GroupIoService
             if (!_categories.GetAll().Any(category => category.Id == existing))
                 throw new InvalidOperationException("The group selected for replacement no longer exists.");
             categoryId = existing;
-            foreach (var old in _snippets.ByCategory(existing))
-                _snippets.MoveToTrash(old.Id);   // recoverable, not destructive
+            foreach (var old in _snippets.ByCategory(existing)) _snippets.MoveToTrash(old.Id);
         }
         else
         {
@@ -93,9 +90,11 @@ public sealed class GroupIoService
         int placed = 0;
         foreach (var item in pkg.Items)
         {
-            if (string.IsNullOrWhiteSpace(item.Content)) continue;
-            long id = _snippets.Add(item.Content, SnippetSource.Import,
-                                    title: item.Title);
+            if (item.Type != SnippetType.Image && string.IsNullOrWhiteSpace(item.Content)) continue;
+            long id = item.Type == SnippetType.Image
+                ? _snippets.AddImage(item.ImagePng!, item.ThumbnailPng!, title: item.Title, ocrText: item.Content)
+                : _snippets.Add(item.Content, SnippetSource.Import, title: item.Title,
+                    explicitType: pkg.Version == 1 ? null : item.Type);
             _snippets.AssignCategory(id, categoryId);
             placed++;
         }
@@ -104,9 +103,26 @@ public sealed class GroupIoService
 
     private static GroupPackage ValidatePackage(GroupPackage? pkg)
     {
-        if (pkg is null || pkg.Version != 1 || string.IsNullOrWhiteSpace(pkg.Name) ||
-            pkg.Items is null || pkg.Items.Any(item => item is null || item.Content is null))
+        if (pkg is null || pkg.Version is not (1 or 2) || string.IsNullOrWhiteSpace(pkg.Name) ||
+            pkg.Items is null || pkg.Items.Count > 10000 ||
+            pkg.Items.Any(item => item is null || item.Content is null))
             throw new InvalidDataException("Not a supported group package.");
+        long assetBytes = 0;
+        foreach (var item in pkg.Items)
+        {
+            if (!Enum.IsDefined(item.Type)) throw new InvalidDataException("Unsupported entry type.");
+            if (item.Type == SnippetType.Image)
+            {
+                if (pkg.Version != 2 || item.ImagePng is null || item.ThumbnailPng is null)
+                    throw new InvalidDataException("The image entry is missing its image asset.");
+                assetBytes += item.ImagePng.LongLength + item.ThumbnailPng.LongLength;
+                if (assetBytes > MaxAssetBytes) throw new InvalidDataException("The group image assets exceed the supported size.");
+                PngImageValidator.Validate(item.ImagePng);
+                PngImageValidator.Validate(item.ThumbnailPng, thumbnail: true);
+            }
+            else if (item.ImagePng is not null || item.ThumbnailPng is not null)
+                throw new InvalidDataException("Text entries cannot contain image assets.");
+        }
         return pkg;
     }
 }

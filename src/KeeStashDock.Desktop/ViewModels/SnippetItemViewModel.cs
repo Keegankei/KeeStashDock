@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using KeeStashDock.Domain.Entities;
 using KeeStashDock.Desktop.Localization;
+using System.Windows.Media;
 
 namespace KeeStashDock.Desktop.ViewModels;
 
@@ -13,7 +14,30 @@ public sealed partial class SnippetItemViewModel : ObservableObject
 {
     public Snippet Model { get; }
 
-    public SnippetItemViewModel(Snippet model) => Model = model;
+    private readonly Func<long, byte[]?>? _thumbnailLoader;
+    private ImageSource? _thumbnail;
+    private bool _thumbnailLoaded;
+
+    public SnippetItemViewModel(Snippet model, Func<long, byte[]?>? thumbnailLoader = null)
+    { Model = model; _thumbnailLoader = thumbnailLoader; }
+
+    public bool IsImage => Model.Type == SnippetType.Image;
+    public ImageSource? Thumbnail
+    {
+        get
+        {
+            if (_thumbnailLoaded || !IsImage) return _thumbnail;
+            _thumbnailLoaded = true;
+            try
+            {
+                if (_thumbnailLoader?.Invoke(Id) is byte[] png)
+                    _thumbnail = ImagePresentation.Decode(png);
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or NotSupportedException or ArgumentException)
+            { /* An unavailable preview must not hide the entry. */ }
+            return _thumbnail;
+        }
+    }
 
     public long Id => Model.Id;
 
@@ -23,6 +47,8 @@ public sealed partial class SnippetItemViewModel : ObservableObject
         get
         {
             if (!string.IsNullOrWhiteSpace(Model.Title)) return Model.Title!;
+            if (IsImage && string.IsNullOrWhiteSpace(Model.Content))
+                return LocalizationService.Instance["Screenshot.Title"];
             string firstLine = Model.Content.Split('\n')[0].Trim();
             return firstLine.Length <= 60 ? firstLine : firstLine[..60] + "…";
         }

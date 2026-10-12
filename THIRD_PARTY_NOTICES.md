@@ -9,6 +9,31 @@ KeeStashDock itself is licensed under Apache-2.0. It depends on third-party soft
 | [CommunityToolkit.Mvvm](https://www.nuget.org/packages/CommunityToolkit.Mvvm/8.4.2) | 8.4.2 | MVVM source generators and helpers | MIT |
 | [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite/10.0.10) | 10.0.10 | SQLite provider and native SQLite bundle | MIT |
 | [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/10.0.10) | 10.0.10 | Dependency-injection container | MIT |
+| [TesseractOCR](https://www.nuget.org/packages/TesseractOCR/5.5.2) | 5.5.2 | Distribution of native offline OCR engine | Apache-2.0 |
+
+## Local OCR engine and models
+
+The application launches the Windows x64 CLI distributed in TesseractOCR 5.5.2.
+The package's CLI reports Tesseract 5.5.0 and Leptonica 1.85.0. The native engine
+and codecs remain subject to their original licenses; complete texts and upstream
+attributions are in `third_party/ocr`, copied to `Licenses/OCR` in build and publish
+outputs. This software is based in part on the work of the Independent JPEG Group.
+
+| Component | Shipped version | License |
+| --- | --- | --- |
+| TesseractOCR wrapper/distribution | 5.5.2 | Apache-2.0; Copyright 2012-2019 Charles Weld, 2021-2025 Kees van Spelde |
+| Tesseract native engine | 5.5.0 | Apache-2.0; contributors listed in the bundled AUTHORS file |
+| Leptonica | 1.85.0 | BSD-2-Clause; Copyright 2001-2020 Leptonica |
+| GIFLIB | 5.2.1 | MIT |
+| libjpeg-turbo | 2.0.6 | IJG, BSD-3-Clause, and zlib licenses |
+| libpng | 1.6.37 | PNG Reference Library License |
+| LibTIFF | 4.3.0 | LibTIFF license |
+| zlib | 1.2.11 | zlib license |
+| Official tessdata_fast English / Simplified Chinese models | `87416418657359cb625c412a48b6e1d6d41c29bd` | Apache-2.0 |
+
+The optional model setup verifies pinned SHA-256 hashes and retains the upstream
+license alongside the installed models. Model binaries are excluded from source
+control; preinstalled distributions must include the `OcrModels/LICENSE` file.
 
 ## Development dependency
 

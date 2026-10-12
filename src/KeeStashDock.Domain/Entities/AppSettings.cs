@@ -30,6 +30,11 @@ public sealed class AppSettings
     public uint HotkeyModifiers { get; set; } = 0x0001;   // MOD_ALT
     public uint HotkeyVirtualKey { get; set; } = 0x51;    // 'Q'
 
+    /// <summary>Global screenshot shortcut; the screenshot button remains available when disabled.</summary>
+    public bool ScreenshotHotkeyEnabled { get; set; } = true;
+    public uint ScreenshotHotkeyModifiers { get; set; } = 0x0003; // MOD_CONTROL | MOD_ALT
+    public uint ScreenshotHotkeyVirtualKey { get; set; } = 0x53;  // 'S'
+
     // ---- Quick panel ---------------------------------------------------
     /// <summary>Retired edge-summon setting, retained so older
     /// settings.json files continue to deserialize cleanly.</summary>
