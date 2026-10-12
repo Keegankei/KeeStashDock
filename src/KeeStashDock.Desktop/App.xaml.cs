@@ -52,6 +52,12 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        if (!DesktopApplicationRestarter.WaitForPreviousInstance(e.Args))
+        {
+            Shutdown();
+            return;
+        }
+
         // ---- 1. Single instance -----------------------------------------
         _instance = new SingleInstance();
         if (!_instance.TryClaim())

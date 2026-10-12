@@ -147,6 +147,26 @@ public sealed class DatabaseDependencyTests
             CultureInfo.InvariantCulture));
     }
 
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("-wal")]
+    [DataRow("-shm")]
+    [DataRow("-journal")]
+    public void BackupRejectsActiveDatabaseAndJournalDestinationsWithoutChangingData(string suffix)
+    {
+        using FileLogger logger = CreateLogger();
+        Db database = CreateMigratedDatabase(logger);
+        using (SqliteConnection connection = database.Open())
+            InsertSnippet(connection, "keep active data", "hash-keep");
+        var backup = new BackupService(database, logger);
+
+        Assert.ThrowsExactly<IOException>(() => backup.BackupTo(database.DatabaseFile + suffix));
+
+        using SqliteConnection check = database.Open();
+        Assert.AreEqual("keep active data", ExecuteScalar(check, "SELECT content FROM snippets"));
+        Assert.AreEqual("ok", ExecuteScalar(check, "PRAGMA quick_check"));
+    }
+
     private Db CreateMigratedDatabase(FileLogger logger)
     {
         var database = new Db(Path.Combine(_tempRoot, "source.db"));

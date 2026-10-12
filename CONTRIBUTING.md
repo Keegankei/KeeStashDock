@@ -39,6 +39,7 @@ python -B tools/offline-translation/test_runtime.py
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/test_process.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PublishSafety.ps1
 ```
 
 OCR model setup is an explicit, hash-verified download. Plain source builds do not
@@ -56,8 +57,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/Clean.ps1
 
 The default removes `src`/`tests` build intermediates and `TestResults`.
 Use `-IncludeIdeState` for Visual Studio cache and `-IncludeBuildOutputs` for
-old `artifacts`/`publish` outputs. The script skips outputs containing `Data`, standalone databases,
-or a running program and checks that deletion targets stay inside this checkout.
+old `artifacts`/`publish` outputs. The script skips `Data` directories and outputs
+containing databases (including WAL/journal companions), settings, drafts, logs,
+credentials, or a running program. It checks that deletion targets stay inside
+this checkout and refuses symbolic links or junctions.
 It does not remove downloaded OCR models or the optional offline runtime.
 
 ## Architecture rules

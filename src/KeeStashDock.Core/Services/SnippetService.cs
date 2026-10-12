@@ -167,12 +167,13 @@ public sealed class SnippetService
     /// </summary>
     public bool RegisterUse(Snippet s)
     {
-        bool burn = s.ExpirePolicy == ExpirePolicy.BurnAfterRead;
-        RegisterUseResult result = _repo.RegisterUse(s.Id, burn);
+        // Another window may have changed retention since this model was loaded.
+        // Evaluate the stored policy in the same statement that records the copy.
+        RegisterUseResult result = _repo.RegisterUse(s.Id);
         s.UseCount = result.UseCount;
         s.LastUsedAt = result.LastUsedAt;
         s.DeletedAt = result.DeletedAt;
-        if (burn)
+        if (result.DeletedAt is not null)
         {
             Changed?.Invoke();
             return true;

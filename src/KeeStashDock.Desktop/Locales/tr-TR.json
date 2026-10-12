@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "Koyu",
   "Settings.Data": "Veri",
   "Settings.Backup.Export": "Veri paketini dışa aktar…",
+  "Settings.Backup.ExportFailed": "Yedek dışa aktarılamadı. Başka bir dosya konumu seçip tekrar deneyin.",
   "Settings.Backup.Import": "Veri paketini içe aktar…",
   "Settings.Backup.Import.Confirm": "İçe aktarma mevcut verilerinizi değiştirir. Önce bir güvenlik yedeği oluşturulur. Devam edilsin mi?",
   "Settings.Backup.Import.Done": "İçe aktarma tamamlandı. Lütfen KeeStashDock'u yeniden başlatın.",

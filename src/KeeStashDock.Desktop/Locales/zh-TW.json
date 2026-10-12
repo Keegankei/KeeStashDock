@@ -66,6 +66,7 @@
   "Settings.Theme.Dark": "深色",
   "Settings.Data": "資料",
   "Settings.Backup.Export": "匯出資料包…",
+  "Settings.Backup.ExportFailed": "無法匯出備份。請選擇其他儲存位置後重試。",
   "Settings.Backup.Import": "匯入資料包…",
   "Settings.Backup.Import.Confirm": "匯入會取代目前全部資料，匯入前會自動建立安全備份。是否繼續？",
   "Settings.Backup.Import.Done": "匯入完成，請重新啟動 KeeStashDock。",

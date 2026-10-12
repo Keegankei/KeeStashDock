@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "다크",
   "Settings.Data": "데이터",
   "Settings.Backup.Export": "데이터 패키지 내보내기…",
+  "Settings.Backup.ExportFailed": "백업을 내보낼 수 없습니다. 다른 저장 위치를 선택한 후 다시 시도하세요.",
   "Settings.Backup.Import": "데이터 패키지 가져오기…",
   "Settings.Backup.Import.Confirm": "가져오기는 현재 데이터를 대체합니다. 먼저 안전 백업을 만듭니다. 계속할까요?",
   "Settings.Backup.Import.Done": "가져오기 완료. KeeStashDock을 다시 시작하세요.",

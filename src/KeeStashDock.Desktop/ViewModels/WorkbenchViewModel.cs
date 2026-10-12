@@ -140,7 +140,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         {
             List<Snippet> data;
             if (!string.IsNullOrWhiteSpace(SearchText))
-                data = _search.Search(SearchText);
+                data = _search.Search(SearchText, trashOnly: IsTrashView);
             else
                 data = SelectedNav?.Id switch
                 {
@@ -161,7 +161,21 @@ public sealed partial class WorkbenchViewModel : ObservableObject
                 SnippetItemViewModel? refreshed = Items.FirstOrDefault(item => item.Id == id);
                 if (refreshed is null)
                 {
-                    _editor.MarkExternalDeleted();
+                    if (!_editor.IsDirty)
+                    {
+                        CommitSelection(Items.FirstOrDefault());
+                        return;
+                    }
+                    // A filter can hide an existing entry. Keep its dirty draft
+                    // and consult the database before reporting an external deletion.
+                    Snippet? current = _snippets.GetById(id);
+                    if (current is null || current.IsDeleted != _editingModel?.IsDeleted)
+                        _editor.MarkExternalDeleted();
+                    else
+                    {
+                        _editingModel = current;
+                        _editor.MergeExternal(CreateSnapshot(current));
+                    }
                     SelectedItem = null;
                 }
                 else
@@ -236,13 +250,22 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     }
 
     [RelayCommand] private void Delete()
-    { if (SelectedItem is not null) _snippets.MoveToTrash(SelectedItem.Id); }
+    {
+        if (SelectedItem is not null && _snippets.GetById(SelectedItem.Id) is { IsDeleted: false })
+            _snippets.MoveToTrash(SelectedItem.Id);
+    }
 
     [RelayCommand] private void Restore()
-    { if (SelectedItem is not null) _snippets.RestoreFromTrash(SelectedItem.Id); }
+    {
+        if (IsTrashView && SelectedItem is not null && _snippets.GetById(SelectedItem.Id) is { IsDeleted: true })
+            _snippets.RestoreFromTrash(SelectedItem.Id);
+    }
 
     [RelayCommand] private void DeleteForever()
-    { if (SelectedItem is not null) _snippets.DeleteForever(SelectedItem.Id); }
+    {
+        if (IsTrashView && SelectedItem is not null && _snippets.GetById(SelectedItem.Id) is { IsDeleted: true })
+            _snippets.DeleteForever(SelectedItem.Id);
+    }
 
     [RelayCommand] private void EmptyTrash() => _snippets.EmptyTrash();
 

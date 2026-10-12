@@ -24,6 +24,7 @@ python -B tools/offline-translation/test_runtime.py
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/test_process.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PublishSafety.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
 dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
@@ -57,7 +58,10 @@ A stable release is not ready until the Windows CI workflow is green and the sam
 - App setup cancellation/timeout after UAC approval: the UI must explain that a privileged Windows runtime installation may continue; after exit code 3010, restart Windows before retrying setup
 - Published offline setup files, first-time English/Chinese model installation, start/stop, actual translation with network unavailable, and missing-model/service errors
 - Local endpoint validation (reject remote URLs and redirects), and no cloud request after a local failure
-- Backup creation, export, import safety backup, and restart
+- Backup creation, export errors, import safety backup, and restart after a slow shutdown
+- Import an open WAL database and a copy left after unexpected exit; verify committed content survives
+- Search inside Trash, restore from another window, and confirm stale actions cannot permanently delete live entries
+- Change retention in another window before copying; confirm burn-after-read uses the current saved policy
 - Group import/export and presets
 - Empty/duplicate text edit rejection, optional empty OCR text, draft preservation, and unchanged tags after a failed save
 - Duplicate group creation/rename, numeric suffix suggestions, and imports with whitespace/case name conflicts
@@ -80,7 +84,7 @@ replace the native OCR/runtime review.
 ## 3. Package
 
 1. Publish into a fresh output directory. Never archive an existing user installation.
-2. Run `tools/Verify-Publish.ps1` as shown above; it rejects missing OCR/models/notices and accidental private state. WPF assets are embedded in the assembly.
+2. Run `tools/Verify-Publish.ps1` as shown above; it rejects missing OCR/models/notices and accidental private state, including database WAL/journal files, rotated logs, environment files, and signing keys. It checks names without opening personal files and refuses symbolic links or junctions. WPF assets are embedded in the assembly.
 3. Keep `Locales`, `OcrModels`, `x64`, `OfflineTranslation`, `NativeRuntime`, `Licenses`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` with the executable. Standard packages include OCR models and offline translation setup scripts; they do not include the much larger optional translation runtime. If preinstalling that runtime, retain Python/wheel/model license files and exclude downloads, logs, process state, and bytecode caches.
 4. Generate a SHA-256 checksum for the final archive.
 5. Digitally sign the executable and archive when a trusted code-signing process is available.

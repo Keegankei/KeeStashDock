@@ -224,6 +224,13 @@ public sealed class SettingsTranslationTests
             Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             Assert.IsTrue(window.IsEnabled, "Cancelling a draft decision must abort restart and restore Settings.");
             componentInstaller.Verify(window);
+            new MigrationRunner(database, logger).Run();
+            using (var lockedExport = new FileStream(Path.Combine(root, "locked.ksdpkg"), FileMode.Create,
+                FileAccess.ReadWrite, FileShare.None))
+            {
+                Assert.IsFalse(window.TryExportPackage(lockedExport.Name),
+                    "A locked export destination must be a recoverable failure instead of an unhandled UI exception.");
+            }
             ImageEntryWindowScenarios.Verify(root);
         }
         finally

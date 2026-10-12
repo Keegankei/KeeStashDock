@@ -19,13 +19,13 @@ public sealed class SearchService
     private readonly SnippetRepository _repo;
     public SearchService(SnippetRepository repo) => _repo = repo;
 
-    public List<Snippet> Search(string query, int limit = 200)
+    public List<Snippet> Search(string query, int limit = 200, bool trashOnly = false)
     {
         query = query.Trim();
-        if (query.Length == 0) return _repo.GetRecent(limit);
+        if (query.Length == 0) return trashOnly ? _repo.GetTrash().Take(limit).ToList() : _repo.GetRecent(limit);
 
         if (ContainsCjk(query))
-            return _repo.SearchLike(query, limit);
+            return _repo.SearchLike(query, limit, trashOnly);
 
         // Build a safe FTS expression: quote each token, add prefix wildcard.
         // Quoting neutralizes FTS operators (AND/OR/NEAR/"), preventing both
@@ -35,12 +35,12 @@ public sealed class SearchService
         string fts = string.Join(" ", tokens);
         try
         {
-            return _repo.SearchFts(fts, limit);
+            return _repo.SearchFts(fts, limit, trashOnly);
         }
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
             // Defensive: any residual FTS syntax edge case degrades to LIKE.
-            return _repo.SearchLike(query, limit);
+            return _repo.SearchLike(query, limit, trashOnly);
         }
     }
 

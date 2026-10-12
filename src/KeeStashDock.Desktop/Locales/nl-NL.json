@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "Donker",
   "Settings.Data": "Gegevens",
   "Settings.Backup.Export": "Gegevenspakket exporteren…",
+  "Settings.Backup.ExportFailed": "De back-up kon niet worden geëxporteerd. Kies een andere bestandslocatie en probeer het opnieuw.",
   "Settings.Backup.Import": "Gegevenspakket importeren…",
   "Settings.Backup.Import.Confirm": "Importeren vervangt uw huidige gegevens. Eerst wordt een veiligheidsback-up gemaakt. Doorgaan?",
   "Settings.Backup.Import.Done": "Import voltooid. Start KeeStashDock opnieuw.",

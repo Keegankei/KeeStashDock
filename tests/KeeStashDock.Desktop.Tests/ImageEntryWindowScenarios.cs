@@ -72,13 +72,29 @@ internal static class ImageEntryWindowScenarios
         Assert.AreEqual(string.Empty, text.Text);
         Assert.AreEqual(string.Empty, snippets.GetById(id)!.Content);
 
+        pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        recognize.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        snippets.MoveToTrash(id);
+        Assert.IsTrue(token.IsCancellationRequested, "Deleting an image elsewhere must cancel its in-flight OCR.");
+        pending.SetResult(new OcrRecognitionResult("Late deleted output", OcrFailure.None));
+        PumpUntil(() => window.RecognitionCompletion.IsCompleted);
+        Assert.AreEqual(string.Empty, snippets.GetById(id)!.Content);
+        Assert.IsTrue(text.IsReadOnly, "Deleting the entry in another window must immediately lock OCR edits.");
+        Assert.IsFalse(recognize.IsEnabled);
+        snippets.RestoreFromTrash(id);
+        Assert.IsFalse(text.IsReadOnly, "Restoring the entry must unlock the existing preview without reopening it.");
+        Assert.IsTrue(recognize.IsEnabled);
         var changed = snippets.GetById(id)!;
+        changed.Content = "Clean editor refresh";
+        snippets.Update(changed);
+        Assert.AreEqual(changed.Content, text.Text, "A clean preview must follow edits made in the workbench.");
+        text.Text = "Unsaved old editor";
         changed.Content = "Changed in another editor";
         snippets.Update(changed);
-        text.Text = "Unsaved old editor";
+        Assert.AreEqual("Unsaved old editor", text.Text, "External edits must preserve a dirty preview draft.");
         Assert.IsFalse(window.SaveText(), "A stale image editor must not overwrite a newer edit.");
         Assert.AreEqual("Changed in another editor", snippets.GetById(id)!.Content);
-        text.Text = string.Empty;
+        text.Text = "Clean editor refresh";
         window.Close();
 
         changed.Content = string.Empty;
@@ -101,12 +117,24 @@ internal static class ImageEntryWindowScenarios
         translation.HideCard();
         translation.Close();
 
+        WeakReference closedPreview = CreateClosedImageWindow(snippets, id, png);
         WeakReference closedWindow = CreateClosedTrackedWindow();
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
         Assert.IsFalse(closedWindow.IsAlive, "Theme updates must not retain closed windows and their image buffers.");
+        Assert.IsFalse(closedPreview.IsAlive, "Snippet change subscriptions must not retain closed image previews.");
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference CreateClosedImageWindow(SnippetService snippets, long id, byte[] png)
+    {
+        var window = new ImageEntryWindow(snippets, (_, _) => Task.FromResult(new OcrRecognitionResult(string.Empty, OcrFailure.NoText)),
+            snippets.GetById(id)!, png);
+        var reference = new WeakReference(window);
+        window.Close();
+        return reference;
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]

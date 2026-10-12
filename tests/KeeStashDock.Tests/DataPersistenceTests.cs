@@ -123,6 +123,27 @@ public sealed class DataPersistenceTests
     }
 
     [TestMethod]
+    [DataRow(ExpirePolicy.Never, ExpirePolicy.BurnAfterRead, true)]
+    [DataRow(ExpirePolicy.BurnAfterRead, ExpirePolicy.Never, false)]
+    public void RegisterUse_AppliesCurrentStoredPolicyAfterAnotherEditorChangesIt(
+        ExpirePolicy oldPolicy, ExpirePolicy newPolicy, bool expectedBurn)
+    {
+        (SnippetRepository repository, SnippetService service, _) = CreateServices();
+        long id = service.Add("policy changed in another window", SnippetSource.Manual, expire: oldPolicy);
+        Snippet staleCopy = service.GetById(id)!;
+        Snippet editor = service.GetById(id)!;
+        editor.ExpirePolicy = newPolicy;
+        service.Update(editor);
+
+        Assert.AreEqual(expectedBurn, service.RegisterUse(staleCopy));
+
+        Snippet stored = service.GetById(id)!;
+        Assert.AreEqual(expectedBurn, stored.DeletedAt is not null);
+        Assert.AreEqual(1, stored.UseCount);
+        Assert.AreEqual(stored.DeletedAt, staleCopy.DeletedAt);
+    }
+
+    [TestMethod]
     public void NonUtcDateTimes_AreRejectedBeforePersistence()
     {
         (SnippetRepository repository, SnippetService service, string databaseFile) =

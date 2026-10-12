@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "Tối",
   "Settings.Data": "Dữ liệu",
   "Settings.Backup.Export": "Xuất gói dữ liệu…",
+  "Settings.Backup.ExportFailed": "Không thể xuất bản sao lưu. Hãy chọn vị trí lưu khác rồi thử lại.",
   "Settings.Backup.Import": "Nhập gói dữ liệu…",
   "Settings.Backup.Import.Confirm": "Nhập sẽ thay thế dữ liệu hiện tại. Bản sao lưu an toàn sẽ được tạo trước. Tiếp tục?",
   "Settings.Backup.Import.Done": "Nhập xong. Vui lòng khởi động lại KeeStashDock.",

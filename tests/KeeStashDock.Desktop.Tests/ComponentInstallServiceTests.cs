@@ -28,7 +28,7 @@ public sealed class ComponentInstallServiceTests
         Directory.CreateDirectory(_localDataDirectory);
         WriteFile(Path.Combine(_baseDirectory, "x64", "tesseract.exe"), "fixture, never executed");
         WriteScript("NativeRuntime", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$ProbeExecutable)
+            param([AllowEmptyString()][Parameter(Mandatory=$true)][string]$ProbeExecutable)
             [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'bound-probe.txt'), $ProbeExecutable)
             """);
     }
@@ -85,7 +85,7 @@ public sealed class ComponentInstallServiceTests
             throw 'The OCR setup must not run'
             """);
         WriteScript("NativeRuntime", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$ProbeExecutable)
+            param([AllowEmptyString()][Parameter(Mandatory=$true)][string]$ProbeExecutable)
             [Console]::Error.WriteLine('Synthetic native runtime failure')
             exit 12
             """);
@@ -110,7 +110,7 @@ public sealed class ComponentInstallServiceTests
             throw 'The OCR setup must not run before Windows restarts'
             """);
         WriteScript("NativeRuntime", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$ProbeExecutable)
+            param([AllowEmptyString()][Parameter(Mandatory=$true)][string]$ProbeExecutable)
             exit 3010
             """);
 
@@ -204,6 +204,8 @@ public sealed class ComponentInstallServiceTests
         Assert.IsTrue(result.IsSuccess, result.Detail);
         CollectionAssert.AreEqual(new[] { "stop", "setup", "start" }, File.ReadAllLines(Path.Combine(OfflineDirectory, "order.txt")));
         Assert.AreEqual(OfflineDirectory, File.ReadAllText(Path.Combine(OfflineDirectory, "argument.txt")));
+        Assert.AreEqual("", File.ReadAllText(Path.Combine(_baseDirectory, "NativeRuntime", "bound-probe.txt")),
+            "An OCR probe cannot establish that the different translation engine's native prerequisites work.");
         Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.OfflineTranslation));
         Assert.AreEqual(ComponentInstallPhase.Starting, progress.Phases.Last());
         Assert.IsTrue((await service.StartOfflineAsync()).IsSuccess);

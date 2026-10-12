@@ -49,11 +49,19 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 ### Fixed
 
+- Keep Trash searches scoped to deleted entries and check current entry state before restoring or permanently deleting from the workbench.
+- Preserve unsaved editor drafts when filters hide an existing entry; synchronize image-window permissions and clean text after external edits, deletion, or restore.
+- Import consistent database snapshots including committed WAL content, even when the source database is open or has uncheckpointed changes after an unexpected exit.
+- Apply the current stored burn-after-read policy atomically when recording use, instead of trusting an older window model.
+- Reject backup destinations that would overwrite the active database or its journal files, and report manual export failures in Settings.
+- Wait for the previous process to exit before restarting the application, avoiding fixed-delay restarts that can be lost to single-instance detection.
+- Fail promptly when OCR output exceeds its bound, and check the offline translation runtime independently of the OCR executable.
+- Reject truncated, conflicting-length, and excessively nested local translation requests.
+- Protect top-level Data directories, export packages, database sidecars, rotated logs, credentials, and private temporary files during cleanup and release verification.
 - Reject corrupted local OCR model files by size and checksum, falling back to verified bundled models.
 - Reuse an available local translation service and start the installed engine only after a connection failure.
 - Finish component setup when its script exits even if the detached translation server keeps output pipes open.
 - Preserve the Windows runtime installer's restart-required exit code instead of reporting a generic failure.
-
 - Make complete group imports transactional, preserving existing groups, entries, images, and deduplicated memberships when an import fails.
 - Mark imported image entries with the import source, and reject malformed persisted timestamps, field types, enum values, and out-of-range counters before replacing a database.
 - Safely ignore background log writes after the logger closes during shutdown.
@@ -61,7 +69,6 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 - Release theme-event subscriptions when image windows close, allowing their original image buffers to be collected.
 - Report translation-result clipboard failures instead of showing a false success message.
 - Ignore stale/reused offline service process IDs without stopping unrelated processes, verify an existing service at the requested port, and invalidate the installation marker before a repair changes runtime files.
-- Preserve the Windows installer restart-required result and ask users to restart before continuing component setup.
 - Include verified OCR models in documented/CI release builds, run offline helper tests in CI, and keep development test scripts out of user packages.
 - Ship dependency license texts and notices for managed/runtime dependencies alongside the existing native OCR notices.
 - Keep selection-popup changes from rewriting the Windows startup entry; only the startup checkbox changes it.

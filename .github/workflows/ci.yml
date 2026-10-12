@@ -47,6 +47,10 @@ jobs:
         shell: pwsh
         run: ./tools/Test-Clean.ps1
 
+      - name: Test release privacy checks
+        shell: pwsh
+        run: ./tools/Test-PublishSafety.ps1
+
       - name: Install verified local OCR models
         shell: pwsh
         run: ./tools/ocr/Setup.ps1

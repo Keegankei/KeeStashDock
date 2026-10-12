@@ -75,6 +75,49 @@ public sealed class DatabaseImportTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void WalDatabaseImport_IncludesCommittedChangesOutsideMainFile(bool sourceIsRunning)
+    {
+        ImportContext context = CreateContext();
+        CreateDatabase(context.ActiveFile, "original");
+        string source = Path.Combine(_root, "live-source.db");
+        CreateDatabase(source, "checkpointed");
+        using var liveSource = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = source,
+            Pooling = false,
+        }.ToString());
+        liveSource.Open();
+        using (var update = liveSource.CreateCommand())
+        {
+            update.CommandText = "PRAGMA journal_mode = WAL; UPDATE snippets SET content = 'committed-in-wal'";
+            update.ExecuteNonQuery();
+        }
+        Assert.IsTrue(new FileInfo(source + "-wal").Length > 0);
+
+        // Reproduce a database left by an interrupted process: all changes are
+        // committed, but the main file has not received its WAL checkpoint.
+        string importSource = source;
+        if (!sourceIsRunning)
+        {
+            importSource = Path.Combine(_root, "interrupted-source.db");
+            foreach (string suffix in new[] { string.Empty, "-wal" })
+            {
+                using var input = new FileStream(source + suffix, FileMode.Open,
+                    FileAccess.Read, FileShare.ReadWrite);
+                using var output = File.Create(importSource + suffix);
+                input.CopyTo(output);
+            }
+        }
+        context.Service.Import(importSource);
+
+        Assert.AreEqual("committed-in-wal", ReadOnlyMarker(context.ActiveFile));
+        Assert.AreEqual("committed-in-wal", ReadOnlyMarker(source));
+        AssertNoImportTemporaryFiles();
+    }
+
+    [TestMethod]
     public void LegacyUserVersionZero_IsMigratedBeforeImport()
     {
         ImportContext context = CreateContext();

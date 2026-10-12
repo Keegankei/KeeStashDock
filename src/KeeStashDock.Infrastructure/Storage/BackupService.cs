@@ -81,7 +81,14 @@ public sealed class BackupService
         string targetFile,
         Func<SqliteConnection> openSource)
     {
-        string? directory = Path.GetDirectoryName(Path.GetFullPath(targetFile));
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFile);
+        targetFile = Path.GetFullPath(targetFile);
+        string active = Path.GetFullPath(_db.DatabaseFile);
+        if (new[] { active, active + "-wal", active + "-shm", active + "-journal" }
+            .Contains(targetFile, StringComparer.OrdinalIgnoreCase))
+            throw new IOException("The active database and its journal files cannot be used as a backup destination.");
+
+        string? directory = Path.GetDirectoryName(targetFile);
         if (directory is not null)
         {
             Directory.CreateDirectory(directory);

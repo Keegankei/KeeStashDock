@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "มืด",
   "Settings.Data": "ข้อมูล",
   "Settings.Backup.Export": "ส่งออกแพ็กเกจข้อมูล…",
+  "Settings.Backup.ExportFailed": "ไม่สามารถส่งออกข้อมูลสำรองได้ โปรดเลือกตำแหน่งไฟล์อื่นแล้วลองอีกครั้ง",
   "Settings.Backup.Import": "นำเข้าแพ็กเกจข้อมูล…",
   "Settings.Backup.Import.Confirm": "การนำเข้าจะแทนที่ข้อมูลปัจจุบันของคุณ ระบบจะสำรองข้อมูลไว้ก่อน ดำเนินการต่อหรือไม่",
   "Settings.Backup.Import.Done": "นำเข้าเสร็จสิ้น โปรดรีสตาร์ต KeeStashDock",

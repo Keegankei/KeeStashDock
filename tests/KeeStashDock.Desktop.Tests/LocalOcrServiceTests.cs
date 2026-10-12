@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KeeStashDock.Desktop.Tests;
@@ -43,6 +45,37 @@ public sealed class LocalOcrServiceTests
         token.Cancel();
         var result = await new LocalOcrService().RecognizeAsync(Header(120, 20), token.Token);
         Assert.AreEqual(OcrFailure.Cancelled, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task ExcessiveEngineOutputFailsPromptlyWithoutWaitingForTheRecognitionDeadline()
+    {
+        string shell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell", "v1.0", "powershell.exe");
+        var start = new ProcessStartInfo(shell)
+        {
+            UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true
+        };
+        string command = "[Console]::Error.Write(('x' * 100000)); Start-Sleep -Seconds 30";
+        foreach (string argument in new[] { "-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand",
+            Convert.ToBase64String(Encoding.Unicode.GetBytes(command)) }) start.ArgumentList.Add(argument);
+        using var process = Process.Start(start)!;
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            var timer = Stopwatch.StartNew();
+            await Assert.ThrowsExactlyAsync<IOException>(() =>
+                LocalOcrService.ExchangeImageAsync(process, Header(20, 20), deadline.Token)
+                    .WaitAsync(TimeSpan.FromSeconds(8)));
+            Assert.IsTrue(timer.Elapsed < TimeSpan.FromSeconds(8),
+                "Output overflow must be returned promptly, rather than mislabeled as an OCR timeout.");
+        }
+        finally
+        {
+            if (!process.HasExited) process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+        }
     }
 
     private static byte[] Header(uint width, uint height)

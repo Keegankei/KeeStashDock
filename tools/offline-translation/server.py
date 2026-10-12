@@ -113,11 +113,17 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(404, {"error": "Unknown endpoint."})
             return
         try:
-            length = int(self.headers.get("Content-Length", "0"))
+            lengths = self.headers.get_all("Content-Length", [])
+            if len(lengths) != 1:
+                raise ValueError()
+            length = int(lengths[0])
             if not 0 < length <= MAX_BODY_BYTES or self.headers.get("Transfer-Encoding"):
                 self.reply(413, {"error": "Request is too large or has no fixed length.", "code": "text_too_long"})
                 return
-            raw = self.rfile.read(length).decode("utf-8")
+            body = self.rfile.read(length)
+            if len(body) != length:
+                raise ValueError()
+            raw = body.decode("utf-8")
             content_type = self.headers.get("Content-Type", "").split(";", 1)[0].lower()
             if content_type == "application/json":
                 payload = json.loads(raw)
@@ -136,7 +142,7 @@ class Handler(BaseHTTPRequestHandler):
             if len(text) > MAX_TEXT_LENGTH:
                 self.reply(413, {"error": "Text exceeds 5000 characters.", "code": "text_too_long"})
                 return
-        except (ValueError, UnicodeError, TimeoutError):
+        except (ValueError, UnicodeError, TimeoutError, RecursionError):
             self.reply(400, {"error": "Invalid translation request.", "code": "invalid_input"})
             return
         if not self.server.translation_lock.acquire(blocking=False):

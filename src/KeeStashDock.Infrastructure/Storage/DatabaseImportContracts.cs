@@ -1,3 +1,5 @@
+using Microsoft.Data.Sqlite;
+
 namespace KeeStashDock.Infrastructure.Storage;
 
 public interface IDatabaseFileOperations
@@ -6,6 +8,7 @@ public interface IDatabaseFileOperations
     long GetLength(string path);
     void CreateDirectory(string path);
     void CopyToNew(string sourcePath, string destinationPath);
+    void SnapshotToNew(string sourcePath, string destinationPath);
     void Replace(string sourcePath, string destinationPath, string backupPath);
     void MoveNew(string sourcePath, string destinationPath);
     void DeleteIfExists(string path);
@@ -40,6 +43,32 @@ public sealed class PhysicalDatabaseFileOperations : IDatabaseFileOperations
             FileOptions.WriteThrough);
         source.CopyTo(destination);
         destination.Flush(flushToDisk: true);
+    }
+
+    /// <summary>Creates a consistent SQLite snapshot, including committed WAL pages,
+    /// without changing or checkpointing the user's selected source database.</summary>
+    public void SnapshotToNew(string sourcePath, string destinationPath)
+    {
+        using var source = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = sourcePath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false,
+        }.ToString());
+        source.Open();
+        // Reserve a new path before SQLite opens it; never overwrite an unrelated file.
+        using (new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None)) { }
+        using var destination = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = destinationPath,
+            Mode = SqliteOpenMode.ReadWrite,
+            Pooling = false,
+        }.ToString());
+        destination.Open();
+        source.BackupDatabase(destination);
+        using var checkpoint = destination.CreateCommand();
+        checkpoint.CommandText = "PRAGMA journal_mode = DELETE";
+        checkpoint.ExecuteNonQuery();
     }
 
     public void Replace(string sourcePath, string destinationPath, string backupPath)

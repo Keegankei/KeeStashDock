@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "Gelap",
   "Settings.Data": "Data",
   "Settings.Backup.Export": "Ekspor paket data…",
+  "Settings.Backup.ExportFailed": "Tidak dapat mengekspor cadangan. Pilih lokasi file lain dan coba lagi.",
   "Settings.Backup.Import": "Impor paket data…",
   "Settings.Backup.Import.Confirm": "Impor akan mengganti data Anda saat ini. Cadangan pengaman dibuat lebih dulu. Lanjutkan?",
   "Settings.Backup.Import.Done": "Impor selesai. Silakan mulai ulang KeeStashDock.",

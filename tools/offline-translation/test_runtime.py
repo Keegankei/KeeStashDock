@@ -1,5 +1,9 @@
 """Offline safety regression tests: python test_runtime.py (no installed models needed)."""
+import http.client
 import importlib.util
+import json
+import socket
+import threading
 import tempfile
 import unittest
 import zipfile
@@ -57,6 +61,77 @@ class ArchiveTests(unittest.TestCase):
             file.write_bytes(b"changed archive")
             with self.assertRaises(ValueError):
                 installer.validate_download(file, "0" * 64)
+
+
+class HttpRequestTests(unittest.TestCase):
+    def setUp(self):
+        self.requests = []
+        def translate(text, source, target):
+            self.requests.append((text, source, target))
+            return "translated", source
+        self.httpd = server.LocalServer(("127.0.0.1", 0), server.Handler)
+        self.httpd.engine = SimpleNamespace(translate=translate)
+        self.httpd.translation_lock = threading.Lock()
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread.start()
+        self.addCleanup(self.close_server)
+
+    def close_server(self):
+        self.httpd.shutdown()
+        self.httpd.server_close()
+        self.thread.join(timeout=3)
+
+    def connection(self):
+        connection = http.client.HTTPConnection("127.0.0.1", self.httpd.server_port, timeout=3)
+        self.addCleanup(connection.close)
+        return connection
+
+    def test_complete_request_reaches_engine(self):
+        connection = self.connection()
+        connection.request("POST", "/translate", json.dumps({"q": "Hello.", "source": "en", "target": "zh"}),
+                           {"Content-Type": "application/json"})
+        response = connection.getresponse()
+        self.assertEqual(response.status, 200)
+        self.assertEqual(json.loads(response.read())["translatedText"], "translated")
+        self.assertEqual(self.requests, [("Hello.", "en", "zh")])
+
+    def test_truncated_body_is_rejected_even_if_received_prefix_is_valid_json(self):
+        connection = self.connection()
+        body = json.dumps({"q": "Hello.", "source": "en", "target": "zh"})
+        connection.request("POST", "/translate", body,
+                           {"Content-Type": "application/json", "Content-Length": str(len(body) + 20)})
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        self.assertEqual(response.status, 400)
+        self.assertEqual(json.loads(response.read())["code"], "invalid_input")
+        self.assertEqual(self.requests, [])
+
+    def test_nested_json_is_rejected_with_a_response_instead_of_dropping_connection(self):
+        connection = self.connection()
+        body = "[" * 2000 + "0" + "]" * 2000
+        connection.request("POST", "/translate", body, {"Content-Type": "application/json"})
+        response = connection.getresponse()
+        self.assertEqual(response.status, 400)
+        self.assertEqual(json.loads(response.read())["code"], "invalid_input")
+        self.assertEqual(self.requests, [])
+
+    def test_ambiguous_body_lengths_do_not_reach_engine(self):
+        connection = self.connection()
+        body = json.dumps({"q": "Hello.", "source": "en", "target": "zh"})
+        connection.putrequest("POST", "/translate")
+        connection.putheader("Content-Type", "application/json")
+        connection.putheader("Content-Length", len(body))
+        connection.putheader("Content-Length", len(body) + 1)
+        connection.endheaders(body.encode("utf-8"))
+        self.assertEqual(connection.getresponse().status, 400)
+        self.assertEqual(self.requests, [])
+
+    def test_browser_origin_cannot_submit_translation(self):
+        connection = self.connection()
+        connection.request("POST", "/translate", "q=Hello&source=en&target=zh",
+                           {"Content-Type": "application/x-www-form-urlencoded", "Origin": "https://example.com"})
+        self.assertEqual(connection.getresponse().status, 403)
+        self.assertEqual(self.requests, [])
 
 
 class InferenceTests(unittest.TestCase):

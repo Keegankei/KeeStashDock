@@ -4,9 +4,30 @@ param([Parameter(Mandatory = $true)][string] $Path)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'ArtifactPolicy.ps1')
 $publishDirectory = (Resolve-Path -LiteralPath $Path).Path
 if (-not (Test-Path -LiteralPath $publishDirectory -PathType Container)) {
     throw 'The publish path must be a directory.'
+}
+
+# Inspect names before required files, and do not traverse symbolic links or junctions.
+$pending = New-Object 'System.Collections.Generic.Stack[IO.FileSystemInfo]'
+$pending.Push((Get-Item -LiteralPath $publishDirectory -Force))
+while ($pending.Count -gt 0) {
+    $entry = $pending.Pop()
+    if (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'A release package must not contain symbolic links or directory junctions.'
+    }
+    $personalReason = Get-PersonalArtifactReason $entry
+    if ($personalReason -or
+        ($entry.PSIsContainer -and $entry.Name -in @('.git', '.vs', '__pycache__')) -or
+        (-not $entry.PSIsContainer -and ($entry.Name -in @('test_runtime.py', 'test_process.ps1') -or
+        $entry.Extension -in @('.user', '.suo', '.pyc')))) {
+        throw ('Private state or development files found in release package: ' + $entry.Name)
+    }
+    if ($entry.PSIsContainer) {
+        foreach ($child in Get-ChildItem -LiteralPath $entry.FullName -Force) { $pending.Push($child) }
+    }
 }
 
 $required = @(
@@ -36,18 +57,6 @@ foreach ($relative in $required) {
     $file = Join-Path $publishDirectory $relative
     if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file).Length -eq 0) {
         throw "Missing or empty release file: $relative"
-    }
-}
-
-# Reject accidental private state without opening any of its contents.
-foreach ($entry in Get-ChildItem -LiteralPath $publishDirectory -Recurse -Force) {
-    if (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
-        throw 'A release package must not contain symbolic links or directory junctions.'
-    }
-    if (($entry.PSIsContainer -and $entry.Name -in @('Data', '.git', '.vs', '__pycache__')) -or
-        (-not $entry.PSIsContainer -and ($entry.Name -in @('settings.json', 'draft.txt', 'service.json', 'test_runtime.py', 'test_process.ps1') -or
-        $entry.Extension -in @('.db', '.sqlite', '.sqlite3', '.log', '.user', '.suo', '.pyc')))) {
-        throw ('Private state or development files found in release package: ' + $entry.Name)
     }
 }
 

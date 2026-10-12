@@ -104,8 +104,12 @@ public sealed class ComponentInstallService
             if (requiredScripts.Any(name => !File.Exists(Path.Combine(_baseDirectory, componentFolder, name))) ||
                 (component == ComponentKind.Ocr && !File.Exists(Path.Combine(_baseDirectory, "x64", "tesseract.exe"))))
                 return new(ComponentInstallFailure.MissingFiles);
+            // Tesseract's successful probe only proves OCR dependencies are usable.
+            // Translation uses a separate native engine and must check the shared runtime.
+            string nativeProbe = component == ComponentKind.Ocr
+                ? Path.Combine(_baseDirectory, "x64", "tesseract.exe") : "";
             var runtime = await RunScriptAsync("NativeRuntime", "Setup.ps1",
-                ["-ProbeExecutable", Path.Combine(_baseDirectory, "x64", "tesseract.exe")], progress, token).ConfigureAwait(false);
+                ["-ProbeExecutable", nativeProbe], progress, token).ConfigureAwait(false);
             if (!runtime.IsSuccess) return runtime;
             if (component == ComponentKind.Ocr)
             {

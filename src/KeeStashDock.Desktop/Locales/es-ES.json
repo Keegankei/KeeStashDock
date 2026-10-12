@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "Oscuro",
   "Settings.Data": "Datos",
   "Settings.Backup.Export": "Exportar paquete de datos…",
+  "Settings.Backup.ExportFailed": "No se pudo exportar la copia de seguridad. Elija otra ubicación y vuelva a intentarlo.",
   "Settings.Backup.Import": "Importar paquete de datos…",
   "Settings.Backup.Import.Confirm": "La importación reemplazará tus datos actuales. Antes se creará una copia de seguridad. ¿Continuar?",
   "Settings.Backup.Import.Done": "Importación completada. Reinicia KeeStashDock.",

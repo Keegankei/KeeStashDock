@@ -547,10 +547,8 @@ public partial class SettingsWindow : Window
     private void OnHelpClick(object sender, RoutedEventArgs e)
         => HelpWindow.ShowGuide(this);
 
-    /// <summary>Restart: schedule a delayed relaunch via a hidden cmd, THEN
-    /// shut down. Order matters - launching the exe directly first would hit
-    /// the single-instance mutex while this process is still alive, and the
-    /// new instance would just wake the panel and exit.</summary>
+    /// <summary>Start a replacement that waits for this process to exit before
+    /// claiming the single-instance mutex, then shut down the current instance.</summary>
     private async void OnRestartClick(object sender, RoutedEventArgs e)
     {
         if (_shutdownPending) return;
@@ -745,8 +743,21 @@ public partial class SettingsWindow : Window
             FileName = $"KeeStashDock_export_{DateTime.Now:yyyyMMdd}.ksdpkg",
             Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg",
         };
-        if (dlg.ShowDialog(this) == true)
-            _backup.ExportPackage(dlg.FileName);
+        if (dlg.ShowDialog(this) != true) return;
+        if (!TryExportPackage(dlg.FileName))
+            MessageBox.Show(this, LocalizationService.Instance["Settings.Backup.ExportFailed"], "KeeStashDock",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    internal bool TryExportPackage(string fileName)
+    {
+        try { _backup.ExportPackage(fileName); return true; }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+            InvalidOperationException or ArgumentException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            App.Log?.Warn($"Database export failed: {exception.GetType().Name}");
+            return false;
+        }
     }
 
     private async void OnImportClick(object sender, RoutedEventArgs e)

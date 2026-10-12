@@ -65,6 +65,7 @@
   "Settings.Theme.Dark": "داكن",
   "Settings.Data": "البيانات",
   "Settings.Backup.Export": "تصدير حزمة البيانات…",
+  "Settings.Backup.ExportFailed": "تعذر تصدير النسخة الاحتياطية. اختر موقعًا آخر للملف وحاول مجددًا.",
   "Settings.Backup.Import": "استيراد حزمة البيانات…",
   "Settings.Backup.Import.Confirm": "سيؤدي الاستيراد إلى استبدال بياناتك الحالية. سيتم إنشاء نسخة احتياطية أولاً. هل تريد المتابعة؟",
   "Settings.Backup.Import.Done": "اكتمل الاستيراد. يرجى إعادة تشغيل KeeStashDock.",

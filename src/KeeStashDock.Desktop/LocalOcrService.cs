@@ -81,15 +81,12 @@ public sealed class LocalOcrService
             process.StartInfo = start;
             if (!process.Start()) return new("", OcrFailure.EngineUnavailable);
 
-            Task<string> output = ReadBoundedAsync(process.StandardOutput, 1_000_000, deadline.Token);
-            Task<string> errors = ReadBoundedAsync(process.StandardError, 32_768, deadline.Token);
-            Task input = WriteImageAsync(process, pngBytes, deadline.Token);
-            await Task.WhenAll(input, output, errors, process.WaitForExitAsync(deadline.Token)).ConfigureAwait(false);
+            string recognizedText = await ExchangeImageAsync(process, pngBytes, deadline.Token).ConfigureAwait(false);
             deadline.Token.ThrowIfCancellationRequested();
             if (process.ExitCode is unchecked((int)0xC0000135) or unchecked((int)0xC000007B))
                 return new("", OcrFailure.EngineUnavailable);
             if (process.ExitCode != 0) return new("", OcrFailure.RecognitionFailed);
-            string text = (await output.ConfigureAwait(false)).Trim();
+            string text = recognizedText.Trim();
             return text.Length == 0 ? new("", OcrFailure.NoText) : new(text, OcrFailure.None);
         }
         catch (OperationCanceledException)
@@ -117,6 +114,35 @@ public sealed class LocalOcrService
             catch (OperationCanceledException) { }
             catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
             if (entered) RecognitionGate.Release();
+        }
+    }
+
+    internal static async Task<string> ExchangeImageAsync(Process process, byte[] bytes, CancellationToken token)
+    {
+        using var exchange = CancellationTokenSource.CreateLinkedTokenSource(token);
+        Task<string> output = ReadBoundedAsync(process.StandardOutput, 1_000_000, exchange.Token);
+        Task<string> errors = ReadBoundedAsync(process.StandardError, 32_768, exchange.Token);
+        Task[] operations = [WriteImageAsync(process, bytes, exchange.Token), output, errors,
+            process.WaitForExitAsync(exchange.Token)];
+        var pending = operations.ToList();
+        try
+        {
+            // A failed/bounded pipe reader must stop the other waits immediately. Waiting
+            // for all tasks first leaves an engine blocked on that pipe until the deadline.
+            while (pending.Count > 0)
+            {
+                Task completed = await Task.WhenAny(pending).ConfigureAwait(false);
+                await completed.ConfigureAwait(false);
+                pending.Remove(completed);
+            }
+            return await output.ConfigureAwait(false);
+        }
+        finally
+        {
+            exchange.Cancel();
+            // Observe every pending I/O task before the caller disposes the process.
+            try { await Task.WhenAll(operations).ConfigureAwait(false); }
+            catch (Exception ex) when (ex is IOException or OperationCanceledException or InvalidOperationException) { }
         }
     }
 

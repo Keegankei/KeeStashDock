@@ -90,7 +90,7 @@ public sealed class DatabaseImportService
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            _files.CopyToNew(source, staging);
+            _files.SnapshotToNew(source, staging);
             _observer?.OnStage(DatabaseImportStage.AfterStaging);
 
             // Validate the recognizable legacy/current schema before any

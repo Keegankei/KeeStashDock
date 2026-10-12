@@ -14,6 +14,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'ArtifactPolicy.ps1')
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $rootPrefix = $repositoryRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
 if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot 'KeeStashDock.sln') -PathType Leaf)) {
@@ -36,6 +37,8 @@ function Assert-SafeDirectory([string]$Path) {
 }
 
 function Get-ProtectedContent([string]$Path) {
+    $rootReason = Get-PersonalArtifactReason (Get-Item -LiteralPath $Path -Force)
+    if ($rootReason) { return $rootReason }
     $pending = New-Object 'System.Collections.Generic.Stack[string]'
     $pending.Push($Path)
     while ($pending.Count -gt 0) {
@@ -44,12 +47,9 @@ function Get-ProtectedContent([string]$Path) {
             if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
                 return "contains a symbolic link or junction: $($item.FullName)"
             }
-            if ($item.PSIsContainer) {
-                if ($item.Name -ieq 'Data') { return 'contains a Data directory' }
-                $pending.Push($item.FullName)
-            } elseif ($item.Extension -in '.db', '.sqlite', '.sqlite3', '.pfx', '.p12' -or $item.Name -ieq 'settings.json') {
-                return "contains potentially personal data: $($item.Name)"
-            }
+            $reason = Get-PersonalArtifactReason $item
+            if ($reason) { return "contains $reason" }
+            if ($item.PSIsContainer) { $pending.Push($item.FullName) }
         }
     }
     return $null

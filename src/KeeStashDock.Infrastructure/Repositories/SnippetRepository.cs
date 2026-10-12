@@ -158,7 +158,7 @@ public sealed partial class SnippetRepository
         ("$t", UtcTimestamp.Format(DateTime.UtcNow)),
         ("$i", id));
 
-    public RegisterUseResult RegisterUse(long id, bool moveToTrash)
+    public RegisterUseResult RegisterUse(long id, bool? moveToTrash = null)
     {
         DateTime usedAt = DateTime.UtcNow;
         string usedAtText = UtcTimestamp.Format(usedAt);
@@ -172,14 +172,15 @@ public sealed partial class SnippetRepository
                 END,
                 last_used_at = $used_at,
                 deleted_at = CASE
-                    WHEN $move_to_trash = 1 THEN COALESCE(deleted_at, $used_at)
+                    WHEN COALESCE($move_to_trash, expire_policy = $burn_policy) = 1 THEN COALESCE(deleted_at, $used_at)
                     ELSE deleted_at
                 END
             WHERE id = $id
             RETURNING use_count, last_used_at, deleted_at
             """;
         command.Parameters.AddWithValue("$used_at", usedAtText);
-        command.Parameters.AddWithValue("$move_to_trash", moveToTrash ? 1 : 0);
+        command.Parameters.AddWithValue("$move_to_trash", moveToTrash is null ? DBNull.Value : moveToTrash.Value ? 1 : 0);
+        command.Parameters.AddWithValue("$burn_policy", (int)ExpirePolicy.BurnAfterRead);
         command.Parameters.AddWithValue("$max_use_count", int.MaxValue);
         command.Parameters.AddWithValue("$id", id);
         using SqliteDataReader reader = command.ExecuteReader();
@@ -247,19 +248,19 @@ public sealed partial class SnippetRepository
                  ("$h", hash)).FirstOrDefault();
 
     /// <summary>FTS5 MATCH search (space-delimited languages).</summary>
-    public List<Snippet> SearchFts(string ftsQuery, int limit)
-        => Query("""
+    public List<Snippet> SearchFts(string ftsQuery, int limit, bool trashOnly = false)
+        => Query($"""
             SELECT s.* FROM snippets_fts f
             JOIN snippets s ON s.id = f.rowid
-            WHERE snippets_fts MATCH $q AND s.deleted_at IS NULL
+            WHERE snippets_fts MATCH $q AND s.deleted_at IS {(trashOnly ? "NOT NULL" : "NULL")}
             ORDER BY rank LIMIT $lim
             """, ("$q", ftsQuery), ("$lim", limit));
 
     /// <summary>LIKE fallback for CJK queries (unicode61 cannot segment CJK).</summary>
-    public List<Snippet> SearchLike(string term, int limit)
-        => Query("""
+    public List<Snippet> SearchLike(string term, int limit, bool trashOnly = false)
+        => Query($"""
             SELECT * FROM snippets
-            WHERE deleted_at IS NULL
+            WHERE deleted_at IS {(trashOnly ? "NOT NULL" : "NULL")}
               AND (content LIKE $q ESCAPE '\' OR COALESCE(title,'') LIKE $q ESCAPE '\')
             ORDER BY is_pinned DESC, updated_at DESC LIMIT $lim
             """,

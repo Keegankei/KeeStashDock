@@ -50,7 +50,40 @@ public partial class ImageEntryWindow : Window
         PreviewMouseDown += (_, _) => DismissActions?.Invoke();
         Deactivated += (_, _) => DismissActions?.Invoke();
         Closing += OnClosing;
-        Closed += (_, _) => { _closed = true; _recognition?.Cancel(); DismissActions?.Invoke(); };
+        _snippets.Changed += OnSnippetChanged;
+        Closed += (_, _) =>
+        {
+            _closed = true;
+            _snippets.Changed -= OnSnippetChanged;
+            _recognition?.Cancel();
+            DismissActions?.Invoke();
+        };
+        UpdateButtons();
+    }
+
+    private void OnSnippetChanged()
+    {
+        if (Dispatcher.CheckAccess()) RefreshEntryState();
+        else Dispatcher.BeginInvoke(RefreshEntryState);
+    }
+
+    private void RefreshEntryState()
+    {
+        if (_closed) return;
+        Snippet? current;
+        try { current = _snippets.GetById(_id); }
+        catch (InvalidOperationException) { current = null; }
+        _readOnly = current is not { IsDeleted: false };
+        if (_readOnly) _recognition?.Cancel();
+        // A clean editor follows edits in the workbench. A dirty editor keeps
+        // its draft and SaveText still checks the original persisted content.
+        if (current is not null && _recognition is null && OcrText.Text == _savedText)
+        {
+            _savedText = current.Content;
+            OcrText.Text = _savedText;
+        }
+        RecognizeButton.IsEnabled = !_readOnly && _recognition is null;
+        OcrText.IsReadOnly = _readOnly || _recognition is not null;
         UpdateButtons();
     }
 
