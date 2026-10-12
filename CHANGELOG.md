@@ -2,9 +2,13 @@
 
 All notable changes to KeeStashDock are documented in this file.
 
-The format follows the principles of Keep a Changelog. The project uses semantic versioning for assembly and release numbers. The reviewed source identifies the current development version as 1.1.2, but no public release tag was supplied; the first public release therefore remains under `Unreleased` until its tag and release date are created.
+The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
+
+## [1.2.1] - 2026-10-12
+
+First packaged release of the current feature set. Includes the fixes and validation from the earlier 1.1.2 development candidates.
 
 ### Added
 
@@ -43,7 +47,7 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 - Duplicate clipboard entries now refresh an existing live snippet instead of creating a second row.
 - Group deletion with contents uses recoverable soft deletion.
 - Replaced floating NuGet versions with centrally managed exact versions.
-- Expanded the English and Simplified Chinese README files.
+- Added English, Simplified Chinese, Traditional Chinese, and Japanese README guides with application screenshots, download links, and in-app component setup instructions.
 - Clarified source-language, licensing, support, security, and release policies.
 - Relicensed KeeStashDock as an OSI-approved open-source project under Apache-2.0.
 
@@ -95,3 +99,6 @@ The format follows the principles of Keep a Changelog. The project uses semantic
 
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
+
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

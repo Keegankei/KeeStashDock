@@ -33,7 +33,7 @@ while ($pending.Count -gt 0) {
 $required = @(
     'KeeStashDock.exe', 'KeeStashDock.dll', 'KeeStashDock.deps.json',
     'KeeStashDock.runtimeconfig.json', 'coreclr.dll', 'System.Private.CoreLib.dll',
-    'e_sqlite3.dll', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'Screenshots.md',
+    'e_sqlite3.dll', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'StartHere.md', 'Screenshots.md',
     'x64/tesseract.exe', 'x64/tesseract55.dll', 'x64/leptonica-1.85.0.dll',
     'NativeRuntime/Setup.ps1',
     'OcrModels/Setup.ps1', 'OcrModels/README.md', 'OcrModels/LICENSE',
@@ -48,7 +48,7 @@ $repositoryDirectory = Split-Path -Parent $PSScriptRoot
 foreach ($locale in Get-ChildItem -LiteralPath (Join-Path $repositoryDirectory 'src/KeeStashDock.Desktop/Locales') -Filter '*.json' -File) {
     $required += 'Locales/' + $locale.Name
 }
-foreach ($group in @('ocr', 'dotnet')) {
+foreach ($group in @('ocr', 'dotnet', 'qr')) {
     foreach ($license in Get-ChildItem -LiteralPath (Join-Path $repositoryDirectory ('third_party/' + $group)) -File) {
         $required += 'Licenses/' + $group + '/' + $license.Name
     }

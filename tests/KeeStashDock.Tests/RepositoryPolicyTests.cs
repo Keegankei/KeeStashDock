@@ -191,7 +191,7 @@ public sealed class RepositoryPolicyTests
         foreach (string file in EnumeratePolicyTextFiles(root))
         {
             string relative = NormalizeRelative(root, file);
-            if (relative.Equals("README.zh-CN.md", StringComparison.OrdinalIgnoreCase)
+            if (IsLocalizedReadme(root, relative)
                 || relative.StartsWith(
                     "src/KeeStashDock.Desktop/Locales/",
                     StringComparison.OrdinalIgnoreCase))
@@ -224,9 +224,14 @@ public sealed class RepositoryPolicyTests
     public void Readmes_DoNotContainPlaceholderSections()
     {
         string root = FindRepositoryRoot();
-        foreach (string name in new[] { "README.md", "README.zh-CN.md" })
+        foreach (string path in Directory.GetFiles(root, "README*.md"))
         {
-            string content = File.ReadAllText(Path.Combine(root, name));
+            string name = Path.GetFileName(path);
+            Assert.IsTrue(
+                name.Equals("README.md", StringComparison.Ordinal)
+                    || IsLocalizedReadme(root, name),
+                $"{name} must use a locale name matching an existing application language pack.");
+            string content = File.ReadAllText(path);
             Assert.IsFalse(
                 Regex.IsMatch(content, @"(?i)\b(?:xxx|todo|tbd)\b"),
                 $"{name} still contains a placeholder marker.");
@@ -234,6 +239,14 @@ public sealed class RepositoryPolicyTests
         }
     }
 
+
+    private static bool IsLocalizedReadme(string root, string relative)
+    {
+        Match match = Regex.Match(relative, @"\AREADME\.([a-z]{2,3}-[A-Z]{2})\.md\z",
+            RegexOptions.CultureInvariant);
+        return match.Success && File.Exists(Path.Combine(root, "src",
+            "KeeStashDock.Desktop", "Locales", match.Groups[1].Value + ".json"));
+    }
 
     private static string ReadHelp(string path)
     {

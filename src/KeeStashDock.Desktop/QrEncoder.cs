@@ -1,18 +1,11 @@
 namespace KeeStashDock.Desktop;
 
 /// <summary>
-/// Self-contained QR Code encoder that replaces the QRCoder NuGet
-/// dependency so the solution builds fully offline. Byte mode (UTF-8),
-/// versions 1-40 auto-selected, ECC level M, best-of-8 mask by ISO penalty.
-///
-/// Correctness: this file is a line-for-line port of a reference
-/// implementation that was machine-validated before porting -
-/// geometry-derived codeword totals against the spec anchors (v1=26,
-/// v40=3706), the famous capacity constants (2953 bytes @40-L / 2331 @40-M)
-/// reproduced from the ECC+block tables, Reed-Solomon syndromes verified
-/// zero on real encodes (incl. CJK and 1200-char payloads), and format /
-/// version bit strings matched against the published ISO 18004 samples.
-/// Algorithm structure follows Nayuki's public-domain QR generator.
+/// QR Code encoder using UTF-8 byte mode, automatic versions 1-40,
+/// error correction level M, and mask selection by the ISO penalty rules.
+/// Algorithm structure follows Project Nayuki's MIT-licensed QR Code generator.
+/// KeeStashDock adapts the implementation to C# and limits its API to text input.
+/// See third_party/qr for the upstream license and attribution.
 /// </summary>
 public static class QrEncoder
 {

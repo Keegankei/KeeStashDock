@@ -5,214 +5,143 @@
 </p>
 
 <p align="center">
-  <strong>A lightweight, portable text dock for Windows.</strong><br>
-  Capture snippets from anywhere, find them quickly, and act on selected text without leaving your current workflow.
+  <strong>A portable Windows dock for text, screenshots, and everyday reuse.</strong><br>
+  Save a snippet, capture a region, recognize its text, and translate only when you choose.
 </p>
 
 <p align="center">
   <a href="README.md">English</a> ·
-  <a href="README.zh-CN.md">Simplified Chinese</a>
+  <a href="README.zh-CN.md">Simplified Chinese</a> ·
+  <a href="README.zh-TW.md">Traditional Chinese</a> ·
+  <a href="README.ja-JP.md">Japanese</a>
 </p>
 
 <p align="center">
-  <img alt="Version 1.1.2" src="docs/assets/badges/version.svg">
+  <img alt="Version 1.2.1" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 and 11" src="docs/assets/badges/windows.svg">
   <img alt="License: Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-> Current development version: **1.1.2**. 
+## Download and start
 
-KeeStashDock is a Windows tray application for text snippets, screenshot entries, and fast reuse. It combines a compact quick panel, a searchable workbench, selection actions, clipboard-assisted workflows, local persistence, portable backups, and extensive appearance and localization options.
+**[Latest release](https://github.com/Keegankei/KeeStashDock/releases/latest)** ·
+**[Download 1.2.1 for Windows x64](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.1/KeeStashDock-1.2.1-win-x64.zip)** ·
+[SHA-256 checksum](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.1/KeeStashDock-1.2.1-win-x64.zip.sha256)
 
-## Highlights
+1. Download the application ZIP from **Assets** on the release page. GitHub's **Source code** archives are for developers.
+2. Extract the complete ZIP to a writable folder, then run `KeeStashDock.exe`. Keep the accompanying folders and files together.
+3. Press **Alt+Q** to open the quick panel. The app also stays available in the Windows system tray.
+4. Open **Settings** to choose your language, appearance, and optional components.
 
-- **Screenshot entries:** capture a region with a button or configurable **Ctrl+Alt+S** shortcut, keep the original image, and recognize English/Simplified Chinese text locally on demand.
-- **Fast capture and recall:** stash text from the quick input, selected text, drag-and-drop, optional clipboard history, imported groups, or built-in command presets.
-- **Organized retrieval:** browse recent, pinned, uncategorized, grouped, and trashed snippets; use SQLite FTS5 search with a CJK-compatible fallback.
-- **Text actions:** copy, optional direct paste, translate selected text, transform content, tear cards into sticky notes, open recognized paths, and generate QR codes.
-- **Retention controls:** keep snippets forever, expire them after one or seven days, or use burn-after-read behavior with recoverable soft deletion.
-- **Portable local data:** SQLite, settings, logs, drafts, and backups live under a single `Data` directory, with an `%AppData%` fallback when the application folder is not writable.
-- **Customizable interface:** light, dark, or system theme; wallpaper, scrim, blur, opacity, text palettes, live language switching, and right-to-left layout support.
+The package targets **Windows x64** and includes the .NET runtime. Windows 11 is the recommended platform; Windows 10 22H2 compatibility is best-effort. OCR and offline translation may need a Microsoft Visual C++ runtime, which the in-app component installer can install. See the [release notes](CHANGELOG.md) and [acceptance record](docs/releases/1.2.1.md) for tested coverage and remaining limits.
 
-## Feature overview
+<details>
+<summary>Verify the download (optional)</summary>
 
-### Capture
+In PowerShell, run the following in the download folder and compare the result with the accompanying `.sha256` file:
 
-- Region screenshots saved as image entries in the current group; Escape or right-click cancels
-- Quick input from the dock panel
-- Selection bubble with either **Capture** or **Translate** action
-- Optional text-only clipboard history, disabled by default
-- Drag-and-drop and group package import
-- Seven built-in preset groups: Git, Docker, Linux Shell, PowerShell, npm/Node.js, Python/pip, and SQL
-- SHA-256 content deduplication for live snippets
+```powershell
+Get-FileHash .\KeeStashDock-1.2.1-win-x64.zip -Algorithm SHA256
+```
 
-### Organize and search
+</details>
 
-- Categories, tags, pinning, source/type metadata, usage counts, and custom ordering
-- Views for All, Pinned, Uncategorized, individual groups, and Trash
-- Full-text search through SQLite FTS5, with `LIKE` fallback for CJK queries
-- Group export and import through `.ksdgrp` JSON packages, including image assets and recognized text
-- Soft deletion and scheduled housekeeping
+## A look inside
 
-### Reuse and transform
+### Main interface
 
-- Copy to clipboard and optional paste back into the previously focused application
-- UPPERCASE, lowercase, whitespace collapse, line-break removal, JSON formatting, URL encode/decode, Base64 encode/decode, and text statistics
-- Sticky-note tear-out from panel cards
-- QR generation for text up to 1,800 characters
-- File-path recognition and open-in-shell behavior
+![KeeStashDock main interface showing sample snippets](docs/images/main-window.png)
 
-### Screenshot entries and OCR
+Keep frequently used text close at hand. Search, pin, group, edit, and recover entries from Trash.
 
-Each image entry keeps its original PNG, thumbnail, and editable recognized text together. Open it to preview or copy the image, save a PNG copy, or click **Recognize text**. Recognition runs locally on demand and supports printed English and Simplified Chinese in the first version. It does not start translation automatically. Select recognized text to use the existing action bubble; its Capture/Translate choice and translation provider follow Settings.
+### Screenshot entry
 
-Images travel with database backups, group exports, Trash recovery, and permanent deletion. Legacy text databases and version 1 group packages remain importable; image group packages use version 2 and require this app version or later. See [screenshot workflow and upgrade notes](docs/SCREENSHOTS.md) and [local OCR setup](docs/LOCAL_OCR.md).
+![Screenshot entry with an image preview and editable recognized text](docs/images/screenshot-entry.png)
 
-### Translation and localization
+Keep the original image and its editable recognized text together. OCR runs on demand; translation uses the existing selection bubble.
 
-- Bing's China endpoint (`cn.bing.com`), requiring no user key and selected by default on new installs
-- Google and Lingva keyless alternatives; existing provider choices are preserved
-- Baidu's official translation API with a user-provided App ID and secret key (free usage depends on account quota)
-- DeepL API support with a separate user-provided key
-- Alibaba Cloud TranslateGeneral with a separate AccessKey ID and secret (activate Machine Translation first; account quota and overage billing apply)
-- Local offline translation through a loopback-only Argos / LibreTranslate-compatible engine; the optional setup downloads English/Chinese models once
-- A Settings test button that translates a fixed sample without reading the clipboard
-- Specific timeout, connection, credential, rate-limit, and quota error messages
-- 20 editable JSON language packs
-- Live reload from Settings
-- Right-to-left layout metadata, currently used by Arabic
+### Component setup
 
-## Privacy and data handling
+![Settings with OCR and offline translation installation controls](docs/images/component-setup.png)
 
-KeeStashDock is local-first. Text, screenshot images, recognized text, settings, logs, and backups are stored on the local machine. OCR never uploads images or automatically translates recognized text. Clipboard history and direct paste are opt-in.
+Install, repair, and manage optional components from Settings. These are actual application views rendered with sample data; see [image provenance](docs/images/README.md).
 
-Cloud translation sends selected text only to the provider chosen in Settings; failures do not automatically forward it to another provider. Bing, Baidu, Alibaba Cloud, Google, Lingva, and DeepL are external services with their own availability and privacy terms. Provider credentials are stored separately, in plain text, in the local `settings.json` file; masking a secret in Settings does not encrypt its storage. Free public endpoints have no guaranteed availability. Do not translate secrets or other sensitive content unless that disclosure is acceptable.
+## Everyday use
 
-Offline translation sends text only to a loopback address on this computer, bypasses HTTP proxies, and rejects redirects and remote endpoints. The optional bundled helper never downloads models while serving translations. Its first setup requires an internet connection and disk space. See [offline translation setup](docs/OFFLINE_TRANSLATION.md).
+| Action | How |
+| --- | --- |
+| Show or hide the quick panel | **Alt+Q**; configurable in Settings |
+| Save typed text | Type in the quick input and press **Enter** |
+| Insert a new line | **Alt+Enter** or **Shift+Enter** |
+| Copy a text entry | Click its card; direct paste is an optional setting |
+| Capture a region | Screenshot button or **Ctrl+Alt+S**; drag to select, **Esc** or right-click to cancel |
+| Open an image entry | Click its card to preview, copy, save, or recognize text |
+| Organize entries | Open the workbench for search, groups, tags, pinning, editing, and Trash |
+| Translate selected text | Enable the selection bubble, choose **Translate**, and select a provider in Settings |
 
-## Requirements
+Additional tools include sticky notes, QR codes, text transformations, group import/export, retention policies, and optional clipboard history. Clipboard history and direct paste are off by default. The interface has 20 language packs and supports light, dark, and system themes.
 
-### Running a release build
+## First-time OCR and offline translation setup
 
-- Windows 11 is the supported release-test baseline.
-- Windows 10 22H2 may still run, but support is best-effort because Microsoft ended standard support on 2025-10-14; use an ESU-covered system where applicable.
-- x64 processor for the supplied `win-x64` publish profile
-- No separately installed .NET runtime when using the self-contained publish output
-- Microsoft Visual C++ v14 x64 Redistributable for native OCR and the optional offline translation engine; see [OCR setup](docs/LOCAL_OCR.md)
+Normal setup uses buttons in the app; no terminal command is required.
 
-### Building from source
+1. Open **Settings > Optional components**.
+2. For OCR, click **Install / repair** under **Text recognition (Chinese / English)** if recognition reports a missing component. The standard ZIP already includes the engine and English/Simplified Chinese models; the installer also checks the native runtime.
+3. For offline translation, click **Install / repair** under **Offline translation (Chinese / English)**. Keep Settings open while the app downloads and verifies the files. Allow approximately **1 GB of free disk space** and **2 GB of available memory**.
+4. If Windows requests permission to install Microsoft's runtime, follow its installer. If the app reports **Restart required**, restart Windows and retry component setup. Cancelling app setup does not undo a Windows runtime installation already started.
+5. Choose **Local offline (Argos / LibreTranslate)** as the translation engine. Keep `http://127.0.0.1:5000` as the address and use **Test translation**. The installed engine starts when needed; Settings also offers **Start service** and **Stop service**.
 
-- Windows with the **.NET SDK 10.0.401** or a compatible later 10.0.4xx patch selected by `global.json`
-- Visual Studio with the .NET desktop development workload, Visual Studio Code, Rider, or the `dotnet` CLI
-- Git, when contributing through the normal pull-request workflow
+Initial downloads require access to GitHub, python.org, files.pythonhosted.org, argos-net.com, and possibly Microsoft download hosts, depending on the component. Some networks may not reach these hosts. Failed setup can be retried and valid cached downloads are reused. After installation, recognition and local translation work offline. The translation service keeps running after the app closes until stopped.
 
-## Quick start for users
+OCR supports printed **English and Simplified Chinese**. The included translation models support **English ↔ Simplified Chinese**, not Japanese, Traditional Chinese, or every interface language. OCR does not translate automatically: select recognized text and use the translation bubble. Missing models never trigger a switch to cloud translation.
 
-1. Extract a release into a writable folder.
-2. Start `KeeStashDock.exe`; the application remains available from the system tray.
-3. Press **Alt+Q** to show or hide the quick panel. The shortcut is configurable in Settings.
-4. Enter text and press **Enter** to create a snippet; use **Alt+Enter** or **Shift+Enter** for a new line at the cursor.
-5. Click a text card to copy it or an image card to open it. Use the screenshot button or **Ctrl+Alt+S** to capture a region; configure or disable that shortcut in Settings. Open the workbench for search, editing, grouping, and recovery.
-6. Review Settings before enabling clipboard history, direct paste, selection translation, or automatic startup.
+See [OCR setup and limits](docs/LOCAL_OCR.md), [offline translation setup and troubleshooting](docs/OFFLINE_TRANSLATION.md), and [screenshot workflows](docs/SCREENSHOTS.md).
 
-For Alibaba Cloud, choose **Translate** as the selection action, select **Alibaba Cloud**, and enter your own AccessKey ID and secret. Use a RAM identity with permission for `alimt:TranslateGeneral`; activate the [Machine Translation service](https://help.aliyun.com/zh/machine-translation/developer-reference/api-alimt-2018-10-12-translategeneral) and review [quota and billing](https://help.aliyun.com/zh/machine-translation/product-overview/billing-overview). Click **Test translation** to verify your account and network.
+## Translation choices and privacy
 
-In Settings, use **Install / repair OCR** if a package lacks OCR models. For offline translation, choose **Local offline** and use **Install / repair offline translation**. The app downloads the verified components in the background and starts the local engine after installation. Settings shows progress, cancellation, and start/stop controls. Missing native runtime prerequisites are installed from Microsoft's signed download; Windows may ask for administrator permission or a restart. Cancelling app setup does not undo an already authorized Windows runtime installation. Keep the default address `http://127.0.0.1:5000` unless you changed the local port. The starter models support English and Simplified Chinese; other target languages require a compatible engine with those models. KeeStashDock does not switch to a cloud provider when a model is missing.
+- **Bing (China), Google, and Lingva:** keyless options, with no guaranteed availability. New installations default to Bing; existing choices are preserved.
+- **Baidu, Alibaba Cloud, and DeepL:** use your own provider credentials. Free quotas and charges depend on your account. Alibaba Cloud requires an activated Machine Translation service and permission for `alimt:TranslateGeneral`.
+- **Local offline:** uses the installed local engine over loopback, with no account or API fee.
 
-## Build, test, and publish
+Text, images, recognized text, and backups stay in local storage. OCR does not upload images. Cloud translation sends the selected text to the chosen provider only; there is no automatic provider fallback. Provider credentials are stored **in plain text** in local `settings.json`; masked input fields do not encrypt them. Avoid sending sensitive content to a provider unless you accept that disclosure.
 
-From the repository root:
+Offline translation accepts only loopback addresses, bypasses HTTP proxies, and rejects redirects. The included helper never downloads models while translating. See the [security policy](SECURITY.md) to report a vulnerability privately.
+
+## Data, backup, and upgrades
+
+Data normally lives in `Data` beside the executable, including the SQLite database, settings, drafts, logs, and backups. If the application folder is not writable, the app uses `%AppData%\KeeStashDock`; Settings reports that fallback. Components installed through the app normally use `%LOCALAPPDATA%\KeeStashDock` and are separate from your entries.
+
+Before upgrading:
+
+1. Export a backup from **Settings > Data**, then exit KeeStashDock from its tray menu.
+2. Extract the new ZIP into a separate folder. For a portable installation, copy the **entire `Data` folder** from the old installation into the new folder while the app is closed. Keep the original as a rollback copy.
+3. If Settings reports the `%AppData%` fallback, back up that folder too. To move to a writable portable folder, copy its complete contents into the new `Data` folder before first launch; otherwise the new app may show an empty library.
+4. Start the new version and check your entries. Do not delete the old copy or backups until satisfied. Keep a pre-upgrade backup for rollback instead of opening an upgraded database in an older release.
+
+Do not share your `Data` folder, credentials, private backups, or logs in an issue. [Support](SUPPORT.md) explains how to provide a sanitized report.
+
+## Build and contribute
+
+Use Windows and the **.NET SDK selected by `global.json`** (10.0.401 or a compatible 10.0.4xx patch):
 
 ```powershell
 dotnet restore KeeStashDock.sln
-dotnet build KeeStashDock.sln --configuration Release --no-restore
+dotnet build KeeStashDock.sln --configuration Release --no-restore --disable-build-servers
 dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 ```
 
-Create the supported portable Windows package:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, optional helper tests, coding conventions, and publish checks. Source code and general documentation use English; localized `README.<locale>.md` files and interface language packs are the exceptions. English documentation is the reference when translations differ.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
-dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
-dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
-  --configuration Release `
-  --no-restore `
-  -p:PublishProfile=FolderProfile `
-  --output artifacts/publish
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
-```
-
-The OCR setup step downloads and verifies the English/Simplified Chinese models before packaging. Use a fresh output folder; never package an installation that contains your `Data` directory. `Verify-Publish.ps1` checks the native engine, models, locales, licenses, offline setup files, and accidental private state. The optional translation runtime is installed separately.
-
-GitHub Actions performs Release build, .NET tests, Python helper safety tests, and this complete publish smoke check on Windows.
-
-## Data layout
-
-The preferred portable layout is:
-
-```text
-KeeStashDock.exe
-Locales/
-Data/
-  keestashdock.db
-  settings.json
-  draft.txt
-  Logs/
-  Backups/
-  Plugins/
-```
-
-When the executable directory is not writable, data is redirected to `%AppData%\KeeStashDock`. The `Plugins` directory is reserved for future extension work; this release does not expose a public plugin runtime.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    Desktop["KeeStashDock.Desktop\nWPF, tray, Win32 integration"]
-    Core["KeeStashDock.Core\nUse cases and text services"]
-    Infrastructure["KeeStashDock.Infrastructure\nSQLite, settings, backup, logging"]
-    Domain["KeeStashDock.Domain\nEntities and enums"]
-
-    Desktop --> Core
-    Desktop --> Infrastructure
-    Desktop --> Domain
-    Core --> Infrastructure
-    Core --> Domain
-    Infrastructure --> Domain
-```
-
-| Project                       | Responsibility                                                                                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `KeeStashDock.Domain`         | Dependency-free entities, settings model, and persisted enums                                                                      |
-| `KeeStashDock.Infrastructure` | SQLite schema and repositories, settings storage, file logging, portable paths, and backups                                        |
-| `KeeStashDock.Core`           | Snippet, search, housekeeping, import/export, type-detection, and text-transformation use cases                                    |
-| `KeeStashDock.Desktop`        | WPF windows and view models, tray lifecycle, hotkeys, clipboard/selection integration, localization, theming, QR, and sticky notes |
-| `KeeStashDock.Tests`          | Unit tests plus repository, localization, and packaging policy checks                                                              |
-| `KeeStashDock.Desktop.Tests`  | Windows WPF keyboard and translation-settings regression tests                                                                     |
-
-A detailed component and data-flow description is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Repository documentation
-
-- [Changelog](CHANGELOG.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Localization guide](docs/LOCALIZATION.md)
-- [Release process](docs/RELEASING.md)
-- [Third-party notices](THIRD_PARTY_NOTICES.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Support policy](SUPPORT.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Apache License 2.0](LICENSE)
-- [Attribution notice](NOTICE)
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Source code, comments, configuration, automation, and general documentation use English. `README.zh-CN.md` and the JSON files under `src/KeeStashDock.Desktop/Locales` are the intentional localization exceptions.
+| Documentation | Purpose |
+| --- | --- |
+| [Changelog](CHANGELOG.md) | Changes by version |
+| [Architecture](docs/ARCHITECTURE.md) | Projects, responsibilities, and data flow |
+| [Localization](docs/LOCALIZATION.md) | Translate the interface |
+| [Release process](docs/RELEASING.md) | Packaging and acceptance checks |
+| [Support](SUPPORT.md) · [Code of Conduct](CODE_OF_CONDUCT.md) | Community participation |
+| [Third-party notices](THIRD_PARTY_NOTICES.md) | Dependency and model licenses |
 
 ## License
 
-Copyright © 2026 KeeganKei.
-
-KeeStashDock is licensed under the [Apache License 2.0](LICENSE), an OSI-approved permissive open-source license. You may use, modify, and redistribute the software, including commercially, subject to the license terms. Preserve the required license, copyright, change, and attribution notices when redistributing the project or derivative works. See [NOTICE](NOTICE) for project attribution. The license does not grant rights to project names, logos, or other trademarks.
+Copyright © 2026 KeeganKei. Licensed under the [Apache License 2.0](LICENSE); see [NOTICE](NOTICE) for attribution. Dependencies, optional runtimes, and models retain their own licenses, described in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The project license does not grant trademark rights.

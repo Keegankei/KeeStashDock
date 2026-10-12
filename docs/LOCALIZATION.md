@@ -6,7 +6,7 @@ English is the repository source language for code, comments, configuration, aut
 
 The intentional localization exceptions are:
 
-- `README.zh-CN.md`
+- Root `README.<locale>.md` files matching an existing interface language pack
 - `src/KeeStashDock.Desktop/Locales/*.json`
 
 The canonical application language file is `en-US.json`. All other language files must remain structurally compatible with it.

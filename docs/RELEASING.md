@@ -5,7 +5,7 @@ This checklist describes a reproducible manual release. It intentionally avoids 
 ## 1. Prepare
 
 1. Confirm that the intended version is set in `Directory.Build.props`.
-2. Update `CHANGELOG.md` and both README files.
+2. Update `CHANGELOG.md`, the English README, and every translated README.
 3. Verify that `LICENSE`, `NOTICE`, README license references, and `PackageLicenseExpression` consistently identify Apache-2.0.
 4. Verify package versions in `Directory.Packages.props`, refresh `THIRD_PARTY_NOTICES.md`, and review Dependabot changes.
 5. Run localization key and placeholder checks through the test suite.
@@ -35,7 +35,7 @@ dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
 ```
 
-A stable release is not ready until the Windows CI workflow is green and the same commit passes a clean-machine smoke test of:
+Run the Windows CI workflow for the release commit. Record local automation, maintainer acceptance, and any environment-specific checks not completed in `docs/releases/<version>.md`. Use the following checklist for hands-on acceptance; synthetic fixtures alone do not establish clean-machine or physical-device coverage:
 
 - First launch and portable-data creation
 - `%AppData%` fallback from a non-writable application folder
@@ -81,22 +81,12 @@ Refresh the bundled dependency licenses when package or self-contained runtime
 versions change. An advisory check covers only its queried feeds and does not
 replace the native OCR/runtime review.
 
-## Local acceptance coverage
+## Acceptance records
 
-The 2026-10-12 local acceptance run extends the automated checks with:
-
-- Read-only program-directory ACLs for OCR and offline component installation, using isolated setup fixtures and a writable user directory.
-- Successful retry immediately after a cancelled or timed-out component operation.
-- Screenshot pixel preservation across negative monitor coordinates, reverse drags, and independently scaled overlays from 100% to 200%.
-- Native quick-panel show/hide/re-show transitions and cross-process single-instance notifications with isolated mutex and pipe names.
-- Startup of the published executable from a path containing spaces, an apostrophe, and an ampersand; a replacement process waits for the isolated parent to exit before opening its database.
-
-These checks do not establish clean-machine UAC behavior or real mixed-DPI mouse
-capture. The published-process check terminates only its disposable parent; it
-does not replace an end-to-end Settings-button restart test. Native UI automation
-could not enumerate the taskbar-hidden quick panel on this host, so that button
-flow remains manual. Keep the clean-machine and physical-display checks above as
-release gates rather than treating simulated coverage as a stable-release sign-off.
+Keep versioned results in [docs/releases](releases/1.2.1.md). Each record identifies
+the release tag, build/test results, package checks, maintainer feedback, and
+remaining platform limitations. Do not convert broad user feedback into a claim
+that every hardware or provider combination was tested.
 
 ## 3. Package
 
@@ -104,13 +94,13 @@ release gates rather than treating simulated coverage as a stable-release sign-o
 2. Run `tools/Verify-Publish.ps1` as shown above; it rejects missing OCR/models/notices and accidental private state, including database WAL/journal files, rotated logs, environment files, and signing keys. It checks names without opening personal files and refuses symbolic links or junctions. WPF assets are embedded in the assembly.
 3. Keep `Locales`, `OcrModels`, `x64`, `OfflineTranslation`, `NativeRuntime`, `Licenses`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` with the executable. Standard packages include OCR models and offline translation setup scripts; they do not include the much larger optional translation runtime. If preinstalling that runtime, retain Python/wheel/model license files and exclude downloads, logs, process state, and bytecode caches.
 4. Generate a SHA-256 checksum for the final archive.
-5. Digitally sign the executable and archive when a trusted code-signing process is available.
-6. Scan the release artifact with the organization's approved security tools.
+5. Sign the executable when a trusted code-signing process is available. If unsigned, state this in the release notes; a checksum is an integrity check, not a signature.
+6. Run available security scans and record their scope and outcome. Do not describe an unperformed scan as passed.
 
 ## 4. Publish
 
-1. Merge the release pull request after required CI checks pass.
-2. Create a signed or annotated Git tag matching the version, for example `v1.1.2`.
+1. Push the reviewed release commit and wait for its required CI checks. Follow the repository's branch policy; use a pull request when required.
+2. Create a signed or annotated Git tag matching the version, for example `v1.2.1`.
 3. Create a GitHub Release from the tag.
 4. Attach the archive and checksum.
 5. Paste the relevant changelog section into the release notes.
@@ -120,7 +110,8 @@ release gates rather than treating simulated coverage as a stable-release sign-o
 
 - Verify the uploaded checksum and start the downloaded artifact.
 - Mark the release as the latest stable release.
-- Move completed changelog entries out of `Unreleased`.
+- Confirm the changelog has the release version and date.
+- Leave repository visibility changes to the owner when publication is staged in a private repository.
 - Monitor security reports, crash reports, and upgrade issues.
 
 ## Repository settings not stored in Git

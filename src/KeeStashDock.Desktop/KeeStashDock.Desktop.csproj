@@ -55,12 +55,16 @@
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\third_party\dotnet\*" Link="Licenses\dotnet\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\third_party\qr\*" Link="Licenses\QR\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\third_party\ocr\*" Link="Licenses\OCR\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Ship the project and dependency notices with every distributable build. -->
+    <None Include="..\..\docs\GETTING_STARTED.md" Link="StartHere.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\LICENSE" Link="LICENSE"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\NOTICE" Link="NOTICE"

@@ -8,7 +8,7 @@ packages or the exact upstream tag on 2026-10-12.
 | --- | --- |
 | CommunityToolkit-LICENSE.md | `CommunityToolkit.Mvvm` 8.4.2 package, `License.md`; .NET Foundation and Contributors |
 | CommunityToolkit-NOTICES.txt | Same package, `ThirdPartyNotices.txt` |
-| NET-LICENSE.txt | `Microsoft.NETCore.App.Runtime.win-x64` 10.0.10 package, `LICENSE.TXT`; MIT, .NET Foundation and Contributors. The same license applies to Microsoft.Data.Sqlite, dependency injection/logging abstractions, and Windows Desktop runtime. |
+| NET-LICENSE.txt | `Microsoft.NETCore.App.Runtime.win-x64` 10.0.12 package, `LICENSE.TXT`; MIT, .NET Foundation and Contributors. The same license applies to Microsoft.Data.Sqlite, dependency injection/logging abstractions, and Windows Desktop runtime. |
 | NET-NOTICES.txt | Same runtime package, `THIRD-PARTY-NOTICES.TXT`; also provided with Microsoft.Extensions packages |
 | SQLitePCLRaw-LICENSE.txt | [SQLitePCL.raw v2.1.12](https://raw.githubusercontent.com/ericsink/SQLitePCL.raw/v2.1.12/LICENSE.TXT), Apache-2.0 |
 

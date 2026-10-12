@@ -86,7 +86,7 @@ English is required for:
 
 The intentional exceptions are:
 
-- `README.zh-CN.md`
+- Localized `README.<locale>.md` files (the English `README.md` is the reference)
 - JSON language packs under `src/KeeStashDock.Desktop/Locales`
 
 `en-US.json` is the canonical localization key set. A translation must preserve every key and every composite-format placeholder such as `{0}`. See `docs/LOCALIZATION.md`.
