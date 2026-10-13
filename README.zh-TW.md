@@ -23,6 +23,8 @@
   <img alt="授權條款：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
+目前穩定版本為 **1.2.1**。專案進入按需維護階段，後續以錯誤修正和安全性更新為主。
+
 ## 下載與啟動
 
 **[最新發行版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** ·
@@ -34,7 +36,7 @@
 3. 按 **Alt+Q** 開啟快速面板，也可從 Windows 系統匣開啟應用程式。
 4. 開啟「設定」，選擇語言、外觀與所需元件。
 
-發行套件適用於 **Windows x64**，已包含 .NET 執行階段。建議使用 Windows 11；Windows 10 22H2 僅提供盡力相容。OCR 與離線翻譯可能需要 Microsoft Visual C++ 執行階段，可透過應用程式內的元件安裝功能補齊。測試範圍與限制請見[更新紀錄](CHANGELOG.md)及[驗收紀錄](docs/RELEASING.md)。
+發行套件適用於 **Windows x64**，已包含 .NET 執行階段。建議使用 Windows 11；Windows 10 22H2 僅提供盡力相容。OCR 與離線翻譯可能需要 Microsoft Visual C++ 執行階段，可透過應用程式內的元件安裝功能補齊。測試範圍與限制請見[更新紀錄](CHANGELOG.md)及[驗收紀錄](docs/releases/1.2.1.md)。
 
 <details>
 <summary>校驗下載檔案（選用）</summary>

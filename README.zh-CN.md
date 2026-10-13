@@ -23,6 +23,8 @@
   <img alt="许可证：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
+当前稳定版为 **1.2.1**。项目进入按需维护阶段，后续以缺陷修复和安全更新为主。
+
 ## 下载与启动
 
 **[最新发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** ·
@@ -34,7 +36,7 @@
 3. 按 **Alt+Q** 打开速览面板，也可通过 Windows 系统托盘访问应用。
 4. 打开“设置”，选择语言、外观和所需组件。
 
-发布包面向 **Windows x64**，已包含 .NET 运行时。推荐 Windows 11；Windows 10 22H2 仅提供尽力兼容。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过软件内的组件安装功能补齐。测试范围与已知限制见[更新日志](CHANGELOG.md)和[验收记录](docs/RELEASING.md)。
+发布包面向 **Windows x64**，已包含 .NET 运行时。推荐 Windows 11；Windows 10 22H2 仅提供尽力兼容。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过软件内的组件安装功能补齐。测试范围与已知限制见[更新日志](CHANGELOG.md)和[验收记录](docs/releases/1.2.1.md)。
 
 <details>
 <summary>校验下载文件（可选）</summary>
