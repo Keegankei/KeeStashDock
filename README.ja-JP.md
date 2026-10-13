@@ -23,6 +23,8 @@
   <img alt="ライセンス：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
+現在の安定版は **1.2.1** です。今後は必要に応じて、不具合の修正とセキュリティ更新を中心に保守します。
+
 ## ダウンロードと起動
 
 **[最新リリース](https://github.com/Keegankei/KeeStashDock/releases/latest)** ·
@@ -34,7 +36,7 @@
 3. **Alt+Q** でクイックパネルを開きます。Windows の通知領域からもアクセスできます。
 4. 「設定」で言語、外観、必要なコンポーネントを選びます。
 
-パッケージは **Windows x64** 向けで、.NET ランタイムを同梱しています。Windows 11 を推奨し、Windows 10 22H2 との互換性はベストエフォートで対応します。OCR とオフライン翻訳には Microsoft Visual C++ ランタイムが必要な場合がありますが、アプリ内のインストール機能で導入できます。検証範囲と制限は[変更履歴](CHANGELOG.md)と[受け入れ検証記録](docs/RELEASING.md)を参照してください。
+パッケージは **Windows x64** 向けで、.NET ランタイムを同梱しています。Windows 11 を推奨し、Windows 10 22H2 との互換性はベストエフォートで対応します。OCR とオフライン翻訳には Microsoft Visual C++ ランタイムが必要な場合がありますが、アプリ内のインストール機能で導入できます。検証範囲と制限は[変更履歴](CHANGELOG.md)と[受け入れ検証記録](docs/releases/1.2.1.md)を参照してください。
 
 <details>
 <summary>ダウンロードの検証（任意）</summary>

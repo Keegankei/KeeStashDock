@@ -23,6 +23,8 @@
   <img alt="License: Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
+Current stable release: **1.2.1**. The project is maintained as needed, with a focus on bug fixes and security updates.
+
 ## Download and start
 
 **[Latest release](https://github.com/Keegankei/KeeStashDock/releases/latest)** ·
