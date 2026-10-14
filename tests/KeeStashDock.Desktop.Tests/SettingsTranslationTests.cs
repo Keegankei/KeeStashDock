@@ -244,6 +244,7 @@ public sealed class SettingsTranslationTests
             ImageEntryWindowScenarios.Verify(root);
             UpdateWindowScenarios.Verify(root);
             StickyNoteWindowScenarios.Verify(root);
+            PerspectiveSurfaceTests.VerifyLiveControls();
         }
         finally
         {

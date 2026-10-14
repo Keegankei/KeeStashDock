@@ -27,6 +27,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     private bool _enabled = true;
     private DispatcherOperation? _pendingShow;
     private bool _syncingBounds;
+    private Geometry? _projectedOutline;
 
     internal PanelShadowWindow(Window panel, double radius = 12)
     {
@@ -68,6 +69,33 @@ internal sealed class PanelShadowWindow : Window, IDisposable
         // Only decoration changes on approach: no control moves away from the pointer.
         _surface.Opacity = floating && !emphasized ? 0.78 : 1;
         SyncVisibility();
+    }
+
+    /// <summary>Updates a projected panel silhouette in owner-local DIPs.
+    /// Null restores the ordinary rounded rectangle used by Classic and notes.</summary>
+    internal void UpdateProjectedOutline(Geometry? outline)
+    {
+        if (_disposed) return;
+        _projectedOutline = outline?.CloneCurrentValue();
+        _projectedOutline?.Freeze();
+        ApplyProjectedOutline(VisualTreeHelper.GetDpi(_panel), VisualTreeHelper.GetDpi(this));
+    }
+
+    private void ApplyProjectedOutline(DpiScale ownerDpi, DpiScale shadowDpi)
+        => _surface.Outline = ScaleProjectedOutline(_projectedOutline,
+            ownerDpi.DpiScaleX / shadowDpi.DpiScaleX,
+            ownerDpi.DpiScaleY / shadowDpi.DpiScaleY);
+
+    internal static Geometry? ScaleProjectedOutline(Geometry? outline, double scaleX, double scaleY)
+    {
+        if (outline is null) return null;
+        Geometry result = outline.CloneCurrentValue();
+        var transform = new TransformGroup();
+        transform.Children.Add(result.Transform);
+        transform.Children.Add(new ScaleTransform(scaleX, scaleY));
+        result.Transform = transform;
+        result.Freeze();
+        return result;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -167,6 +195,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
             _surface.CornerRadius = _cornerRadius * dpi.DpiScaleX / decorationDpi.DpiScaleX;
             _surface.Spread = 24 * dpi.DpiScaleX / decorationDpi.DpiScaleX;
             _surface.ShadowOffset = 4 * dpi.DpiScaleY / decorationDpi.DpiScaleY;
+            ApplyProjectedOutline(dpi, decorationDpi);
         }
     }
 

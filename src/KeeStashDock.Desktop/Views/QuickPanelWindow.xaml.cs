@@ -73,7 +73,8 @@ public partial class QuickPanelWindow : Window
                             SettingsStore settings,
                             Infrastructure.Repositories.CategoryRepository categories,
                             Action onExpandRequested, Action onSettingsRequested,
-                            Action? onCaptureRequested = null, Action<long>? onImageRequested = null)
+                            Action? onCaptureRequested = null, Action<long>? onImageRequested = null,
+                            Func<Point?>? perspectivePointer = null)
     {
         InitializeComponent();
         _settings = settings;
@@ -81,6 +82,7 @@ public partial class QuickPanelWindow : Window
         _onSettingsRequested = onSettingsRequested;
         _onCaptureRequested = onCaptureRequested;
         _onImageRequested = onImageRequested;
+        _perspectivePointer = perspectivePointer;
         _vm = new QuickPanelViewModel(snippets, search, categories);
         _vm.DraftChanged += _draft.OnTextChanged;
         DataContext = _vm;
@@ -592,7 +594,13 @@ public partial class QuickPanelWindow : Window
             case WM_EXITSIZEMOVE:
                 // Fires once after every completed drag OR resize loop:
                 // one place persists both position and user-chosen size.
+                _nativeDepthMove = false;
                 PersistGeometry();
+                UpdatePerspectivePointer();
+                break;
+            case 0x0231: // WM_ENTERSIZEMOVE
+                _nativeDepthMove = true;
+                FreezePerspectiveMotion();
                 break;
         }
         return IntPtr.Zero;
@@ -985,7 +993,8 @@ public partial class QuickPanelWindow : Window
         while (d is not null)
         {
             if (d is T hit) return hit;
-            d = VisualTreeHelper.GetParent(d);
+            d = d is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
         }
         return null;
     }
@@ -1002,6 +1011,7 @@ public partial class QuickPanelWindow : Window
 
         var loc = LocalizationService.Instance;
         var menu = new ContextMenu();
+        TrackDepthPopup(menu);
 
         if (item.IsImage)
         {
@@ -1076,8 +1086,17 @@ public partial class QuickPanelWindow : Window
         // Threshold crossed: tear the card out FROM ITS OWN SLOT. The note
         // spawns aligned with the card's on-screen rect (so it visually
         // detaches rather than teleporting) and takes over the drag.
+        Point deviceTL;
+        try { deviceTL = _pressContainer.PointToScreen(new Point(0, 0)); }
+        catch (InvalidOperationException)
+        {
+            // A settings switch/list refresh can detach a pressed item before
+            // the next move. Cancel that gesture instead of using stale pixels.
+            _pressItem = null;
+            _pressContainer = null;
+            return;
+        }
         _tearFired = true;
-        Point deviceTL = _pressContainer.PointToScreen(new Point(0, 0));
         Point dipTL = deviceTL;
         var ct = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (ct is not null) dipTL = ct.TransformFromDevice.Transform(deviceTL);

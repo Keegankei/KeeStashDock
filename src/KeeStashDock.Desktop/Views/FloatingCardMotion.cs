@@ -3,6 +3,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Media3D;
 
 namespace KeeStashDock.Desktop.Views;
 
@@ -149,14 +150,14 @@ public static class FloatingCardMotion
         while (value is not null)
         {
             if (value is ButtonBase) return true;
-            value = value is Visual ? VisualTreeHelper.GetParent(value) : LogicalTreeHelper.GetParent(value);
+            value = value is Visual or Visual3D ? VisualTreeHelper.GetParent(value) : LogicalTreeHelper.GetParent(value);
         }
         return false;
     }
 }
 
 /// <summary>Finite tween that releases its clock on completion or cancellation.</summary>
-internal sealed class MotionValue(Animatable target, DependencyProperty property)
+internal sealed class MotionValue(DependencyObject target, DependencyProperty property)
 {
     private int _generation;
     private double? _destination;
@@ -167,7 +168,7 @@ internal sealed class MotionValue(Animatable target, DependencyProperty property
         double from = (double)target.GetValue(property);
         int generation = ++_generation;
         _destination = value;
-        target.BeginAnimation(property, null);
+        ((IAnimatable)target).BeginAnimation(property, null);
         target.SetValue(property, value);
         if (!animate || Math.Abs(from - value) < 0.001) return;
         var animation = new DoubleAnimation(from, value, TimeSpan.FromMilliseconds(160))
@@ -177,8 +178,10 @@ internal sealed class MotionValue(Animatable target, DependencyProperty property
         };
         animation.Completed += (_, _) =>
         {
-            if (_generation == generation) target.BeginAnimation(property, null);
+            if (_generation == generation) ((IAnimatable)target).BeginAnimation(property, null);
         };
-        target.BeginAnimation(property, animation);
+        ((IAnimatable)target).BeginAnimation(property, animation);
     }
+
+    internal void Freeze() => To((double)target.GetValue(property), animate: false);
 }

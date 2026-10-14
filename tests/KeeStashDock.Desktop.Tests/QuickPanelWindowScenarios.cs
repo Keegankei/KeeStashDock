@@ -44,8 +44,10 @@ internal static class QuickPanelWindowScenarios
             settings.Current.PanelUserHeight = 460;
             settings.Current.CollapseDelaySeconds = 60;
             var openedImages = new List<long>();
+            Point pointer = new(-1000, -1000);
             panel = new QuickPanelWindow(snippets, new SearchService(repository), settings,
-                new CategoryRepository(db), () => { }, () => { }, onImageRequested: openedImages.Add)
+                new CategoryRepository(db), () => { }, () => { }, onImageRequested: openedImages.Add,
+                perspectivePointer: () => pointer)
             { Title = "KeeStashDock isolated UI smoke" };
 
             panel.ShowPanel();
@@ -56,7 +58,8 @@ internal static class QuickPanelWindowScenarios
             Assert.IsFalse(panel.ShowInTaskbar);
             Assert.IsFalse(panel.ShowActivated);
             VerifyDepthModes(panel, settings, handle, openedImages);
-            CaptureDocumentationPreviews(panel, settings, snippets);
+            VerifyPerspectiveMotion(panel, handle, value => pointer = value);
+            CaptureDocumentationPreviews(panel, settings, snippets, value => pointer = value);
             panel.ShowPanel();
             PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
             Assert.AreEqual(handle, new WindowInteropHelper(panel).Handle);
@@ -124,17 +127,14 @@ internal static class QuickPanelWindowScenarios
             panel.UpdateLayout();
             Assert.AreEqual(settings.Current.FloatingPanelEnabled && FloatingCardMotion.AnimationsAllowed,
                 panel.FloatingDepthEnabled);
-            Assert.AreEqual(settings.Current.FloatingPanelEnabled && !SystemParameters.HighContrast,
-                panel.FloatingStyleEnabled, "Static floating chrome must not depend on Windows animation preferences.");
-            var frames = Descendants(cardList).OfType<FloatingFrame>().ToArray();
-            Assert.AreEqual(2, frames.Length);
-            Assert.IsTrue(frames.All(frame => !frame.IsHitTestVisible));
-            Assert.IsTrue(frames.All(frame => frame.IsVisible == panel.FloatingStyleEnabled));
-            Assert.AreEqual(panel.FloatingStyleEnabled ? Brushes.Transparent : panel.FindResource("B.CardBg"), card.Background);
+            Assert.AreEqual(panel.FloatingDepthEnabled, ((PerspectiveSurface)panel.FindName("SpatialSurface")).IsPerspectiveEnabled);
+            Assert.AreEqual(panel.FindResource("B.CardBg"), card.Background);
+            Assert.AreEqual(new CornerRadius(10), card.CornerRadius,
+                "Floating changes the spatial presentation, never the original card styling.");
             Assert.AreEqual(initial, new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight),
                 "Switching appearance cannot add shadow padding to the visible panel geometry.");
             Assert.AreSame(shadow, panel.OwnedWindows.OfType<PanelShadowWindow>().Single());
-            if (panel.FloatingStyleEnabled)
+            if (panel.FloatingDepthEnabled)
             {
                 // Release on the fixed hit area, outside the displaced front
                 // surface, still opens the card. Use an image callback so this
@@ -164,6 +164,8 @@ internal static class QuickPanelWindowScenarios
         settings.Save();
         panel.UpdateLayout();
         Assert.AreEqual(44, panel.ActualHeight, 0.01);
+        Assert.IsFalse(((PerspectiveSurface)panel.FindName("SpatialSurface")).IsPerspectiveEnabled);
+        Assert.IsFalse(panel.IsDepthPointerPolling);
         SendMessage(handle, 0x0232, nint.Zero, nint.Zero); // Complete a native move/resize.
         Assert.AreEqual(initial.Width, settings.Current.PanelUserWidth);
         Assert.AreEqual(initial.Height, settings.Current.PanelUserHeight,
@@ -183,7 +185,48 @@ internal static class QuickPanelWindowScenarios
         }
     }
 
-    private static void CaptureDocumentationPreviews(QuickPanelWindow panel, SettingsStore settings, SnippetService snippets)
+    private static void VerifyPerspectiveMotion(QuickPanelWindow panel, nint handle, Action<Point> movePointer)
+    {
+        if (!panel.FloatingDepthEnabled) return;
+        var surface = (PerspectiveSurface)panel.FindName("SpatialSurface");
+        Rect nativeEnvelope = new(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight);
+        Point first = new(panel.ActualWidth + 20, 65);
+        movePointer(first);
+        panel.UpdatePerspectivePointer();
+        PerspectivePose expected = PerspectivePose.FromPointer(first, panel.RenderSize);
+        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw - expected.Yaw) < 0.01);
+        Assert.IsTrue(panel.IsDepthPointerPolling, "A nearby desktop pointer must drive the panel even outside its HWND.");
+        Assert.AreEqual(nativeEnvelope, new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight));
+
+        SendMessage(handle, 0x0231, nint.Zero, nint.Zero); // Native move/resize starts.
+        double frozenYaw = surface.Yaw;
+        Point second = new(-20, panel.ActualHeight - 60);
+        movePointer(second);
+        panel.UpdatePerspectivePointer();
+        Assert.AreEqual(frozenYaw, surface.Yaw, "Dragging must retain the current pose without snapping the hit target away.");
+        Assert.IsFalse(panel.IsDepthPointerPolling);
+        SendMessage(handle, 0x0232, nint.Zero, nint.Zero);
+        expected = PerspectivePose.FromPointer(second, panel.RenderSize);
+        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw - expected.Yaw) < 0.01);
+
+        var combo = (ComboBox)panel.FindName("ExpireCombo");
+        try
+        {
+            combo.IsDropDownOpen = true;
+            frozenYaw = surface.Yaw;
+            movePointer(first);
+            panel.UpdatePerspectivePointer();
+            Assert.AreEqual(frozenYaw, surface.Yaw, "The separate popup must not chase a moving placement target.");
+            Assert.IsFalse(panel.IsDepthPointerPolling);
+        }
+        finally { combo.IsDropDownOpen = false; }
+        movePointer(new Point(-1000, -1000));
+        panel.UpdatePerspectivePointer();
+        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw) < 0.01);
+        Assert.IsFalse(panel.IsDepthPointerPolling, "Idle/far-away panels must release the fast cursor sampler.");
+    }
+
+    private static void CaptureDocumentationPreviews(QuickPanelWindow panel, SettingsStore settings, SnippetService snippets, Action<Point> movePointer)
     {
         string? destination = Environment.GetEnvironmentVariable("KEESTASHDOCK_DOC_IMAGES");
         if (string.IsNullOrWhiteSpace(destination)) return;
@@ -212,6 +255,8 @@ internal static class QuickPanelWindowScenarios
                 panel.ShowPanel();
                 PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
                 panel.UpdateLayout();
+                movePointer(floating ? new Point(panel.ActualWidth + 10, 50) : new Point(-1000, -1000));
+                panel.UpdatePerspectivePointer();
                 if (floating && panel.FloatingDepthEnabled)
                 {
                     FrameworkElement? card = Descendants((ListBox)panel.FindName("CardList"))
@@ -234,20 +279,21 @@ internal static class QuickPanelWindowScenarios
                         ? Color.FromRgb(35, 40, 50) : Color.FromRgb(230, 235, 243));
                     drawing.DrawRectangle(backdrop, null, new Rect(0, 0, width, height));
                     if (shadow.IsVisible)
-                        drawing.DrawRectangle(new VisualBrush(shadow), null, new Rect(0, 0, width, height));
-                    drawing.DrawRectangle(new VisualBrush(panel), null,
+                        drawing.DrawImage(PerspectivePreviewRecorder.Snapshot(shadow), new Rect(0, 0, width, height));
+                    drawing.DrawImage(PerspectivePreviewRecorder.Snapshot(panel),
                         new Rect(padding, padding, panel.ActualWidth, panel.ActualHeight));
                 }
                 var image = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
                 image.Render(frame);
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
-                using var output = File.Create(Path.Combine(directory, name));
-                encoder.Save(output);
+                using (var output = File.Create(Path.Combine(directory, name))) encoder.Save(output);
+                if (floating && !dark) PerspectivePreviewRecorder.Record(panel, movePointer, directory);
             }
         }
         finally
         {
+            movePointer(new Point(-1000, -1000));
             ThemeManager.Apply(originalDark ? "Dark" : "Light");
             settings.Current.PanelUserHeight = originalHeight;
             settings.Current.FloatingPanelEnabled = originalMode;
