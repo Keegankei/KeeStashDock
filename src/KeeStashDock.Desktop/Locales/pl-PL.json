@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Kopiuj i tłumacz",
   "Selection.CopyShortcut": "Kopiuj do KeeStashDock (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Tłumacz (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Aktualizacja lub ponownie uruchomiona aplikacja nadal działa. Zamknij aplikację lub poczekaj na zakończenie aktualizacji i spróbuj ponownie."
+  "Updates.Running": "Aktualizacja lub ponownie uruchomiona aplikacja nadal działa. Zamknij aplikację lub poczekaj na zakończenie aktualizacji i spróbuj ponownie.",
+  "Updates.Retry": "Ponów",
+  "Updates.CheckingReleasePage": "Sprawdzanie oficjalnej strony wydania…",
+  "Updates.AvailableUnknownSize": "Dostępna jest wersja {0}.",
+  "Updates.ReleasePageNotes": "Wersję sprawdzono na oficjalnej stronie wydania GitHub. Otwórz tę stronę, aby przeczytać pełną listę zmian."
 }

@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Salin dan terjemahkan",
   "Selection.CopyShortcut": "Salin ke KeeStashDock (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Terjemahkan (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Pembaruan atau aplikasi yang dimulai ulang masih berjalan. Tutup aplikasi atau tunggu pembaruan selesai sebelum mencoba lagi."
+  "Updates.Running": "Pembaruan atau aplikasi yang dimulai ulang masih berjalan. Tutup aplikasi atau tunggu pembaruan selesai sebelum mencoba lagi.",
+  "Updates.Retry": "Coba lagi",
+  "Updates.CheckingReleasePage": "Memeriksa halaman rilis resmi…",
+  "Updates.AvailableUnknownSize": "Versi {0} tersedia.",
+  "Updates.ReleasePageNotes": "Versi diperiksa melalui halaman rilis resmi GitHub. Buka halaman rilis untuk membaca catatan lengkapnya."
 }

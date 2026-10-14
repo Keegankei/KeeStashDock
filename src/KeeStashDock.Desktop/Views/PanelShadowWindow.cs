@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace KeeStashDock.Desktop.Views;
 
@@ -24,6 +25,8 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     private HwndSource? _source;
     private bool _disposed;
     private bool _enabled = true;
+    private DispatcherOperation? _pendingShow;
+    private bool _syncingBounds;
 
     internal PanelShadowWindow(Window panel, double radius = 12)
     {
@@ -48,6 +51,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
         panel.LocationChanged += OnGeometryChanged;
         panel.SizeChanged += OnSizeChanged;
         panel.IsVisibleChanged += OnVisibilityChanged;
+        panel.Loaded += OnPanelLoaded;
         panel.Closed += OnPanelClosed;
         panel.DpiChanged += OnDpiChanged;
         DpiChanged += OnDpiChanged;
@@ -85,6 +89,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     private void OnGeometryChanged(object? sender, EventArgs e) => SyncBounds();
     private void OnSizeChanged(object sender, SizeChangedEventArgs e) => SyncBounds();
     private void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e) => SyncVisibility();
+    private void OnPanelLoaded(object sender, RoutedEventArgs e) => SyncVisibility();
     private void OnOpacityChanged(object? sender, EventArgs e) { if (!_disposed) Opacity = _panel.Opacity; }
     private void OnPanelClosed(object? sender, EventArgs e) => Dispose();
     private void OnDpiChanged(object sender, DpiChangedEventArgs e) => SyncBounds();
@@ -92,21 +97,49 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     private void SyncVisibility()
     {
         if (_disposed) return;
-        if (_panel.IsVisible && Owner is null) Owner = _panel;
+        if (_panel.IsLoaded && _panel.IsVisible && Owner is null) Owner = _panel;
         if (!_enabled || !_panel.IsVisible || _panel.WindowState == WindowState.Minimized)
         {
-            Hide();
+            _pendingShow?.Abort();
+            _pendingShow = null;
+            if (IsVisible) Hide();
+            return;
+        }
+        if (!IsVisible)
+        {
+            // IsVisibleChanged is raised inside the owner's first Show().
+            // Showing a second HWND synchronously there re-enters WPF layout
+            // while SizeToContent still has a placeholder native rectangle,
+            // shrinking a 280-DIP sticky note to a one/two-pixel-wide sliver.
+            // Wait for that layout to finish before creating the decoration.
+            if (_pendingShow is null)
+                _pendingShow = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                {
+                    _pendingShow = null;
+                    if (_disposed || !_enabled || !_panel.IsVisible || !_panel.IsLoaded ||
+                        _panel.WindowState == WindowState.Minimized || _panel.ActualWidth <= 0 || _panel.ActualHeight <= 0) return;
+                    if (Owner is null) Owner = _panel;
+                    Opacity = _panel.Opacity;
+                    SyncBounds();
+                    Show();
+                    SyncBounds();
+                }));
             return;
         }
         Opacity = _panel.Opacity;
-        SyncBounds();
-        if (!IsVisible) Show();
         SyncBounds();
     }
 
     private void SyncBounds()
     {
-        if (_disposed || !_panel.IsVisible) return;
+        if (_disposed || _syncingBounds || !_panel.IsVisible || !_panel.IsLoaded) return;
+        _syncingBounds = true;
+        try { SyncNativeBounds(); }
+        finally { _syncingBounds = false; }
+    }
+
+    private void SyncNativeBounds()
+    {
         nint ownerHandle = new WindowInteropHelper(_panel).Handle;
         if (!GetWindowRect(ownerHandle, out NativeRect rect)) return;
         // Native coordinates are essential on monitors left of the primary and
@@ -151,10 +184,13 @@ internal sealed class PanelShadowWindow : Window, IDisposable
         _panel.LocationChanged -= OnGeometryChanged;
         _panel.SizeChanged -= OnSizeChanged;
         _panel.IsVisibleChanged -= OnVisibilityChanged;
+        _panel.Loaded -= OnPanelLoaded;
         _panel.Closed -= OnPanelClosed;
         _panel.DpiChanged -= OnDpiChanged;
         _opacityDescriptor.RemoveValueChanged(_panel, OnOpacityChanged);
         _source?.RemoveHook(WndProc);
+        _pendingShow?.Abort();
+        _pendingShow = null;
         _source = null;
     }
 

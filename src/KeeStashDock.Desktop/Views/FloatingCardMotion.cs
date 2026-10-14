@@ -62,7 +62,7 @@ public static class FloatingCardMotion
         private readonly ScaleTransform _scale = new();
         private readonly RotateTransform _rotate = new();
         private readonly TranslateTransform _translate = new();
-        private readonly MotionValue _scaleX, _scaleY, _angle, _lift;
+        private readonly MotionValue _scaleX, _scaleY, _angle, _lift, _shift;
         private bool _pressed;
 
         internal Controller(FrameworkElement host, FrameworkElement target)
@@ -81,6 +81,7 @@ public static class FloatingCardMotion
             _scaleY = new(_scale, ScaleTransform.ScaleYProperty);
             _angle = new(_rotate, RotateTransform.AngleProperty);
             _lift = new(_translate, TranslateTransform.YProperty);
+            _shift = new(_translate, TranslateTransform.XProperty);
             host.MouseEnter += OnMove;
             host.MouseMove += OnMove;
             host.MouseLeave += OnLeave;
@@ -98,10 +99,11 @@ public static class FloatingCardMotion
             if (_pressed && e.LeftButton != MouseButtonState.Pressed) _pressed = false;
             Point point = e.GetPosition(_host);
             double normalizedX = Math.Clamp(point.X / Math.Max(1, _host.ActualWidth), 0, 1) - 0.5;
-            _lift.To(_pressed ? 0 : -2);
+            _lift.To(_pressed ? 2 : -4);
+            _shift.To(_pressed ? 2 : normalizedX * 2);
             // Bound the corner displacement as well as the angle, including a
             // very wide resized panel, so the reserved shadow margin suffices.
-            _angle.To(_pressed ? 0 : normalizedX * Math.Min(0.9, 120 / Math.Max(1, _host.ActualWidth)));
+            _angle.To(_pressed ? 0 : normalizedX * Math.Min(1.2, 160 / Math.Max(1, _host.ActualWidth)));
             _scaleX.To(_pressed ? 0.985 : 1);
             _scaleY.To(_pressed ? 0.985 : 1);
         }
@@ -125,6 +127,7 @@ public static class FloatingCardMotion
             _scaleY.To(1, animate);
             _angle.To(0, animate);
             _lift.To(0, animate);
+            _shift.To(0, animate);
         }
         public void Dispose()
         {

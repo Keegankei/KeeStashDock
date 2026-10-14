@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "복사 및 번역",
   "Selection.CopyShortcut": "KeeStashDock에 복사(Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "번역(Ctrl+Alt+Shift+T)",
-  "Updates.Running": "업데이트 또는 업데이트 후 다시 시작한 앱이 아직 실행 중입니다. 앱을 닫거나 업데이트가 끝날 때까지 기다린 후 다시 시도하세요."
+  "Updates.Running": "업데이트 또는 업데이트 후 다시 시작한 앱이 아직 실행 중입니다. 앱을 닫거나 업데이트가 끝날 때까지 기다린 후 다시 시도하세요.",
+  "Updates.Retry": "다시 시도",
+  "Updates.CheckingReleasePage": "공식 릴리스 페이지 확인 중…",
+  "Updates.AvailableUnknownSize": "버전 {0}을 사용할 수 있습니다.",
+  "Updates.ReleasePageNotes": "GitHub 공식 릴리스 페이지에서 버전을 확인했습니다. 전체 변경 사항은 릴리스 페이지를 열어 확인하세요."
 }

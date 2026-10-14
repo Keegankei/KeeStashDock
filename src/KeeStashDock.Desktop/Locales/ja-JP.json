@@ -306,5 +306,9 @@
   "Settings.SelectionAction.Both": "コピーと翻訳",
   "Selection.CopyShortcut": "KeeStashDock にコピー（Ctrl+Alt+Shift+C）",
   "Selection.TranslateShortcut": "翻訳（Ctrl+Alt+Shift+T）",
-  "Updates.Running": "更新処理または更新後に再起動したアプリがまだ動作しています。アプリを閉じるか、更新の完了を待ってから再試行してください。"
+  "Updates.Running": "更新処理または更新後に再起動したアプリがまだ動作しています。アプリを閉じるか、更新の完了を待ってから再試行してください。",
+  "Updates.Retry": "再試行",
+  "Updates.CheckingReleasePage": "公式リリースページを確認しています…",
+  "Updates.AvailableUnknownSize": "バージョン {0} が利用できます。",
+  "Updates.ReleasePageNotes": "GitHub の公式リリースページでバージョンを確認しました。詳しい変更内容はリリースページを開いて確認してください。"
 }

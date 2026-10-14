@@ -243,6 +243,7 @@ public sealed class SettingsTranslationTests
             }
             ImageEntryWindowScenarios.Verify(root);
             UpdateWindowScenarios.Verify(root);
+            StickyNoteWindowScenarios.Verify(root);
         }
         finally
         {

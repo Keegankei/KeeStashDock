@@ -306,5 +306,9 @@
   "Settings.SelectionAction.Both": "複製和翻譯",
   "Selection.CopyShortcut": "複製到 KeeStashDock（Ctrl+Alt+Shift+C）",
   "Selection.TranslateShortcut": "翻譯（Ctrl+Alt+Shift+T）",
-  "Updates.Running": "更新或更新後重新啟動的應用程式仍在執行。請關閉應用程式或等待更新完成後再試。"
+  "Updates.Running": "更新或更新後重新啟動的應用程式仍在執行。請關閉應用程式或等待更新完成後再試。",
+  "Updates.Retry": "重試",
+  "Updates.CheckingReleasePage": "正在檢查官方發佈頁面…",
+  "Updates.AvailableUnknownSize": "發現版本 {0}。",
+  "Updates.ReleasePageNotes": "已透過 GitHub 官方發佈頁確認版本。開啟發佈頁面可查看完整更新說明。"
 }

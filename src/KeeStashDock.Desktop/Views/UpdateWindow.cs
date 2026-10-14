@@ -29,7 +29,6 @@ internal sealed class UpdateWindow : Window
     private bool _restartAttempted;
     private Task _stageCleanup = Task.CompletedTask;
     private string _statusKey = "Updates.Check";
-    private string? _detail;
 
     internal UpdateWindow(Func<StagedUpdate, Task<bool>> restart,
         ReleaseUpdateService? service = null, string? installationDirectory = null, string? stagingDirectory = null)
@@ -81,7 +80,7 @@ internal sealed class UpdateWindow : Window
                 _restartAttempted = true;
                 if (!await _restart(_staged)) SetStatus("Updates.HelperFailed");
             }
-            catch (Exception ex) { SetStatus("Updates.Failed", ex.Message); }
+            catch (Exception ex) { ShowFailure(ex); }
             finally { _installing = false; Refresh(); }
         };
         _release.Click += (_, _) => OpenRelease();
@@ -105,6 +104,7 @@ internal sealed class UpdateWindow : Window
             target.Text = string.Format(L("Updates.Target"), _installationDirectory);
             _check.Content = L("Updates.Check"); _download.Content = L("Updates.Download");
             _install.Content = L("Updates.Restart"); _cancel.Content = L("Updates.Cancel"); _release.Content = L("Updates.OpenRelease");
+            if (_available is { FromReleasePage: true }) _notes.Text = L("Updates.ReleasePageNotes");
             RenderStatus(); Refresh();
         }
     }
@@ -112,12 +112,17 @@ internal sealed class UpdateWindow : Window
     internal void CancelOperation() => _request?.Cancel();
     internal bool HasPendingWork => _request is not null || !_stageCleanup.IsCompleted;
     private static string L(string key) => LocalizationService.Instance[key];
-    private void SetStatus(string key, string? detail = null) { _statusKey = key; _detail = detail; RenderStatus(); }
+    private void SetStatus(string key) { _statusKey = key; RenderStatus(); }
     private void RenderStatus()
     {
         _status.Text = _statusKey == "Updates.Available" && _available is not null
-            ? string.Format(L(_statusKey), _available.Version, ((_available.ArchiveSize ?? 0) / 1048576d).ToString("0.0"))
-            : L(_statusKey) + (_detail is null ? "" : "\n" + _detail);
+            ? (_available.ArchiveSize is long size
+                ? string.Format(L(_statusKey), _available.Version, (size / 1048576d).ToString("0.0"))
+                : string.Format(L("Updates.AvailableUnknownSize"), _available.Version))
+            : L(_statusKey);
+        _check.Content = L(_statusKey is "Updates.Network" or "Updates.RateLimited" or "Updates.Failed"
+            or "Updates.MissingAssets" or "Updates.Invalid" or "Updates.Cancelled" or "Updates.HelperFailed"
+            ? "Updates.Retry" : "Updates.Check");
     }
     private void Refresh()
     {
@@ -140,16 +145,21 @@ internal sealed class UpdateWindow : Window
         {
             await DiscardUnattemptedStageAsync();
             request.Token.ThrowIfCancellationRequested();
-            ReleaseUpdateInfo? available = await _service.CheckAsync(DesktopUpdateCoordinator.CurrentVersion, request.Token);
+            ReleaseUpdateInfo? available = await _service.CheckAsync(DesktopUpdateCoordinator.CurrentVersion, request.Token,
+                new Progress<UpdateCheckPhase>(_ =>
+                {
+                    if (!_closed && !request.IsCancellationRequested && ReferenceEquals(_request, request))
+                        SetStatus("Updates.CheckingReleasePage");
+                }));
             request.Token.ThrowIfCancellationRequested();
             if (_closed) return;
             _available = available;
             SetStatus(_available is null ? "Updates.UpToDate" : "Updates.Available");
             if (_available is not null)
             {
-                _notes.Text = _available.Notes;
+                _notes.Text = _available.FromReleasePage ? L("Updates.ReleasePageNotes") : _available.Notes;
                 if (!File.Exists(Path.Combine(_installationDirectory, UpdatePackageManifest.FileName)))
-                    SetStatus("Updates.Manual", _detail);
+                    SetStatus("Updates.Manual");
             }
         }
         catch (OperationCanceledException) { if (!_closed) SetStatus("Updates.Cancelled"); }
@@ -209,12 +219,12 @@ internal sealed class UpdateWindow : Window
                 or UpdateFailure.ChecksumMismatch => "Updates.Invalid",
             _ => "Updates.Failed"
         } : "Updates.Failed";
-        SetStatus(key, ex.Message);
+        SetStatus(key);
     }
 
     private void OpenRelease()
     {
-        try { Process.Start(new ProcessStartInfo("https://github.com/Keegankei/KeeStashDock/releases/latest") { UseShellExecute = true }); }
-        catch (Exception ex) { SetStatus("Updates.Network", ex.Message); }
+        try { Process.Start(new ProcessStartInfo(ReleaseUpdateService.LatestReleaseUrl) { UseShellExecute = true }); }
+        catch (Exception ex) { ShowFailure(ex); }
     }
 }

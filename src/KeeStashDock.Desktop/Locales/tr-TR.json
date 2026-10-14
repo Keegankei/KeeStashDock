@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Kopyala ve çevir",
   "Selection.CopyShortcut": "KeeStashDock’a kopyala (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Çevir (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Güncelleme veya yeniden başlatılan uygulama hâlâ çalışıyor. Yeniden denemeden önce uygulamayı kapatın ya da güncellemenin bitmesini bekleyin."
+  "Updates.Running": "Güncelleme veya yeniden başlatılan uygulama hâlâ çalışıyor. Yeniden denemeden önce uygulamayı kapatın ya da güncellemenin bitmesini bekleyin.",
+  "Updates.Retry": "Yeniden dene",
+  "Updates.CheckingReleasePage": "Resmî sürüm sayfası denetleniyor…",
+  "Updates.AvailableUnknownSize": "{0} sürümü kullanılabilir.",
+  "Updates.ReleasePageNotes": "Sürüm, resmî GitHub sürüm sayfasından doğrulandı. Tüm sürüm notlarını okumak için sürüm sayfasını açın."
 }

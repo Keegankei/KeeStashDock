@@ -6,6 +6,10 @@
 
 Starting with 1.2.2, choose **Check for updates** in the tray menu or **Settings > About**. The application contacts the official `Keegankei/KeeStashDock` GitHub Releases endpoint only on request. It ignores drafts and prereleases and compares numeric release versions.
 
+If the API is rate limited or cannot be reached, the same check tries the repository's official `github.com` latest-release link. Only a redirect to that repository's stable numeric release tag is accepted. For a newer version, the app also checks its expected SHA-256 sidecar and archive headers before offering a download; it does not download the ZIP during the check. Release notes for this route are available through **Open release page**. This uses GitHub's [documented latest-release link](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases), with no mirror or access token.
+
+Checks have a 30-second overall deadline and remain cancellable. Within the open dialog, verified results are reused for 30 seconds, failed checks back off briefly, and API rate-limit reset/retry headers are respected. **Retry** remains available after a failure; it does not repeatedly submit requests while a backoff is active.
+
 Review the available version, release notes, download size and installation folder. Choose **Download update** to stage the Windows x64 ZIP outside the installation. You can cancel during download. The app verifies the matching SHA-256 sidecar, every manifest file, ZIP paths and extraction limits before offering **Restart and upgrade**.
 
 Closing the update window or checking again discards a downloaded stage if no restart-and-upgrade attempt has begun. Failed or cancelled downloads also attempt to remove their temporary stage. A file lock or denied permission can leave a temporary folder for later cleanup; these steps do not modify the installed application.

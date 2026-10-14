@@ -20,6 +20,27 @@
   <Window.Resources>
     <v:NullToVisibilityConverter x:Key="NullToVis"/>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <Style x:Key="FloatingOnly" TargetType="FrameworkElement">
+      <Setter Property="Visibility" Value="Collapsed"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding FloatingStyleEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}" Value="True">
+          <Setter Property="Visibility" Value="Visible"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="PanelCard" TargetType="Border" BasedOn="{StaticResource S.Card}">
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="Effect" Value="{x:Null}"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding FloatingStyleEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}" Value="True">
+          <Setter Property="Background" Value="Transparent"/>
+          <Setter Property="BorderBrush" Value="Transparent"/>
+          <Setter Property="CornerRadius" Value="0"/>
+          <Setter Property="Padding" Value="14,12,18,12"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
   </Window.Resources>
 
   <!-- The near-invisible root background (alpha = 1) is functional, not
@@ -29,18 +50,28 @@
   <Grid Background="#01000000">
     <Border x:Name="RootBorder" Background="{DynamicResource B.PanelBg}"
             BorderBrush="{DynamicResource B.Border}" BorderThickness="1"
-            CornerRadius="12">
+            CornerRadius="{DynamicResource Panel.CornerRadius}">
       <Grid>
         <!-- Optional user background image (ImageBrush set in code); the
              frosted-glass BlurEffect attaches here so it blurs ONLY the
              image, never the content above it. -->
         <Grid x:Name="BackgroundLayer" IsHitTestVisible="False">
-        <Border x:Name="BgImage" CornerRadius="11" Background="Transparent"/>
+        <Border x:Name="BgImage" CornerRadius="{DynamicResource Panel.InnerRadius}" Background="Transparent"/>
         <!-- Theme-colored scrim over the image; opacity is user-set
              (Settings > background). Transparent when no image. -->
-        <Border x:Name="Scrim" CornerRadius="11" Background="Transparent"/>
+        <Border x:Name="Scrim" CornerRadius="{DynamicResource Panel.InnerRadius}" Background="Transparent"/>
         </Grid>
-        <Border x:Name="DepthHighlight" CornerRadius="11" IsHitTestVisible="False"/>
+        <Border x:Name="DepthHighlight" CornerRadius="{DynamicResource Panel.InnerRadius}" IsHitTestVisible="False"/>
+        <Grid Style="{StaticResource FloatingOnly}">
+          <Border Width="3" Margin="4,45,0,12" HorizontalAlignment="Left"
+                  Background="{DynamicResource B.Border}" Opacity="0.4"/>
+          <Border Width="46" Height="3" Background="#E0C339"
+                  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,0,0,0"/>
+          <Border Height="1" Margin="12,0,12,6" VerticalAlignment="Bottom"
+                  Background="{DynamicResource B.Border}" Opacity="0.6"/>
+          <Path Data="M 0,0 L 8,0 L 12,4 L 34,4" Stroke="#E0C339" StrokeThickness="2"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,6"/>
+        </Grid>
         <Grid>
           <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>   <!-- top bar (the whole shrunk state) -->
@@ -100,9 +131,24 @@
           <Button Style="{StaticResource S.IconButton}" Content="&#xE713;" Margin="2,0,0,0"
                   Click="OnSettingsClick" ToolTip="{loc:Tr QuickPanel.Btn.Settings}"/>
         </StackPanel>
-        <TextBlock x:Name="TitleText" Text="KeeStashDock" FontWeight="SemiBold"
-                   FontSize="13" VerticalAlignment="Center"/>
+        <TextBlock x:Name="TitleText" Text="KeeStashDock" VerticalAlignment="Center">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+              <Setter Property="FontWeight" Value="SemiBold"/>
+              <Setter Property="FontSize" Value="13"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding FloatingStyleEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}" Value="True">
+                  <Setter Property="FontFamily" Value="{StaticResource F.Mono}"/>
+                  <Setter Property="FontSize" Value="12"/>
+                  <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
       </DockPanel>
+      <Border Grid.Row="0" Height="1" Margin="12,0,12,0" VerticalAlignment="Bottom"
+              Background="{DynamicResource B.Border}" Style="{StaticResource FloatingOnly}"/>
 
       <!-- ============ Expanded: quick input (multi-line) ================
            Enter = stash, Shift+Enter = newline; box grows with content. -->
@@ -185,15 +231,33 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <!-- One snippet card. Single click copies (the primary gesture). -->
-              <Grid Margin="8,7" Background="Transparent"
+              <Grid Margin="{DynamicResource Panel.CardMargin}" Background="Transparent"
+                    MouseLeftButtonUp="OnCardClick" Tag="{Binding}"
                     v:FloatingCardMotion.Enabled="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}"
                     v:FloatingCardMotion.Target="{Binding ElementName=CardMotionSurface}">
-                <Grid x:Name="CardMotionSurface">
-                  <v:SurfaceShadow Spread="4" ShadowOffset="1"
+                <v:FloatingFrame Margin="5,5,0,0" Backplate="True" Opacity="0.65"
+                                 Stroke="{DynamicResource B.Border}"
+                                 Style="{StaticResource FloatingOnly}"/>
+                <Grid x:Name="CardMotionSurface" Margin="{DynamicResource Panel.CardFrontMargin}">
+                  <v:SurfaceShadow Spread="{DynamicResource Panel.CardShadowSpread}" ShadowOffset="2"
                                    Strength="{DynamicResource Panel.CardShadowStrength}"
                                    Visibility="{DynamicResource Panel.ShadowVisibility}"/>
-              <Border Style="{StaticResource S.Card}" Margin="0" Effect="{x:Null}"
-                      MouseLeftButtonUp="OnCardClick" Tag="{Binding}">
+                  <v:FloatingFrame Fill="{DynamicResource B.CardBg}">
+                    <v:FloatingFrame.Style>
+                      <Style TargetType="v:FloatingFrame" BasedOn="{StaticResource FloatingOnly}">
+                        <Setter Property="Stroke" Value="{DynamicResource B.Border}"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                            <Setter Property="Stroke" Value="#E0C339"/>
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                            <Setter Property="Stroke" Value="#E0C339"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </v:FloatingFrame.Style>
+                  </v:FloatingFrame>
+              <Border Style="{StaticResource PanelCard}" Tag="{Binding}">
                 <Grid>
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

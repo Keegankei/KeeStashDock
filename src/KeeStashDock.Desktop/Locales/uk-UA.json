@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Копіювання й переклад",
   "Selection.CopyShortcut": "Копіювати до KeeStashDock (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Перекласти (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Оновлення або перезапущена програма ще працює. Закрийте програму або дочекайтеся завершення оновлення й повторіть спробу."
+  "Updates.Running": "Оновлення або перезапущена програма ще працює. Закрийте програму або дочекайтеся завершення оновлення й повторіть спробу.",
+  "Updates.Retry": "Повторити",
+  "Updates.CheckingReleasePage": "Перевірка офіційної сторінки випуску…",
+  "Updates.AvailableUnknownSize": "Доступна версія {0}.",
+  "Updates.ReleasePageNotes": "Версію перевірено на офіційній сторінці випуску GitHub. Відкрийте сторінку випуску, щоб прочитати повний опис змін."
 }

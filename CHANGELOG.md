@@ -9,10 +9,14 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 ### 1.2.2 candidate
 
 - Added a persisted Classic / Floating panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
+- Refined Floating mode with original chamfered surfaces, offset outline plates, technical corner accents, stronger lift/press feedback, and a stationary card click area. Light/dark themes and user opacity remain supported.
 - Added screenshot actions for saving an image, extracting text, or extracting and translating. OCR-only results stay in memory, and recognized source text remains available after translation failures.
 - Added a combined selection bubble with separate Copy and Translate buttons, cached source text, temporary keyboard shortcuts, and clipboard-history deduplication.
 - Added explicit update checks in the tray and Settings, official GitHub release discovery, cancellable SHA-256-verified downloads, ownership manifests, same-path replacement, and startup-health rollback/recovery.
 - Kept translation-provider settings available for screenshot translation when the selection bubble is disabled.
+- Fixed screenshot selection being cancelled by the global selection-bubble dismissal handler on the first left press.
+- Fixed torn-out sticky notes collapsing to narrow lines by deferring shadow creation until their initial layout completes.
+- Added official release-page fallback when the GitHub API is rate-limited or unreachable, bounded checks, retry caching/backoff, and fully localized update errors.
 - Added regression coverage for presentation, screenshot routing, selection sessions, release metadata, unsafe packages, managed-file preservation, and interrupted updates. See the [1.2.2 acceptance record](docs/releases/1.2.2.md) for current results and outstanding visual/platform checks.
 
 

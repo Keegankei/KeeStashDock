@@ -12,6 +12,27 @@ namespace KeeStashDock.Desktop.Tests;
 public sealed class PanelDepthTests
 {
     [STATestMethod]
+    public void FloatingChromePreservesCardOpacityAndHasNoSolidBackplate()
+    {
+        var host = new Grid { Width = 160, Height = 100 };
+        host.Children.Add(new FloatingFrame { Backplate = true, Margin = new Thickness(5, 5, 0, 0), Stroke = Brushes.Gray });
+        host.Children.Add(new FloatingFrame { Margin = new Thickness(0, 0, 5, 5),
+            Fill = new SolidColorBrush(Color.FromArgb(80, 200, 200, 200)), Stroke = Brushes.White });
+        host.Measure(new Size(160, 100));
+        host.Arrange(new Rect(0, 0, 160, 100));
+        host.UpdateLayout();
+        var bitmap = new RenderTargetBitmap(160, 100, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(host);
+        var pixels = new byte[160 * 100 * 4];
+        bitmap.CopyPixels(pixels, 160 * 4, 0);
+        Assert.AreEqual((byte)80, pixels[(50 * 160 + 80) * 4 + 3],
+            "The offset backing must not increase the configured card opacity.");
+        Assert.AreEqual((byte)0, pixels[(2 * 160 + 153) * 4 + 3],
+            "The upper corner is genuinely cut away, not painted over with an opaque patch.");
+        Assert.IsTrue(host.Children.Cast<FloatingFrame>().All(frame => !frame.IsHitTestVisible));
+    }
+
+    [STATestMethod]
     public void HollowShadowLeavesTranslucentSurfaceInteriorUntouched()
     {
         var host = new Grid { Width = 160, Height = 140 };

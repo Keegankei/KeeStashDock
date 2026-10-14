@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Kopiëren en vertalen",
   "Selection.CopyShortcut": "Naar KeeStashDock kopiëren (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Vertalen (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Een update of de opnieuw gestarte toepassing is nog actief. Sluit de toepassing of wacht tot de update is voltooid en probeer opnieuw."
+  "Updates.Running": "Een update of de opnieuw gestarte toepassing is nog actief. Sluit de toepassing of wacht tot de update is voltooid en probeer opnieuw.",
+  "Updates.Retry": "Opnieuw proberen",
+  "Updates.CheckingReleasePage": "Officiële releasepagina controleren…",
+  "Updates.AvailableUnknownSize": "Versie {0} is beschikbaar.",
+  "Updates.ReleasePageNotes": "De versie is gecontroleerd op de officiële GitHub-releasepagina. Open de releasepagina voor de volledige toelichting."
 }

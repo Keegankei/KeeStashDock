@@ -41,6 +41,8 @@ internal static class UpdateWindowScenarios
             VerifyNoUpdate(installation);
             VerifyAvailableAndManualInstall(installation);
             VerifyCancellationAndClose(installation);
+            VerifyLocalizedFailureAndRetry(installation);
+            VerifyRateLimitFallback(installation);
             VerifyUnusedStageCleanup(installation, isolatedRoot);
         }
         finally { LocalizationService.Instance.SetLanguage(priorLanguage); }
@@ -64,7 +66,8 @@ internal static class UpdateWindowScenarios
             Drain();
             Assert.AreEqual(1, handler.Requests, "Showing the same dialog again must not duplicate its automatic check.");
             ActionButton(window, "CheckUpdateButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            PumpUntil(() => handler.Requests == 2 && ActionButton(window, "CheckUpdateButton").IsEnabled);
+            PumpUntil(() => ActionButton(window, "CheckUpdateButton").IsEnabled);
+            Assert.AreEqual(1, handler.Requests, "A recent verified result is cached during the open dialog.");
         }
         finally { CloseAndDrain(window); }
     }
@@ -98,7 +101,7 @@ internal static class UpdateWindowScenarios
             Assert.IsTrue(Status(window).Contains(version, StringComparison.Ordinal));
             Assert.IsFalse(ActionButton(window, "InstallUpdateButton").IsEnabled, "Discovery alone cannot enable restart/install.");
             Assert.AreEqual(notes, ((TextBox)window.FindName("ReleaseNotes")).Text);
-            Assert.AreEqual(2, handler.Requests, "Checks must not fetch assets automatically.");
+            Assert.AreEqual(1, handler.Requests, "Recent metadata is cached; checking never downloads the archive.");
             SavePreview(window);
         }
         finally { CloseAndDrain(window); }
@@ -147,6 +150,73 @@ internal static class UpdateWindowScenarios
                 CloseAndDrain(window);
             }
         }
+    }
+
+    private static void VerifyLocalizedFailureAndRetry(string installation)
+    {
+        string language = LocalizationService.Instance.CurrentLanguage;
+        LocalizationService.Instance.SetLanguage("zh-CN");
+        using var handler = new ReplyHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests)),
+            metadataOnly: false);
+        using var http = new HttpClient(handler);
+        using var service = new ReleaseUpdateService(http);
+        var window = new UpdateWindow(_ => throw new AssertFailedException("A failed check cannot install."), service, installation);
+        try
+        {
+            window.Show();
+            PumpUntil(() => Status(window) == L("Updates.RateLimited") && ActionButton(window, "CheckUpdateButton").IsEnabled);
+            Assert.AreEqual(L("Updates.RateLimited"), Status(window), "No raw English transport exception should be appended.");
+            Assert.AreEqual(L("Updates.Retry"), ActionButton(window, "CheckUpdateButton").Content);
+            Assert.IsTrue(ActionButton(window, "OpenReleaseButton").IsEnabled);
+            Assert.IsFalse(ActionButton(window, "DownloadUpdateButton").IsEnabled);
+            int requests = handler.Requests;
+            ActionButton(window, "CheckUpdateButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            PumpUntil(() => Status(window) == L("Updates.RateLimited") && ActionButton(window, "CheckUpdateButton").IsEnabled);
+            Assert.AreEqual(requests, handler.Requests, "Repeated Retry clicks respect the short failed-check backoff.");
+        }
+        finally { window.Close(); LocalizationService.Instance.SetLanguage(language); }
+    }
+
+    private static void VerifyRateLimitFallback(string installation)
+    {
+        string version = NewerVersion();
+        string page = ReleaseUpdateService.RepositoryUrl + "/releases/tag/v" + version;
+        string asset = "KeeStashDock-" + version + "-win-x64.zip";
+        using var handler = new ReplyHandler((request, _) =>
+        {
+            string uri = request.RequestUri!.AbsoluteUri;
+            if (uri == ReleaseUpdateService.ReleaseApiUrl)
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests));
+            if (uri == ReleaseUpdateService.LatestReleaseUrl)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.Found);
+                response.Headers.Location = new Uri(page);
+                return Task.FromResult(response);
+            }
+            if (uri == page) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            if (uri.EndsWith(asset + ".sha256", StringComparison.Ordinal)) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                { Content = new StringContent(new string('a', 64) + "  " + asset) });
+            Assert.AreEqual(HttpMethod.Head, request.Method, "The fallback UI check cannot download an archive.");
+            var headers = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([]) };
+            headers.Content.Headers.ContentLength = 85_000_000;
+            return Task.FromResult(headers);
+        }, metadataOnly: false);
+        using var http = new HttpClient(handler);
+        using var service = new ReleaseUpdateService(http);
+        var window = new UpdateWindow(_ => throw new AssertFailedException("Discovery cannot install."), service, installation);
+        try
+        {
+            window.Show();
+            PumpUntil(() => ActionButton(window, "DownloadUpdateButton").IsEnabled);
+            Assert.IsTrue(Status(window).Contains(version, StringComparison.Ordinal));
+            Assert.AreEqual(L("Updates.ReleasePageNotes"), ((TextBox)window.FindName("ReleaseNotes")).Text);
+            Assert.IsFalse(ActionButton(window, "InstallUpdateButton").IsEnabled);
+            Assert.AreEqual(5, handler.Requests);
+            LocalizationService.Instance.SetLanguage("zh-CN");
+            Assert.AreEqual(L("Updates.ReleasePageNotes"), ((TextBox)window.FindName("ReleaseNotes")).Text,
+                "System fallback guidance must change with the dialog language.");
+        }
+        finally { window.Close(); LocalizationService.Instance.SetLanguage("en-US"); }
     }
 
     private static void SavePreview(UpdateWindow window)

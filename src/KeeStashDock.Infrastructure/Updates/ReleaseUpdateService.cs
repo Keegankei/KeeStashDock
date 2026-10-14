@@ -8,7 +8,9 @@ using System.Text.RegularExpressions;
 namespace KeeStashDock.Infrastructure.Updates;
 
 public sealed record ReleaseUpdateInfo(string Version, string Notes, Uri ReleaseUrl,
-    Uri ArchiveUrl, Uri ChecksumUrl, long? ArchiveSize);
+    Uri ArchiveUrl, Uri ChecksumUrl, long? ArchiveSize, bool FromReleasePage = false);
+
+public enum UpdateCheckPhase { ReleasePageFallback }
 public sealed record StagedUpdate(string PackageDirectory, UpdatePackageManifest Manifest);
 
 public enum UpdateFailure
@@ -31,62 +33,181 @@ public sealed class ReleaseUpdateService : IDisposable
 {
     public const string RepositoryUrl = "https://github.com/Keegankei/KeeStashDock";
     public const string ReleaseApiUrl = "https://api.github.com/repos/Keegankei/KeeStashDock/releases/latest";
+    public const string LatestReleaseUrl = RepositoryUrl + "/releases/latest";
     public const long MaximumArchiveBytes = 512L * 1024 * 1024;
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
     private readonly TimeSpan _downloadTimeout;
+    private readonly TimeSpan _checkTimeout;
+    private readonly Dictionary<string, (ReleaseUpdateInfo? Result, DateTimeOffset Expires)> _checks = new(StringComparer.Ordinal);
+    private DateTimeOffset _apiRetryAt;
+    private (UpdateException Error, DateTimeOffset Expires)? _failedCheck;
 
-    public ReleaseUpdateService(HttpClient? httpClient = null, TimeSpan? downloadTimeout = null)
+    public ReleaseUpdateService(HttpClient? httpClient = null, TimeSpan? downloadTimeout = null, TimeSpan? checkTimeout = null)
     {
         _downloadTimeout = downloadTimeout ?? TimeSpan.FromMinutes(15);
         if (_downloadTimeout <= TimeSpan.Zero || _downloadTimeout.TotalMilliseconds > uint.MaxValue - 1)
             throw new ArgumentOutOfRangeException(nameof(downloadTimeout));
+        _checkTimeout = checkTimeout ?? TimeSpan.FromSeconds(30);
+        if (_checkTimeout <= TimeSpan.Zero || _checkTimeout.TotalMilliseconds > uint.MaxValue - 1)
+            throw new ArgumentOutOfRangeException(nameof(checkTimeout));
         _ownsHttp = httpClient is null;
         _http = httpClient ?? new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
         { Timeout = TimeSpan.FromMinutes(15) };
     }
 
-    public async Task<ReleaseUpdateInfo?> CheckAsync(string currentVersion, CancellationToken cancellationToken = default)
+    public async Task<ReleaseUpdateInfo?> CheckAsync(string currentVersion, CancellationToken cancellationToken = default,
+        IProgress<UpdateCheckPhase>? progress = null)
     {
         Version installed = ParseVersion(currentVersion);
+        cancellationToken.ThrowIfCancellationRequested();
+        string cacheKey = installed.ToString();
+        if (_checks.TryGetValue(cacheKey, out var cached) && cached.Expires > DateTimeOffset.UtcNow) return cached.Result;
+        if (_failedCheck is { } failure && failure.Expires > DateTimeOffset.UtcNow) throw failure.Error;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(TimeSpan.FromSeconds(30));
+        deadline.CancelAfter(_checkTimeout);
         try
         {
-            using HttpResponseMessage response = await SendAsync(new Uri(ReleaseApiUrl), metadata: true, deadline.Token).ConfigureAwait(false);
-            byte[] payload = await ReadBoundedAsync(response, 2 * 1024 * 1024, deadline.Token).ConfigureAwait(false);
-            using JsonDocument document = JsonDocument.Parse(payload, new JsonDocumentOptions { MaxDepth = 32 });
-            JsonElement root = document.RootElement;
-            if (root.GetProperty("draft").GetBoolean() || root.GetProperty("prerelease").GetBoolean()) return null;
-            string tag = RequiredString(root, "tag_name");
-            string version = tag.StartsWith('v') ? tag[1..] : tag;
-            Version available = ParseVersion(version);
-            if (available <= installed) return null;
-            string archiveName = ArchiveName(version);
-            string prefix = RepositoryUrl + "/releases/download/" + Uri.EscapeDataString(tag) + "/";
-            JsonElement[] archives = root.GetProperty("assets").EnumerateArray()
-                .Where(asset => RequiredString(asset, "name") == archiveName).ToArray();
-            JsonElement[] checksums = root.GetProperty("assets").EnumerateArray()
-                .Where(asset => RequiredString(asset, "name") == archiveName + ".sha256").ToArray();
-            if (archives.Length != 1 || checksums.Length != 1)
-                throw new UpdateException(UpdateFailure.MissingAssets, "The release does not contain one Windows x64 archive and its matching SHA-256 file.");
-            Uri archive = ExactUri(RequiredString(archives[0], "browser_download_url"), prefix + archiveName);
-            Uri checksum = ExactUri(RequiredString(checksums[0], "browser_download_url"), prefix + archiveName + ".sha256");
-            Uri releasePage = ExactUri(RequiredString(root, "html_url"), RepositoryUrl + "/releases/tag/" + Uri.EscapeDataString(tag));
-            long? size = archives[0].TryGetProperty("size", out JsonElement sizeElement) && sizeElement.TryGetInt64(out long length)
-                ? length : null;
-            if (size is <= 0 or > MaximumArchiveBytes)
-                throw new UpdateException(UpdateFailure.InvalidMetadata, "The release archive size is invalid or exceeds the supported limit.");
-            string notes = root.TryGetProperty("body", out JsonElement body) && body.ValueKind == JsonValueKind.String
-                ? body.GetString() ?? "" : "";
-            return new(version, notes, releasePage, archive, checksum, size);
+            ReleaseUpdateInfo? result;
+            using var apiDeadline = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token);
+            apiDeadline.CancelAfter(TimeSpan.FromMilliseconds(Math.Min(8000, _checkTimeout.TotalMilliseconds / 2)));
+            try
+            {
+                if (_apiRetryAt > DateTimeOffset.UtcNow)
+                    throw new UpdateException(UpdateFailure.RateLimited, "The API is in its retry backoff period.");
+                result = await CheckApiAsync(installed, apiDeadline.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!deadline.IsCancellationRequested &&
+                (ex is HttpRequestException or OperationCanceledException ||
+                 ex is UpdateException { Failure: UpdateFailure.Network or UpdateFailure.RateLimited }))
+            {
+                // One request to the documented public release page, never another
+                // API retry or a mirror. Unsupported metadata is not a fallback trigger.
+                progress?.Report(UpdateCheckPhase.ReleasePageFallback);
+                result = await CheckReleasePageAsync(installed, deadline.Token).ConfigureAwait(false);
+            }
+            deadline.Token.ThrowIfCancellationRequested();
+            _checks[cacheKey] = (result, DateTimeOffset.UtcNow.AddSeconds(30));
+            _failedCheck = null;
+            return result;
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-        { throw new UpdateException(UpdateFailure.Network, "The update check timed out. Retry or open the release page.", ex); }
+        { throw RememberFailure(new UpdateException(UpdateFailure.Network, "The update check timed out.", ex)); }
         catch (HttpRequestException ex)
-        { throw new UpdateException(UpdateFailure.Network, "The official release source could not be reached.", ex); }
+        { throw RememberFailure(new UpdateException(UpdateFailure.Network, "The official release source could not be reached.", ex)); }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException or FormatException)
-        { throw new UpdateException(UpdateFailure.InvalidMetadata, "The release metadata is not a supported GitHub release response.", ex); }
+        { throw RememberFailure(new UpdateException(UpdateFailure.InvalidMetadata, "The release metadata is not supported.", ex)); }
+        catch (UpdateException ex) { throw RememberFailure(ex); }
+    }
+
+    private UpdateException RememberFailure(UpdateException error)
+    {
+        _failedCheck = (error, DateTimeOffset.UtcNow.AddSeconds(5));
+        return error;
+    }
+
+    private async Task<ReleaseUpdateInfo?> CheckApiAsync(Version installed, CancellationToken token)
+    {
+        using HttpResponseMessage response = await SendAsync(new Uri(ReleaseApiUrl), metadata: true, token).ConfigureAwait(false);
+        byte[] payload = await ReadBoundedAsync(response, 2 * 1024 * 1024, token).ConfigureAwait(false);
+        using JsonDocument document = JsonDocument.Parse(payload, new JsonDocumentOptions { MaxDepth = 32 });
+        JsonElement root = document.RootElement;
+        if (root.GetProperty("draft").GetBoolean() || root.GetProperty("prerelease").GetBoolean()) return null;
+        string tag = RequiredString(root, "tag_name");
+        string version = tag.StartsWith('v') ? tag[1..] : tag;
+        Version available = ParseVersion(version);
+        if (available <= installed) return null;
+        string archiveName = ArchiveName(version);
+        string prefix = RepositoryUrl + "/releases/download/" + Uri.EscapeDataString(tag) + "/";
+        JsonElement[] archives = root.GetProperty("assets").EnumerateArray()
+            .Where(asset => RequiredString(asset, "name") == archiveName).ToArray();
+        JsonElement[] checksums = root.GetProperty("assets").EnumerateArray()
+            .Where(asset => RequiredString(asset, "name") == archiveName + ".sha256").ToArray();
+        if (archives.Length != 1 || checksums.Length != 1)
+            throw new UpdateException(UpdateFailure.MissingAssets, "The release does not contain one Windows x64 archive and its matching SHA-256 file.");
+        Uri archive = ExactUri(RequiredString(archives[0], "browser_download_url"), prefix + archiveName);
+        Uri checksum = ExactUri(RequiredString(checksums[0], "browser_download_url"), prefix + archiveName + ".sha256");
+        Uri releasePage = ExactUri(RequiredString(root, "html_url"), RepositoryUrl + "/releases/tag/" + Uri.EscapeDataString(tag));
+        long? size = archives[0].TryGetProperty("size", out JsonElement sizeElement) && sizeElement.TryGetInt64(out long length)
+            ? length : null;
+        if (size is <= 0 or > MaximumArchiveBytes)
+            throw new UpdateException(UpdateFailure.InvalidMetadata, "The release archive size is invalid or exceeds the supported limit.");
+        string notes = root.TryGetProperty("body", out JsonElement body) && body.ValueKind == JsonValueKind.String
+            ? body.GetString() ?? "" : "";
+        return new(version, notes, releasePage, archive, checksum, size);
+    }
+
+    private async Task<ReleaseUpdateInfo?> CheckReleasePageAsync(Version installed, CancellationToken token)
+    {
+        // GitHub documents /releases/latest as the canonical public latest-release
+        // link. Resolve it without parsing HTML or accepting arbitrary page links.
+        Uri uri = new(LatestReleaseUrl);
+        string? tag = null;
+        for (int redirect = 0; redirect <= 3; redirect++)
+        {
+            tag = ValidateReleasePageUri(uri);
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.UserAgent.ParseAdd("KeeStashDock-Updater/1.2.2");
+            request.Headers.Accept.ParseAdd("text/html");
+            using HttpResponseMessage response = await _http.SendAsync(request,
+                HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+            token.ThrowIfCancellationRequested();
+            if (response.RequestMessage?.RequestUri is { } actual && actual != uri)
+                throw new UpdateException(UpdateFailure.InvalidMetadata, "An unexpected automatic release-page redirect occurred.");
+            if ((int)response.StatusCode is 301 or 302 or 303 or 307 or 308)
+            {
+                Uri? location = response.Headers.Location;
+                if (location is null || redirect == 3)
+                    throw new UpdateException(UpdateFailure.Network, "The official release-page redirect could not be resolved.");
+                uri = location.IsAbsoluteUri ? location : new Uri(uri, location);
+                ValidateReleasePageUri(uri); // Reject unsafe redirect targets before making a request.
+                continue;
+            }
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.Forbidden)
+                throw new UpdateException(UpdateFailure.RateLimited, "The official release page is temporarily unavailable.");
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                throw new UpdateException(UpdateFailure.MissingRelease, "The official release page has no stable release.");
+            response.EnsureSuccessStatusCode();
+            if (tag is null)
+                throw new UpdateException(UpdateFailure.InvalidMetadata, "The latest-release link did not identify a version.");
+            break;
+        }
+        string version = tag!.StartsWith('v') ? tag[1..] : tag;
+        if (ParseVersion(version) <= installed) return null;
+        string archiveName = ArchiveName(version);
+        string prefix = RepositoryUrl + "/releases/download/" + tag + "/";
+        var archive = new Uri(prefix + archiveName);
+        var checksum = new Uri(prefix + archiveName + ".sha256");
+        try
+        {
+            // A newer tag alone is not a downloadable update. Confirm the matching
+            // sidecar and archive headers; do not download ZIP bytes during a check.
+            using HttpResponseMessage digestResponse = await SendAsync(checksum, false, token).ConfigureAwait(false);
+            ParseChecksum(Encoding.UTF8.GetString(await ReadBoundedAsync(digestResponse, 4096, token).ConfigureAwait(false)), archiveName);
+            using HttpResponseMessage archiveResponse = await SendAsync(archive, false, token, HttpMethod.Head).ConfigureAwait(false);
+            long? size = archiveResponse.Content.Headers.ContentLength;
+            if (size is <= 0 or > MaximumArchiveBytes)
+                throw new UpdateException(UpdateFailure.InvalidMetadata, "The archive size is outside supported limits.");
+            return new(version, "", uri, archive, checksum, size, FromReleasePage: true);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        { throw new UpdateException(UpdateFailure.MissingAssets, "The official release is missing its archive or checksum.", ex); }
+    }
+
+    private static string? ValidateReleasePageUri(Uri uri)
+    {
+        if (!uri.IsAbsoluteUri || uri.Scheme != Uri.UriSchemeHttps || uri.Port != 443 ||
+            uri.Host != "github.com" || uri.UserInfo.Length != 0 || uri.Query.Length != 0 || uri.Fragment.Length != 0)
+            throw new UpdateException(UpdateFailure.InvalidMetadata, "The release page is outside the official HTTPS source.");
+        if (uri.AbsoluteUri == LatestReleaseUrl) return null;
+        string prefix = RepositoryUrl + "/releases/tag/";
+        if (!uri.AbsoluteUri.StartsWith(prefix, StringComparison.Ordinal))
+            throw new UpdateException(UpdateFailure.InvalidMetadata, "The release page is outside the configured repository.");
+        string tag = uri.AbsoluteUri[prefix.Length..];
+        if (!Regex.IsMatch(tag, @"\Av?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?\z", RegexOptions.CultureInvariant))
+            throw new UpdateException(UpdateFailure.UnsupportedVersion, "The release redirect does not identify a stable numeric version.");
+        ParseVersion(tag);
+        return tag;
     }
 
     public async Task<StagedUpdate> DownloadAsync(ReleaseUpdateInfo info, string stagingRoot,
@@ -346,17 +467,19 @@ public sealed class ReleaseUpdateService : IDisposable
         if (total != entry.Length) throw new InvalidDataException("An archive entry is truncated.");
     }
 
-    private async Task<HttpResponseMessage> SendAsync(Uri uri, bool metadata, CancellationToken cancellationToken)
+    private async Task<HttpResponseMessage> SendAsync(Uri uri, bool metadata, CancellationToken cancellationToken,
+        HttpMethod? method = null)
     {
         for (int redirect = 0; redirect <= 5; redirect++)
         {
             ValidateTransportUri(uri, metadata);
-            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            using var request = new HttpRequestMessage(method ?? HttpMethod.Get, uri);
             request.Headers.UserAgent.ParseAdd("KeeStashDock-Updater/1.2.2");
             request.Headers.Accept.ParseAdd(metadata ? "application/vnd.github+json" : "application/octet-stream");
             HttpResponseMessage response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 // Also reject an injected client's unexpected automatic redirect.
                 if (response.RequestMessage?.RequestUri is { } finalUri) ValidateTransportUri(finalUri, metadata);
                 if ((int)response.StatusCode is 301 or 302 or 303 or 307 or 308)
@@ -368,8 +491,15 @@ public sealed class ReleaseUpdateService : IDisposable
                     continue;
                 }
                 if (response.StatusCode == HttpStatusCode.TooManyRequests ||
-                    (response.StatusCode == HttpStatusCode.Forbidden && response.Headers.TryGetValues("X-RateLimit-Remaining", out var remaining) && remaining.Contains("0")))
+                    (response.StatusCode == HttpStatusCode.Forbidden &&
+                     (response.Headers.RetryAfter is not null ||
+                      response.Headers.TryGetValues("X-RateLimit-Remaining", out var remaining) && remaining.Contains("0"))))
+                {
+                    if (metadata) SetApiBackoff(response);
                     throw new UpdateException(UpdateFailure.RateLimited, "GitHub temporarily limited update requests. Retry later or open the release page.");
+                }
+                if (metadata && (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden))
+                    _apiRetryAt = DateTimeOffset.UtcNow.AddMinutes(1);
                 if (metadata && response.StatusCode == HttpStatusCode.NotFound)
                     throw new UpdateException(UpdateFailure.MissingRelease, "The official source has no available stable release.");
                 response.EnsureSuccessStatusCode();
@@ -378,6 +508,23 @@ public sealed class ReleaseUpdateService : IDisposable
             catch { response.Dispose(); throw; }
         }
         throw new UpdateException(UpdateFailure.Network, "The release download could not be resolved.");
+    }
+
+    private void SetApiBackoff(HttpResponseMessage response)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset retry = now.AddMinutes(1);
+        if (response.Headers.RetryAfter?.Delta is { } delay && delay > TimeSpan.Zero)
+            retry = now.AddTicks(Math.Min(delay.Ticks, TimeSpan.FromDays(1).Ticks));
+        else if (response.Headers.RetryAfter?.Date is { } date && date > now)
+            retry = date;
+        if (response.Headers.TryGetValues("X-RateLimit-Reset", out var resets) &&
+            long.TryParse(resets.FirstOrDefault(), out long seconds) && seconds is >= 0 and <= 253402300799)
+        {
+            var reset = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            if (reset > retry) retry = reset;
+        }
+        _apiRetryAt = retry > now.AddDays(1) ? now.AddDays(1) : retry;
     }
 
     private static void ValidateTransportUri(Uri uri, bool metadata)

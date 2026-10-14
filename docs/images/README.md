@@ -1,7 +1,7 @@
 # Documentation screenshots
 
-These images show the actual KeeStashDock WPF views in English with the light
-theme and synthetic sample data. They were rendered in memory on Windows for
+These images show the actual KeeStashDock WPF views in English with synthetic
+sample data. Light theme is used except where noted. They were rendered in memory on Windows for
 versions 1.2.1 and 1.2.2 as identified below. Window title bars are omitted; no real desktop or clipboard
 content was captured.
 
@@ -11,7 +11,8 @@ content was captured.
 | `screenshot-entry.png` | Image entry with an original sample note and editable sample OCR text |
 | `component-setup.png` | Settings' optional components section in the initial not-installed state (1.2.1) |
 | `classic-panel.png` | Quick panel with soft exterior/card shadows and synthetic snippets (1.2.2) |
-| `floating-panel.png` | The same panel with Floating enabled and a bounded first-card hover pose (1.2.2) |
+| `floating-panel.png` | Floating panel with chamfered fronts, offset outline plates and a bounded first-card hover pose (1.2.2 revision 2) |
+| `floating-panel-dark.png` | The same Floating view using the dark palette (1.2.2 revision 2) |
 | `selection-actions.png` | Combined Copy / Translate selection bubble (1.2.2) |
 | `screenshot-text.png` | Transient screenshot text result before any explicit copy action (1.2.2) |
 | `update-check.png` | Actual update dialog showing a simulated newer version and example installation path (1.2.2) |
@@ -41,3 +42,8 @@ GitHub, download an update, or run an installer.
 
 These previews demonstrate appearance; they do not establish physical
 mixed-DPI coverage or animation performance on every GPU.
+
+Floating chrome is original WPF vector drawing. Its layered technical direction
+was informed by the maintainer's reference to Arknights: Endfield, including the
+[official interface presentation](https://endfield.gryphline.com/news/2662).
+No game artwork, logo, screenshot or proprietary font is bundled or traced.

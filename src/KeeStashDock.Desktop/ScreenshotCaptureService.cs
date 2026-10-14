@@ -157,7 +157,7 @@ public sealed class ScreenshotCaptureService
         return new CapturedScreenshot(stream.ToArray(), bounds.Width, bounds.Height);
     }
 
-    private sealed class CaptureOverlay : Window
+    internal sealed class CaptureOverlay : Window
     {
         private readonly SelectionSurface _surface;
         private readonly Action<Drawing.Point> _begin, _move, _finish;

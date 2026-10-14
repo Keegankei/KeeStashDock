@@ -1,5 +1,7 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -10,6 +12,72 @@ namespace KeeStashDock.Desktop.Tests;
 [TestClass]
 public sealed class ScreenshotCaptureTests
 {
+    [STATestMethod]
+    public void OverlayMouseDownReachesDragWithoutSelectionDismissalCancellingCapture()
+    {
+        // Use the actual overlay and WPF preview/bubble routes with synthetic
+        // pixels. No App startup, screen read, global hook or OS input injection.
+        using var request = new CancellationTokenSource();
+        int starts = 0, cancels = 0;
+        var source = BitmapSource.Create(320, 240, 96, 96, PixelFormats.Bgr24, null, new byte[320 * 240 * 3], 320 * 3);
+        var overlay = new ScreenshotCaptureService.CaptureOverlay(new Drawing.Rectangle(0, 0, 320, 240),
+            source, "Drag to capture", _ => starts++, _ => { }, _ => { }, _ => { },
+            () => { cancels++; request.Cancel(); }, () => { });
+        try
+        {
+            overlay.AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler((sender, _) =>
+                App.DismissSelectionForMouseDown(sender as Window, capturingScreenshot: true, null, null, request.Cancel)),
+                handledEventsToo: true);
+            var surface = (UIElement)((Grid)overlay.Content).Children[0];
+            surface.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                { RoutedEvent = Mouse.PreviewMouseDownEvent });
+            Assert.IsFalse(request.IsCancellationRequested,
+                "The application's preview handler must leave screenshot capture alive before the drag starts.");
+            surface.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                { RoutedEvent = Mouse.MouseDownEvent });
+            Assert.AreEqual(1, starts, "The same mouse-down must reach the overlay's actual drag handler.");
+            Assert.AreEqual(0, cancels);
+
+            surface.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
+                { RoutedEvent = Mouse.MouseDownEvent });
+            Assert.IsTrue(request.IsCancellationRequested, "Explicit right-click cancellation must remain available.");
+            Assert.AreEqual(1, cancels);
+        }
+        finally { overlay.Close(); }
+    }
+
+    [STATestMethod]
+    public void NormalWindowMouseDownStillDismissesResultsAfterCaptureEnds()
+    {
+        var content = new Border();
+        var window = new Window { Content = content };
+        var selectionPopup = new Window();
+        var translationCard = new Window();
+        int dismissals = 0;
+        bool capturing = true;
+        MouseButtonEventHandler handler = (sender, _) => App.DismissSelectionForMouseDown(sender as Window,
+            capturing, selectionPopup, translationCard, () => dismissals++);
+        window.AddHandler(Mouse.PreviewMouseDownEvent, handler, handledEventsToo: true);
+        selectionPopup.AddHandler(Mouse.PreviewMouseDownEvent, handler, handledEventsToo: true);
+        translationCard.AddHandler(Mouse.PreviewMouseDownEvent, handler, handledEventsToo: true);
+        try
+        {
+            Click(content);
+            Assert.AreEqual(0, dismissals, "Pending internal mouse events cannot cancel active screenshot overlays.");
+            capturing = false;
+            Click(selectionPopup);
+            Click(translationCard);
+            Assert.AreEqual(0, dismissals, "Clicking either result bubble must preserve its own request.");
+            Click(content);
+            Assert.AreEqual(1, dismissals, "Once capture ends, clicking normal UI must dismiss its OCR/translation result.");
+        }
+        finally { window.Close(); selectionPopup.Close(); translationCard.Close(); }
+
+        static void Click(UIElement element) => element.RaiseEvent(
+            new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                { RoutedEvent = Mouse.PreviewMouseDownEvent });
+    }
+
     [TestMethod]
     public void SelectionCrossesNegativeOriginAndMainMonitorInPhysicalPixels()
     {

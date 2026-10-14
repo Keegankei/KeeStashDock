@@ -72,6 +72,214 @@ public sealed class ReleaseUpdateServiceTests
     }
 
     [TestMethod]
+    public async Task RateLimitedApiUsesVerifiedOfficialPageWithoutDownloadingArchive_AndBacksOff()
+    {
+        var requests = new List<(string Url, string Method)>();
+        using var http = Client(request =>
+        {
+            Assert.IsNull(request.Headers.Authorization, "The public fallback must not require credentials.");
+            requests.Add((request.RequestUri!.AbsoluteUri, request.Method.Method));
+            return FallbackReply(request);
+        });
+        using var service = new ReleaseUpdateService(http);
+        var phases = new List<UpdateCheckPhase>();
+        ReleaseUpdateInfo? result = await service.CheckAsync("1.2.2", progress: new CheckProgress(phases.Add));
+        Assert.IsNotNull(result);
+        Assert.AreEqual(Version, result.Version);
+        Assert.IsTrue(result.FromReleasePage);
+        Assert.AreEqual(200L, result.ArchiveSize);
+        Assert.AreEqual(new Uri(ReleaseUrl), result.ReleaseUrl);
+        CollectionAssert.AreEqual(new[] { UpdateCheckPhase.ReleasePageFallback }, phases);
+        Assert.AreEqual(5, requests.Count);
+        Assert.IsTrue(requests.Contains((ArchiveUrl, "HEAD")));
+        Assert.IsFalse(requests.Contains((ArchiveUrl, "GET")), "A check may inspect headers, but cannot download a ZIP.");
+        Assert.AreSame(result, await service.CheckAsync("1.2.2"));
+        Assert.AreEqual(5, requests.Count, "Repeated checks reuse verified results for 30 seconds.");
+        Assert.IsNotNull(await service.CheckAsync("1.2.1"));
+        Assert.AreEqual(1, requests.Count(item => item.Url == ReleaseUpdateService.ReleaseApiUrl),
+            "A different comparison must still respect the API rate-limit backoff.");
+    }
+
+    [TestMethod]
+    public async Task OfficialRedirectCanConfirmCurrentVersionWithoutAssetRequests()
+    {
+        var requests = new List<string>();
+        using var http = Client(request => { requests.Add(request.RequestUri!.AbsoluteUri); return FallbackReply(request); });
+        using var service = new ReleaseUpdateService(http);
+        Assert.IsNull(await service.CheckAsync(Version));
+        Assert.AreEqual(3, requests.Count);
+        Assert.IsFalse(requests.Any(url => url.Contains("/releases/download/", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public async Task ApiConnectionFailureCanUseSameOfficialFallback()
+    {
+        using var http = Client(request => request.RequestUri!.AbsoluteUri == ReleaseUpdateService.ReleaseApiUrl
+            ? throw new HttpRequestException("Fixture API connection failure") : FallbackReply(request));
+        using var service = new ReleaseUpdateService(http);
+        Assert.IsTrue((await service.CheckAsync("1.2.2"))!.FromReleasePage);
+    }
+
+    [TestMethod]
+    [DataRow("https://attacker.invalid/releases/tag/v1.3.0")]
+    [DataRow("https://github.com/Other/Repository/releases/tag/v1.3.0")]
+    [DataRow("http://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0")]
+    [DataRow("https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0-rc.1")]
+    [DataRow("https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0?redirect=other")]
+    [DataRow("https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0%2Fextra")]
+    [DataRow("https://github.com/login")]
+    public async Task UnsafeOrUnsupportedReleaseRedirectIsRejectedBeforeFollowing(string destination)
+    {
+        var requests = new List<string>();
+        using var http = Client(request =>
+        {
+            requests.Add(request.RequestUri!.AbsoluteUri);
+            return request.RequestUri.AbsoluteUri == ReleaseUpdateService.LatestReleaseUrl
+                ? Redirect(destination) : FallbackReply(request);
+        });
+        using var service = new ReleaseUpdateService(http);
+        UpdateException error = await Assert.ThrowsAsync<UpdateException>(() => service.CheckAsync("1.2.2"));
+        Assert.IsTrue(error.Failure is UpdateFailure.InvalidMetadata or UpdateFailure.UnsupportedVersion);
+        CollectionAssert.AreEqual(new[] { ReleaseUpdateService.ReleaseApiUrl, ReleaseUpdateService.LatestReleaseUrl }, requests);
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task MissingOrInvalidFallbackChecksumNeverEnablesAnUpdate(bool missing)
+    {
+        var requests = new List<string>();
+        using var http = Client(request =>
+        {
+            string url = request.RequestUri!.AbsoluteUri;
+            requests.Add(url);
+            return url == ArchiveUrl + ".sha256"
+                ? new HttpResponseMessage(missing ? HttpStatusCode.NotFound : HttpStatusCode.OK)
+                    { Content = new StringContent("not the expected checksum") }
+                : FallbackReply(request);
+        });
+        using var service = new ReleaseUpdateService(http);
+        UpdateException error = await Assert.ThrowsAsync<UpdateException>(() => service.CheckAsync("1.2.2"));
+        Assert.AreEqual(missing ? UpdateFailure.MissingAssets : UpdateFailure.InvalidMetadata, error.Failure);
+        Assert.IsFalse(requests.Contains(ArchiveUrl), "A bad checksum cannot fall through to a download or another source.");
+    }
+
+    [TestMethod]
+    public async Task FailedChecksBackOffAndCanceledCachedCheckStillHonorsCancellation()
+    {
+        int requests = 0;
+        using var http = Client(_ => { requests++; return new(HttpStatusCode.TooManyRequests); });
+        using var service = new ReleaseUpdateService(http);
+        await Assert.ThrowsAsync<UpdateException>(() => service.CheckAsync("1.2.2"));
+        Assert.AreEqual(2, requests);
+        await Assert.ThrowsAsync<UpdateException>(() => service.CheckAsync("1.2.2"));
+        Assert.AreEqual(2, requests, "A rapid retry must not produce a rate-limit storm.");
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        await Assert.ThrowsAsync<OperationCanceledException>(() => service.CheckAsync("1.2.2", cancelled.Token));
+    }
+
+    [TestMethod]
+    public async Task FallbackChecksumBodyHonorsCheckDeadlineAndUserCancellation()
+    {
+        foreach (bool userCancels in new[] { false, true })
+        {
+            var stalled = new StallingStream();
+            using var http = Client(request => request.RequestUri!.AbsoluteUri == ArchiveUrl + ".sha256"
+                ? new(HttpStatusCode.OK) { Content = new StreamContent(stalled) } : FallbackReply(request));
+            using var service = new ReleaseUpdateService(http,
+                checkTimeout: userCancels ? TimeSpan.FromSeconds(5) : TimeSpan.FromMilliseconds(180));
+            using var cancellation = new CancellationTokenSource();
+            Task<ReleaseUpdateInfo?> check = service.CheckAsync("1.2.2", cancellation.Token);
+            await stalled.ReadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            if (userCancels)
+            {
+                cancellation.Cancel();
+                await Assert.ThrowsAsync<OperationCanceledException>(() => check);
+            }
+            else
+                Assert.AreEqual(UpdateFailure.Network, (await Assert.ThrowsAsync<UpdateException>(() => check)).Failure);
+        }
+    }
+
+    [TestMethod]
+    public async Task StalledApiBodyFallsBackBeforeTheOverallCheckDeadline()
+    {
+        using var http = Client(request => request.RequestUri!.AbsoluteUri == ReleaseUpdateService.ReleaseApiUrl
+            ? new(HttpStatusCode.OK) { Content = new StreamContent(new StallingStream()) } : FallbackReply(request));
+        using var service = new ReleaseUpdateService(http, checkTimeout: TimeSpan.FromSeconds(1));
+        ReleaseUpdateInfo? result = await service.CheckAsync("1.2.2");
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.FromReleasePage, "A stalled API body must leave time for the official page fallback.");
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task FallbackRejectsMissingOrOversizedArchiveHeaders(bool missing)
+    {
+        using var http = Client(request =>
+        {
+            if (request.RequestUri!.AbsoluteUri != ArchiveUrl) return FallbackReply(request);
+            Assert.AreEqual(HttpMethod.Head, request.Method);
+            var response = new HttpResponseMessage(missing ? HttpStatusCode.NotFound : HttpStatusCode.OK)
+                { Content = new ByteArrayContent([]) };
+            response.Content.Headers.ContentLength = ReleaseUpdateService.MaximumArchiveBytes + 1;
+            return response;
+        });
+        using var service = new ReleaseUpdateService(http);
+        UpdateException error = await Assert.ThrowsAsync<UpdateException>(() => service.CheckAsync("1.2.2"));
+        Assert.AreEqual(missing ? UpdateFailure.MissingAssets : UpdateFailure.InvalidMetadata, error.Failure);
+    }
+
+    [TestMethod]
+    public async Task FallbackWithoutArchiveLengthDoesNotReadItsBodyOrInventASize()
+    {
+        var archiveBody = new StallingStream();
+        using var http = Client(request => request.RequestUri!.AbsoluteUri == ArchiveUrl
+            ? new(HttpStatusCode.OK) { Content = new StreamContent(archiveBody) } : FallbackReply(request));
+        using var service = new ReleaseUpdateService(http);
+        ReleaseUpdateInfo? result = await service.CheckAsync("1.2.2");
+        Assert.IsNotNull(result);
+        Assert.IsNull(result.ArchiveSize);
+        Assert.IsFalse(archiveBody.ReadStarted.Task.IsCompleted, "A HEAD check cannot read ZIP bytes.");
+    }
+
+    private static HttpResponseMessage Redirect(string location)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.Found);
+        response.Headers.Location = new Uri(location, UriKind.RelativeOrAbsolute);
+        return response;
+    }
+
+    private static HttpResponseMessage FallbackReply(HttpRequestMessage request)
+    {
+        string url = request.RequestUri!.AbsoluteUri;
+        if (url == ReleaseUpdateService.ReleaseApiUrl)
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.Forbidden);
+            response.Headers.Add("X-RateLimit-Remaining", "0");
+            response.Headers.Add("X-RateLimit-Reset", DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds().ToString());
+            return response;
+        }
+        if (url == ReleaseUpdateService.LatestReleaseUrl) return Redirect(ReleaseUrl);
+        if (url == ReleaseUrl) return new(HttpStatusCode.OK) { Content = new StringContent("Fixture release page") };
+        if (url == ArchiveUrl + ".sha256") return new(HttpStatusCode.OK)
+            { Content = new StringContent(new string('a', 64) + "  " + ArchiveName) };
+        if (url == ArchiveUrl)
+        {
+            Assert.AreEqual(HttpMethod.Head, request.Method);
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([]) };
+            response.Content.Headers.ContentLength = 200;
+            return response;
+        }
+        throw new AssertFailedException("Unexpected fallback request: " + url);
+    }
+
+    private sealed class CheckProgress(Action<UpdateCheckPhase> report) : IProgress<UpdateCheckPhase>
+    { public void Report(UpdateCheckPhase value) => report(value); }
+
+    [TestMethod]
     public async Task ValidPackageIsStagedAndEveryDeclaredFileVerified()
     {
         byte[] archive = Package();

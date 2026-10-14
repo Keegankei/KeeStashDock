@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Copiar y traducir",
   "Selection.CopyShortcut": "Copiar en KeeStashDock (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Traducir (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Una actualización o la aplicación reiniciada sigue en ejecución. Cierra la aplicación o espera a que termine la actualización antes de volver a intentarlo."
+  "Updates.Running": "Una actualización o la aplicación reiniciada sigue en ejecución. Cierra la aplicación o espera a que termine la actualización antes de volver a intentarlo.",
+  "Updates.Retry": "Reintentar",
+  "Updates.CheckingReleasePage": "Consultando la página oficial de publicación…",
+  "Updates.AvailableUnknownSize": "La versión {0} está disponible.",
+  "Updates.ReleasePageNotes": "La versión se ha comprobado en la página oficial de GitHub. Abre la página de publicación para leer las notas completas."
 }

@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "कॉपी और अनुवाद",
   "Selection.CopyShortcut": "KeeStashDock में कॉपी करें (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "अनुवाद करें (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "अपडेट या उसके बाद पुनः शुरू किया गया ऐप अभी चल रहा है। फिर कोशिश करने से पहले ऐप बंद करें या अपडेट पूरा होने की प्रतीक्षा करें।"
+  "Updates.Running": "अपडेट या उसके बाद पुनः शुरू किया गया ऐप अभी चल रहा है। फिर कोशिश करने से पहले ऐप बंद करें या अपडेट पूरा होने की प्रतीक्षा करें।",
+  "Updates.Retry": "फिर कोशिश करें",
+  "Updates.CheckingReleasePage": "आधिकारिक रिलीज़ पृष्ठ की जाँच हो रही है…",
+  "Updates.AvailableUnknownSize": "संस्करण {0} उपलब्ध है।",
+  "Updates.ReleasePageNotes": "आधिकारिक GitHub रिलीज़ पृष्ठ पर संस्करण जाँचा गया। पूरे बदलाव पढ़ने के लिए रिलीज़ पृष्ठ खोलें।"
 }

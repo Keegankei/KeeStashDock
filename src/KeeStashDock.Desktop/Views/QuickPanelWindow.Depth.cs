@@ -12,6 +12,9 @@ public partial class QuickPanelWindow
     public static readonly DependencyProperty FloatingDepthEnabledProperty = DependencyProperty.Register(
         nameof(FloatingDepthEnabled), typeof(bool), typeof(QuickPanelWindow), new PropertyMetadata(false));
     public bool FloatingDepthEnabled => (bool)GetValue(FloatingDepthEnabledProperty);
+    public static readonly DependencyProperty FloatingStyleEnabledProperty = DependencyProperty.Register(
+        nameof(FloatingStyleEnabled), typeof(bool), typeof(QuickPanelWindow), new PropertyMetadata(false));
+    public bool FloatingStyleEnabled => (bool)GetValue(FloatingStyleEnabledProperty);
 
     private PanelShadowWindow? _panelShadow;
     private readonly TranslateTransform _backgroundParallax = new();
@@ -50,10 +53,18 @@ public partial class QuickPanelWindow
             _lastHighContrast = highContrast;
             _lastMotion = motion;
             SetValue(FloatingDepthEnabledProperty, motion);
-            Resources["Panel.CardShadowStrength"] = floating ? 0.22 : 0.14;
+            bool styled = floating && !highContrast;
+            SetValue(FloatingStyleEnabledProperty, styled);
+            Resources["Panel.CornerRadius"] = new CornerRadius(styled ? 2 : 12);
+            Resources["Panel.InnerRadius"] = new CornerRadius(styled ? 1 : 11);
+            Resources["Panel.CardMargin"] = styled ? new Thickness(12, 9, 12, 9) : new Thickness(8, 7, 8, 7);
+            Resources["Panel.CardFrontMargin"] = styled ? new Thickness(0, 0, 5, 5) : new Thickness(0);
+            Resources["Panel.CardShadowSpread"] = styled ? 7d : 4d;
+            Resources["Panel.CardShadowStrength"] = styled ? 0.28 : 0.14;
             Resources["Panel.ShadowVisibility"] = highContrast ? Visibility.Hidden : Visibility.Visible;
             _backgroundScale.ScaleX = _backgroundScale.ScaleY = motion ? 1.02 : 1;
             _highlightOpacity?.To(floating && !highContrast ? 0.55 : 0, animate: false);
+            UpdateBackgroundClip();
         }
         _panelShadow.UpdateAppearance(!highContrast, floating, _depthApproached);
         _highlightOpacity?.To(floating && !highContrast ? _depthApproached ? 1 : 0.55 : 0, motion);
@@ -97,9 +108,13 @@ public partial class QuickPanelWindow
     }
 
     private void OnDepthSizeChanged(object sender, SizeChangedEventArgs e)
+        => UpdateBackgroundClip();
+
+    private void UpdateBackgroundClip()
     {
+        double radius = FloatingStyleEnabled ? 1 : 11;
         BackgroundLayer.Clip = new RectangleGeometry(
-            new Rect(0, 0, Math.Max(0, ActualWidth - 2), Math.Max(0, ActualHeight - 2)), 11, 11);
+            new Rect(0, 0, Math.Max(0, ActualWidth - 2), Math.Max(0, ActualHeight - 2)), radius, radius);
     }
 
     private void OnDepthVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)

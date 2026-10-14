@@ -59,8 +59,8 @@ public partial class App
         EventManager.RegisterClassHandler(typeof(Window), Mouse.PreviewMouseDownEvent,
             new MouseButtonEventHandler((sender, _) =>
             {
-                if (sender is Window window && window != _selectionPopup && window != _translationCard)
-                    DismissSelection();
+                DismissSelectionForMouseDown(sender as Window, _capturingScreenshot,
+                    _selectionPopup, _translationCard, DismissSelection);
             }), handledEventsToo: true);
         Exit += (_, _) => _selectionSession.Dispose();
         _selectionPopup.CaptureRequested += CaptureSelectionAsync;
@@ -357,10 +357,20 @@ public partial class App
 
     private void DismissSelection()
     {
+        // Screenshot overlays are application windows too. Their first preview
+        // mouse event must not cancel the request before the drag handler runs.
+        if (_capturingScreenshot) return;
         _internalSelectionSource = null;
         _translationCancellation?.Cancel();
         _selectionPopup.HideBubble();
         _translationCard.HideCard();
+    }
+
+    internal static void DismissSelectionForMouseDown(Window? window, bool capturingScreenshot,
+        Window? selectionPopup, Window? translationCard, Action dismiss)
+    {
+        if (!capturingScreenshot && window is not null && window != selectionPopup && window != translationCard)
+            dismiss();
     }
 
 }

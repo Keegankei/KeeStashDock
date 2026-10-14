@@ -305,5 +305,9 @@
   "Settings.SelectionAction.Both": "Sao chép và dịch",
   "Selection.CopyShortcut": "Sao chép vào KeeStashDock (Ctrl+Alt+Shift+C)",
   "Selection.TranslateShortcut": "Dịch (Ctrl+Alt+Shift+T)",
-  "Updates.Running": "Bản cập nhật hoặc ứng dụng được khởi động lại vẫn đang chạy. Hãy đóng ứng dụng hoặc đợi cập nhật hoàn tất trước khi thử lại."
+  "Updates.Running": "Bản cập nhật hoặc ứng dụng được khởi động lại vẫn đang chạy. Hãy đóng ứng dụng hoặc đợi cập nhật hoàn tất trước khi thử lại.",
+  "Updates.Retry": "Thử lại",
+  "Updates.CheckingReleasePage": "Đang kiểm tra trang phát hành chính thức…",
+  "Updates.AvailableUnknownSize": "Có phiên bản {0}.",
+  "Updates.ReleasePageNotes": "Đã kiểm tra phiên bản trên trang phát hành GitHub chính thức. Mở trang phát hành để đọc toàn bộ ghi chú."
 }

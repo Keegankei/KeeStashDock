@@ -43,8 +43,9 @@ internal static class QuickPanelWindowScenarios
             settings.Current.PanelUserWidth = 400;
             settings.Current.PanelUserHeight = 460;
             settings.Current.CollapseDelaySeconds = 60;
+            var openedImages = new List<long>();
             panel = new QuickPanelWindow(snippets, new SearchService(repository), settings,
-                new CategoryRepository(db), () => { }, () => { })
+                new CategoryRepository(db), () => { }, () => { }, onImageRequested: openedImages.Add)
             { Title = "KeeStashDock isolated UI smoke" };
 
             panel.ShowPanel();
@@ -54,7 +55,7 @@ internal static class QuickPanelWindowScenarios
             Assert.IsTrue(IsWindowVisible(handle), "The panel must be visible to Windows even without a taskbar button.");
             Assert.IsFalse(panel.ShowInTaskbar);
             Assert.IsFalse(panel.ShowActivated);
-            VerifyDepthModes(panel, settings, handle);
+            VerifyDepthModes(panel, settings, handle, openedImages);
             CaptureDocumentationPreviews(panel, settings, snippets);
             panel.ShowPanel();
             PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
@@ -95,7 +96,7 @@ internal static class QuickPanelWindowScenarios
         }
     }
 
-    private static void VerifyDepthModes(QuickPanelWindow panel, SettingsStore settings, nint handle)
+    private static void VerifyDepthModes(QuickPanelWindow panel, SettingsStore settings, nint handle, List<long> openedImages)
     {
         var shadow = panel.OwnedWindows.OfType<PanelShadowWindow>().Single();
         Assert.AreEqual(!SystemParameters.HighContrast, shadow.IsVisible);
@@ -123,9 +124,38 @@ internal static class QuickPanelWindowScenarios
             panel.UpdateLayout();
             Assert.AreEqual(settings.Current.FloatingPanelEnabled && FloatingCardMotion.AnimationsAllowed,
                 panel.FloatingDepthEnabled);
+            Assert.AreEqual(settings.Current.FloatingPanelEnabled && !SystemParameters.HighContrast,
+                panel.FloatingStyleEnabled, "Static floating chrome must not depend on Windows animation preferences.");
+            var frames = Descendants(cardList).OfType<FloatingFrame>().ToArray();
+            Assert.AreEqual(2, frames.Length);
+            Assert.IsTrue(frames.All(frame => !frame.IsHitTestVisible));
+            Assert.IsTrue(frames.All(frame => frame.IsVisible == panel.FloatingStyleEnabled));
+            Assert.AreEqual(panel.FloatingStyleEnabled ? Brushes.Transparent : panel.FindResource("B.CardBg"), card.Background);
             Assert.AreEqual(initial, new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight),
                 "Switching appearance cannot add shadow padding to the visible panel geometry.");
             Assert.AreSame(shadow, panel.OwnedWindows.OfType<PanelShadowWindow>().Single());
+            if (panel.FloatingStyleEnabled)
+            {
+                // Release on the fixed hit area, outside the displaced front
+                // surface, still opens the card. Use an image callback so this
+                // regression never copies to the real system clipboard.
+                var hitArea = Descendants(cardList).OfType<Grid>().Single(grid => grid.Tag is ViewModels.SnippetItemViewModel);
+                var item = (ViewModels.SnippetItemViewModel)hitArea.Tag;
+                var originalType = item.Model.Type;
+                try
+                {
+                    item.Model.Type = Domain.Entities.SnippetType.Image;
+                    int before = openedImages.Count;
+                    hitArea.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                        { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+                    Assert.AreEqual(before + 1, openedImages.Count);
+                    Assert.AreEqual(item.Id, openedImages[^1]);
+                    Descendants(card).OfType<Button>().First().RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice,
+                        Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+                    Assert.AreEqual(before + 1, openedImages.Count, "Pin/delete releases must not open their card.");
+                }
+                finally { item.Model.Type = originalType; }
+            }
         }
         ((Button)panel.FindName("ShrinkExpandBtn")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         panel.UpdateLayout();
@@ -165,11 +195,18 @@ internal static class QuickPanelWindowScenarios
         snippets.Add("Keep ideas close\nUseful notes, screenshots and links, ready when you need them.", Domain.Entities.SnippetSource.Manual);
         double originalHeight = settings.Current.PanelUserHeight ?? 460;
         bool originalMode = settings.Current.FloatingPanelEnabled;
+        bool originalDark = ThemeManager.IsDark;
         try
         {
             settings.Current.PanelUserHeight = 600;
-            foreach (bool floating in new[] { false, true })
+            foreach (var (floating, dark, name) in new[]
             {
+                (false, false, "classic-panel.png"),
+                (true, false, "floating-panel.png"),
+                (true, true, "floating-panel-dark.png"),
+            })
+            {
+                ThemeManager.Apply(dark ? "Dark" : "Light");
                 settings.Current.FloatingPanelEnabled = floating;
                 settings.Save();
                 panel.ShowPanel();
@@ -205,12 +242,13 @@ internal static class QuickPanelWindowScenarios
                 image.Render(frame);
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
-                using var output = File.Create(Path.Combine(directory, floating ? "floating-panel.png" : "classic-panel.png"));
+                using var output = File.Create(Path.Combine(directory, name));
                 encoder.Save(output);
             }
         }
         finally
         {
+            ThemeManager.Apply(originalDark ? "Dark" : "Light");
             settings.Current.PanelUserHeight = originalHeight;
             settings.Current.FloatingPanelEnabled = originalMode;
             settings.Save();
