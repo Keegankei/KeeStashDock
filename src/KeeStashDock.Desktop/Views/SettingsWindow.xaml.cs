@@ -88,7 +88,18 @@ public partial class SettingsWindow : Window
         _loading = false;
     }
 
+    public event Action? CheckUpdatesRequested;
+
     public void ShowAndActivate() { Show(); Activate(); }
+
+    public void ShowComponents()
+    {
+        ShowAndActivate();
+        Dispatcher.BeginInvoke(new Action(() => ComponentsSection.BringIntoView()));
+    }
+
+    private void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
+        => CheckUpdatesRequested?.Invoke();
 
     private void PopulateFromSettings()
     {
@@ -114,6 +125,7 @@ public partial class SettingsWindow : Window
             System.Globalization.CultureInfo.InvariantCulture);
         ThemeCombo.SelectedIndex = cfg.Theme switch
         { "Light" => 1, "Dark" => 2, _ => 0 };
+        PanelModeCombo.SelectedIndex = cfg.FloatingPanelEnabled ? 1 : 0;
 
         BgPathText.Text = cfg.BackgroundImagePath ?? "—";
         BgOpacitySlider.Value = Math.Clamp(cfg.BackgroundOverlayOpacity, 0.2, 1.0) * 100;
@@ -136,7 +148,7 @@ public partial class SettingsWindow : Window
         RefreshCustomColorUi();
         SelectionPopupCheck.IsChecked = cfg.SelectionPopupEnabled;
         SelectionActionCombo.SelectedIndex =
-            cfg.SelectionAction == "Translate" ? 1 : 0;
+            cfg.SelectionAction switch { "Translate" => 1, "Both" => 2, _ => 0 };
         BubbleStyleCombo.SelectedIndex = 1;   // fallback: FollowTheme
         for (int i = 0; i < BubbleStyleCombo.Items.Count; i++)
             if (BubbleStyleCombo.Items[i] is ComboBoxItem bs &&
@@ -507,14 +519,13 @@ public partial class SettingsWindow : Window
         SelectionActionCombo.Opacity = on ? 1.0 : 0.4;
         BubbleStyleCombo.IsEnabled = on;
         BubbleStyleCombo.Opacity = on ? 1.0 : 0.4;
-        // The engine row only EXISTS while the action is Translate; it is
-        // additionally locked with the bubble toggle like its siblings.
-        bool translate = (SelectionActionCombo.SelectedItem as ComboBoxItem)?.Tag
-            as string == "Translate";
+        // Screenshot translation also uses these providers, even with the
+        // selection bubble disabled or in capture-only mode.
+        const bool translate = true;
         TranslateEngineRow.Visibility =
             translate ? Visibility.Visible : Visibility.Collapsed;
-        TranslateEngineCombo.IsEnabled = on;
-        TranslateEngineCombo.Opacity = on ? 1.0 : 0.4;
+        TranslateEngineCombo.IsEnabled = true;
+        TranslateEngineCombo.Opacity = 1;
         string? engine = (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag as string;
         TranslateEngineHint.Visibility = translate && engine is not ("Aliyun" or "Offline")
             ? Visibility.Visible : Visibility.Collapsed;
@@ -522,18 +533,18 @@ public partial class SettingsWindow : Window
             ? Visibility.Visible : Visibility.Collapsed;
         OfflineSettingsPanel.Visibility = translate && engine == "Offline"
             ? Visibility.Visible : Visibility.Collapsed;
-        AliyunSettingsPanel.IsEnabled = on;
-        OfflineSettingsPanel.IsEnabled = on;
+        AliyunSettingsPanel.IsEnabled = true;
+        OfflineSettingsPanel.IsEnabled = true;
         TranslationTestPanel.Visibility = translate ? Visibility.Visible : Visibility.Collapsed;
-        TranslationTestButton.IsEnabled = on && _translationTestCancellation is null;
+        TranslationTestButton.IsEnabled = _translationTestCancellation is null;
         ApiKeyRow.Visibility = translate && engine is "DeepL" or "Baidu"
             ? Visibility.Visible : Visibility.Collapsed;
         TranslationAppIdRow.Visibility = translate && engine == "Baidu"
             ? Visibility.Visible : Visibility.Collapsed;
-        TranslationAppIdBox.IsEnabled = on;
-        TranslationAppIdBox.Opacity = on ? 1.0 : 0.4;
-        ApiKeyBox.IsEnabled = on;
-        ApiKeyBox.Opacity = on ? 1.0 : 0.4;
+        TranslationAppIdBox.IsEnabled = true;
+        TranslationAppIdBox.Opacity = 1;
+        ApiKeyBox.IsEnabled = true;
+        ApiKeyBox.Opacity = 1;
         BubbleGlowCheck.IsEnabled = on;
         BubbleGlowCheck.Opacity = on ? 1.0 : 0.4;
         BubbleShadowCheck.IsEnabled = on;
@@ -688,6 +699,17 @@ public partial class SettingsWindow : Window
         _settings.Current.Theme = theme;
         _settings.Save();
         ThemeManager.Apply(theme);
+    }
+
+    private void OnPanelModeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        string? mode = (PanelModeCombo.SelectedItem as ComboBoxItem)?.Tag as string;
+        if (mode is not ("Classic" or "Floating")) return;
+        bool enabled = mode == "Floating";
+        if (_settings.Current.FloatingPanelEnabled == enabled) return;
+        _settings.Current.FloatingPanelEnabled = enabled;
+        _settings.Save();
     }
 
     // --------------------------------------------------------- background

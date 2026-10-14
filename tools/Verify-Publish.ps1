@@ -33,7 +33,7 @@ while ($pending.Count -gt 0) {
 $required = @(
     'KeeStashDock.exe', 'KeeStashDock.dll', 'KeeStashDock.deps.json',
     'KeeStashDock.runtimeconfig.json', 'coreclr.dll', 'System.Private.CoreLib.dll',
-    'e_sqlite3.dll', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'StartHere.md', 'Screenshots.md',
+    'e_sqlite3.dll', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'StartHere.md', 'Screenshots.md', 'Updating.md',
     'x64/tesseract.exe', 'x64/tesseract55.dll', 'x64/leptonica-1.85.0.dll',
     'NativeRuntime/Setup.ps1',
     'OcrModels/Setup.ps1', 'OcrModels/README.md', 'OcrModels/LICENSE',
@@ -76,3 +76,4 @@ if ($LASTEXITCODE -ne 0 -or $languages -notcontains 'eng' -or $languages -notcon
     throw 'The packaged OCR engine could not start or load both language models.'
 }
 Write-Host 'Portable package verified: runtime, 20 locales, OCR engine/models, offline setup, licenses, and no private state.'
+& (Join-Path $PSScriptRoot 'Verify-UpdateManifest.ps1') -Path $publishDirectory

@@ -103,8 +103,7 @@ public partial class QuickPanelWindow : Window
         _clock = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _clock.Tick += (_, _) => TickStateMachine();
 
-        LocalizationService.Instance.LanguageChanged +=
-            () => LocalizationService.Instance.ApplyFlowDirection(this);
+        LocalizationService.Instance.LanguageChanged += OnPanelLanguageChanged;
         LocalizationService.Instance.ApplyFlowDirection(this);
 
         // Borderless windows get no system resize frame; WM_NCHITTEST turns
@@ -131,16 +130,22 @@ public partial class QuickPanelWindow : Window
             .CollectionChanged += (_, _) => ScheduleLocalTints();
 
         // Scrim color derives from the active palette - refresh on theme swap.
-        ThemeManager.Changed += () => { _visualSig = null; ApplyBackground(); };
+        ThemeManager.Changed += OnPanelThemeChanged;
         // Hot-apply: picking an image / moving the opacity or frost
         // sliders takes effect immediately, no re-summon needed (the
         // signature guard below makes unrelated saves - e.g. geometry - free).
-        _settings.Changed += () => Dispatcher.Invoke(ApplyBackground);
+        _settings.Changed += OnPanelSettingsChanged;
+        InitializeDepth();
         Closed += (_, _) =>
         {
             _visibilityTransition++;
             _clock.Stop();
             _tintTimer.Stop();
+            BeginAnimation(OpacityProperty, null);
+            DisposeDepth();
+            _settings.Changed -= OnPanelSettingsChanged;
+            ThemeManager.Changed -= OnPanelThemeChanged;
+            LocalizationService.Instance.LanguageChanged -= OnPanelLanguageChanged;
         };
     }
 
@@ -158,6 +163,7 @@ public partial class QuickPanelWindow : Window
     /// capped so a 20-megapixel wallpaper cannot balloon memory.</summary>
     private void ApplyBackground()
     {
+        ApplyDepthSettings();
         var cfg = _settings.Current;
         string sig = $"{cfg.BackgroundImagePath}|{cfg.BackgroundOverlayOpacity:0.##}|" +
                      $"{cfg.FrostedGlassEnabled}|{cfg.FrostedGlassRadius:0.#}|" +
@@ -228,6 +234,7 @@ public partial class QuickPanelWindow : Window
         ApplyForegroundScheme(cfg, haveImage ? imageAvg : null);
         // ...then the per-region pass refines individual text elements.
         _hasBgImage = haveImage;
+        ApplyBackgroundDepth();
         ScheduleLocalTints(rebuild: true);
 
     }
@@ -601,10 +608,8 @@ public partial class QuickPanelWindow : Window
 
         var t = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (t is null) return 0;
-        var m = t.TransformToDevice;
-        double l = Left * m.M11, tp = Top * m.M22;
-        double r = (Left + ActualWidth) * m.M11;
-        double b = (Top + ActualHeight) * m.M22;
+        if (!TryGetNativeBounds(out var bounds)) return 0;
+        double l = bounds.Left, tp = bounds.Top, r = bounds.Right, b = bounds.Bottom;
 
         bool left   = x >= l && x < l + ResizeBorderPx;
         bool right  = x <= r && x > r - ResizeBorderPx;
@@ -724,7 +729,8 @@ public partial class QuickPanelWindow : Window
         BeginAnimation(OpacityProperty, null);
         Opacity = 0;
         Show();
-        var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+        var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(
+            FloatingCardMotion.AnimationsAllowed ? 150 : 0))
         { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
         fade.Completed += (_, _) =>
         {
@@ -742,9 +748,16 @@ public partial class QuickPanelWindow : Window
     public void HidePanel()
     {
         _clock.Stop();
+        ResetDepthMotion();
         int transition = ++_visibilityTransition;
         double opacity = Opacity;
         BeginAnimation(OpacityProperty, null);
+        if (!FloatingCardMotion.AnimationsAllowed)
+        {
+            Opacity = 1;
+            Hide();
+            return;
+        }
         Opacity = opacity;
         var fade = new DoubleAnimation(opacity, 0, TimeSpan.FromMilliseconds(120));
         fade.Completed += (_, _) =>
@@ -770,6 +783,7 @@ public partial class QuickPanelWindow : Window
         // zone would immediately re-expand it, oscillating forever.
         bool engaged = IsMouseOver || IsKeyboardFocusWithin ||
                        CursorNearWindow(ProximityDip);
+        UpdateDepthApproach(engaged);
         var now = DateTime.UtcNow;
 
         if (_vm.IsLocked) { ResetTimers(); return; }   // lock pins the state
@@ -796,6 +810,7 @@ public partial class QuickPanelWindow : Window
     private void SetState(PanelState s)
     {
         if (_state == s) return;
+        ResetDepthMotion();
         _state = s;
         // Manual shrink leaves the cursor on the window; require it to leave
         // once before hover can auto-expand again.
@@ -818,10 +833,11 @@ public partial class QuickPanelWindow : Window
         if (t is null) return false;
         var m = t.TransformToDevice;
         double marginX = marginDip * m.M11, marginY = marginDip * m.M22;
-        double l = Left * m.M11 - marginX;
-        double tp = Top * m.M22 - marginY;
-        double r = (Left + ActualWidth) * m.M11 + marginX;
-        double b = (Top + ActualHeight) * m.M22 + marginY;
+        if (!TryGetNativeBounds(out var bounds)) return false;
+        double l = bounds.Left - marginX;
+        double tp = bounds.Top - marginY;
+        double r = bounds.Right + marginX;
+        double b = bounds.Bottom + marginY;
         return pt.X >= l && pt.X <= r && pt.Y >= tp && pt.Y <= b;
     }
 
@@ -907,6 +923,8 @@ public partial class QuickPanelWindow : Window
     private void OnCardClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: SnippetItemViewModel item }) return;
+        if (FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(
+                e.OriginalSource as DependencyObject) is not null) return;
 
         // File-path cards open their target on click (copy stays available
         // via Enter in the keyboard flow); other cards copy as before.
@@ -935,6 +953,8 @@ public partial class QuickPanelWindow : Window
     private void OnCardPressDown(object sender, MouseButtonEventArgs e)
     {
         _tearFired = false;
+        _pressItem = null;
+        _pressContainer = null;
         if (FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(
                 e.OriginalSource as DependencyObject) is not null) return;
         var container = ItemsControl.ContainerFromElement(
@@ -1062,7 +1082,9 @@ public partial class QuickPanelWindow : Window
         var ct = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (ct is not null) dipTL = ct.TransformFromDevice.Transform(deviceTL);
 
-        var note = new StickyNoteWindow(_pressItem, _settings.Current.CardOpacity);
+        ResetCardMotion(_pressContainer);
+        var note = new StickyNoteWindow(_pressItem, _settings.Current.CardOpacity,
+            _settings.Current.FloatingPanelEnabled, _settings);
         _pressItem = null;
         _pressContainer = null;
         Mouse.Capture(null);   // the ListBoxItem must let go before DragMove

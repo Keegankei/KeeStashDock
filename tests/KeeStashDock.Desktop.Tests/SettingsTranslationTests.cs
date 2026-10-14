@@ -188,10 +188,19 @@ public sealed class SettingsTranslationTests
             Assert.AreEqual("test-aliyun-secret-updated", finalSettings.Current.AliyunAccessKeySecret);
             Assert.AreEqual("http://127.0.0.1:5010", finalSettings.Current.OfflineTranslationEndpoint);
             Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = false;
-            Assert.IsFalse(key.IsEnabled);
-            Assert.IsFalse(appId.IsEnabled);
-            Assert.IsFalse(aliyunPanel.IsEnabled);
-            Assert.IsFalse(Named<Button>(window, "TranslationTestButton").IsEnabled);
+            Assert.IsTrue(key.IsEnabled, "Screenshot translation must remain configurable with the selection bubble disabled.");
+            Assert.IsTrue(appId.IsEnabled);
+            Assert.IsTrue(aliyunPanel.IsEnabled);
+            Assert.IsTrue(Named<Button>(window, "TranslationTestButton").IsEnabled);
+            var selectionAction = Named<ComboBox>(window, "SelectionActionCombo");
+            Assert.IsFalse(selectionAction.IsEnabled);
+            Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = true;
+            selectionAction.SelectedItem = selectionAction.Items.OfType<ComboBoxItem>().Single(item => (string?)item.Tag == "Both");
+            var bothSettings = new SettingsStore(settingsFile);
+            bothSettings.Load();
+            Assert.AreEqual("Both", bothSettings.Current.SelectionAction);
+            Assert.IsTrue(Named<Grid>(window, "TranslateEngineRow").IsVisible || window.Visibility != Visibility.Visible);
+            Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = false;
 
             // Both actions use an in-memory registrar: no global shortcut or
             // actual user's settings/registry are changed by this test.
@@ -233,6 +242,7 @@ public sealed class SettingsTranslationTests
                     "A locked export destination must be a recoverable failure instead of an unhandled UI exception.");
             }
             ImageEntryWindowScenarios.Verify(root);
+            UpdateWindowScenarios.Verify(root);
         }
         finally
         {

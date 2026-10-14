@@ -23,7 +23,16 @@
   <img alt="许可证：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-当前稳定版为 **1.2.1**。项目进入按需维护阶段，后续以缺陷修复和安全更新为主。
+当前已发布版本为 **1.2.1**。本分支正在准备 **1.2.2**，新增功能的验收进度见[候选版验收记录](docs/releases/1.2.2.md)。正式发布前，下方下载链接仍指向 1.2.1。
+
+## 1.2.2 候选版新增功能
+
+- **经典 / 悬浮模式：**在设置中切换。两种模式都提供柔和投影；悬浮模式增加鼠标靠近、按压和拖动反馈，并遵循 Windows 减少动画与高对比度设置。
+- **截图三入口：**框选后选择保存截图、提取文字或提取并翻译。Enter 保存，Esc 或右键取消。仅提取文字不会生成条目，也不会自动复制。
+- **复制与翻译并列：**划词气泡可同时显示两个独立按钮。复制仍会收纳到文本坞，翻译使用同一选区原文且不会新增条目。
+- **检查更新：**位于托盘菜单和设置的“关于”。点击后下载并校验 SHA-256，再确认重启升级；只替换受清单管理的应用文件。详情见[升级与恢复说明](docs/UPDATING.zh-CN.md)。
+
+候选版预览：[经典面板](docs/images/classic-panel.png) · [悬浮面板](docs/images/floating-panel.png) · [复制 / 翻译](docs/images/selection-actions.png) · [提取文字](docs/images/screenshot-text.png) · [检查更新](docs/images/update-check.png)。[图片来源说明](docs/images/README.md)。
 
 ## 下载与启动
 

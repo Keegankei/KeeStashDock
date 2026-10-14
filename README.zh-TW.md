@@ -23,7 +23,16 @@
   <img alt="授權條款：Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-目前穩定版本為 **1.2.1**。專案進入按需維護階段，後續以錯誤修正和安全性更新為主。
+目前已發布版本為 **1.2.1**。本分支正在準備 **1.2.2**，驗收進度見[候選版紀錄](docs/releases/1.2.2.md)。正式發布前，下方下載連結仍指向 1.2.1。
+
+## 1.2.2 候選版新增功能
+
+- **經典 / 懸浮模式：**在設定中切換。兩種模式皆有柔和投影；懸浮模式增加靠近、按壓與拖曳回饋，並遵循 Windows 減少動畫與高對比設定。
+- **截圖三種操作：**框選後儲存截圖、擷取文字或擷取並翻譯。Enter 儲存，Esc 或右鍵取消。僅擷取文字不會建立項目或自動複製。
+- **複製與翻譯並列：**選取文字的氣泡可同時顯示兩個獨立按鈕。複製仍會收納到文字塢；翻譯使用同一段原文而不新增項目。
+- **檢查更新：**位於系統匣選單與設定的「關於」。點選下載並驗證 SHA-256，再確認重新啟動升級；只替換清單管理的程式檔案。詳見[升級與復原說明](docs/UPDATING.md)。
+
+候選版預覽：[經典面板](docs/images/classic-panel.png) · [懸浮面板](docs/images/floating-panel.png) · [複製 / 翻譯](docs/images/selection-actions.png) · [擷取文字](docs/images/screenshot-text.png) · [檢查更新](docs/images/update-check.png)。[圖片來源說明](docs/images/README.md)。
 
 ## 下載與啟動
 

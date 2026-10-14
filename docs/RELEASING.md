@@ -32,6 +32,7 @@ dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --no-restore `
   -p:PublishProfile=FolderProfile `
   --output artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/New-UpdateManifest.ps1 -Path artifacts/publish
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
 ```
 
@@ -67,6 +68,10 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - Duplicate group creation/rename, numeric suffix suggestions, and imports with whitespace/case name conflicts
 - Upgrade a copy of a v1/v2 database containing duplicate group names; verify group IDs, memberships, and snippet content remain intact
 - Theme switching, custom appearance, high DPI, and Arabic right-to-left layout
+- Classic/Floating modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
+- Screenshot Save / Extract / Extract and translate, transient text, source-copy after failure, cancellation and reselection
+- Selection Copy / Translate / Both, Copy then Translate on the same source, history on/off and stale async results
+- Update check/download cancellation, same-path managed replacement, preserved custom/component/data files, denied elevation, interrupted helper and startup-health rollback
 
 The current build upgrades databases to schema v4 on startup. Back up existing user data before an upgrade. Older binaries that support only v1-v3 cannot open a v4 database; testing an older binary requires a separate copy of a pre-upgrade backup. Version 2 group exports preserve image assets; version 1 text imports remain supported.
 

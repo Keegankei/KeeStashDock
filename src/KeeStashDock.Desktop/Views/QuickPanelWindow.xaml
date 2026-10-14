@@ -34,10 +34,13 @@
         <!-- Optional user background image (ImageBrush set in code); the
              frosted-glass BlurEffect attaches here so it blurs ONLY the
              image, never the content above it. -->
+        <Grid x:Name="BackgroundLayer" IsHitTestVisible="False">
         <Border x:Name="BgImage" CornerRadius="11" Background="Transparent"/>
         <!-- Theme-colored scrim over the image; opacity is user-set
              (Settings > background). Transparent when no image. -->
         <Border x:Name="Scrim" CornerRadius="11" Background="Transparent"/>
+        </Grid>
+        <Border x:Name="DepthHighlight" CornerRadius="11" IsHitTestVisible="False"/>
         <Grid>
           <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>   <!-- top bar (the whole shrunk state) -->
@@ -182,7 +185,14 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <!-- One snippet card. Single click copies (the primary gesture). -->
-              <Border Style="{StaticResource S.Card}"
+              <Grid Margin="8,7" Background="Transparent"
+                    v:FloatingCardMotion.Enabled="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}"
+                    v:FloatingCardMotion.Target="{Binding ElementName=CardMotionSurface}">
+                <Grid x:Name="CardMotionSurface">
+                  <v:SurfaceShadow Spread="4" ShadowOffset="1"
+                                   Strength="{DynamicResource Panel.CardShadowStrength}"
+                                   Visibility="{DynamicResource Panel.ShadowVisibility}"/>
+              <Border Style="{StaticResource S.Card}" Margin="0" Effect="{x:Null}"
                       MouseLeftButtonUp="OnCardClick" Tag="{Binding}">
                 <Grid>
                   <Grid.RowDefinitions>
@@ -257,6 +267,8 @@
                   </DockPanel>
                 </Grid>
               </Border>
+                </Grid>
+              </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>

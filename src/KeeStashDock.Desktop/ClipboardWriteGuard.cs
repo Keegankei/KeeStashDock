@@ -2,7 +2,7 @@ using KeeStashDock.Desktop.Interop;
 
 namespace KeeStashDock.Desktop;
 
-/// <summary>Distinguishes copying an existing entry from new clipboard history.</summary>
+/// <summary>Distinguishes application-owned clipboard writes and selection reads from new history.</summary>
 internal sealed class ClipboardWriteGuard(Func<uint> getSequence)
 {
     internal static ClipboardWriteGuard Shared { get; } = new(NativeMethods.GetClipboardSequenceNumber);
@@ -13,14 +13,38 @@ internal sealed class ClipboardWriteGuard(Func<uint> getSequence)
 
     internal void Write(Action write)
     {
+        using var scope = BeginWrite();
+        write();
+    }
+
+    /// <summary>
+    /// Also covers delayed clipboard notifications while an external application
+    /// responds to our simulated Ctrl+C. The caller must keep this scope until
+    /// that copy has completed, including when its UI request has been canceled.
+    /// </summary>
+    internal IDisposable BeginWrite()
+    {
         uint before = getSequence();
         _writeDepth++;
-        try { write(); }
-        finally
+        return new WriteScope(this, before);
+    }
+
+    private void CompleteWrite(uint before)
+    {
+        uint after = getSequence();
+        if (after != before) _ownSequence = after;
+        _writeDepth--;
+    }
+
+    private sealed class WriteScope(ClipboardWriteGuard owner, uint before) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
         {
-            uint after = getSequence();
-            if (after != before) _ownSequence = after;
-            _writeDepth--;
+            if (_disposed) return;
+            _disposed = true;
+            owner.CompleteWrite(before);
         }
     }
 }

@@ -63,6 +63,8 @@
 
   <ItemGroup>
     <!-- Ship the project and dependency notices with every distributable build. -->
+    <None Include="..\..\docs\UPDATING.md" Link="Updating.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\GETTING_STARTED.md" Link="StartHere.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\LICENSE" Link="LICENSE"

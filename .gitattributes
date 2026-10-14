@@ -15,3 +15,6 @@
 *.db binary
 *.sqlite binary
 *.sqlite3 binary
+
+# Preserve verbatim upstream notice formatting, including trailing blank lines.
+third_party/** whitespace=-blank-at-eof

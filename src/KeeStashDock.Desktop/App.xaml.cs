@@ -48,9 +48,20 @@ public partial class App : Application
     private bool _exitPending;
     private SettingsWindow? _settingsWin;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        LocalizationService.Instance.SetLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
+        if (await DesktopUpdateCoordinator.RunHelperIfRequestedAsync(e.Args))
+        {
+            Shutdown(Environment.ExitCode);
+            return;
+        }
+        if (!DesktopUpdateCoordinator.CheckRecoveryBeforeStartup(e.Args))
+        {
+            Shutdown();
+            return;
+        }
 
         if (!DesktopApplicationRestarter.WaitForPreviousInstance(e.Args))
         {
@@ -114,6 +125,7 @@ public partial class App : Application
         _tray.ShowPanelRequested += TogglePanel;
         _tray.ShowWorkbenchRequested += ShowWorkbench;
         _tray.ShowSettingsRequested += ShowSettings;
+        _tray.CheckUpdatesRequested += ShowUpdates;
         _tray.ExitRequested += ExitApp;
         _tray.CaptureRequested += CaptureScreenshot;
 
@@ -131,44 +143,12 @@ public partial class App : Application
             _tray.ShowInfo("KeeStashDock", LocalizationService.Instance["Screenshot.HotkeyConflict"]);
         _screenshotHotkey.HotkeyPressed += CaptureScreenshot;
 
-        // Selection popup: a mouse hook spots select-like gestures anywhere
-        // on the desktop and offers a "copy to KeeStashDock" bubble beside
-        // the selection.
-        _selectionWatcher = new SelectionWatcher();
-        _selectionPopup = new SelectionPopupWindow(settings);
-        _translationCard = new TranslationResultWindow(settings);
-        _translationCard.IsVisibleChanged += (_, _) =>
-        {
-            if (!_translationCard.IsVisible) _translationCancellation?.Cancel();
-        };
-        MiniToast.Settings = settings;
-        DirectPaste.Settings = settings;
-        DirectPaste.StartTracking();
-        _clipboardWatcher = new ClipboardWatcher(
-            settings, _services.GetRequiredService<SnippetService>());
-        _selectionWatcher.SelectionLikely += (x, y) =>
-        {
-            if (_capturingScreenshot) return;
-            _internalSelectionSource = null;
-            _translationCancellation?.Cancel();
-            if (!settings.Current.SelectionPopupEnabled) return;
-            (_lastSelectionX, _lastSelectionY) = (x, y);
-            _translationCard.HideCard();   // a new selection retires old results
-            _selectionPopup.ShowAt(x, y);
-        };
-        _selectionWatcher.AnyMouseDown += (_, _) =>
-        {
-            _internalSelectionSource = null;
-            _translationCancellation?.Cancel();
-            _selectionPopup.HideBubble();
-            _translationCard.HideCard();
-        };
-        _selectionPopup.CaptureRequested += CaptureSelectionAsync;
-        _selectionPopup.TranslateRequested += TranslateSelectionAsync;
-        ApplySelectionPopupSetting(settings);
-        settings.Changed += () => ApplySelectionPopupSetting(settings);
+        InitializeSelectionServices(settings);
 
         Log.Info("Startup complete (stowed state)");
+        DesktopUpdateCoordinator.AcknowledgeStartup(e.Args);
+        if (await DesktopUpdateCoordinator.WaitForCompletionAsync(e.Args, _shutdownCancellation.Token))
+            _tray.ShowInfo("KeeStashDock", LocalizationService.Instance["Updates.Completed"]);
     }
 
     // ------------------------------------------------------------ windows
@@ -198,20 +178,6 @@ public partial class App : Application
     private CancellationTokenSource? _translationCancellation;
     private int _lastSelectionX, _lastSelectionY;
     private bool? _selectionPopupApplied;
-
-    private void ApplySelectionPopupSetting(SettingsStore settings)
-    {
-        bool enable = settings.Current.SelectionPopupEnabled && !_capturingScreenshot;
-        if (!enable)
-        {
-            _translationCancellation?.Cancel();
-            _translationCard.HideCard();
-        }
-        if (_selectionPopupApplied == enable) return;
-        _selectionPopupApplied = enable;
-        if (enable) _selectionWatcher.Start();
-        else { _selectionWatcher.Stop(); _selectionPopup.HideBubble(); }
-    }
 
     /// <summary>One-shot starter content (runs after migrations, before any
     /// UI): a localized "Default" group plus a "Git BASH" group pre-filled
@@ -273,227 +239,6 @@ public partial class App : Application
         }
     }
 
-    /// <summary>Bubble clicked: synthesize Ctrl+C into the still-focused
-    /// source app, VERIFY via the clipboard sequence number that a copy
-    /// actually happened (the gesture heuristic can misfire on plain drags),
-    /// wash the formatting off, stash into the panel's current group.
-    ///
-    /// Rich-text hardening (bug: browser PAGE selections toasted "no
-    /// selection" while input-box text worked). Two distinct failure modes
-    /// were being conflated:
-    ///   1. Browsers write HTML + RTF + text and can take well over the old
-    ///      600 ms - the wait window is now 2 s with early exit;
-    ///   2. worse, the sequence number often bumps while the source app
-    ///      STILL HOLDS the clipboard open for the remaining formats, so the
-    ///      first GetText() threw CLIPBRD_E_CANT_OPEN, was caught into "",
-    ///      and misreported as "no selection". Reading now retries, and if a
-    ///      copy verifiably happened (seq changed) but text stays
-    ///      unreachable, falls back to the CF_HTML fragment stripped to
-    ///      plain text; only then does it report "capture failed" - a
-    ///      DIFFERENT message from "no selection".</summary>
-    private async void CaptureSelectionAsync()
-    {
-        string? text = await GetSelectedTextAsync();
-        if (text is null) return;   // failure toasts already shown
-
-        // Wash formatting: clipboard now holds ONLY plain text.
-        try { ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(text, copy: true)); } catch { }
-
-        long? category = _panel?.CurrentCategoryId;
-        long id = _services.GetRequiredService<SnippetService>()
-            .Add(text, Domain.Entities.SnippetSource.Clipboard, categoryId: category);
-        if (category is long cat)
-            _services.GetRequiredService<SnippetService>().AssignCategory(id, cat);
-
-        MiniToast.Show(LocalizationService.Instance["Toast.Captured"]);
-    }
-
-    /// <summary>Selection translation grabs the selection with the
-    /// same Ctrl+C flow as capture, then shows the glass result card in an
-    /// immediate "translating..." state so the click always visibly lands,
-    /// swapping in the translation (or a calm error) when the service
-    /// answers. Nothing is stored and the clipboard is NOT washed - the
-    /// user asked to READ this text, not to keep it.</summary>
-    private async void TranslateSelectionAsync()
-    {
-        _translationCancellation?.Cancel();
-        using var request = new CancellationTokenSource();
-        _translationCancellation = request;
-        try
-        {
-            string? text = await GetSelectedTextAsync(request.Token);
-            if (text is null || request.IsCancellationRequested) return;
-
-            _translationCard.ShowTranslating(_lastSelectionX, _lastSelectionY);
-            var cfg = _services.GetRequiredService<SettingsStore>().Current;
-            TranslationResult result = await TranslationService.TranslateDetailedAsync(
-                text, cfg, request.Token);
-
-            if (request.IsCancellationRequested ||
-                !ReferenceEquals(_translationCancellation, request) ||
-                !_translationCard.IsVisible) return;
-            if (result.IsSuccess)
-            {
-                _translationCard.ShowResult(result.Text!);
-            }
-            else if (result.Failure != TranslationFailure.Cancelled)
-            {
-                // Only diagnostic categories are logged, never text or credentials.
-                Log?.Warn($"Translation failed: provider={result.Provider}, " +
-                    $"failure={result.Failure}, http={result.HttpStatusCode}");
-                _translationCard.ShowError(TranslationService.FailureMessageKey(result));
-            }
-        }
-        catch (OperationCanceledException) when (request.IsCancellationRequested)
-        {
-            // A changed selection or dismissed request has no result to show.
-        }
-        finally
-        {
-            if (ReferenceEquals(_translationCancellation, request))
-                _translationCancellation = null;
-        }
-    }
-
-    /// <summary>Synthesizes Ctrl+C and reads the selection as plain text.
-    /// Null (with the appropriate toast already shown) when nothing was
-    /// selected or nothing text-like could be read.</summary>
-    private static async Task<string?> GrabSelectionTextAsync(
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        uint seqBefore = NativeMethods.GetClipboardSequenceNumber();
-
-        NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
-        NativeMethods.keybd_event(NativeMethods.VK_C, 0, 0, UIntPtr.Zero);
-        NativeMethods.keybd_event(NativeMethods.VK_C, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-        NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-
-        bool copied = false;
-        for (int i = 0; i < 50; i++)                  // up to ~2 s, exits early
-        {
-            await Task.Delay(40, cancellationToken);
-            if (NativeMethods.GetClipboardSequenceNumber() != seqBefore)
-            { copied = true; break; }
-        }
-        if (!copied)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            // Sequence never moved: nothing was selected (or the page blocks
-            // copying) - genuinely "no selection".
-            MiniToast.Show(LocalizationService.Instance["Toast.NoSelection"]);
-            return null;
-        }
-
-        // A copy DID happen. Read with retries: the source may still hold
-        // the clipboard open while writing its remaining formats.
-        string text = string.Empty;
-        for (int i = 0; i < 12 && text.Length == 0; i++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            try
-            {
-                var data = Clipboard.GetDataObject();
-                if (data?.GetData(DataFormats.UnicodeText) is string t &&
-                    !string.IsNullOrWhiteSpace(t))
-                {
-                    text = t;
-                    break;
-                }
-                if (data is not null)
-                {
-                    // Formats are readable but none is plain text: some web
-                    // apps put ONLY HTML on the clipboard - strip it down.
-                    if (data.GetDataPresent(DataFormats.Html) &&
-                        data.GetData(DataFormats.Html) is string html)
-                    {
-                        string stripped = HtmlClipboardToPlainText(html);
-                        if (!string.IsNullOrWhiteSpace(stripped))
-                        {
-                            text = stripped;
-                            break;
-                        }
-                    }
-                    if (!data.GetDataPresent(DataFormats.UnicodeText))
-                        break;   // image/file-only clipboard: retrying won't help
-                }
-            }
-            catch (System.Runtime.InteropServices.COMException)
-            { /* clipboard transiently locked by the source app - retry */ }
-            await Task.Delay(60, cancellationToken);
-        }
-
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            // The copy happened but yielded nothing text-like - tell the
-            // truth instead of blaming the (real) selection.
-            MiniToast.Show(LocalizationService.Instance["Toast.CaptureFailed"]);
-            return null;
-        }
-
-        return text;
-    }
-
-    /// <summary>Last-resort plain text from a CF_HTML clipboard payload:
-    /// takes the StartFragment..EndFragment slice, turns the common block
-    /// terminators into newlines, drops every remaining tag, and decodes
-    /// entities. Not a general HTML renderer - good enough for the "web app
-    /// copied HTML only" fallback path.</summary>
-    private static string HtmlClipboardToPlainText(string cfHtml)
-    {
-        string html = cfHtml;
-        int start = cfHtml.IndexOf("<!--StartFragment-->", StringComparison.OrdinalIgnoreCase);
-        int end = cfHtml.IndexOf("<!--EndFragment-->", StringComparison.OrdinalIgnoreCase);
-        if (start >= 0 && end > start)
-            html = cfHtml[(start + "<!--StartFragment-->".Length)..end];
-
-        html = System.Text.RegularExpressions.Regex.Replace(
-            html, @"<(br|/p|/div|/li|/tr|/h[1-6])\s*/?>", "\n",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        html = System.Text.RegularExpressions.Regex.Replace(
-            html, @"<script[\s\S]*?</script>|<style[\s\S]*?</style>", "",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        html = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", "");
-        html = System.Net.WebUtility.HtmlDecode(html);
-        html = System.Text.RegularExpressions.Regex.Replace(html, "[ \\t]+\\n", "\n");
-        html = System.Text.RegularExpressions.Regex.Replace(html, "\\n{3,}", "\n\n");
-        return html.Trim();
-    }
-
-    private Task<string?> GetSelectedTextAsync(CancellationToken cancellationToken = default)
-    {
-        TextBox? source = _internalSelectionSource;
-        if (source is null) return GrabSelectionTextAsync(cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        string? selected = source.IsVisible ? source.SelectedText : null;
-        return Task.FromResult(string.IsNullOrWhiteSpace(selected) ? null : selected);
-    }
-
-    private void ShowInternalSelection(TextBox source)
-    {
-        var settings = _services.GetRequiredService<SettingsStore>().Current;
-        if (!settings.SelectionPopupEnabled || _capturingScreenshot || string.IsNullOrWhiteSpace(source.SelectedText)) return;
-        _translationCancellation?.Cancel();
-        _translationCard.HideCard();
-        _internalSelectionSource = source;
-        Rect caret = source.GetRectFromCharacterIndex(source.SelectionStart + source.SelectionLength);
-        Point local = caret.IsEmpty ? Mouse.GetPosition(source) : caret.BottomRight;
-        Point point = source.PointToScreen(local);
-        if (!double.IsFinite(point.X) || !double.IsFinite(point.Y)) return;
-        (_lastSelectionX, _lastSelectionY) = ((int)point.X, (int)point.Y);
-        _selectionPopup.ShowAt(_lastSelectionX, _lastSelectionY);
-    }
-
-    private void DismissInternalSelection()
-    {
-        if (_internalSelectionSource is null) return;
-        _internalSelectionSource = null;
-        _translationCancellation?.Cancel();
-        _selectionPopup.HideBubble();
-        _translationCard.HideCard();
-    }
-
     private void ShowImageEntry(long id)
     {
         if (_imageWindows.TryGetValue(id, out var existing))
@@ -516,61 +261,9 @@ public partial class App : Application
         { MiniToast.Show(LocalizationService.Instance["Screenshot.ImageUnavailable"]); }
     }
 
-    private void CaptureScreenshot()
-        => CaptureScreenshotFrom(_workbench?.IsActive == true ? _workbench.CurrentCategoryId : _panel?.CurrentCategoryId,
-            _workbench?.IsActive == true ? ExpirePolicy.Never : _panel?.CurrentExpirePolicy ?? ExpirePolicy.Never);
-
-    private async void CaptureScreenshotFrom(long? categoryId, ExpirePolicy expire)
-    {
-        if (_capturingScreenshot || _preparingShutdown || _shutdownCancellation.IsCancellationRequested ||
-            !_services.GetRequiredService<DatabaseMaintenanceCoordinator>().CanStartOperation) return;
-        _capturingScreenshot = true;
-        var settings = _services.GetRequiredService<SettingsStore>();
-        var visible = Windows.OfType<Window>().Where(window => window.IsVisible &&
-            window is not SelectionPopupWindow && window is not TranslationResultWindow).ToArray();
-        nint previousForeground = NativeMethods.GetForegroundWindow();
-        bool saved = false;
-        _translationCancellation?.Cancel();
-        _internalSelectionSource = null;
-        _selectionPopup.HideBubble();
-        _translationCard.HideCard();
-        _selectionWatcher.Stop();
-        try
-        {
-            foreach (Window window in visible) window.Hide();
-            // Let the desktop compositor remove our windows before freezing the screen.
-            await Task.Delay(180, _shutdownCancellation.Token);
-            CapturedScreenshot? captured = await _screenshotCapture.CaptureAsync(_shutdownCancellation.Token);
-            if (captured is null) return;
-            byte[] preview = ImagePresentation.Thumbnail(captured.PngBytes);
-            var snippets = _services.GetRequiredService<SnippetService>();
-            long id = snippets.AddImage(captured.PngBytes, preview, categoryId, expire);
-            if (categoryId is long group) snippets.AssignCategory(id, group);
-            saved = true;
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception)
-        { MiniToast.Show(LocalizationService.Instance["Screenshot.CaptureFailed"]); }
-        finally
-        {
-            if (!_shutdownCancellation.IsCancellationRequested)
-            {
-                foreach (Window window in visible)
-                    if (Windows.OfType<Window>().Contains(window))
-                    {
-                        if (window is QuickPanelWindow quickPanel) quickPanel.ShowPanel();
-                        else window.Show();
-                    }
-                if (previousForeground != nint.Zero) NativeMethods.SetForegroundWindow(previousForeground);
-                if (settings.Current.SelectionPopupEnabled) _selectionWatcher.Start();
-                if (saved) { Panel.ShowPanel(); MiniToast.Show(LocalizationService.Instance["Screenshot.Saved"]); }
-            }
-            _capturingScreenshot = false;
-        }
-    }
-
     private void TogglePanel()
     {
+        if (_exitPending) return;
         if (_capturingScreenshot) return;
         if (Panel.IsVisible) Panel.HidePanel();
         else ShowPanel();
@@ -578,6 +271,7 @@ public partial class App : Application
 
     private void ShowPanel()
     {
+        if (_exitPending) return;
         // A second executable launch summons the panel; it must not hide an
         // already visible panel or replace its remembered direct-paste target.
         if (_capturingScreenshot) return;
@@ -587,6 +281,7 @@ public partial class App : Application
 
     private void ShowWorkbench()
     {
+        if (_exitPending) return;
         _workbench ??= new WorkbenchWindow(
             _services.GetRequiredService<SnippetService>(),
             _services.GetRequiredService<SearchService>(),
@@ -603,13 +298,24 @@ public partial class App : Application
 
     private void ShowSettings()
     {
-        _settingsWin ??= new SettingsWindow(
-            _services.GetRequiredService<SettingsStore>(),
-            _services.GetRequiredService<BackupService>(),
-            _services.GetRequiredService<DatabaseImportService>(),
-            _services.GetRequiredService<IApplicationRestarter>(),
-            _hotkey, _screenshotHotkey, prepareForShutdown: PrepareForShutdownAsync);
+        if (_exitPending) return;
+        if (_settingsWin is null)
+        {
+            _settingsWin = new SettingsWindow(
+                _services.GetRequiredService<SettingsStore>(),
+                _services.GetRequiredService<BackupService>(),
+                _services.GetRequiredService<DatabaseImportService>(),
+                _services.GetRequiredService<IApplicationRestarter>(),
+                _hotkey, _screenshotHotkey, prepareForShutdown: PrepareForShutdownAsync);
+            _settingsWin.CheckUpdatesRequested += ShowUpdates;
+        }
         _settingsWin.ShowAndActivate();
+    }
+
+    private void ShowComponentSettings()
+    {
+        ShowSettings();
+        _settingsWin?.ShowComponents();
     }
 
     private async Task<bool> PrepareForShutdownAsync()
@@ -656,6 +362,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _translationCancellation?.Cancel();
+        _updateWindow?.CancelOperation();
         DirectPaste.StopTracking();
         _clipboardWatcher?.Dispose();
         _selectionWatcher?.Dispose();

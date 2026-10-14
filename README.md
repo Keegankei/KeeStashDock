@@ -23,7 +23,16 @@
   <img alt="License: Apache 2.0" src="docs/assets/badges/license.svg">
 </p>
 
-Current stable release: **1.2.1**. The project is maintained as needed, with a focus on bug fixes and security updates.
+Current published release: **1.2.1**. This branch prepares **1.2.2**; its new features remain subject to the [candidate acceptance record](docs/releases/1.2.2.md). The download links below continue to point to the published release until 1.2.2 is released.
+
+## New in the 1.2.2 candidate
+
+- **Classic / Floating:** switch panel modes in Settings. Both use soft shadows; Floating adds pointer, press, and drag feedback. Windows reduced-animation and high-contrast preferences disable motion effects.
+- **Screenshot actions:** after selecting a region, save the image, extract text, or extract and translate. Enter saves; Esc/right-click cancels. Extraction alone creates no entry and copies nothing automatically.
+- **Copy and translate:** the selection bubble can show two independent buttons. Copy retains capture-to-dock behavior; Translate uses the same selected text without creating an entry.
+- **Check for updates:** open the tray menu or Settings > About. Downloads require a click and SHA-256 verification; replacement requires a separate restart confirmation. Only managed application files are replaced. Read [upgrade and recovery instructions](docs/UPDATING.md).
+
+Candidate previews: [Classic](docs/images/classic-panel.png) · [Floating](docs/images/floating-panel.png) · [Copy / Translate](docs/images/selection-actions.png) · [Extracted text](docs/images/screenshot-text.png) · [Update check](docs/images/update-check.png). [Image provenance](docs/images/README.md).
 
 ## Download and start
 

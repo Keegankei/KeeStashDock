@@ -6,6 +6,16 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+### 1.2.2 candidate
+
+- Added a persisted Classic / Floating panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
+- Added screenshot actions for saving an image, extracting text, or extracting and translating. OCR-only results stay in memory, and recognized source text remains available after translation failures.
+- Added a combined selection bubble with separate Copy and Translate buttons, cached source text, temporary keyboard shortcuts, and clipboard-history deduplication.
+- Added explicit update checks in the tray and Settings, official GitHub release discovery, cancellable SHA-256-verified downloads, ownership manifests, same-path replacement, and startup-health rollback/recovery.
+- Kept translation-provider settings available for screenshot translation when the selection bubble is disabled.
+- Added regression coverage for presentation, screenshot routing, selection sessions, release metadata, unsafe packages, managed-file preservation, and interrupted updates. See the [1.2.2 acceptance record](docs/releases/1.2.2.md) for current results and outstanding visual/platform checks.
+
+
 ## [1.2.1] - 2026-10-12
 
 First packaged release of the current feature set. Includes the fixes and validation from the earlier 1.1.2 development candidates.

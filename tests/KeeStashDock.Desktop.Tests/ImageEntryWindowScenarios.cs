@@ -126,8 +126,30 @@ internal static class ImageEntryWindowScenarios
         string? copiedResult = null;
         Assert.IsTrue(translation.TryCopyResult(value => copiedResult = value));
         Assert.AreEqual("Translated sample", copiedResult, "A failed copy must leave the translation available for retry.");
+        translation.SetRecognizedSource("Recognized source sample");
+        translation.ShowError("Translate.Failed");
+        Assert.IsTrue(translation.TryCopySource(value => copiedResult = value));
+        Assert.AreEqual("Recognized source sample", copiedResult, "Translation failure must preserve the recognized source.");
+        Assert.IsFalse(translation.TryCopyResult(_ => Assert.Fail("An error is not a translation to copy.")));
         translation.HideCard();
+        Assert.IsFalse(translation.TryCopySource(_ => Assert.Fail("Dismissal must release the source text.")));
         translation.Close();
+
+        var screenshotActions = new System.Windows.Controls.StackPanel();
+        var extractAction = new Button();
+        var translateAction = new Button();
+        screenshotActions.Children.Add(extractAction);
+        screenshotActions.Children.Add(translateAction);
+        int extracts = 0, translations = 0;
+        extractAction.Click += (_, _) => extracts++;
+        translateAction.Click += (_, _) => translations++;
+        Assert.IsTrue(ScreenshotSelection.InvokeFocusedAction(screenshotActions, extractAction));
+        Assert.IsTrue(ScreenshotSelection.InvokeFocusedAction(screenshotActions, translateAction));
+        Assert.AreEqual(1, extracts, "Enter on the OCR action must invoke OCR, not default Save.");
+        Assert.AreEqual(1, translations, "Enter on the translation action must invoke translation, not default Save.");
+        Assert.IsFalse(ScreenshotSelection.InvokeFocusedAction(screenshotActions, new Button()));
+        Assert.IsFalse(ScreenshotSelection.InvokeFocusedAction(screenshotActions, null));
+        CaptureActionDocumentationPreviews(isolatedRoot);
 
         WeakReference closedPreview = CreateClosedImageWindow(snippets, id, png);
         WeakReference closedWindow = CreateClosedTrackedWindow();
@@ -137,6 +159,62 @@ internal static class ImageEntryWindowScenarios
         GC.Collect();
         Assert.IsFalse(closedWindow.IsAlive, "Theme updates must not retain closed windows and their image buffers.");
         Assert.IsFalse(closedPreview.IsAlive, "Snippet change subscriptions must not retain closed image previews.");
+    }
+
+    private static void CaptureActionDocumentationPreviews(string isolatedRoot)
+    {
+        string? destination = Environment.GetEnvironmentVariable("KEESTASHDOCK_DOC_IMAGES");
+        if (string.IsNullOrWhiteSpace(destination)) return;
+        string directory = Path.GetFullPath(destination);
+        Directory.CreateDirectory(directory);
+        var settings = new SettingsStore(Path.Combine(isolatedRoot, "action-previews.json"));
+        settings.Current.SelectionAction = "Both";
+        settings.Current.BubbleTextGlow = false;
+        var selection = new SelectionPopupWindow(settings);
+        var recognition = new TranslationResultWindow(settings);
+        try
+        {
+            // Render actual view content without showing native windows, triggering
+            // selection reads/hotkeys, capturing desktop pixels, or touching clipboard.
+            RenderWindow(selection, "selection-actions.png");
+            recognition.ShowRecognizedText("Keep ideas close.\nCapture a region, extract its text, then copy only when you need it.");
+            RenderWindow(recognition, "screenshot-text.png");
+        }
+        finally { selection.Close(); recognition.Close(); }
+
+        void RenderWindow(Window view, string fileName)
+        {
+            var content = (FrameworkElement)view.Content;
+            view.Content = null;
+            var frame = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(230, 235, 243)),
+                Padding = new Thickness(24),
+                FlowDirection = view.FlowDirection,
+                Child = content,
+            };
+            try
+            {
+                // Render the arranged visual directly. VisualBrush would scale the
+                // margin/effect bounds into ActualWidth/Height and compress the text.
+                frame.Measure(new Size(468, double.PositiveInfinity));
+                frame.Arrange(new Rect(frame.DesiredSize));
+                frame.UpdateLayout();
+                int width = (int)Math.Ceiling(frame.ActualWidth);
+                int height = (int)Math.Ceiling(frame.ActualHeight);
+                var image = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                image.Render(frame);
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(image));
+                using var output = File.Create(Path.Combine(directory, fileName));
+                encoder.Save(output);
+            }
+            finally
+            {
+                frame.Child = null;
+                view.Content = content;
+            }
+        }
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]

@@ -185,6 +185,10 @@ public sealed class AppSettings
     /// <summary>Application theme: "Light", "Dark", or "System".</summary>
     public string Theme { get; set; } = "System";
 
+    /// <summary>Opt-in floating panel depth and interaction animations.
+    /// Missing settings preserve the classic appearance.</summary>
+    public bool FloatingPanelEnabled { get; set; } = false;
+
     /// <summary>One-shot flag: the starter groups ("Default" + "Git BASH"
     /// with its pre-filled high-frequency git commands) have been created.
     /// Prevents re-seeding after the user renames or deletes them.</summary>

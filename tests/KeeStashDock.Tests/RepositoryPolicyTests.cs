@@ -191,7 +191,7 @@ public sealed class RepositoryPolicyTests
         foreach (string file in EnumeratePolicyTextFiles(root))
         {
             string relative = NormalizeRelative(root, file);
-            if (IsLocalizedReadme(root, relative)
+            if (IsLocalizedReadme(root, relative) || IsLocalizedDocumentation(root, relative)
                 || relative.StartsWith(
                     "src/KeeStashDock.Desktop/Locales/",
                     StringComparison.OrdinalIgnoreCase))
@@ -239,6 +239,13 @@ public sealed class RepositoryPolicyTests
         }
     }
 
+
+    private static bool IsLocalizedDocumentation(string root, string relative)
+    {
+        Match match = Regex.Match(relative, @"\A(docs/.+)\.([a-z]{2,3}-[A-Z]{2})\.md\z", RegexOptions.CultureInvariant);
+        return match.Success && File.Exists(Path.Combine(root, match.Groups[1].Value + ".md"))
+            && File.Exists(Path.Combine(root, "src", "KeeStashDock.Desktop", "Locales", match.Groups[2].Value + ".json"));
+    }
 
     private static bool IsLocalizedReadme(string root, string relative)
     {

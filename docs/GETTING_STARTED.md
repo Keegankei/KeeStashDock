@@ -1,4 +1,4 @@
-# KeeStashDock 1.2.1
+# KeeStashDock 1.2.2
 
 Windows x64 portable package. Extract the entire ZIP into a writable folder and
 run `KeeStashDock.exe`. The .NET runtime is included. Keep all files and folders
@@ -10,11 +10,10 @@ beside the executable.
   and Settings. Launching the executable again brings back the panel.
 - Type a text entry and press **Enter** to save it. **Alt+Enter** or **Shift+Enter**
   inserts a new line. Click an entry to copy it.
-- Use **Ctrl+Alt+S** or a screenshot button to save a selected screen region as an
-  image entry. **Esc** cancels. Open the entry to view, copy, or save its image.
-- Use **Recognize text** to add editable, searchable text. OCR runs locally and
-  does not translate automatically. Select recognized text to use the existing
-  translation bubble after enabling the selection popup in Settings.
+- Use **Ctrl+Alt+S** or a screenshot button, select a region, then choose **Save screenshot**, **Extract text**, or **Extract and translate**. **Enter** saves; **Esc** or right-click cancels. Extracting text alone creates no library entry and does not automatically copy text.
+- Open a saved image entry and use **Recognize text** to add editable, searchable text. OCR runs locally. Translation uses only your configured provider when explicitly requested; source text remains available after failure.
+- In Settings, choose **Classic** or **Floating** panel mode. Floating adds finite hover, press and drag feedback; Windows accessibility preferences can disable animation.
+- Select **Copy and translate** for two independent selection-bubble buttons. Copy saves the selection to the dock; Translate uses the same source text without adding an entry.
 
 ## Optional local components
 
@@ -44,7 +43,9 @@ data folder before upgrading, close KeeStashDock, extract the new package into a
 fresh folder, and copy the complete old data folder to the new `Data` folder.
 Keep the old backup separately. Never overwrite a live database.
 
-This release upgrades databases to schema v4. Older programs that only understand
+From 1.2.2 onward, use **Check for updates** in the tray menu or **Settings > About**. The app checks official GitHub Releases only on request. Download and verify first, then confirm **Restart and upgrade**. Same-path upgrades preserve user data and installed components, keep a rollback copy, and check successful startup. See `Updating.md` for recovery and first-upgrade instructions.
+
+This release retains database schema v4. Older programs that only understand
 v1-v3 cannot open the upgraded database. Images are included in database backups.
 
 ## Help and license

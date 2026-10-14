@@ -3,6 +3,8 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Automation;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -15,6 +17,8 @@ using Forms = System.Windows.Forms;
 namespace KeeStashDock.Desktop;
 
 public sealed record CapturedScreenshot(byte[] PngBytes, int PixelWidth, int PixelHeight);
+public enum ScreenshotAction { Save, ExtractText, ExtractAndTranslate }
+public sealed record ScreenshotCaptureResult(CapturedScreenshot Image, ScreenshotAction Action, int AnchorX, int AnchorY);
 
 /// <summary>
 /// Freezes the desktop before showing one selector per monitor. All selection
@@ -25,7 +29,7 @@ public sealed class ScreenshotCaptureService
 {
     private bool _isCapturing;
 
-    public async Task<CapturedScreenshot?> CaptureAsync(CancellationToken cancellationToken = default)
+    public async Task<ScreenshotCaptureResult?> CaptureAsync(CancellationToken cancellationToken = default)
     {
         Application.Current.Dispatcher.VerifyAccess();
         if (_isCapturing) return null;
@@ -41,11 +45,17 @@ public sealed class ScreenshotCaptureService
                 throw new InvalidOperationException("The virtual desktop is too large to capture.");
 
             BitmapSource snapshot = CaptureDesktop(desktop);
-            var result = new TaskCompletionSource<Drawing.Rectangle?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = new TaskCompletionSource<(Drawing.Rectangle Bounds, ScreenshotAction Action, Drawing.Point Anchor)?>(TaskCreationOptions.RunContinuationsAsynchronously);
             bool overlaysReady = false;
             Drawing.Point? start = null;
             Drawing.Rectangle selection = Drawing.Rectangle.Empty;
+            Drawing.Point anchor = Drawing.Point.Empty;
             void Cancel() => result.TrySetResult(null);
+            void Choose(ScreenshotAction action)
+            {
+                if (start is null && selection.Width >= 2 && selection.Height >= 2)
+                    result.TrySetResult((selection, action, anchor));
+            }
             void CheckActivation() => Application.Current.Dispatcher.BeginInvoke(
                 DispatcherPriority.ApplicationIdle, new Action(() =>
                 {
@@ -60,26 +70,40 @@ public sealed class ScreenshotCaptureService
                 selection = ScreenshotSelection.Clamp(origin, point, desktop);
                 foreach (var window in windows) window.ShowSelection(selection);
             }
-            void Begin(Drawing.Point point) { start = point; Move(point); }
+            void Begin(Drawing.Point point)
+            {
+                foreach (var window in windows) window.HideActions();
+                start = point;
+                Move(point);
+            }
             void Finish(Drawing.Point point)
             {
                 Move(point);
+                start = null;
                 if (selection.Width >= 2 && selection.Height >= 2)
-                    result.TrySetResult(selection);
+                {
+                    anchor = point;
+                    var owner = windows.FirstOrDefault(window => window.ScreenBounds.Contains(point))
+                        ?? windows.OrderByDescending(window =>
+                        {
+                            var overlap = Drawing.Rectangle.Intersect(window.ScreenBounds, selection);
+                            return (long)overlap.Width * overlap.Height;
+                        }).First();
+                    owner.ShowActions(selection);
+                }
                 else
                 {
-                    start = null;
                     foreach (var window in windows) window.ShowSelection(Drawing.Rectangle.Empty);
                 }
             }
 
-            string instruction = LocalizationService.Instance["Screenshot.CaptureRegionHint"];
+            string instruction = LocalizationService.Instance["Screenshot.ActionHint"];
             foreach (var monitor in monitors)
             {
                 var crop = new CroppedBitmap(snapshot, new Int32Rect(
                     monitor.X - desktop.X, monitor.Y - desktop.Y, monitor.Width, monitor.Height));
                 crop.Freeze();
-                windows.Add(new CaptureOverlay(monitor, crop, instruction, Begin, Move, Finish, Cancel, CheckActivation));
+                windows.Add(new CaptureOverlay(monitor, crop, instruction, Begin, Move, Finish, Choose, Cancel, CheckActivation));
             }
             using var registration = cancellationToken.Register(() =>
                 Application.Current.Dispatcher.BeginInvoke(Cancel));
@@ -88,13 +112,14 @@ public sealed class ScreenshotCaptureService
                 windows.FirstOrDefault(w => w.ScreenBounds.Contains(cursor.X, cursor.Y))?.Activate();
             overlaysReady = true;
 
-            Drawing.Rectangle? selected = await result.Task;
+            var selected = await result.Task;
             cancellationToken.ThrowIfCancellationRequested();
-            if (selected is not { } bounds) return null;
+            if (selected is not { } chosen) return null;
+            var bounds = chosen.Bounds;
             if (bounds.Width > 16384 || bounds.Height > 16384 || (long)bounds.Width * bounds.Height > 40_000_000)
                 throw new InvalidOperationException("The selected image is too large to save.");
-            return EncodeCrop(snapshot, new Int32Rect(bounds.X - desktop.X, bounds.Y - desktop.Y,
-                bounds.Width, bounds.Height));
+            return new ScreenshotCaptureResult(EncodeCrop(snapshot, new Int32Rect(bounds.X - desktop.X, bounds.Y - desktop.Y,
+                bounds.Width, bounds.Height)), chosen.Action, chosen.Anchor.X, chosen.Anchor.Y);
         }
         finally
         {
@@ -137,10 +162,14 @@ public sealed class ScreenshotCaptureService
         private readonly SelectionSurface _surface;
         private readonly Action<Drawing.Point> _begin, _move, _finish;
         private readonly Action _cancel;
+        private readonly Border _toolbar;
+        private readonly Canvas _actions;
+        private readonly Button _save;
         public Drawing.Rectangle ScreenBounds { get; }
 
         public CaptureOverlay(Drawing.Rectangle bounds, BitmapSource image, string instruction,
-            Action<Drawing.Point> begin, Action<Drawing.Point> move, Action<Drawing.Point> finish, Action cancel,
+            Action<Drawing.Point> begin, Action<Drawing.Point> move, Action<Drawing.Point> finish,
+            Action<ScreenshotAction> choose, Action cancel,
             Action checkActivation)
         {
             ScreenBounds = bounds;
@@ -153,14 +182,57 @@ public sealed class ScreenshotCaptureService
             Background = Brushes.Black;
             FlowDirection = FlowDirection.LeftToRight;
             WindowStartupLocation = WindowStartupLocation.Manual;
-            Content = _surface = new SelectionSurface(bounds, image, instruction);
+            var root = new Grid();
+            root.Children.Add(_surface = new SelectionSurface(bounds, image, instruction));
+            root.Children.Add(_actions = new Canvas());
+            var buttons = new WrapPanel
+            {
+                FlowDirection = LocalizationService.Instance.IsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight
+            };
+            Button AddAction(string key, Action action)
+            {
+                string label = LocalizationService.Instance[key];
+                var button = new Button
+                {
+                    Content = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap },
+                    Padding = new Thickness(10, 7, 10, 7), Margin = new Thickness(3),
+                    MaxWidth = 210, Cursor = Cursors.Arrow, MinHeight = 32
+                };
+                AutomationProperties.SetName(button, label);
+                button.Click += (_, e) => { e.Handled = true; action(); };
+                buttons.Children.Add(button);
+                return button;
+            }
+            _save = AddAction("Screenshot.ActionSave", () => choose(ScreenshotAction.Save));
+            AddAction("Screenshot.ActionExtract", () => choose(ScreenshotAction.ExtractText));
+            AddAction("Screenshot.ActionTranslate", () => choose(ScreenshotAction.ExtractAndTranslate));
+            AddAction("Common.Cancel", cancel);
+            _toolbar = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(28, 28, 34)), CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(5), Visibility = Visibility.Collapsed,
+                Child = new ScrollViewer { Content = buttons, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled }
+            };
+            _actions.Children.Add(_toolbar);
+            Content = root;
             SourceInitialized += (_, _) => Place();
             Loaded += (_, _) => { Place(); Focus(); };
             Deactivated += (_, _) => checkActivation();
-            PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; _cancel(); } };
+            PreviewKeyDown += (_, e) =>
+            {
+                if (e.Key == Key.Escape) { e.Handled = true; _cancel(); }
+                else if (e.Key == Key.Enter)
+                {
+                    e.Handled = true;
+                    if (!ScreenshotSelection.InvokeFocusedAction(_toolbar, Keyboard.FocusedElement))
+                        choose(ScreenshotAction.Save);
+                }
+            };
             MouseRightButtonDown += (_, e) => { e.Handled = true; _cancel(); };
             MouseLeftButtonDown += (_, e) =>
             {
+                if (_toolbar.IsMouseOver) return;
                 e.Handled = true;
                 if (CaptureNative.GetCursorPos(out var p)) { CaptureMouse(); _begin(new(p.X, p.Y)); }
             };
@@ -186,6 +258,29 @@ public sealed class ScreenshotCaptureService
         }
 
         public void ShowSelection(Drawing.Rectangle selected) => _surface.ShowSelection(selected);
+
+        public void HideActions() => _toolbar.Visibility = Visibility.Collapsed;
+
+        public void ShowActions(Drawing.Rectangle selected)
+        {
+            // Only the toolbar uses DIPs; the selection and monitor rectangle stay in pixels.
+            double scaleX = _surface.ActualWidth / ScreenBounds.Width;
+            double scaleY = _surface.ActualHeight / ScreenBounds.Height;
+            double availableWidth = Math.Max(1, _surface.ActualWidth - 16);
+            double availableHeight = Math.Max(1, _surface.ActualHeight - 16);
+            _toolbar.MaxWidth = Math.Min(760, availableWidth);
+            _toolbar.MaxHeight = availableHeight;
+            _toolbar.Visibility = Visibility.Visible;
+            _toolbar.Measure(new Size(_toolbar.MaxWidth, _toolbar.MaxHeight));
+            Rect local = new((selected.Left - ScreenBounds.Left) * scaleX,
+                (selected.Top - ScreenBounds.Top) * scaleY, selected.Width * scaleX, selected.Height * scaleY);
+            Point placement = ScreenshotSelection.PlaceToolbar(local, _toolbar.DesiredSize,
+                new Size(_surface.ActualWidth, _surface.ActualHeight));
+            Canvas.SetLeft(_toolbar, placement.X);
+            Canvas.SetTop(_toolbar, placement.Y);
+            Activate();
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, () => _save.Focus());
+        }
     }
 
     internal sealed class SelectionSurface(Drawing.Rectangle bounds, BitmapSource image, string instruction) : FrameworkElement
@@ -233,6 +328,23 @@ public sealed class ScreenshotCaptureService
 
 internal static class ScreenshotSelection
 {
+    internal static bool InvokeFocusedAction(FrameworkElement toolbar, IInputElement? focused)
+    {
+        if (focused is not Button { IsEnabled: true } button || !toolbar.IsAncestorOf(button)) return false;
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        return true;
+    }
+
+    internal static Point PlaceToolbar(Rect selection, Size toolbar, Size monitor)
+    {
+        const double margin = 8;
+        double y = selection.Bottom + margin;
+        if (y + toolbar.Height > monitor.Height - margin) y = selection.Top - toolbar.Height - margin;
+        return new Point(
+            Math.Clamp(selection.Left, margin, Math.Max(margin, monitor.Width - toolbar.Width - margin)),
+            Math.Clamp(y, margin, Math.Max(margin, monitor.Height - toolbar.Height - margin)));
+    }
+
     public static Drawing.Rectangle Clamp(Drawing.Point start, Drawing.Point end, Drawing.Rectangle desktop)
     {
         int left = Math.Clamp(Math.Min(start.X, end.X), desktop.Left, desktop.Right);

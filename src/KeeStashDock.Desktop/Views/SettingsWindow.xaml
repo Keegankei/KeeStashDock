@@ -127,7 +127,7 @@
       </Border>
 
       <!-- ============ Optional local components ============ -->
-      <Border Style="{StaticResource S.Section}">
+      <Border x:Name="ComponentsSection" Style="{StaticResource S.Section}">
         <StackPanel>
           <TextBlock Style="{StaticResource S.SectionTitle}" Text="{loc:Tr Components.Title}"/>
           <TextBlock Text="{loc:Tr Components.Hint}" TextWrapping="Wrap" FontSize="11"
@@ -193,6 +193,8 @@
                             Content="{loc:Tr Settings.SelectionAction.Capture}"/>
               <ComboBoxItem Tag="Translate"
                             Content="{loc:Tr Settings.SelectionAction.Translate}"/>
+              <ComboBoxItem Tag="Both"
+                            Content="{loc:Tr Settings.SelectionAction.Both}"/>
             </ComboBox>
           </Grid>
 
@@ -410,6 +412,23 @@
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
+                       TextWrapping="Wrap" Text="{loc:Tr Settings.PanelMode}"/>
+            <ComboBox Grid.Column="1" x:Name="PanelModeCombo" MinWidth="200"
+                      HorizontalAlignment="Stretch"
+                      SelectionChanged="OnPanelModeChanged">
+              <ComboBoxItem Tag="Classic" Content="{loc:Tr Settings.PanelMode.Classic}"/>
+              <ComboBoxItem Tag="Floating" Content="{loc:Tr Settings.PanelMode.Floating}"/>
+            </ComboBox>
+          </Grid>
+          <TextBlock Text="{loc:Tr Settings.PanelMode.Hint}" TextWrapping="Wrap"
+                     FontSize="11" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+
+          <Grid Style="{StaticResource S.Row}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.PanelTextColor}"/>
             <ComboBox Grid.Column="1" x:Name="TextColorCombo" Width="200"
@@ -578,6 +597,9 @@
                      Text="{loc:Tr Settings.About}"/>
           <TextBlock x:Name="AboutText" FontSize="12"
                      Foreground="{DynamicResource B.TextMuted}" TextWrapping="Wrap"/>
+          <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left"
+                  Margin="0,10,0,0" Click="OnCheckUpdatesClick"
+                  Content="{loc:Tr Updates.Check}"/>
           <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left"
                   Margin="0,10,0,0" Click="OnHelpClick"
                   Content="{loc:Tr Settings.Help}"/>
