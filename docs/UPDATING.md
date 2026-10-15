@@ -22,6 +22,8 @@ A failed check does not mean the application is up to date. Retry or use **Open 
 
 The full portable package includes `update-manifest.json`. Keep it beside the executable. It records paths, lengths and hashes for shipped application files; it never owns your `Data` or `%AppData%` folders.
 
+Organized packages bundle the .NET runtime into the same root `KeeStashDock.exe`, with guides under `Docs` and project/dependency licenses under `Licenses`. Languages, OCR and component setup folders remain beside it. Always extract the whole package. During an in-app upgrade from an older flat layout, unchanged loose libraries owned by the previous manifest can be removed safely; the executable path and data location stay the same.
+
 - Existing libraries, settings, provider credentials, screenshots, drafts, logs and backups stay in their current storage location.
 - Downloaded OCR models and offline runtime/model assets are preserved. Shipped setup scripts can be updated normally.
 - Custom user files are preserved. An unowned collision, modified managed file or unsafe linked destination stops installation instead of silently overwriting it. Move a deliberately customized application file aside and use the documented manual procedure if necessary.

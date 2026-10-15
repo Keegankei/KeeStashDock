@@ -27,12 +27,15 @@ Current published release: **1.2.1**. This branch prepares **1.2.2**; its new fe
 
 ## New in the 1.2.2 candidate
 
-- **Classic / Floating:** switch panel modes in Settings. Both use soft shadows; Floating adds pointer, press, and drag feedback. Windows reduced-animation and high-contrast preferences disable motion effects.
+- **Classic / Floating:** keep the familiar UI with soft shadows, layered cards and a thin panel side layer. Floating offers Fixed perspective or Drag to inspect: hold the right button and drag, then release to keep the angle. A plain right-click keeps the card menu. Middle-button and custom button/modifier gestures are available in Settings. Cards still respond to proximity; reduced-animation and high-contrast preferences disable motion effects.
+- **Compact and edge modes:** the original 44-DIP compact bar keeps all six actions and restores the previous expanded size. Optional edge auto-hide leaves a 6-DIP-thick, 72-DIP-long handle on any of the four screen edges; hover to restore the panel.
 - **Screenshot actions:** after selecting a region, save the image, extract text, or extract and translate. Enter saves; Esc/right-click cancels. Extraction alone creates no entry and copies nothing automatically.
 - **Copy and translate:** the selection bubble can show two independent buttons. Copy retains capture-to-dock behavior; Translate uses the same selected text without creating an entry.
 - **Check for updates:** open the tray menu or Settings > About. Downloads require a click and SHA-256 verification; replacement requires a separate restart confirmation. Only managed application files are replaced. Read [upgrade and recovery instructions](docs/UPDATING.md).
 
-Candidate previews: [Classic](docs/images/classic-panel.png) · [Floating](docs/images/floating-panel.png) · [Copy / Translate](docs/images/selection-actions.png) · [Extracted text](docs/images/screenshot-text.png) · [Update check](docs/images/update-check.png). [Image provenance](docs/images/README.md).
+The revision-5 candidate package keeps `KeeStashDock.exe`, `StartHere.md` and `update-manifest.json` at its root, with guides, licenses, locales and component assets in named folders. Keep the extracted package together; portable `Data` remains beside the executable.
+
+Candidate previews: [Classic](docs/images/classic-panel.png) · [Floating](docs/images/floating-panel.png) · [Hover and drag inspection](docs/images/floating-panel-motion.gif) · [Copy / Translate](docs/images/selection-actions.png) · [Extracted text](docs/images/screenshot-text.png) · [Update check](docs/images/update-check.png). [Image provenance](docs/images/README.md).
 
 ## Download and start
 

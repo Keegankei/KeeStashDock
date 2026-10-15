@@ -264,6 +264,9 @@ public sealed class SettingsTranslationTests
             UpdateWindowScenarios.Verify(root);
             StickyNoteWindowScenarios.Verify(root);
             PerspectiveSurfaceTests.VerifyLiveControls();
+            EdgeDockScenarios.VerifySettings(window, settings);
+            FloatingPerformanceScenarios.RecordIfRequested(root);
+            EdgeDockScenarios.Verify(root);
         }
         finally
         {

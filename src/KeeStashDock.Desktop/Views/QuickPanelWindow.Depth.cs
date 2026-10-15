@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Windows.Controls.Primitives;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,8 +22,11 @@ public partial class QuickPanelWindow
     private readonly ScaleTransform _backgroundScale = new(1, 1, 0.5, 0.5);
     private readonly LinearGradientBrush _depthHighlightBrush = new(
         Color.FromArgb(18, 255, 255, 255), Colors.Transparent, 90) { Opacity = 0 };
-    private readonly DispatcherTimer _depthPointerTimer = new() { Interval = TimeSpan.FromMilliseconds(32) };
-    private MotionValue? _parallaxX, _parallaxY, _highlightOpacity, _yaw, _pitch, _offsetX, _offsetY;
+    private readonly DispatcherTimer _depthPointerTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
+    private MotionValue? _highlightOpacity;
+    private Point? _lastDepthPointer;
+    private bool _cardProximityDirty = true;
+    private long _lastDepthMovement;
     private DispatcherOperation? _pendingDepthShadow;
     private bool _depthClosed, _depthApproached, _nativeDepthMove;
     private int _depthPopupCount;
@@ -33,18 +38,15 @@ public partial class QuickPanelWindow
     private void InitializeDepth()
     {
         _panelShadow = new PanelShadowWindow(this);
-        _parallaxX = new(_backgroundParallax, TranslateTransform.XProperty);
-        _parallaxY = new(_backgroundParallax, TranslateTransform.YProperty);
         _highlightOpacity = new(_depthHighlightBrush, Brush.OpacityProperty);
-        _yaw = new(SpatialSurface, PerspectiveSurface.YawProperty);
-        _pitch = new(SpatialSurface, PerspectiveSurface.PitchProperty);
-        _offsetX = new(SpatialSurface, PerspectiveSurface.OffsetXProperty);
-        _offsetY = new(SpatialSurface, PerspectiveSurface.OffsetYProperty);
         DepthHighlight.Background = _depthHighlightBrush;
         SpatialSurface.ProjectionChanged += OnPerspectiveChanged;
         _depthPointerTimer.Tick += OnDepthPointerTick;
         SizeChanged += OnDepthSizeChanged;
         MouseMove += OnDepthPointerMove;
+        PreviewMouseMove += OnInspectionMove;
+        LostMouseCapture += OnInspectionCaptureLost;
+        PreviewKeyDown += OnInspectionKeyDown;
         MouseLeave += OnDepthPointerMove;
         IsVisibleChanged += OnDepthVisibilityChanged;
         AddHandler(PreviewMouseDownEvent, new MouseButtonEventHandler(OnDepthPress), true);
@@ -56,6 +58,8 @@ public partial class QuickPanelWindow
             combo.DropDownOpened += OnDepthDropDownOpened;
             combo.DropDownClosed += OnDepthDropDownClosed;
         }
+        CardList.AddHandler(ScrollViewer.ScrollChangedEvent,
+            new ScrollChangedEventHandler((_, _) => { _cardProximityDirty = true; WakeDepthSampler(); }));
         SystemParameters.StaticPropertyChanged += OnDepthSystemSettingsChanged;
         ApplyDepthSettings();
     }
@@ -75,13 +79,14 @@ public partial class QuickPanelWindow
             _lastHighContrast = highContrast;
             _lastMotion = motion;
             _lastFollowPointer = followPointer;
+            if (motion) SpatialSurface.SetPose(PerspectivePose.Fixed);
             SetValue(FloatingDepthEnabledProperty, motion);
             Resources["Panel.CardShadowStrength"] = motion ? 0.22 : 0.14;
             Resources["Panel.ShadowVisibility"] = highContrast ? Visibility.Hidden : Visibility.Visible;
             _backgroundScale.ScaleX = _backgroundScale.ScaleY = motion ? 1.02 : 1;
         }
         RefreshPerspectiveMode();
-        _panelShadow.UpdateAppearance(!highContrast, motion, _depthApproached);
+        _panelShadow.UpdateAppearance(!highContrast && !IsEdgeDockHidden, motion, _depthApproached);
         _highlightOpacity?.To(motion ? _depthApproached ? 1 : 0.55 : 0, motion);
         ApplyBackgroundDepth();
         UpdatePerspectivePointer();
@@ -89,11 +94,12 @@ public partial class QuickPanelWindow
 
     private void RefreshPerspectiveMode()
     {
-        bool enabled = FloatingDepthEnabled && _state == PanelState.Expanded;
+        bool enabled = FloatingDepthEnabled && _state == PanelState.Expanded && !IsEdgeDockHidden;
         if (SpatialSurface.IsPerspectiveEnabled != enabled)
         {
             ResetDepthMotion();
             SpatialSurface.IsPerspectiveEnabled = enabled;
+            if (enabled) SpatialSurface.SetPose(PerspectivePose.Fixed);
         }
     }
 
@@ -107,13 +113,24 @@ public partial class QuickPanelWindow
     }
 
     private void OnDepthPointerTick(object? sender, EventArgs e) => UpdatePerspectivePointer();
-    private void OnDepthPointerMove(object sender, MouseEventArgs e) => UpdatePerspectivePointer();
+    private void OnDepthPointerMove(object sender, MouseEventArgs e) => WakeDepthSampler();
+
+    private void WakeDepthSampler()
+    {
+        if (!_depthClosed && IsVisible && SpatialSurface.IsPerspectiveEnabled && !IsDepthInteractionActive())
+            _depthPointerTimer.Start();
+    }
 
     internal void UpdatePerspectivePointer()
     {
-        if (_depthClosed || !IsVisible || !SpatialSurface.IsPerspectiveEnabled)
+        if (_depthClosed || !IsVisible || !IsLoaded || !SpatialSurface.IsLoaded || !SpatialSurface.IsPerspectiveEnabled)
         {
             _depthPointerTimer.Stop();
+            return;
+        }
+        if (_inspectionActive)
+        {
+            ApplyInspectionPose();
             return;
         }
         if (IsDepthInteractionActive())
@@ -121,22 +138,22 @@ public partial class QuickPanelWindow
             FreezePerspectiveMotion();
             return;
         }
+        // Pointer movement now affects cards only. The panel's angle changes
+        // exclusively during the user's configured inspection drag.
         Point? point = _perspectivePointer is not null ? _perspectivePointer() : ReadPerspectivePointer();
-        PerspectivePose pointerPose = point is Point cursor ? PerspectivePose.FromPointer(cursor, RenderSize) : default;
-        // Fixed perspective still samples nearby movement for card feedback;
-        // its panel angle is independent of that pointer position.
-        PerspectivePose pose = _settings.Current.FloatingPanelFollowPointer ? pointerPose : PerspectivePose.Fixed;
-        if (pointerPose.Nearby) _depthPointerTimer.Start();
+        bool nearby = point is Point cursor && PerspectivePose.FromPointer(cursor, RenderSize).Nearby;
+        bool moved = point != _lastDepthPointer;
+        if (moved || _cardProximityDirty)
+        {
+            _lastDepthPointer = point;
+            _cardProximityDirty = false;
+            _lastDepthMovement = Stopwatch.GetTimestamp();
+            FloatingCardMotion.UpdateProximity(CardList, point, this);
+        }
+        if (nearby && Stopwatch.GetElapsedTime(_lastDepthMovement).TotalMilliseconds < 200)
+            _depthPointerTimer.Start();
         else _depthPointerTimer.Stop();
-        _yaw?.To(pose.Yaw);
-        _pitch?.To(pose.Pitch);
-        _offsetX?.To(pose.OffsetX);
-        _offsetY?.To(pose.OffsetY);
-        _parallaxX?.To(pose.OffsetX * 0.5 / Math.Max(1, RootBorder.ActualWidth));
-        _parallaxY?.To(pose.OffsetY * 0.5 / Math.Max(1, RootBorder.ActualHeight));
-        FloatingCardMotion.UpdateProximity(CardList, point, this);
     }
-
     private Point? ReadPerspectivePointer()
     {
         if (!Interop.NativeMethods.GetCursorPos(out var cursor) || !TryGetNativeBounds(out var bounds)) return null;
@@ -158,14 +175,37 @@ public partial class QuickPanelWindow
     {
         // Keep the displayed angle. Snapping flat here would move an already
         // hit-tested button or text selection under the pointer.
-        _yaw?.Freeze(); _pitch?.Freeze(); _offsetX?.Freeze(); _offsetY?.Freeze();
-        _parallaxX?.Freeze(); _parallaxY?.Freeze();
+
+
         FloatingCardMotion.FreezeProximity(CardList);
         _depthPointerTimer.Stop();
     }
 
-    private void OnDepthPress(object sender, MouseButtonEventArgs e) => FreezePerspectiveMotion();
-    private void OnDepthRelease(object sender, MouseButtonEventArgs e) => ResumePerspectiveAfterInput();
+    private void OnDepthPress(object sender, MouseButtonEventArgs e)
+    {
+        if (_inspectionActive)
+        {
+            // Its release may arrive after the inspection button is released.
+            // Keep that extra press from becoming an unpaired card click.
+            if (e.ChangedButton != _inspectionButton)
+                _suppressedInspectionButtons |= 1 << (int)e.ChangedButton;
+            e.Handled = true;
+            return;
+        }
+        PrepareInspection(e);
+        FreezePerspectiveMotion();
+    }
+    private void OnDepthRelease(object sender, MouseButtonEventArgs e)
+    {
+        if (_inspectionActive && e.ChangedButton != _inspectionButton)
+        {
+            _suppressedInspectionButtons &= ~(1 << (int)e.ChangedButton);
+            e.Handled = true;
+            return;
+        }
+        CompleteInspection(e);
+        ResumePerspectiveAfterInput();
+    }
     private void OnDepthEditorFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         if (QuickBox.IsKeyboardFocusWithin) FreezePerspectiveMotion();
@@ -182,13 +222,18 @@ public partial class QuickPanelWindow
     }
     private void ResumePerspectiveAfterInput()
     {
-        if (!_depthClosed) Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(UpdatePerspectivePointer));
+        if (!_depthClosed)
+        {
+            _cardProximityDirty = true;
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(UpdatePerspectivePointer));
+        }
     }
 
     private void OnPerspectiveChanged(object? sender, EventArgs e)
     {
+        _cardProximityDirty = true;
         if (_depthClosed || _pendingDepthShadow is not null) return;
-        // Four animated values can change together. Rebuild the hollow outline
+        // Coalesce layout and pose changes. Rebuild the hollow outline
         // once per render pass, with no permanent rendering subscription.
         _pendingDepthShadow = Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
         {
@@ -205,7 +250,7 @@ public partial class QuickPanelWindow
         UpdatePerspectivePointer();
         if (_depthApproached == approached) return;
         _depthApproached = approached;
-        _panelShadow?.UpdateAppearance(!SystemParameters.HighContrast, FloatingDepthEnabled, approached);
+        _panelShadow?.UpdateAppearance(!SystemParameters.HighContrast && !IsEdgeDockHidden, FloatingDepthEnabled, approached);
         _highlightOpacity?.To(FloatingDepthEnabled ? approached ? 1 : 0.55 : 0, FloatingDepthEnabled);
     }
 
@@ -233,8 +278,11 @@ public partial class QuickPanelWindow
     {
         _depthPointerTimer.Stop();
         _depthApproached = false;
-        _yaw?.To(0, false); _pitch?.To(0, false); _offsetX?.To(0, false); _offsetY?.To(0, false);
-        _parallaxX?.To(0, false); _parallaxY?.To(0, false); _highlightOpacity?.To(0, false);
+        CancelInspection();
+        _lastDepthPointer = null;
+        _cardProximityDirty = true;
+        SpatialSurface.SetPose(FloatingDepthEnabled ? PerspectivePose.Fixed : default);
+        _backgroundParallax.X = _backgroundParallax.Y = 0; _highlightOpacity?.To(0, false);
         ResetCardMotion(CardList);
     }
 
@@ -262,7 +310,7 @@ public partial class QuickPanelWindow
     private void OnPanelSettingsChanged()
     {
         if (_depthClosed || Dispatcher.HasShutdownStarted) return;
-        Dispatcher.Invoke(() => { if (!_depthClosed) ApplyBackground(); });
+        Dispatcher.Invoke(() => { if (!_depthClosed) { CancelInspection(); ApplyBackground(); ApplyEdgeDockSettings(); } });
     }
     private void OnPanelThemeChanged()
     {

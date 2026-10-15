@@ -1,12 +1,15 @@
 #Requires -Version 5.1
 # Exercise ownership manifest generation and tampering checks on disposable files.
 [CmdletBinding()]
-param([string]$AssemblyPath)
+param([string]$AssemblyPath, [string]$ExecutablePath)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($AssemblyPath)) {
     $AssemblyPath = Join-Path $PSScriptRoot '../src/KeeStashDock.Desktop/bin/Release/net10.0-windows/KeeStashDock.dll'
+}
+if ([string]::IsNullOrWhiteSpace($ExecutablePath)) {
+    $ExecutablePath = [IO.Path]::ChangeExtension($AssemblyPath, '.exe')
 }
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('KeeStashDock-manifest-test-' + [Guid]::NewGuid().ToString('N'))
 $expectedRoot = [IO.Path]::GetFullPath($testRoot)
@@ -77,7 +80,22 @@ try {
         [IO.Directory]::Delete($linkTarget)
     }
     & $verifier -Path $testRoot
-    Write-Output 'Update manifest checks passed: valid/deterministic, corrupt, missing, extra, version, duplicate, traversal, private-state, and junction cases.'
+    # An organized package reads version metadata from the native apphost;
+    # ownership verification must not depend on a loose managed assembly.
+    $organized = Join-Path $testRoot 'organized-fixture'
+    [IO.Directory]::CreateDirectory((Join-Path $organized 'Licenses')) | Out-Null
+    Copy-Item -LiteralPath $ExecutablePath -Destination (Join-Path $organized 'KeeStashDock.exe')
+    [IO.File]::WriteAllText((Join-Path $organized 'Licenses/LICENSE'), 'fixture license')
+    & $generator -Path $organized
+    & $verifier -Path $organized
+    $organizedManifest = Get-Content -LiteralPath (Join-Path $organized 'update-manifest.json') -Raw | ConvertFrom-Json
+    if ($organizedManifest.version -cne ($original | ConvertFrom-Json).version) {
+        throw 'Flat and organized packages must expose the same application version.'
+    }
+    [IO.File]::WriteAllText((Join-Path $organized 'KeeStashDock.exe'), 'not a versioned application')
+    Assert-Rejected { & $generator -Path $organized }
+    Assert-Rejected { & $verifier -Path $organized }
+    Write-Output 'Update manifest checks passed: flat/organized versions, valid/deterministic, corrupt, missing, extra, duplicate, traversal, private-state, and junction cases.'
 }
 finally {
     if ([IO.Path]::GetFullPath($testRoot) -ne $expectedRoot -or

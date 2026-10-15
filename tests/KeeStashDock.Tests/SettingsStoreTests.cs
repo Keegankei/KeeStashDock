@@ -110,7 +110,7 @@ public sealed class SettingsStoreTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public void FloatingPanel_LegacySettingsKeepPointerFollow(bool floatingEnabled)
+    public void FloatingPanel_LegacySettingsKeepModeAndUseSafeInspectionDefaults(bool floatingEnabled)
     {
         File.WriteAllText(_settingsFile, $$"""
             { "theme": "Dark", "floatingPanelEnabled": {{floatingEnabled.ToString().ToLowerInvariant()}} }
@@ -121,7 +121,13 @@ public sealed class SettingsStoreTests
 
         Assert.AreEqual(floatingEnabled, store.Current.FloatingPanelEnabled);
         Assert.IsTrue(store.Current.FloatingPanelFollowPointer,
-            "Upgrading an existing configuration must retain pointer following.");
+            "The existing floating preference remains compatible with deliberate drag inspection.");
+        Assert.AreEqual("Right", store.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", store.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", store.Current.FloatingInspectionModifiers);
+        Assert.IsFalse(store.Current.PanelEdgeAutoHideEnabled);
+        Assert.IsNull(store.Current.PanelDevicePosX);
+        Assert.IsNull(store.Current.PanelDevicePosY);
         Assert.AreEqual("Dark", store.Current.Theme);
     }
 
@@ -147,6 +153,116 @@ public sealed class SettingsStoreTests
         Assert.IsFalse(classic.Current.FloatingPanelEnabled);
         Assert.AreEqual(followPointer, classic.Current.FloatingPanelFollowPointer,
             "Switching to Classic must retain the preferred floating perspective mode.");
+    }
+
+
+    [TestMethod]
+    public void InspectionGestures_AllSupportedCustomCombinationsRoundTrip()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingInspectionGesture = "Custom";
+        store.Current.PanelEdgeAutoHideEnabled = true;
+        foreach (string button in new[] { "Left", "Right", "Middle", "XButton1", "XButton2" })
+        foreach (string modifiers in new[] { "None", "Control", "Alt", "Shift", "Control+Alt", "Control+Shift", "Alt+Shift", "Control+Alt+Shift" })
+        {
+            store.Current.FloatingInspectionButton = button;
+            store.Current.FloatingInspectionModifiers = modifiers;
+            store.Save();
+            var reloaded = new SettingsStore(_settingsFile);
+            reloaded.Load();
+            Assert.AreEqual("Custom", reloaded.Current.FloatingInspectionGesture);
+            Assert.AreEqual(button, reloaded.Current.FloatingInspectionButton);
+            Assert.AreEqual(modifiers, reloaded.Current.FloatingInspectionModifiers);
+            Assert.IsTrue(reloaded.Current.PanelEdgeAutoHideEnabled);
+        }
+        foreach (string preset in new[] { "Right", "Middle" })
+        {
+            store.Current.FloatingInspectionGesture = preset;
+            store.Save();
+            var reloaded = new SettingsStore(_settingsFile);
+            reloaded.Load();
+            Assert.AreEqual(preset, reloaded.Current.FloatingInspectionGesture);
+            Assert.AreEqual("XButton2", reloaded.Current.FloatingInspectionButton);
+            Assert.AreEqual("Control+Alt+Shift", reloaded.Current.FloatingInspectionModifiers,
+                "A preset must preserve the user's saved custom combination.");
+        }
+    }
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("unknown")]
+    [DataRow("right")]
+    public void InvalidInspectionFields_LoadSafeDefaultsWithoutResettingOtherSettings(string? invalid)
+    {
+        File.WriteAllText(_settingsFile, JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["theme"] = "Dark",
+            ["floatingPanelFollowPointer"] = false,
+            ["floatingInspectionGesture"] = invalid,
+            ["floatingInspectionButton"] = invalid,
+            ["floatingInspectionModifiers"] = invalid,
+        }));
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual("Right", store.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", store.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", store.Current.FloatingInspectionModifiers);
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.IsFalse(store.Current.FloatingPanelFollowPointer);
+    }
+
+    [TestMethod]
+    [DataRow(-100_000, 100_000)]
+    [DataRow(-3840, -240)]
+    [DataRow(0, 0)]
+    public void ValidPhysicalMonitorCoordinates_RoundTrip(int x, int y)
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.PanelDevicePosX = x;
+        store.Current.PanelDevicePosY = y;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(x, reloaded.Current.PanelDevicePosX);
+        Assert.AreEqual(y, reloaded.Current.PanelDevicePosY);
+    }
+
+    [TestMethod]
+    [DataRow(100_001, 0)]
+    [DataRow(0, -100_001)]
+    [DataRow(int.MinValue, int.MaxValue)]
+    public void InvalidPhysicalMonitorCoordinates_LoadAsMissingPair(int x, int y)
+    {
+        File.WriteAllText(_settingsFile, $$"""
+            { "panelDevicePosX": {{x}}, "panelDevicePosY": {{y}}, "panelPosX": 400, "panelPosY": 120 }
+            """);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.IsNull(store.Current.PanelDevicePosX);
+        Assert.IsNull(store.Current.PanelDevicePosY);
+        Assert.AreEqual(400d, store.Current.PanelPosX);
+        Assert.AreEqual(120d, store.Current.PanelPosY);
+    }
+
+    [TestMethod]
+    public void Save_NormalizesInvalidInspectionAndIncompletePhysicalLocation()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingInspectionGesture = null!;
+        store.Current.FloatingInspectionButton = "Back";
+        store.Current.FloatingInspectionModifiers = "Win";
+        store.Current.PanelDevicePosX = -3840;
+        store.Current.PanelDevicePosY = null;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual("Right", reloaded.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", reloaded.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", reloaded.Current.FloatingInspectionModifiers);
+        Assert.IsNull(reloaded.Current.PanelDevicePosX);
+        Assert.IsNull(reloaded.Current.PanelDevicePosY);
+        Assert.IsFalse(File.Exists(_settingsFile + ".tmp"));
     }
 
     [TestMethod]

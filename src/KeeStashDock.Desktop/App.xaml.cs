@@ -51,6 +51,11 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.FirstOrDefault() == PackageVerification.Argument)
+        {
+            Shutdown(await PackageVerification.RunAsync(e.Args));
+            return;
+        }
         LocalizationService.Instance.SetLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
         if (await DesktopUpdateCoordinator.RunHelperIfRequestedAsync(e.Args))
         {
@@ -265,7 +270,7 @@ public partial class App : Application
     {
         if (_exitPending) return;
         if (_capturingScreenshot) return;
-        if (Panel.IsVisible) Panel.HidePanel();
+        if (Panel.IsVisible && !Panel.IsEdgeDockHidden) Panel.HidePanel();
         else ShowPanel();
     }
 

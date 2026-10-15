@@ -73,6 +73,45 @@ public sealed class PortableUpdateInstallerTests
     }
 
     [TestMethod]
+    public void FlatPackageCanMoveToBundledLayoutAndRollBackWithoutMovingData()
+    {
+        // Only package ownership changes; the entry point and portable data root
+        // stay in place, including when a new executable fails its health check.
+        string organized = Path.Combine(_root, "organized-package");
+        WritePackage(organized, "1.2.3", new()
+        {
+            ["KeeStashDock.exe"] = "bundled application",
+            ["StartHere.md"] = "package guide",
+            ["Docs/Updating.md"] = "upgrade guide",
+            ["Licenses/LICENSE"] = "project license",
+            ["x64/tesseract.exe"] = "independent OCR engine",
+            ["OcrModels/Setup.ps1"] = "new setup"
+        });
+        _installer.Prepare(_install, organized, _transaction);
+        _installer.Apply(_transaction);
+        Assert.AreEqual("bundled application", Read(_install, "KeeStashDock.exe"));
+        Assert.IsFalse(File.Exists(Path.Combine(_install, "library.dll")));
+        Assert.IsFalse(File.Exists(Path.Combine(_install, "obsolete.dll")));
+        Assert.AreEqual("upgrade guide", Read(_install, "Docs/Updating.md"));
+        Assert.AreEqual("project license", Read(_install, "Licenses/LICENSE"));
+        Assert.AreEqual("independent OCR engine", Read(_install, "x64/tesseract.exe"));
+        Assert.AreEqual("user installed model", Read(_install, "OcrModels/eng.traineddata"));
+        AssertPreserved();
+
+        Assert.AreEqual(PortableUpdateState.RolledBack, _installer.Rollback(_transaction).State);
+        AssertOldApplication();
+        Assert.AreEqual("old library", Read(_install, "library.dll"));
+        Assert.AreEqual("obsolete", Read(_install, "obsolete.dll"));
+        Assert.AreEqual("old setup", Read(_install, "OcrModels/Setup.ps1"));
+        Assert.AreEqual("1.2.2", UpdatePackageManifest.Load(_install).Version);
+        Assert.IsFalse(File.Exists(Path.Combine(_install, "Docs", "Updating.md")));
+        Assert.IsFalse(File.Exists(Path.Combine(_install, "Licenses", "LICENSE")));
+        Assert.IsFalse(File.Exists(Path.Combine(_install, "x64", "tesseract.exe")));
+        Assert.AreEqual("user installed model", Read(_install, "OcrModels/eng.traineddata"));
+        AssertPreserved();
+    }
+
+    [TestMethod]
     public void FirstUpgradeWithoutOwnershipManifestIsRefused()
     {
         File.Delete(Path.Combine(_install, UpdatePackageManifest.FileName));

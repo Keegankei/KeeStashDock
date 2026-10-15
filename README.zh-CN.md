@@ -27,12 +27,15 @@
 
 ## 1.2.2 候选版新增功能
 
-- **经典 / 悬浮模式：**在设置中切换。两种模式都提供柔和投影；悬浮模式增加鼠标靠近、按压和拖动反馈，并遵循 Windows 减少动画与高对比度设置。
+- **经典 / 悬浮模式：**保留原有界面，增加柔和投影、层叠卡片与面板薄侧层。悬浮模式可选固定透视或拖动检视：默认按住右键拖动，松开保留角度，右键单击仍显示卡片菜单。设置中可改为中键或自定义鼠标键及修饰键。卡片继续响应靠近，动效遵循 Windows 减少动画与高对比度设置。
+- **收缩与贴边：**传统 44 DIP 收缩条保留六个按钮，展开恢复原有尺寸。可选贴边自动收起，在屏幕任一边缘保留厚 6 DIP、长 72 DIP 的把手，悬停恢复面板。
 - **截图三入口：**框选后选择保存截图、提取文字或提取并翻译。Enter 保存，Esc 或右键取消。仅提取文字不会生成条目，也不会自动复制。
 - **复制与翻译并列：**划词气泡可同时显示两个独立按钮。复制仍会收纳到文本坞，翻译使用同一选区原文且不会新增条目。
 - **检查更新：**位于托盘菜单和设置的“关于”。点击后下载并校验 SHA-256，再确认重启升级；只替换受清单管理的应用文件。详情见[升级与恢复说明](docs/UPDATING.zh-CN.md)。
 
-候选版预览：[经典面板](docs/images/classic-panel.png) · [悬浮面板](docs/images/floating-panel.png) · [复制 / 翻译](docs/images/selection-actions.png) · [提取文字](docs/images/screenshot-text.png) · [检查更新](docs/images/update-check.png)。[图片来源说明](docs/images/README.md)。
+第五候选版将 `KeeStashDock.exe`、`StartHere.md` 和 `update-manifest.json` 保留在根目录，说明、版权、语言包和组件资料按文件夹分类。请保持解压包完整，便携 `Data` 仍位于程序旁。
+
+候选版预览：[经典面板](docs/images/classic-panel.png) · [悬浮面板](docs/images/floating-panel.png) · [悬停与拖动检视](docs/images/floating-panel-motion.gif) · [复制 / 翻译](docs/images/selection-actions.png) · [提取文字](docs/images/screenshot-text.png) · [检查更新](docs/images/update-check.png)。[图片来源说明](docs/images/README.md)。
 
 ## 下载与启动
 

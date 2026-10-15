@@ -128,6 +128,11 @@ public partial class SettingsWindow : Window
         PanelModeCombo.SelectedIndex = cfg.FloatingPanelEnabled ? 1 : 0;
         FloatingMotionCombo.SelectedIndex = cfg.FloatingPanelFollowPointer ? 0 : 1;
         FloatingMotionCombo.IsEnabled = cfg.FloatingPanelEnabled;
+        PanelEdgeAutoHideCheck.IsChecked = cfg.PanelEdgeAutoHideEnabled;
+        SelectInspectionOption(InspectionGestureCombo, cfg.FloatingInspectionGesture, "Right");
+        SelectInspectionOption(InspectionButtonCombo, cfg.FloatingInspectionButton, "Left");
+        SelectInspectionOption(InspectionModifiersCombo, cfg.FloatingInspectionModifiers, "Alt");
+        RefreshInspectionGestureControls();
 
         BgPathText.Text = cfg.BackgroundImagePath ?? "—";
         BgOpacitySlider.Value = Math.Clamp(cfg.BackgroundOverlayOpacity, 0.2, 1.0) * 100;
@@ -710,6 +715,7 @@ public partial class SettingsWindow : Window
         if (mode is not ("Classic" or "Floating")) return;
         bool enabled = mode == "Floating";
         FloatingMotionCombo.IsEnabled = enabled;
+        RefreshInspectionGestureControls();
         if (_settings.Current.FloatingPanelEnabled == enabled) return;
         _settings.Current.FloatingPanelEnabled = enabled;
         _settings.Save();
@@ -721,8 +727,43 @@ public partial class SettingsWindow : Window
         string? mode = (FloatingMotionCombo.SelectedItem as ComboBoxItem)?.Tag as string;
         if (mode is not ("Follow" or "Fixed")) return;
         bool follow = mode == "Follow";
+        RefreshInspectionGestureControls();
         if (_settings.Current.FloatingPanelFollowPointer == follow) return;
         _settings.Current.FloatingPanelFollowPointer = follow;
+        _settings.Save();
+    }
+
+    private static void SelectInspectionOption(ComboBox combo, string value, string fallback)
+        => combo.SelectedItem = combo.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == value)
+            ?? combo.Items.OfType<ComboBoxItem>().Single(item => (string?)item.Tag == fallback);
+
+    private void RefreshInspectionGestureControls()
+    {
+        if (InspectionGesturePanel is null || InspectionCustomRow is null) return;
+        bool enabled = (PanelModeCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Floating" &&
+            (FloatingMotionCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Follow";
+        InspectionGesturePanel.IsEnabled = enabled;
+        InspectionCustomRow.Visibility = (InspectionGestureCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Custom"
+            ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnInspectionGestureChanged(object sender, SelectionChangedEventArgs e)
+    {
+        RefreshInspectionGestureControls();
+        if (_loading || InspectionGestureCombo?.SelectedItem is not ComboBoxItem gesture ||
+            InspectionButtonCombo?.SelectedItem is not ComboBoxItem button ||
+            InspectionModifiersCombo?.SelectedItem is not ComboBoxItem modifiers) return;
+        var cfg = _settings.Current;
+        cfg.FloatingInspectionGesture = (string)gesture.Tag;
+        cfg.FloatingInspectionButton = (string)button.Tag;
+        cfg.FloatingInspectionModifiers = (string)modifiers.Tag;
+        _settings.Save();
+    }
+
+    private void OnPanelEdgeAutoHideChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        _settings.Current.PanelEdgeAutoHideEnabled = PanelEdgeAutoHideCheck.IsChecked == true;
         _settings.Save();
     }
 

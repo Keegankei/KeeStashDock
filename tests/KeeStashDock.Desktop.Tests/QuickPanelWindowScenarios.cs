@@ -160,6 +160,9 @@ internal static class QuickPanelWindowScenarios
         ((Button)panel.FindName("ShrinkExpandBtn")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         panel.UpdateLayout();
         Assert.AreEqual(44, panel.ActualHeight, 0.01, "The collapsed bar must remain exactly 44 DIPs.");
+        Assert.AreEqual(Visibility.Collapsed, ((TextBlock)panel.FindName("TitleText")).Visibility);
+        Assert.IsTrue(panel.ActualWidth < initial.Width, "The compact toolbar must contain only six buttons.");
+        Assert.AreEqual(6, ((StackPanel)panel.FindName("TopBarButtons")).Children.Count);
         settings.Current.FloatingPanelEnabled = true;
         settings.Save();
         panel.UpdateLayout();
@@ -190,62 +193,134 @@ internal static class QuickPanelWindowScenarios
         if (!panel.FloatingDepthEnabled) return;
         var surface = (PerspectiveSurface)panel.FindName("SpatialSurface");
         Rect nativeEnvelope = new(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight);
-        Point first = new(panel.ActualWidth + 20, 65);
-        movePointer(first);
+        foreach (Point point in new[] { new Point(420, 65), new Point(-20, 400), new Point(200, 180) })
+        {
+            movePointer(point);
+            panel.UpdatePerspectivePointer();
+            Assert.AreEqual(PerspectivePose.Fixed.Yaw, surface.Yaw, 0.01,
+                "Passing the pointer over a panel must no longer rotate it.");
+        }
+        Point origin = new(180, 200), destination = new(300, 90);
+        Assert.IsTrue(panel.BeginInspection(origin));
+        panel.MoveInspection(destination);
         panel.UpdatePerspectivePointer();
-        PerspectivePose expected = PerspectivePose.FromPointer(first, panel.RenderSize);
-        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw - expected.Yaw) < 0.01);
-        Assert.IsTrue(panel.IsDepthPointerPolling, "A nearby desktop pointer must drive the panel even outside its HWND.");
+        PerspectivePose expected = InspectionGesture.DragPose(PerspectivePose.Fixed, destination - origin, panel.RenderSize);
+        Assert.AreEqual(expected.Yaw, surface.Yaw, 0.01);
+        Assert.AreEqual(expected.Pitch, surface.Pitch, 0.01);
+        panel.EndInspection();
+        Assert.IsFalse(panel.IsInspecting);
         Assert.AreEqual(nativeEnvelope, new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight));
-
-        SendMessage(handle, 0x0231, nint.Zero, nint.Zero); // Native move/resize starts.
-        double frozenYaw = surface.Yaw;
-        Point second = new(-20, panel.ActualHeight - 60);
-        movePointer(second);
+        movePointer(new Point(-1000, -1000));
         panel.UpdatePerspectivePointer();
-        Assert.AreEqual(frozenYaw, surface.Yaw, "Dragging must retain the current pose without snapping the hit target away.");
+        Assert.AreEqual(expected.Yaw, surface.Yaw, 0.01, "Releasing retains the inspected angle.");
         Assert.IsFalse(panel.IsDepthPointerPolling);
-        SendMessage(handle, 0x0232, nint.Zero, nint.Zero);
-        expected = PerspectivePose.FromPointer(second, panel.RenderSize);
-        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw - expected.Yaw) < 0.01);
+        VerifyInspectionButtonReleases(panel, origin);
 
+        SendMessage(handle, 0x0231, nint.Zero, nint.Zero);
+        Assert.IsFalse(panel.BeginInspection(origin), "Native window move/resize must not start inspection.");
+        panel.UpdatePerspectivePointer();
+        Assert.AreEqual(expected.Yaw, surface.Yaw);
+        SendMessage(handle, 0x0232, nint.Zero, nint.Zero);
         var combo = (ComboBox)panel.FindName("ExpireCombo");
+        bool popupClosed = false;
+        void OnPopupClosed(object? sender, EventArgs args) => popupClosed = true;
+        combo.DropDownClosed += OnPopupClosed;
         try
         {
             combo.IsDropDownOpen = true;
-            frozenYaw = surface.Yaw;
-            movePointer(first);
+            Assert.IsFalse(panel.BeginInspection(origin), "Popups must retain stable placement targets.");
             panel.UpdatePerspectivePointer();
-            Assert.AreEqual(frozenYaw, surface.Yaw, "The separate popup must not chase a moving placement target.");
             Assert.IsFalse(panel.IsDepthPointerPolling);
         }
-        finally { combo.IsDropDownOpen = false; }
-        movePointer(new Point(-1000, -1000));
-        panel.UpdatePerspectivePointer();
-        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw) < 0.01);
-        Assert.IsFalse(panel.IsDepthPointerPolling, "Idle/far-away panels must release the fast cursor sampler.");
+        finally
+        {
+            combo.IsDropDownOpen = false;
+            // Closing can finish asynchronously after the popup fade. The
+            // product correctly keeps inspection blocked until DropDownClosed.
+            try { PumpUntil(() => popupClosed); }
+            finally { combo.DropDownClosed -= OnPopupClosed; }
+        }
 
+        Assert.IsTrue(panel.BeginInspection(origin));
         settings.Current.FloatingPanelFollowPointer = false;
         settings.Save();
-        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw - PerspectivePose.Fixed.Yaw) < 0.01);
-        Point[] corners = [new(0, 0), new(panel.ActualWidth, 0), new(0, panel.ActualHeight),
-            new(panel.ActualWidth, panel.ActualHeight)];
-        Point[] fixedProjection = corners.Select(surface.ProjectPoint).ToArray();
-        foreach (Point cursor in new[] { first, second, new Point(200, 180), new Point(-1000, -1000) })
-        {
-            movePointer(cursor);
-            panel.UpdatePerspectivePointer();
-            Assert.AreEqual(PerspectivePose.Fixed.Yaw, surface.Yaw, 0.01);
-            Assert.AreEqual(PerspectivePose.Fixed.Pitch, surface.Pitch, 0.01);
-            CollectionAssert.AreEqual(fixedProjection, corners.Select(surface.ProjectPoint).ToArray(),
-                "Fixed perspective must retain exactly the same projected panel while the pointer moves.");
-            Assert.AreEqual(nativeEnvelope, new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight));
-        }
-        Assert.IsFalse(panel.IsDepthPointerPolling, "Fixed mode must also stop card sampling when the pointer is far away.");
+        Assert.IsFalse(panel.IsInspecting, "Switching to fixed mode must cancel inspection.");
+        Assert.IsTrue(HitProjectedButton(panel), "Mode changes must restore real button hit testing.");
+        Assert.AreEqual(PerspectivePose.Fixed.Yaw, surface.Yaw, 0.01);
+        Assert.IsFalse(panel.BeginInspection(origin), "Fixed perspective disables the inspection gesture.");
         VerifyCardProximity(panel, handle, movePointer);
         settings.Current.FloatingPanelFollowPointer = true;
         settings.Save();
-        PumpUntil(() => !surface.HasAnimatedProperties && Math.Abs(surface.Yaw) < 0.01);
+        Assert.IsTrue(panel.BeginInspection(origin));
+        panel.MoveInspection(destination);
+        panel.UpdatePerspectivePointer();
+        panel.HidePanel();
+        Assert.IsFalse(panel.IsInspecting, "Hiding cancels inspection and its frame timer.");
+        Assert.IsFalse(panel.IsDepthPointerPolling);
+        panel.ShowPanel();
+        PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
+        Assert.IsTrue(HitProjectedButton(panel), "Hiding during inspection must restore input on the next summon.");
+    }
+    private static void VerifyInspectionButtonReleases(QuickPanelWindow panel, Point origin)
+    {
+        MouseButtonEventArgs Raise(MouseButton changed, RoutedEvent routedEvent)
+        {
+            var args = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, changed)
+                { RoutedEvent = routedEvent };
+            panel.RaiseEvent(args);
+            return args;
+        }
+        foreach (MouseButton inspection in new[] { MouseButton.Right, MouseButton.Middle, MouseButton.XButton1 })
+        {
+            Assert.IsTrue(HitProjectedButton(panel), "Normal pointer input must hit the real projected button.");
+            Assert.IsTrue(panel.BeginInspection(origin, inspection));
+            Assert.IsFalse(HitProjectedButton(panel), "Captured inspection must skip child 3D hit testing.");
+            Assert.IsTrue(Raise(MouseButton.Left, UIElement.PreviewMouseDownEvent).Handled);
+            Assert.IsTrue(Raise(inspection, UIElement.PreviewMouseUpEvent).Handled);
+            Assert.IsFalse(panel.IsInspecting);
+            Assert.IsTrue(HitProjectedButton(panel), "Ending inspection must restore projected button hit testing.");
+            Assert.IsTrue(Raise(MouseButton.Left, UIElement.PreviewMouseUpEvent).Handled,
+                "An extra button released after inspection ends must not copy or open a card.");
+            Assert.IsFalse(Raise(MouseButton.Left, UIElement.PreviewMouseUpEvent).Handled,
+                "The suppression belongs to one release, not future clicks.");
+
+            Assert.IsTrue(panel.BeginInspection(origin, inspection));
+            Raise(MouseButton.Left, UIElement.PreviewMouseDownEvent);
+            Assert.IsTrue(Raise(MouseButton.Left, UIElement.PreviewMouseUpEvent).Handled);
+            Assert.IsTrue(panel.IsInspecting, "Releasing the extra button must not end inspection.");
+            // Duplicate primary-down notifications must not make its release
+            // look like a suppressed secondary release and leave inspection stuck.
+            Raise(inspection, UIElement.PreviewMouseDownEvent);
+            Raise(inspection, UIElement.PreviewMouseUpEvent);
+            Assert.IsFalse(panel.IsInspecting);
+            Assert.IsFalse(Raise(MouseButton.Left, UIElement.PreviewMouseUpEvent).Handled,
+                "A secondary release consumed during inspection must clear its suppression.");
+            Assert.IsTrue(HitProjectedButton(panel));
+        }
+
+        Assert.IsTrue(panel.BeginInspection(origin));
+        panel.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+            { RoutedEvent = UIElement.LostMouseCaptureEvent });
+        Assert.IsFalse(panel.IsInspecting, "Lost capture must cancel inspection.");
+        Assert.IsTrue(HitProjectedButton(panel), "Lost capture must restore real button hit testing.");
+        Assert.IsTrue(Raise(MouseButton.Right, UIElement.PreviewMouseUpEvent).Handled,
+            "Cancellation must still consume the original inspection release.");
+    }
+
+    private static bool HitProjectedButton(QuickPanelWindow panel)
+    {
+        var surface = (PerspectiveSurface)panel.FindName("SpatialSurface");
+        var button = (Button)panel.FindName("ShrinkExpandBtn");
+        Point content = button.TransformToAncestor(surface.ContentRoot)
+            .Transform(new Point(button.ActualWidth / 2, button.ActualHeight / 2));
+        DependencyObject? hit = surface.InputHitTest(surface.ProjectPoint(content)) as DependencyObject;
+        while (hit is not null)
+        {
+            if (ReferenceEquals(hit, button)) return true;
+            hit = hit is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(hit) : LogicalTreeHelper.GetParent(hit);
+        }
+        return false;
     }
 
     private static void VerifyCardProximity(QuickPanelWindow panel, nint handle, Action<Point> movePointer)

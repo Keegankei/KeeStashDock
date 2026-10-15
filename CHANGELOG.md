@@ -9,8 +9,11 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 ### 1.2.2 candidate
 
 - Added a persisted Classic / Floating panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
-- Revised Floating mode to retain the ordinary rounded UI, colors, fonts and spacing while the whole panel follows the nearby pointer in perspective. Motion is bounded to 10 degrees of yaw, 7 degrees of pitch and 2 DIPs of offset within a 180-DIP proximity region, with finite 160 ms easing. Input, drag and popup interactions hold the current pose; the collapsed bar and accessibility fallbacks remain flat.
-- Refined Floating mode with a persisted Fixed perspective / Follow pointer choice. In Follow pointer mode, the pointer-facing edge recedes. Cards gain layered outlines, hollow shadows and independent proximity brightness/lift feedback in both presentations, while Classic keeps its existing appearance.
+- Revised Floating mode to retain the ordinary rounded UI, colors, fonts and spacing, with Fixed perspective and Drag to inspect presentations. Hold and drag the right mouse button by default to inspect the panel, then release to retain its angle. A right-click without dragging keeps the card menu. Middle-button and custom button/modifier gestures are also available; Classic and accessibility fallbacks remain flat.
+- Added a thin side layer to the perspective panel, plus layered card outlines, hollow shadows and independent proximity brightness/lift feedback. Card controls, text input, scrolling and normal window movement keep their existing actions.
+- Reduced repeated perspective hit testing, coordinate conversions and drawing allocations; card feedback shares a bounded sampler and retained drawing resources. Idle pointer movement no longer rotates the panel.
+- Added optional auto-hide on all four screen edges, with a 6-DIP-thick, 72-DIP-long handle that restores the panel on hover. The original 44-DIP compact bar retains all six actions and restores the previous expanded size.
+- Organized the candidate portable package around a root application executable, StartHere guide and update manifest, with documentation, licenses, locales and component assets in named folders. Portable Data remains in its existing location.
 - Added screenshot actions for saving an image, extracting text, or extracting and translating. OCR-only results stay in memory, and recognized source text remains available after translation failures.
 - Added a combined selection bubble with separate Copy and Translate buttons, cached source text, temporary keyboard shortcuts, and clipboard-history deduplication.
 - Added explicit update checks in the tray and Settings, official GitHub release discovery, cancellable SHA-256-verified downloads, ownership manifests, same-path replacement, and startup-health rollback/recovery.
@@ -18,7 +21,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 - Fixed screenshot selection being cancelled by the global selection-bubble dismissal handler on the first left press.
 - Fixed torn-out sticky notes collapsing to narrow lines by deferring shadow creation until their initial layout completes.
 - Added official release-page fallback when the GitHub API is rate-limited or unreachable, bounded checks, retry caching/backoff, and fully localized update errors.
-- The maintainer confirmed that update checking, card tear-out and screenshot selection are fixed in candidate revision 2, and accepted the basic spatial direction in revision 3. Revision 4 refines direction, presentation choices and card depth; final visual acceptance remains pending.
+- The maintainer confirmed that update checking, card tear-out and screenshot selection are fixed in candidate revision 2, and accepted the basic spatial direction in revision 3. Revision 5 addresses the reported interaction cost, adds deliberate drag inspection, edge auto-hide and package organization; final visual and platform acceptance remain pending.
 - Added regression coverage for presentation, screenshot routing, selection sessions, release metadata, unsafe packages, managed-file preservation, and interrupted updates. See the [1.2.2 acceptance record](docs/releases/1.2.2.md) for current results and outstanding visual/platform checks.
 
 

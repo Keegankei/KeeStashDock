@@ -23,13 +23,15 @@ A change to the WPF application should also pass a publish smoke check:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
-dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
+dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64 -p:PublishProfile=FolderProfile
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
   --no-restore `
   -p:PublishProfile=FolderProfile `
   --output artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/New-UpdateManifest.ps1 -Path artifacts/publish
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PackagedHost.ps1 -Path artifacts/publish
 ```
 
 The optional translation helper has standard-library-only safety tests (Python 3.11 or later):
@@ -40,11 +42,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/te
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PublishSafety.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-SingleFileBundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-UpdateManifest.ps1
 ```
 
 OCR model setup is an explicit, hash-verified download. Plain source builds do not
 need models; the complete release package and CI publish check do. Use a fresh
 publish directory rather than a running installation or a directory with `Data`.
+The profile bundles the application runtime; keep the complete package together
+because OCR, languages, component tools and documentation remain external. The
+host smoke check uses an isolated mode without creating user data or starting
+the normal tray application. See [the release process](docs/RELEASING.md) for
+the final ZIP layout and checksum requirements.
 
 ## Cleaning local outputs
 

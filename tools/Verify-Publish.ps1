@@ -5,6 +5,8 @@ param([Parameter(Mandatory = $true)][string] $Path)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'ArtifactPolicy.ps1')
+. (Join-Path $PSScriptRoot 'UpdateManifest.Common.ps1')
+. (Join-Path $PSScriptRoot 'SingleFileBundle.Common.ps1')
 $publishDirectory = (Resolve-Path -LiteralPath $Path).Path
 if (-not (Test-Path -LiteralPath $publishDirectory -PathType Container)) {
     throw 'The publish path must be a directory.'
@@ -31,9 +33,7 @@ while ($pending.Count -gt 0) {
 }
 
 $required = @(
-    'KeeStashDock.exe', 'KeeStashDock.dll', 'KeeStashDock.deps.json',
-    'KeeStashDock.runtimeconfig.json', 'coreclr.dll', 'System.Private.CoreLib.dll',
-    'e_sqlite3.dll', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'StartHere.md', 'Screenshots.md', 'Updating.md',
+    'KeeStashDock.exe', 'StartHere.md',
     'x64/tesseract.exe', 'x64/tesseract55.dll', 'x64/leptonica-1.85.0.dll',
     'NativeRuntime/Setup.ps1',
     'OcrModels/Setup.ps1', 'OcrModels/README.md', 'OcrModels/LICENSE',
@@ -44,6 +44,19 @@ $required = @(
     'OfflineTranslation/Stop.ps1', 'OfflineTranslation/server.py',
     'OfflineTranslation/setup_runtime.py', 'OfflineTranslation/README.md'
 )
+$flat = Test-Path -LiteralPath (Join-Path $publishDirectory 'KeeStashDock.dll') -PathType Leaf
+if ($flat) {
+    $required += @('KeeStashDock.dll', 'KeeStashDock.deps.json', 'KeeStashDock.runtimeconfig.json',
+        'coreclr.dll', 'System.Private.CoreLib.dll', 'e_sqlite3.dll')
+}
+if (Test-Path -LiteralPath (Join-Path $publishDirectory 'Licenses/LICENSE') -PathType Leaf) {
+    $required += @('Licenses/LICENSE', 'Licenses/NOTICE', 'Licenses/THIRD_PARTY_NOTICES.md',
+        'Docs/Screenshots.md', 'Docs/Updating.md', 'Docs/Updating.zh-CN.md')
+} else {
+    # Continue validating previously issued flat packages without weakening
+    # their complete runtime, documentation, or ownership requirements.
+    $required += @('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'Screenshots.md', 'Updating.md')
+}
 $repositoryDirectory = Split-Path -Parent $PSScriptRoot
 foreach ($locale in Get-ChildItem -LiteralPath (Join-Path $repositoryDirectory 'src/KeeStashDock.Desktop/Locales') -Filter '*.json' -File) {
     $required += 'Locales/' + $locale.Name
@@ -57,6 +70,23 @@ foreach ($relative in $required) {
     $file = Join-Path $publishDirectory $relative
     if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file).Length -eq 0) {
         throw "Missing or empty release file: $relative"
+    }
+}
+if (-not $flat) {
+    $embedded = @(Get-SingleFileBundleEntries (Join-Path $publishDirectory 'KeeStashDock.exe'))
+    foreach ($runtime in @('KeeStashDock.dll', 'KeeStashDock.deps.json', 'KeeStashDock.runtimeconfig.json',
+        'KeeStashDock.Core.dll', 'KeeStashDock.Domain.dll', 'KeeStashDock.Infrastructure.dll',
+        'coreclr.dll', 'System.Private.CoreLib.dll', 'e_sqlite3.dll',
+        'PresentationCore.dll', 'PresentationFramework.dll', 'WindowsBase.dll', 'wpfgfx_cor3.dll')) {
+        if (-not ($embedded | Where-Object Path -CEQ $runtime)) { throw "Missing bundled runtime file: $runtime" }
+    }
+    if ($embedded | Where-Object { $_.Path -match '^(?:x64|x86|Locales|OcrModels|OfflineTranslation|NativeRuntime|Docs|Licenses)/' }) {
+        throw 'Editable assets and the separate OCR engine must remain outside the application bundle.'
+    }
+    foreach ($entry in Get-ChildItem -LiteralPath $publishDirectory -File) {
+        if ($entry.Name -cnotin @('KeeStashDock.exe', 'StartHere.md', 'update-manifest.json')) {
+            throw ('Unexpected loose file in the organized package root: ' + $entry.Name)
+        }
     }
 }
 

@@ -122,10 +122,26 @@ public sealed class SettingsStore
 
         Current.PanelPosX = NormalizeOptionalFinite(Current.PanelPosX);
         Current.PanelPosY = NormalizeOptionalFinite(Current.PanelPosY);
+        // A physical location is meaningful only as a complete pair. Invalid
+        // monitor coordinates fall back to the existing safe DIP placement.
+        if (Current.PanelDevicePosX is not (>= -100_000 and <= 100_000) ||
+            Current.PanelDevicePosY is not (>= -100_000 and <= 100_000))
+        {
+            Current.PanelDevicePosX = null;
+            Current.PanelDevicePosY = null;
+        }
         Current.PanelUserWidth = NormalizeOptionalPositive(
             Current.PanelUserWidth, 160, 4000);
         Current.PanelUserHeight = NormalizeOptionalPositive(
             Current.PanelUserHeight, 120, 4000);
+
+        if (Current.FloatingInspectionGesture is not ("Right" or "Middle" or "Custom"))
+            Current.FloatingInspectionGesture = "Right";
+        if (Current.FloatingInspectionButton is not ("Left" or "Right" or "Middle" or "XButton1" or "XButton2"))
+            Current.FloatingInspectionButton = "Left";
+        if (Current.FloatingInspectionModifiers is not ("None" or "Control" or "Alt" or "Shift" or
+            "Control+Alt" or "Control+Shift" or "Alt+Shift" or "Control+Alt+Shift"))
+            Current.FloatingInspectionModifiers = "Alt";
 
         if (string.IsNullOrWhiteSpace(Current.Language))
             Current.Language = "en-US";

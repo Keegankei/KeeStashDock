@@ -352,6 +352,12 @@
                     Checked="OnCollectionChanged" Unchecked="OnCollectionChanged"
                     Content="{loc:Tr Settings.DirectPaste}"/>
 
+          <CheckBox x:Name="PanelEdgeAutoHideCheck" Margin="0,0,0,4"
+                    Content="{loc:Tr Settings.Panel.EdgeAutoHide}"
+                    Checked="OnPanelEdgeAutoHideChanged" Unchecked="OnPanelEdgeAutoHideChanged"/>
+          <TextBlock Text="{loc:Tr Settings.Panel.EdgeAutoHideHint}" TextWrapping="Wrap"
+                     FontSize="11" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+
           <!-- Panel timing: seconds, committed on focus loss / Enter -->
           <Grid Style="{StaticResource S.Row}">
             <Grid.ColumnDefinitions>
@@ -439,6 +445,54 @@
           </Grid>
           <TextBlock Text="{loc:Tr Settings.FloatingMotion.Hint}" TextWrapping="Wrap"
                      FontSize="11" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+
+          <StackPanel x:Name="InspectionGesturePanel">
+            <Grid Style="{StaticResource S.Row}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220" TextWrapping="Wrap"
+                         Text="{loc:Tr Settings.InspectionGesture}"/>
+              <ComboBox Grid.Column="1" x:Name="InspectionGestureCombo" MinWidth="200"
+                        SelectionChanged="OnInspectionGestureChanged">
+                <ComboBoxItem Tag="Right" Content="{loc:Tr Settings.InspectionGesture.Right}"/>
+                <ComboBoxItem Tag="Middle" Content="{loc:Tr Settings.InspectionGesture.Middle}"/>
+                <ComboBoxItem Tag="Custom" Content="{loc:Tr Settings.InspectionGesture.Custom}"/>
+              </ComboBox>
+            </Grid>
+            <Grid x:Name="InspectionCustomRow" Style="{StaticResource S.Row}" Visibility="Collapsed">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220" TextWrapping="Wrap"
+                         Text="{loc:Tr Settings.InspectionGesture.Custom}"/>
+              <StackPanel Grid.Column="1">
+                <ComboBox x:Name="InspectionModifiersCombo" MinWidth="200" Margin="0,0,0,4"
+                          SelectionChanged="OnInspectionGestureChanged">
+                  <ComboBoxItem Tag="None" Content="{loc:Tr Settings.InspectionGesture.NoModifier}"/>
+                  <ComboBoxItem Tag="Control" Content="Ctrl"/>
+                  <ComboBoxItem Tag="Alt" Content="Alt"/>
+                  <ComboBoxItem Tag="Shift" Content="Shift"/>
+                  <ComboBoxItem Tag="Control+Alt" Content="Ctrl + Alt"/>
+                  <ComboBoxItem Tag="Control+Shift" Content="Ctrl + Shift"/>
+                  <ComboBoxItem Tag="Alt+Shift" Content="Alt + Shift"/>
+                  <ComboBoxItem Tag="Control+Alt+Shift" Content="Ctrl + Alt + Shift"/>
+                </ComboBox>
+                <ComboBox x:Name="InspectionButtonCombo" MinWidth="200"
+                          SelectionChanged="OnInspectionGestureChanged">
+                  <ComboBoxItem Tag="Left" Content="{loc:Tr Settings.InspectionGesture.Left}"/>
+                  <ComboBoxItem Tag="Right" Content="{loc:Tr Settings.InspectionGesture.Right}"/>
+                  <ComboBoxItem Tag="Middle" Content="{loc:Tr Settings.InspectionGesture.Middle}"/>
+                  <ComboBoxItem Tag="XButton1" Content="{loc:Tr Settings.InspectionGesture.XButton1}"/>
+                  <ComboBoxItem Tag="XButton2" Content="{loc:Tr Settings.InspectionGesture.XButton2}"/>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+            <TextBlock Text="{loc:Tr Settings.InspectionGesture.Hint}" TextWrapping="Wrap"
+                       FontSize="11" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+          </StackPanel>
 
           <Grid Style="{StaticResource S.Row}">
             <Grid.ColumnDefinitions>

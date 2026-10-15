@@ -138,6 +138,7 @@ public partial class QuickPanelWindow : Window
         // signature guard below makes unrelated saves - e.g. geometry - free).
         _settings.Changed += OnPanelSettingsChanged;
         InitializeDepth();
+        InitializeEdgeDock();
         Closed += (_, _) =>
         {
             _visibilityTransition++;
@@ -595,10 +596,12 @@ public partial class QuickPanelWindow : Window
                 // Fires once after every completed drag OR resize loop:
                 // one place persists both position and user-chosen size.
                 _nativeDepthMove = false;
+                UpdateEdgeDockAfterMove();
                 PersistGeometry();
                 UpdatePerspectivePointer();
                 break;
             case 0x0231: // WM_ENTERSIZEMOVE
+                RevealEdgeDock();
                 _nativeDepthMove = true;
                 FreezePerspectiveMotion();
                 break;
@@ -607,10 +610,11 @@ public partial class QuickPanelWindow : Window
     }
 
     /// <summary>Maps a screen point (WM_NCHITTEST lParam, device px) onto the
-    /// window's 6px edge bands. The shrunk bar has a fixed height, so it only
-    /// exposes left/right handles; the expanded panel exposes all eight.</summary>
+    /// window's 6px edge bands. Compact and edge-handle states cannot resize;
+    /// the expanded panel exposes all eight handles.</summary>
     private int HitTestResizeEdge(IntPtr lParam)
     {
+        if (IsEdgeDockHidden || _state == PanelState.Shrunk) return 0;
         int x = unchecked((short)((long)lParam & 0xFFFF));
         int y = unchecked((short)(((long)lParam >> 16) & 0xFFFF));
 
@@ -632,9 +636,6 @@ public partial class QuickPanelWindow : Window
         bool cTop    = y >= tp && y < tp + CornerBandPx;
         bool cBottom = y <= b && y > b - CornerBandPx;
 
-        if (_state == PanelState.Shrunk)
-            return left ? HTLEFT : right ? HTRIGHT : 0;   // height is fixed
-
         if (cTop && cLeft) return HTTOPLEFT;
         if (cTop && cRight) return HTTOPRIGHT;
         if (cBottom && cLeft) return HTBOTTOMLEFT;
@@ -648,12 +649,20 @@ public partial class QuickPanelWindow : Window
 
     private void PersistGeometry()
     {
+        if (IsEdgeDockHidden || _changingEdgeBounds) return;
         var cfg = _settings.Current;
         cfg.PanelPosX = Left;
         cfg.PanelPosY = Top;
-        cfg.PanelUserWidth = ActualWidth;                 // both states share width
+        if (TryGetNativeBounds(out var normalBounds))
+        {
+            cfg.PanelDevicePosX = normalBounds.Left;
+            cfg.PanelDevicePosY = normalBounds.Top;
+        }
         if (_state == PanelState.Expanded)
+        {
+            cfg.PanelUserWidth = ActualWidth;
             cfg.PanelUserHeight = ActualHeight;
+        }
         _settings.Save();
     }
 
@@ -674,13 +683,22 @@ public partial class QuickPanelWindow : Window
 
     /// <summary>The compact window is exactly the height of its visible bar.</summary>
     private double ShrunkWindowHeight => ShrunkHeight;
+    private double CompactToolbarWidth
+    {
+        get
+        {
+            TopBarButtons.Measure(new Size(double.PositiveInfinity, ShrunkHeight));
+            return Math.Ceiling(TopBarButtons.DesiredSize.Width + 20);
+        }
+    }
 
     /// <summary>Applies the persisted (or default) top-left position, clamped
     /// into the current work area so a monitor change can never lose the window.</summary>
     private void ApplyPosition()
     {
+        if (TryApplyDevicePosition()) return;
         var wa = SystemParameters.WorkArea;
-        double w = ExpandedWidth;   // both states share the same width
+        double w = _state == PanelState.Expanded ? ExpandedWidth : CompactToolbarWidth;
         double h = _state == PanelState.Expanded ? ExpandedHeight : ShrunkWindowHeight;
 
         double x = _settings.Current.PanelPosX
@@ -700,8 +718,11 @@ public partial class QuickPanelWindow : Window
         ExpireRow.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         ListArea.Visibility  = expanded ? Visibility.Visible : Visibility.Collapsed;
 
-        MinWidth = MinExpandedWidth;
-        Width    = ExpandedWidth;
+        TitleText.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        ResizeMode = expanded ? ResizeMode.CanResize : ResizeMode.NoResize;
+        MinWidth = expanded ? MinExpandedWidth : CompactToolbarWidth;
+        MaxWidth = expanded ? double.PositiveInfinity : CompactToolbarWidth;
+        Width = expanded ? ExpandedWidth : CompactToolbarWidth;
         if (expanded)
         {
             MinHeight = 300;
@@ -728,6 +749,7 @@ public partial class QuickPanelWindow : Window
     /// activation (spec item 3).</summary>
     public void ShowPanel()
     {
+        ClearEdgeDockBeforeShow();
         _vm.ReloadCategories();   // groups may have changed in the workbench
         _vm.Reload();
         ApplyBackground();   // picks up settings changes made while hidden
@@ -750,6 +772,7 @@ public partial class QuickPanelWindow : Window
 
         ResetTimers();
         _clock.Start();
+        UpdateEdgeDockAfterMove();
     }
 
     /// <summary>Fades out into the hidden (tray-only) state.</summary>
@@ -784,14 +807,20 @@ public partial class QuickPanelWindow : Window
     private void TickStateMachine()
     {
         if (!IsVisible) return;
+        bool edgeOwnsTransition = TickEdgeDock();
+        if (IsEdgeDockHidden) return;
         // Engagement includes PROXIMITY (cursor within ~48 DIP of the window)
         // in BOTH states: it makes the thin shrunk bar forgiving to aim at,
         // and it must symmetrically keep the expanded panel open - otherwise
         // "idle just outside the panel" would collapse it and the proximity
         // zone would immediately re-expand it, oscillating forever.
-        bool engaged = IsMouseOver || IsKeyboardFocusWithin ||
+        bool engaged = IsMouseOver || IsKeyboardFocusWithin || _inspectionActive ||
+                       _inspectionPending || ReferenceEquals(Mouse.Captured, this) ||
                        CursorNearWindow(ProximityDip);
         UpdateDepthApproach(engaged);
+        // Edge docking replaces ordinary timed shrinking, not nearby card
+        // feedback or the slow sampler that detects movement outside the HWND.
+        if (edgeOwnsTransition) return;
         var now = DateTime.UtcNow;
 
         if (_vm.IsLocked) { ResetTimers(); return; }   // lock pins the state
@@ -818,6 +847,7 @@ public partial class QuickPanelWindow : Window
     private void SetState(PanelState s)
     {
         if (_state == s) return;
+        RevealEdgeDock();
         ResetDepthMotion();
         _state = s;
         // Manual shrink leaves the cursor on the window; require it to leave
@@ -825,9 +855,9 @@ public partial class QuickPanelWindow : Window
         _expandArmed = s != PanelState.Shrunk || !IsMouseOver;
         ResetTimers();
         ApplyStateVisuals();
-        // Keep the panel inside the work area after the size change.
-        var wa = SystemParameters.WorkArea;
-        Top = Math.Clamp(Top, wa.Top, Math.Max(wa.Top, wa.Bottom - Height));
+        // Preserve this monitor and docking edge through compact/expanded sizes.
+        UpdateLayout();
+        ClampPanelToCurrentWorkArea();
     }
 
     private void ResetTimers() { _idleSince = null; _hoverSince = null; }
@@ -853,7 +883,8 @@ public partial class QuickPanelWindow : Window
 
     private void OnTopBarMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ChangedButton != MouseButton.Left) return;
+        if (e.ChangedButton != MouseButton.Left ||
+            FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(e.OriginalSource as DependencyObject) is not null) return;
         try { DragMove(); }   // geometry is persisted by WM_EXITSIZEMOVE
         catch (InvalidOperationException) { }
     }

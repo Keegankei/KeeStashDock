@@ -28,6 +28,9 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     private DispatcherOperation? _pendingShow;
     private bool _syncingBounds;
     private Geometry? _projectedOutline;
+    private Geometry? _appliedOutline;
+    private double _appliedScaleX = double.NaN, _appliedScaleY = double.NaN;
+    private bool _floating;
 
     internal PanelShadowWindow(Window panel, double radius = 12)
     {
@@ -47,6 +50,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
             Margin = new Thickness(PaddingDip), CornerRadius = radius,
             Spread = 24, ShadowOffset = 4, Strength = 0.22,
         };
+        _surface.SetResourceReference(SurfaceShadow.DepthBrushProperty, "B.Border");
         Content = _surface;
         SourceInitialized += OnSourceInitialized;
         panel.LocationChanged += OnGeometryChanged;
@@ -65,6 +69,8 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     {
         if (_disposed) return;
         _enabled = enabled;
+        _floating = floating;
+        UpdateDepth(VisualTreeHelper.GetDpi(_panel), VisualTreeHelper.GetDpi(this));
         _surface.Strength = floating ? 0.30 : 0.21;
         // Only decoration changes on approach: no control moves away from the pointer.
         _surface.Opacity = floating && !emphasized ? 0.78 : 1;
@@ -76,24 +82,36 @@ internal sealed class PanelShadowWindow : Window, IDisposable
     internal void UpdateProjectedOutline(Geometry? outline)
     {
         if (_disposed) return;
-        _projectedOutline = outline?.CloneCurrentValue();
-        _projectedOutline?.Freeze();
+        _projectedOutline = outline is null || outline.IsFrozen ? outline : (Geometry)outline.GetCurrentValueAsFrozen();
         ApplyProjectedOutline(VisualTreeHelper.GetDpi(_panel), VisualTreeHelper.GetDpi(this));
     }
 
     private void ApplyProjectedOutline(DpiScale ownerDpi, DpiScale shadowDpi)
-        => _surface.Outline = ScaleProjectedOutline(_projectedOutline,
-            ownerDpi.DpiScaleX / shadowDpi.DpiScaleX,
-            ownerDpi.DpiScaleY / shadowDpi.DpiScaleY);
+    {
+        double scaleX = ownerDpi.DpiScaleX / shadowDpi.DpiScaleX;
+        double scaleY = ownerDpi.DpiScaleY / shadowDpi.DpiScaleY;
+        if (ReferenceEquals(_appliedOutline, _projectedOutline) &&
+            _appliedScaleX == scaleX && _appliedScaleY == scaleY) return;
+        _appliedOutline = _projectedOutline;
+        _appliedScaleX = scaleX;
+        _appliedScaleY = scaleY;
+        _surface.Outline = ScaleProjectedOutline(_projectedOutline, scaleX, scaleY);
+    }
+
+    private void UpdateDepth(DpiScale ownerDpi, DpiScale shadowDpi)
+        => _surface.Depth = _floating ? 2.5 * ownerDpi.DpiScaleY / shadowDpi.DpiScaleY : 0;
 
     internal static Geometry? ScaleProjectedOutline(Geometry? outline, double scaleX, double scaleY)
     {
         if (outline is null) return null;
+        // The usual same-monitor path already receives a frozen silhouette.
+        // Share it with the shadow instead of copying all its points twice.
+        if (scaleX == 1 && scaleY == 1)
+            return outline.IsFrozen ? outline : (Geometry)outline.GetCurrentValueAsFrozen();
         Geometry result = outline.CloneCurrentValue();
-        var transform = new TransformGroup();
-        transform.Children.Add(result.Transform);
-        transform.Children.Add(new ScaleTransform(scaleX, scaleY));
-        result.Transform = transform;
+        Matrix transform = result.Transform.Value;
+        transform.Scale(scaleX, scaleY);
+        result.Transform = new MatrixTransform(transform);
         result.Freeze();
         return result;
     }
@@ -195,6 +213,7 @@ internal sealed class PanelShadowWindow : Window, IDisposable
             _surface.CornerRadius = _cornerRadius * dpi.DpiScaleX / decorationDpi.DpiScaleX;
             _surface.Spread = 24 * dpi.DpiScaleX / decorationDpi.DpiScaleX;
             _surface.ShadowOffset = 4 * dpi.DpiScaleY / decorationDpi.DpiScaleY;
+            UpdateDepth(dpi, decorationDpi);
             ApplyProjectedOutline(dpi, decorationDpi);
         }
     }

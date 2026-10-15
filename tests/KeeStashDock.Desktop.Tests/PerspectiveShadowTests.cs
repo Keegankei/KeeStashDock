@@ -63,4 +63,99 @@ public sealed class PerspectiveShadowTests
         Assert.IsNull(PanelShadowWindow.ScaleProjectedOutline(null, 1.5, 0.8),
             "Classic mode must restore the ordinary rounded-rectangle shadow.");
     }
+
+    [STATestMethod]
+    public void SameDpiSharesFrozenOutlineButSnapshotsMutableInput()
+    {
+        var outline = new RectangleGeometry(new Rect(10, 20, 80, 60), 8, 8);
+        Geometry snapshot = PanelShadowWindow.ScaleProjectedOutline(outline, 1, 1)!;
+        Assert.IsFalse(outline.IsFrozen, "A caller-owned geometry must remain editable.");
+        Assert.IsTrue(snapshot.IsFrozen);
+        outline.Rect = new Rect(20, 30, 80, 60);
+        Assert.AreEqual(new Rect(10, 20, 80, 60), snapshot.Bounds,
+            "Changing the source cannot change a shadow's retained snapshot.");
+        outline.Freeze();
+        Assert.AreSame(outline, PanelShadowWindow.ScaleProjectedOutline(outline, 1, 1),
+            "Normal pointer frames must share the already-frozen silhouette without copying its points.");
+    }
+
+    [STATestMethod]
+    public void ProjectedThicknessIsThinThemedAndHollowAndDoesNotChangeClassic()
+    {
+        var outline = new RectangleGeometry(new Rect(10, 10, 100, 90), 8, 8);
+        outline.Freeze();
+        var themeBrush = new SolidColorBrush(Colors.SteelBlue);
+        var shadow = new SurfaceShadow
+        {
+            Outline = outline, Strength = 0, Depth = 2.5, DepthBrush = themeBrush,
+        };
+        byte[] pixels = Render(shadow);
+        Assert.IsTrue(Alpha(pixels, 65, 101) > 80, "The bottom edge should have a visible thin side wall.");
+        Assert.IsTrue(Alpha(pixels, 110, 50) > 0, "The right edge should show the slight depth offset.");
+        Assert.AreEqual((byte)0, Alpha(pixels, 65, 105), "Thickness must not become a large second panel.");
+        for (int y = 20; y < 90; y++)
+            for (int x = 20; x < 100; x++)
+                Assert.AreEqual((byte)0, Alpha(pixels, x, y), "Depth must leave the translucent face entirely hollow.");
+        Assert.IsFalse(shadow.IsHitTestVisible);
+        Assert.IsFalse(themeBrush.IsFrozen, "Drawing must not freeze an externally owned theme brush.");
+        int side = PixelIndex(65, 101);
+        Assert.IsTrue(pixels[side] > pixels[side + 2], "The side wall should use the theme's color.");
+        themeBrush.Color = Colors.White;
+        byte[] changedTheme = Render(shadow);
+        Assert.AreEqual(changedTheme[side], changedTheme[side + 2], "Live theme changes must update the side wall.");
+
+        shadow.Depth = 0;
+        Assert.IsTrue(Render(shadow).All(value => value == 0), "Disabling depth should clear it completely.");
+        shadow.Depth = 2.5;
+        shadow.Outline = null;
+        Assert.IsTrue(Render(shadow).All(value => value == 0), "Classic shadows must not gain the projected side wall.");
+    }
+
+    [STATestMethod]
+    public void ReusedShadowRefreshesFalloffAndTracksTheNewSilhouette()
+    {
+        var outline = new RectangleGeometry(new Rect(20, 20, 80, 70), 8, 8);
+        outline.Freeze();
+        var shadow = new SurfaceShadow { Outline = outline, Spread = 20, ShadowOffset = 4, Strength = 0.3 };
+        byte strong = Alpha(Render(shadow), 108, 55);
+        Assert.IsTrue(strong > 0);
+        shadow.Strength = 0.1;
+        Assert.IsTrue(Alpha(Render(shadow), 108, 55) < strong, "Changing strength must invalidate cached falloff paints.");
+        shadow.Spread = 4;
+        Assert.AreEqual((byte)0, Alpha(Render(shadow), 108, 55), "Changing spread must not retain wider cached strokes.");
+        shadow.Spread = 20;
+        shadow.Strength = 0.3;
+        var moved = new RectangleGeometry(new Rect(30, 20, 80, 70), 8, 8);
+        moved.Freeze();
+        shadow.Outline = moved;
+        byte[] pixels = Render(shadow);
+        Assert.AreEqual((byte)0, Alpha(pixels, 108, 55), "The old edge must become transparent inside the new face.");
+        Assert.IsTrue(Alpha(pixels, 118, 55) > 0, "The retained paints must follow the new projected edge.");
+    }
+
+    private const int RenderPadding = 32, RenderWidth = 184, RenderHeight = 174;
+
+    private static int PixelIndex(int x, int y)
+        => ((y + RenderPadding) * RenderWidth + x + RenderPadding) * 4;
+
+    private static byte Alpha(byte[] pixels, int x, int y) => pixels[PixelIndex(x, y) + 3];
+
+    private static byte[] Render(SurfaceShadow shadow)
+    {
+        var host = new Grid { Width = RenderWidth, Height = RenderHeight };
+        shadow.Margin = new Thickness(RenderPadding);
+        host.Children.Add(shadow);
+        try
+        {
+            host.Measure(new Size(RenderWidth, RenderHeight));
+            host.Arrange(new Rect(0, 0, RenderWidth, RenderHeight));
+            host.UpdateLayout();
+            var bitmap = new RenderTargetBitmap(RenderWidth, RenderHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(host);
+            var pixels = new byte[RenderWidth * RenderHeight * 4];
+            bitmap.CopyPixels(pixels, RenderWidth * 4, 0);
+            return pixels;
+        }
+        finally { host.Children.Remove(shadow); }
+    }
 }

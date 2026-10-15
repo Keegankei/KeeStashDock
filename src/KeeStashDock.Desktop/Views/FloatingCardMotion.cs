@@ -42,9 +42,8 @@ public static class FloatingCardMotion
     /// </summary>
     internal static void UpdateProximity(DependencyObject subtree, Point? pointerInPanel, FrameworkElement panel)
     {
-        DependencyObject? hit = pointerInPanel is { } point && double.IsFinite(point.X) && double.IsFinite(point.Y)
-            ? panel.InputHitTest(point) as DependencyObject : null;
-        VisitControllers(subtree, controller => controller.UpdateProximity(pointerInPanel, panel, hit));
+        var sample = new ProximitySample(subtree, pointerInPanel, panel);
+        VisitControllers(subtree, controller => controller.UpdateProximity(sample));
     }
 
     internal static void FreezeProximity(DependencyObject subtree)
@@ -112,9 +111,100 @@ public static class FloatingCardMotion
     internal static void Reset(DependencyObject element)
         => (element.GetValue(ControllerProperty) as Controller)?.Reset();
 
+    /// <summary>
+    /// Share projection and inverse pointer mapping across a sample. Proximity
+    /// only needs to hold a moving button still, not repeat WPF's full hit test.
+    /// </summary>
+    private sealed class ProximitySample
+    {
+        private readonly FrameworkElement _panel;
+        private readonly PerspectiveSurface? _surface;
+        private readonly GeneralTransform? _surfaceToPanel;
+        private bool _pointerMapped;
+        private Point? _contentPointer;
+        internal Point? Pointer { get; }
+
+        internal ProximitySample(DependencyObject subtree, Point? pointer, FrameworkElement panel)
+        {
+            _panel = panel;
+            if (!panel.IsLoaded || !panel.IsVisible || pointer is not { } point ||
+                !double.IsFinite(point.X) || !double.IsFinite(point.Y)) return;
+            try
+            {
+                for (DependencyObject? parent = subtree; parent is not null; parent = Parent(parent))
+                    if (parent is PerspectiveSurface surface)
+                    {
+                        _surface = surface;
+                        _surfaceToPanel = surface.TransformToVisual(panel);
+                        break;
+                    }
+                Pointer = point;
+            }
+            // Visibility can change before Show finishes, or while mode
+            // switching reparents the live visual. The next sample retries
+            // after layout instead of transforming two disconnected trees.
+            catch (InvalidOperationException) { }
+            catch (ArgumentException) { }
+        }
+
+        internal bool IsOverButton(ButtonBase button)
+        {
+            if (!button.IsVisible || !button.IsHitTestVisible || button.RenderSize.Width <= 0 || button.RenderSize.Height <= 0)
+                return false;
+            try
+            {
+                if (!_pointerMapped)
+                {
+                    _pointerMapped = true;
+                    if (Pointer is not { } point || !new Rect(_panel.RenderSize).Contains(point)) return false;
+                    if (_surface is null) _contentPointer = point;
+                    else if (_surfaceToPanel?.Inverse is { } inverse && inverse.TryTransform(point, out Point projected) &&
+                             _surface.TryUnprojectPoint(projected, out Point content)) _contentPointer = content;
+                }
+                if (_contentPointer is not { } mapped) return false;
+                // This stays wholly in the content plane, including the card's
+                // current lift/scale. Only freeze feedback; WPF still routes all
+                // real clicks through its own precise input hit testing.
+                GeneralTransform toContent = _surface is null
+                    ? button.TransformToAncestor(_panel) : button.TransformToAncestor(_surface.ContentRoot);
+                return toContent.Inverse is { } fromContent && fromContent.TryTransform(mapped, out Point local) &&
+                    new Rect(button.RenderSize).Contains(local);
+            }
+            catch (InvalidOperationException) { return false; }
+            catch (ArgumentException) { return false; }
+        }
+
+        internal bool Project(FrameworkElement source, Rect bounds, Point[] points)
+        {
+            points[0] = bounds.TopLeft;
+            points[1] = bounds.TopRight;
+            points[2] = bounds.BottomRight;
+            points[3] = bounds.BottomLeft;
+            // Transform only within the unchanged 2D content tree. Building a
+            // WPF GeneralTransform through Viewport2DVisual3D repeatedly creates
+            // its interaction mesh; the surface already knows this projection.
+            GeneralTransform transform = _surface is null
+                ? source.TransformToVisual(_panel) : source.TransformToAncestor(_surface.ContentRoot);
+            for (int i = 0; i < points.Length; i++)
+            {
+                if (!transform.TryTransform(points[i], out Point point)) return false;
+                if (_surface is not null)
+                {
+                    point = _surface.ProjectPoint(point);
+                    if (!_surfaceToPanel!.TryTransform(point, out point)) return false;
+                }
+                points[i] = point;
+            }
+            return true;
+        }
+    }
+
     private sealed class Controller : IDisposable
     {
         private readonly FrameworkElement _host, _target;
+        private readonly ScrollContentPresenter? _viewport;
+        private readonly Point[] _quad = new Point[4];
+        private readonly List<ButtonBase> _buttons = [];
         private readonly Transform _previousTransform;
         private readonly Point _previousOrigin;
         private readonly ScaleTransform _scale = new();
@@ -128,6 +218,9 @@ public static class FloatingCardMotion
         {
             _host = host;
             _target = target;
+            CollectButtons(host);
+            for (DependencyObject? parent = Parent(host); parent is not null; parent = Parent(parent))
+                if (parent is ScrollContentPresenter viewport) { _viewport = viewport; break; }
             _previousTransform = target.RenderTransform;
             _previousOrigin = target.RenderTransformOrigin;
             var transforms = new TransformGroup();
@@ -158,25 +251,27 @@ public static class FloatingCardMotion
             // card here would move a button between pointer-down and pointer-up.
             if (IsButton(e.OriginalSource as DependencyObject)) { Freeze(); return; }
             if (_pressed && e.LeftButton != MouseButtonState.Pressed) _pressed = false;
-            if (_frozen && !_pressed) return;
-            Point point = e.GetPosition(_host);
-            Apply(1, Math.Clamp(point.X / Math.Max(1, _host.ActualWidth) * 2 - 1, -1, 1),
-                Math.Clamp(point.Y / Math.Max(1, _host.ActualHeight) * 2 - 1, -1, 1));
+            // The shared panel sampler owns hover/proximity. A second stream
+            // from routed MouseMove used to restart seven tweens between ticks.
         }
 
-        internal void UpdateProximity(Point? pointer, FrameworkElement panel, DependencyObject? hit)
+        internal void UpdateProximity(ProximitySample sample)
         {
             if (!AnimationsAllowed || !_host.IsVisible) { Reset(); return; }
             if (_pressed && Mouse.LeftButton != MouseButtonState.Pressed) _pressed = false;
             if (_pressed) return;
-            if (IsButton(hit) && IsWithinHost(hit)) { Freeze(); return; }
-            _frozen = false;
-            if (pointer is not { } point || !double.IsFinite(point.X) || !double.IsFinite(point.Y))
+            if (sample.Pointer is not { } point)
             { Rest(animate: true); return; }
-            Point[]? quad = VisibleQuad(panel);
+            Point[]? quad = VisibleQuad(sample);
             if (quad is null) { Rest(animate: true); return; }
             double activity = ProximityActivity(point, quad);
             if (activity <= 0) { Rest(animate: true); return; }
+            // A button clipped above/below the scrolling viewport must not
+            // freeze a card through another row. Nearness alone is insufficient.
+            if (activity == 1)
+                foreach (ButtonBase button in _buttons)
+                    if (sample.IsOverButton(button)) { Freeze(); return; }
+            _frozen = false;
             var bounds = Rect.Empty;
             foreach (Point corner in quad) bounds.Union(corner);
             double x = Math.Clamp((point.X - bounds.X) / Math.Max(1, bounds.Width) * 2 - 1, -1, 1);
@@ -184,7 +279,7 @@ public static class FloatingCardMotion
             Apply(Math.Round(activity, 2), Math.Round(x, 2), Math.Round(y, 2));
         }
 
-        private Point[]? VisibleQuad(FrameworkElement panel)
+        private Point[]? VisibleQuad(ProximitySample sample)
         {
             try
             {
@@ -193,33 +288,29 @@ public static class FloatingCardMotion
                 // input row or outside the scrolling viewport.
                 FrameworkElement source = _host;
                 var bounds = new Rect(_host.RenderSize);
-                for (DependencyObject? parent = Parent(_host); parent is not null; parent = Parent(parent))
+                if (_viewport is { } viewport)
                 {
-                    if (parent is not ScrollContentPresenter viewport) continue;
                     bounds = _host.TransformToAncestor(viewport).TransformBounds(bounds);
                     bounds.Intersect(new Rect(viewport.RenderSize));
                     source = viewport;
-                    break;
                 }
                 if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) return null;
-                GeneralTransform transform = source.TransformToVisual(panel);
-                Point[] points = [bounds.TopLeft, bounds.TopRight, bounds.BottomRight, bounds.BottomLeft];
-                for (int i = 0; i < points.Length; i++)
-                    if (!transform.TryTransform(points[i], out points[i])) return null;
-                return points;
+                return sample.Project(source, bounds, _quad) ? _quad : null;
             }
             catch (InvalidOperationException) { return null; }
             catch (ArgumentException) { return null; }
         }
 
-        private bool IsWithinHost(DependencyObject? value)
+        private void CollectButtons(DependencyObject parent)
         {
-            while (value is not null)
+            if (parent is ButtonBase button)
             {
-                if (ReferenceEquals(value, _host)) return true;
-                value = Parent(value);
+                _buttons.Add(button);
+                return;
             }
-            return false;
+            if (parent is not Visual and not Visual3D) return;
+            for (int index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+                CollectButtons(VisualTreeHelper.GetChild(parent, index));
         }
 
         private void Apply(double activity, double x, double y)
@@ -236,6 +327,7 @@ public static class FloatingCardMotion
 
         internal void Freeze()
         {
+            if (_frozen) return;
             _frozen = true;
             if (_pressed) return;
             _scaleX.Freeze(); _scaleY.Freeze(); _angle.Freeze(); _lift.Freeze(); _shift.Freeze();
@@ -247,9 +339,9 @@ public static class FloatingCardMotion
             if (IsButton(e.OriginalSource as DependencyObject)) { Freeze(); return; }
             if (!AnimationsAllowed) return;
             _pressed = true;
-            OnMove(sender, e);
+            Apply(0.3, 0, 0);
         }
-        private void OnUp(object sender, MouseButtonEventArgs e) { _pressed = false; OnMove(sender, e); }
+        private void OnUp(object sender, MouseButtonEventArgs e) { _pressed = false; }
         // The shared sampler owns pointer departure: moving into the 40 DIP
         // approach area must fade smoothly rather than briefly snap to rest.
         private void OnLostCapture(object sender, MouseEventArgs e) { if (!_frozen) Reset(); }
@@ -259,6 +351,7 @@ public static class FloatingCardMotion
         internal void Reset() { _pressed = false; _frozen = false; Rest(animate: false); }
         private void Rest(bool animate)
         {
+            _frozen = false;
             _scaleX.To(1, animate);
             _scaleY.To(1, animate);
             _angle.To(0, animate);
@@ -298,12 +391,14 @@ public static class FloatingCardMotion
 /// <summary>Finite tween that releases its clock on completion or cancellation.</summary>
 internal sealed class MotionValue(DependencyObject target, DependencyProperty property)
 {
+    private static readonly CubicEase EaseOut = CreateEase();
     private int _generation;
     private double? _destination;
 
     internal void To(double value, bool animate = true)
     {
-        if (animate && _destination == value) return;
+        if (animate && _destination is { } destination &&
+            (destination == value || (value is not 0 and not 1 && Math.Abs(destination - value) < 0.001))) return;
         double from = (double)target.GetValue(property);
         int generation = ++_generation;
         _destination = value;
@@ -312,7 +407,7 @@ internal sealed class MotionValue(DependencyObject target, DependencyProperty pr
         if (!animate || Math.Abs(from - value) < 0.001) return;
         var animation = new DoubleAnimation(from, value, TimeSpan.FromMilliseconds(160))
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            EasingFunction = EaseOut,
             FillBehavior = FillBehavior.Stop,
         };
         animation.Completed += (_, _) =>
@@ -323,4 +418,11 @@ internal sealed class MotionValue(DependencyObject target, DependencyProperty pr
     }
 
     internal void Freeze() => To((double)target.GetValue(property), animate: false);
+
+    private static CubicEase CreateEase()
+    {
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        ease.Freeze();
+        return ease;
+    }
 }

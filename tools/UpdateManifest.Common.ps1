@@ -38,9 +38,14 @@ function Assert-UpdateRelativePath([string]$Path) {
 
 function Get-UpdatePackageVersion([string]$Directory) {
     $assembly = Join-Path $Directory 'KeeStashDock.dll'
-    if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw 'The package must contain KeeStashDock.dll.' }
+    # Legacy flat packages expose the managed assembly; organized single-file
+    # packages carry the same version resource on their root apphost executable.
+    if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) {
+        $assembly = Join-Path $Directory 'KeeStashDock.exe'
+    }
+    if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw 'The package must contain its versioned application.' }
     $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($assembly)
-    if ([string]::IsNullOrWhiteSpace($info.FileVersion)) { throw 'KeeStashDock.dll must contain a file version.' }
+    if ([string]::IsNullOrWhiteSpace($info.FileVersion)) { throw 'The application must contain a file version.' }
     $version = [Version]$info.FileVersion
     if ($version.Build -lt 0 -or $version.Revision -gt 0) {
         throw 'Release packages require a three-part stable version and a zero file-version revision.'

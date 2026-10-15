@@ -311,5 +311,8 @@
       </Grid>
     </Border>
     </v:PerspectiveSurface>
+    <Border x:Name="EdgeDockHandle" Visibility="Collapsed" CornerRadius="3"
+            Background="{DynamicResource B.Accent}" Cursor="Hand"
+            ToolTip="{loc:Tr QuickPanel.EdgeRestore}"/>
   </Grid>
 </Window>

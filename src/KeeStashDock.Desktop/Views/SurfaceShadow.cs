@@ -26,6 +26,19 @@ public sealed class SurfaceShadow : FrameworkElement
     public static readonly DependencyProperty OutlineProperty = DependencyProperty.Register(
         nameof(Outline), typeof(Geometry), typeof(SurfaceShadow),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty DepthProperty = DependencyProperty.Register(
+        nameof(Depth), typeof(double), typeof(SurfaceShadow),
+        new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty DepthBrushProperty = DependencyProperty.Register(
+        nameof(DepthBrush), typeof(Brush), typeof(SurfaceShadow),
+        new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    private (Brush Brush, Pen? Pen)[]? _projectedLayers;
+    private double _layerSpread, _layerStrength;
+    private TranslateTransform? _shadowTranslation, _depthTranslation, _rimTranslation;
+    private Brush? _depthBrush;
+    private Pen? _depthPen;
+    private static readonly Pen DepthRim = CreateDepthRim();
 
     public double Strength { get => (double)GetValue(StrengthProperty); set => SetValue(StrengthProperty, value); }
     public double Spread { get => (double)GetValue(SpreadProperty); set => SetValue(SpreadProperty, value); }
@@ -33,6 +46,9 @@ public sealed class SurfaceShadow : FrameworkElement
     public double ShadowOffset { get => (double)GetValue(ShadowOffsetProperty); set => SetValue(ShadowOffsetProperty, value); }
     /// <summary>Optional projected surface outline, expressed in this element's DIPs.</summary>
     public Geometry? Outline { get => (Geometry?)GetValue(OutlineProperty); set => SetValue(OutlineProperty, value); }
+    /// <summary>Thin side wall outside the projected face; unused for ordinary shadows.</summary>
+    public double Depth { get => (double)GetValue(DepthProperty); set => SetValue(DepthProperty, value); }
+    public Brush DepthBrush { get => (Brush)GetValue(DepthBrushProperty); set => SetValue(DepthBrushProperty, value); }
 
     public SurfaceShadow() => IsHitTestVisible = false;
 
@@ -65,11 +81,12 @@ public sealed class SurfaceShadow : FrameworkElement
         }
     }
 
-    private static void DrawProjectedShadow(DrawingContext dc, Geometry outline,
+    private void DrawProjectedShadow(DrawingContext dc, Geometry outline,
         double spread, double strength, double offset)
     {
+        if (!outline.IsFrozen) outline = (Geometry)outline.GetCurrentValueAsFrozen();
         Rect bounds = outline.Bounds;
-        if (bounds.IsEmpty || strength <= 0) return;
+        if (bounds.IsEmpty) return;
         bounds.Inflate(spread + 1, spread + offset + 1);
         // Exclude the actual projected face, including its rounded corners.
         // A rectangular exclusion would leave dark wedges inside a tilted,
@@ -79,18 +96,49 @@ public sealed class SurfaceShadow : FrameworkElement
         outside.Freeze();
         dc.PushClip(outside);
 
-        Geometry shifted = outline.CloneCurrentValue();
-        var transform = new TransformGroup();
-        transform.Children.Add(shifted.Transform);
-        transform.Children.Add(new TranslateTransform(0, offset));
-        shifted.Transform = transform;
-        shifted.Freeze();
+        // Pose changes only the frozen outline. Retain the falloff brushes and
+        // pens, and shift the drawing context instead of cloning that outline
+        // for every frame of the pointer-follow animation.
+        EnsureProjectedLayers(spread, strength);
+        dc.PushTransform(Translation(ref _shadowTranslation, 0, offset));
+        foreach (var layer in _projectedLayers!) dc.DrawGeometry(layer.Brush, layer.Pen, outline);
+        dc.Pop();
 
-        // Concentric strokes avoid rebuilding widened path geometries on every
-        // pointer frame. Each stroke adds only the missing opacity, so their
-        // overlap follows the same soft falloff as the rectangular shadow.
+        double depth = Math.Clamp(double.IsFinite(Depth) ? Depth : 0, 0, 16);
+        if (depth > 0)
+        {
+            Brush brush = DepthBrush;
+            if (!ReferenceEquals(_depthBrush, brush) || !brush.IsFrozen)
+            {
+                _depthBrush = brush;
+                var snapshot = brush.IsFrozen ? brush : (Brush)brush.GetCurrentValueAsFrozen();
+                _depthPen = new Pen(snapshot, 0.7) { LineJoin = PenLineJoin.Round };
+                _depthPen.Freeze();
+            }
+            // The clip stays at the front face while this narrow backing moves
+            // down/right. Its center is hollow even over a translucent panel.
+            dc.PushTransform(Translation(ref _depthTranslation, depth * 0.5, depth));
+            dc.PushOpacity(0.65);
+            dc.DrawGeometry(brush, _depthPen, outline);
+            dc.Pop();
+            dc.Pop();
+            dc.PushTransform(Translation(ref _rimTranslation, depth * 0.5 - 0.2, depth - 0.3));
+            dc.DrawGeometry(null, DepthRim, outline);
+            dc.Pop();
+        }
+        dc.Pop();
+    }
+
+    private void EnsureProjectedLayers(double spread, double strength)
+    {
+        if (_projectedLayers is not null && _layerSpread == spread && _layerStrength == strength) return;
+        _layerSpread = spread;
+        _layerStrength = strength;
+        _projectedLayers = new (Brush, Pen?)[(int)Math.Ceiling(spread) + 1];
+        // Each overlapping stroke adds only the missing opacity; caching does
+        // not reduce the original soft shadow's layers or change its falloff.
         double previous = 0;
-        for (int layer = (int)Math.Ceiling(spread); layer >= 0; layer--)
+        for (int layer = _projectedLayers.Length - 1; layer >= 0; layer--)
         {
             double target = strength * Math.Exp(-4.0 * Math.Pow(layer / spread, 2));
             double alpha = Math.Clamp((target - previous) / (1 - previous), 0, 1);
@@ -99,9 +147,26 @@ public sealed class SurfaceShadow : FrameworkElement
             brush.Freeze();
             Pen? pen = layer == 0 ? null : new Pen(brush, layer * 2) { LineJoin = PenLineJoin.Round };
             pen?.Freeze();
-            dc.DrawGeometry(brush, pen, shifted);
+            _projectedLayers[_projectedLayers.Length - layer - 1] = (brush, pen);
         }
-        dc.Pop();
+    }
+
+    private static TranslateTransform Translation(ref TranslateTransform? cached, double x, double y)
+    {
+        if (cached is null || cached.X != x || cached.Y != y)
+        {
+            cached = new TranslateTransform(x, y);
+            cached.Freeze();
+        }
+        return cached;
+    }
+
+    private static Pen CreateDepthRim()
+    {
+        var pen = new Pen(new SolidColorBrush(Color.FromArgb(42, 255, 255, 255)), 0.6)
+            { LineJoin = PenLineJoin.Round };
+        pen.Freeze();
+        return pen;
     }
 
     internal static Geometry Ring(Rect bounds, double radius, double offset, int layer)

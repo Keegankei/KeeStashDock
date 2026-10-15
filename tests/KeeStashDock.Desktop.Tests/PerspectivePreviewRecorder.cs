@@ -53,6 +53,8 @@ internal static class PerspectivePreviewRecorder
         {
             Point pointer = Position(index);
             movePointer(pointer);
+            if (index == count / 2) panel.BeginInspection(pointer);
+            if (panel.IsInspecting) panel.MoveInspection(pointer);
             panel.UpdatePerspectivePointer();
             Pump(TimeSpan.FromMilliseconds(delayMilliseconds));
             panel.UpdateLayout();
@@ -71,7 +73,7 @@ internal static class PerspectivePreviewRecorder
                         shadow.ActualWidth, shadow.ActualHeight));
                 drawing.DrawImage(face, new Rect(padding, padding, panel.ActualWidth, panel.ActualHeight));
                 drawing.PushTransform(new TranslateTransform(pointer.X + padding, pointer.Y + padding));
-                drawing.DrawGeometry(Brushes.White, pointerOutline, pointerShape);
+                drawing.DrawGeometry(panel.IsInspecting ? Brushes.Orange : Brushes.White, pointerOutline, pointerShape);
                 drawing.Pop();
             }
             var rendered = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
@@ -81,6 +83,7 @@ internal static class PerspectivePreviewRecorder
             encoder.Frames.Add(BitmapFrame.Create(indexed));
         }
 
+        panel.EndInspection();
         using var encoded = new MemoryStream();
         encoder.Save(encoded);
         Directory.CreateDirectory(directory);
@@ -100,7 +103,7 @@ internal static class PerspectivePreviewRecorder
     {
         var elapsed = Stopwatch.StartNew();
         var frame = new DispatcherFrame();
-        var timer = new DispatcherTimer(DispatcherPriority.Background)
+        var timer = new DispatcherTimer(DispatcherPriority.Send)
         {
             Interval = TimeSpan.FromMilliseconds(8),
         };

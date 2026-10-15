@@ -44,6 +44,21 @@ public sealed class CardDepthTests
     }
 
     [STATestMethod]
+    public void ProximityToleratesAnUnloadedOrDisconnectedProjectedTree()
+    {
+        var host = new Grid { Width = 140, Height = 80 };
+        var surface = new PerspectiveSurface { Child = host, IsPerspectiveEnabled = true };
+        surface.Measure(new Size(400, 300));
+        surface.Arrange(new Rect(0, 0, 400, 300));
+        surface.UpdateLayout();
+        var unrelatedPanel = new Grid { Width = 400, Height = 300 };
+        FloatingCardMotion.UpdateProximity(host, new Point(60, 40), unrelatedPanel);
+        surface.IsPerspectiveEnabled = false;
+        FloatingCardMotion.UpdateProximity(host, new Point(60, 40), unrelatedPanel);
+        Assert.IsFalse(unrelatedPanel.IsLoaded);
+    }
+
+    [STATestMethod]
     public void LayeredDecorationIsHollowAndNonInteractiveAtRestAndOnApproach()
     {
         var decoration = new CardDepthDecoration { OutlineBrush = Brushes.SlateGray, Margin = new Thickness(20) };
@@ -99,6 +114,37 @@ public sealed class CardDepthTests
         Assert.AreEqual(new Size(), decoration.RenderSize);
     }
 
+    [STATestMethod]
+    public void RetainedLayersRefreshThemeBrushesAndSizeWithoutFreezingTheResource()
+    {
+        var outline = new SolidColorBrush(Colors.Red);
+        var decoration = new CardDepthDecoration { OutlineBrush = outline, Margin = new Thickness(20) };
+        var host = new Grid();
+        host.Children.Add(decoration);
+        Assert.IsTrue(ColoredPixels(Render(host), red: true) > 100);
+        Assert.IsFalse(outline.IsFrozen, "A retained drawing must not freeze the shared theme resource.");
+        outline.Color = Colors.Blue;
+        byte[] recolored = Render(host);
+        Assert.IsTrue(ColoredPixels(recolored, red: false) > 100);
+        Assert.AreEqual(0, ColoredPixels(recolored, red: true));
+
+        decoration.Margin = new Thickness(30);
+        byte[] resized = Render(host);
+        Assert.AreEqual((byte)0, Alpha(resized, 165, 70), "Old-sized plates must disappear after layout changes.");
+        Assert.IsTrue(Alpha(resized, 155, 70) > 0);
+        decoration.Activity = 1;
+        byte[] active = Render(host);
+        Assert.AreEqual((byte)0, Alpha(active, 90, 70), "The retained clip stays hollow as its plates move.");
+
+        static int ColoredPixels(byte[] pixels, bool red)
+        {
+            int count = 0;
+            for (int i = 0; i < pixels.Length; i += 4)
+                if (red ? pixels[i + 2] > pixels[i] + 20 : pixels[i] > pixels[i + 2] + 20) count++;
+            return count;
+        }
+    }
+
     internal static void VerifyProjectedScrollClippingAndFreeze()
     {
         if (!FloatingCardMotion.AnimationsAllowed) return;
@@ -106,7 +152,13 @@ public sealed class CardDepthTests
         var rear = new CardDepthDecoration();
         var target = new Grid();
         var front = new CardDepthDecoration { IsHighlight = true };
+        var button = new Button
+        {
+            Content = "Pin", Width = 36, Height = 22, Margin = new Thickness(0, 0, 8, 8),
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom
+        };
         target.Children.Add(new Border { Background = Brushes.AliceBlue, CornerRadius = new CornerRadius(10) });
+        target.Children.Add(button);
         target.Children.Add(front);
         host.Children.Add(rear);
         host.Children.Add(target);
@@ -124,7 +176,7 @@ public sealed class CardDepthTests
             VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
         };
-        var content = new Grid { Background = Brushes.White };
+        var content = new Grid { Background = Brushes.White, Margin = new Thickness(9, 13, 7, 11) };
         content.Children.Add(scroll);
         var surface = new PerspectiveSurface { Child = content, IsPerspectiveEnabled = true, Yaw = -8, Pitch = 5 };
         var window = new Window
@@ -152,6 +204,21 @@ public sealed class CardDepthTests
                 "A separately routed MouseMove must not restart a card during an editor/menu freeze.");
             Assert.AreEqual(frozen, new Point(lift.X, lift.Y));
 
+            Point buttonCenter = button.TransformToAncestor(window).Transform(new Point(18, 11));
+            FloatingCardMotion.UpdateProximity(host, buttonCenter, window);
+            Assert.IsFalse(lift.HasAnimatedProperties);
+            Assert.AreEqual(frozen, new Point(lift.X, lift.Y),
+                "A button on the lifted card must stay still without repeating a 3D input hit test.");
+
+            scroll.ScrollToVerticalOffset(75);
+            window.UpdateLayout();
+            PumpUntil(() => scroll.VerticalOffset >= 74);
+            Point clippedButton = button.TransformToAncestor(window).Transform(new Point(18, 5));
+            FloatingCardMotion.UpdateProximity(host, clippedButton, window);
+            PumpUntil(() => rear.Activity < 0.99 && !rear.HasAnimatedProperties);
+            Assert.IsTrue(rear.Activity > 0,
+                "A clipped button near the visible card must fade proximity rather than falsely freeze it.");
+
             scroll.ScrollToVerticalOffset(110);
             window.UpdateLayout();
             PumpUntil(() => scroll.VerticalOffset >= 109);
@@ -165,6 +232,9 @@ public sealed class CardDepthTests
             scroll.ScrollToVerticalOffset(0);
             window.UpdateLayout();
             PumpUntil(() => scroll.VerticalOffset == 0);
+            surface.Yaw = 8;
+            surface.Pitch = -5;
+            center = host.TransformToAncestor(window).Transform(new Point(70, 35));
             FloatingCardMotion.UpdateProximity(host, center, window);
             PumpUntil(() => rear.Activity >= 0.99 && !rear.HasAnimatedProperties);
             FloatingCardMotion.SetEnabled(host, false);

@@ -11,7 +11,8 @@
     <RootNamespace>KeeStashDock.Desktop</RootNamespace>
     <AssemblyName>KeeStashDock</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- The release profile produces a self-contained win-x64 folder. -->
+    <!-- The release profile bundles the .NET host while retaining editable
+         locales, component tools, documentation, and independent OCR binaries. -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,7 +50,7 @@
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\tools\ocr\models\*" Link="OcrModels\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="..\..\docs\SCREENSHOTS.md" Link="Screenshots.md"
+    <None Include="..\..\docs\SCREENSHOTS.md" Link="Docs\Screenshots.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\LOCAL_OCR.md" Link="OcrModels\README.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
@@ -63,15 +64,17 @@
 
   <ItemGroup>
     <!-- Ship the project and dependency notices with every distributable build. -->
-    <None Include="..\..\docs\UPDATING.md" Link="Updating.md"
+    <None Include="..\..\docs\UPDATING.md" Link="Docs\Updating.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="..\..\docs\UPDATING.zh-CN.md" Link="Docs\Updating.zh-CN.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\GETTING_STARTED.md" Link="StartHere.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="..\..\LICENSE" Link="LICENSE"
+    <None Include="..\..\LICENSE" Link="Licenses\LICENSE"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="..\..\NOTICE" Link="NOTICE"
+    <None Include="..\..\NOTICE" Link="Licenses\NOTICE"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="..\..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md"
+    <None Include="..\..\THIRD_PARTY_NOTICES.md" Link="Licenses\THIRD_PARTY_NOTICES.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
@@ -84,4 +87,18 @@
     <None Include="..\..\docs\OFFLINE_TRANSLATION.md" Link="OfflineTranslation\README.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
+  <!-- NuGet adds the Tesseract DLL items after this project's ItemGroups.
+       Set final publish metadata after resolution and before bundling so the
+       separate tesseract.exe process can load its DLLs from its own x64 folder. -->
+  <Target Name="OrganizePortableBundle" BeforeTargets="_ComputeFilesToBundle"
+          Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
+          Condition="'%(ResolvedFileToPublish.RelativePath)' == 'StartHere.md' Or $([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '^(x64|Locales|NativeRuntime|OcrModels|OfflineTranslation|Licenses|Docs)[\\/]'))">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+          Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb' Or ('$(RuntimeIdentifier)' == 'win-x64' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '^x86[\\/]')))" />
+    </ItemGroup>
+  </Target>
 </Project>

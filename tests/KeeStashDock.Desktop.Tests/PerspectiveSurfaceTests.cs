@@ -112,6 +112,97 @@ public sealed class PerspectiveSurfaceTests
     }
 
     [STATestMethod]
+    public void BatchedPosePublishesOneCompleteProjectionAndSkipsAnUnchangedPose()
+    {
+        var surface = new PerspectiveSurface { Child = new Border(), IsPerspectiveEnabled = true };
+        Layout(surface, new Size(400, 600));
+        int changes = 0;
+        PerspectivePose observed = default;
+        surface.ProjectionChanged += (_, _) =>
+        {
+            changes++;
+            observed = new(surface.Yaw, surface.Pitch, surface.OffsetX, surface.OffsetY, false);
+        };
+        var pose = new PerspectivePose(8, -5, 2, -1, false);
+        surface.SetPose(pose);
+        Assert.AreEqual(1, changes, "A pose update must not publish four intermediate projections.");
+        Assert.AreEqual(pose, observed);
+        surface.SetPose(pose);
+        Assert.AreEqual(1, changes, "An idle inspection must not schedule another shadow rebuild.");
+        surface.SetPose(new PerspectivePose(-8, 5, -2, 1, false));
+        Assert.AreEqual(2, changes);
+    }
+
+    [STATestMethod]
+    public void InverseProjectionRoundTripsAcrossSizesAnglesAndOffsets()
+    {
+        var surface = new PerspectiveSurface { Child = new Border(), IsPerspectiveEnabled = true };
+        foreach (Size size in new[] { new Size(400, 600), new Size(600, 900), new Size(700, 260) })
+        {
+            Layout(surface, size);
+            foreach (double yaw in new[] { -12.0, 0.0, 12.0 })
+            foreach (double pitch in new[] { -9.0, 0.0, 9.0 })
+            foreach (double offset in new[] { -4.0, 0.0, 4.0 })
+            {
+                surface.SetPose(new PerspectivePose(yaw, pitch, offset, -offset, false));
+                foreach (Point point in Corners(size).Append(new Point(size.Width * 0.37, size.Height * 0.62)))
+                {
+                    Assert.IsTrue(surface.TryUnprojectPoint(surface.ProjectPoint(point), out Point unprojected));
+                    Assert.IsTrue((point - unprojected).Length < 0.00001,
+                        $"2D hit testing must agree with rendered content at {size}, {yaw}/{pitch}/{offset}.");
+                }
+            }
+        }
+        Assert.IsFalse(surface.TryUnprojectPoint(new Point(double.NaN, 0), out _));
+        Assert.IsFalse(surface.TryUnprojectPoint(new Point(0, double.PositiveInfinity), out _));
+        surface.IsPerspectiveEnabled = false;
+        Assert.IsTrue(surface.TryUnprojectPoint(new Point(73, 92), out Point flat));
+        Assert.AreEqual(new Point(73, 92), flat);
+    }
+
+    [STATestMethod]
+    public void CachedProjectionStillUpdatesLiveContentAndTheme()
+    {
+        var brush = new SolidColorBrush(Colors.Red);
+        var text = new TextBlock { Text = "Live cache", FontSize = 28, Foreground = Brushes.White };
+        var content = new Border { Background = brush, Child = text, Padding = new Thickness(20) };
+        var surface = new PerspectiveSurface { Child = content, IsPerspectiveEnabled = true, Yaw = 8, Pitch = -5 };
+        var size = new Size(400, 300);
+        Layout(surface, size);
+        byte[] before = RenderPixels(surface, size);
+        Point sample = surface.ProjectPoint(new Point(300, 220));
+        int pixel = ((int)sample.Y * (int)size.Width + (int)sample.X) * 4;
+        Assert.IsTrue(before[pixel + 2] > 240 && before[pixel] < 5);
+        text.Text = "Changed text remains live";
+        Layout(surface, size);
+        Assert.IsTrue(WhitePixels(RenderPixels(surface, size)) > WhitePixels(before) * 1.3,
+            "Text-only edits must update cached glyphs without requiring a theme or layout change.");
+        brush.Color = Colors.Blue;
+        Layout(surface, size);
+        byte[] after = RenderPixels(surface, size);
+        Assert.IsTrue(after[pixel] > 240 && after[pixel + 2] < 5,
+            "A cached live plane must invalidate its texture when content changes.");
+        Assert.AreSame(content, surface.Child);
+        Assert.AreEqual("Changed text remains live", text.Text);
+        surface.SetPose(new PerspectivePose(-8, 5, 0, 0, false));
+        Assert.IsTrue(surface.TryUnprojectPoint(surface.ProjectPoint(new Point(30, 30)), out Point actual));
+        Assert.IsTrue((actual - new Point(30, 30)).Length < 0.00001);
+        surface.IsPerspectiveEnabled = false;
+        Layout(surface, size);
+        byte[] flat = RenderPixels(surface, size);
+        int flatPixel = (220 * 400 + 300) * 4;
+        Assert.IsTrue(flat[flatPixel] > 240 && flat[flatPixel + 2] < 5);
+
+        static int WhitePixels(byte[] pixels)
+        {
+            int count = 0;
+            for (int i = 0; i < pixels.Length; i += 4)
+                if (pixels[i] > 240 && pixels[i + 1] > 240 && pixels[i + 2] > 240) count++;
+            return count;
+        }
+    }
+
+    [STATestMethod]
     public void ModeSwitchKeepsLiveChildrenBindingsAndResources()
     {
         var text = new TextBox { Text = "retained editor state" };

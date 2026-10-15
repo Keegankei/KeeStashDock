@@ -25,8 +25,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/te
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PublishSafety.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-SingleFileBundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-UpdateManifest.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
-dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64
+dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64 -p:PublishProfile=FolderProfile
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
   --no-restore `
@@ -34,7 +36,17 @@ dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --output artifacts/publish
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/New-UpdateManifest.ps1 -Path artifacts/publish
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Path artifacts/publish
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PackagedHost.ps1 -Path artifacts/publish
 ```
+
+Use the same publish profile during restore and publish so native runtime and
+single-file analyzer dependencies agree. The profile bundles the .NET/WPF and
+SQLite runtimes into the root executable while keeping the independent OCR
+engine, editable languages and component tools external. `Test-PackagedHost`
+launches an isolated verification mode that checks the actual packaged process,
+SQLite, projected WPF text, languages and synthetic OCR without opening the
+normal application or creating user data. It also verifies that the executable
+and application base directory remain at the package root.
 
 Run the Windows CI workflow for the release commit. Record local automation, maintainer acceptance, and any environment-specific checks not completed in `docs/releases/<version>.md`. Use the following checklist for hands-on acceptance; synthetic fixtures alone do not establish clean-machine or physical-device coverage:
 
@@ -95,11 +107,11 @@ that every hardware or provider combination was tested.
 
 ## 3. Package
 
-1. Publish into a fresh output directory. Never archive an existing user installation.
-2. Run `tools/Verify-Publish.ps1` as shown above; it rejects missing OCR/models/notices and accidental private state, including database WAL/journal files, rotated logs, environment files, and signing keys. It checks names without opening personal files and refuses symbolic links or junctions. WPF assets are embedded in the assembly.
-3. Keep `Locales`, `OcrModels`, `x64`, `OfflineTranslation`, `NativeRuntime`, `Licenses`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` with the executable. Standard packages include OCR models and offline translation setup scripts; they do not include the much larger optional translation runtime. If preinstalling that runtime, retain Python/wheel/model license files and exclude downloads, logs, process state, and bytecode caches.
-4. Generate a SHA-256 checksum for the final archive.
-5. Sign the executable when a trusted code-signing process is available. If unsigned, state this in the release notes; a checksum is an integrity check, not a signature.
+1. Publish into a fresh output directory. Never archive an existing user installation. Keep `KeeStashDock.exe`, `StartHere.md`, and `update-manifest.json` at the root. Keep `Docs`, `Licenses`, `Locales`, `OcrModels`, `x64`, `OfflineTranslation`, and `NativeRuntime` beside them. Project `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` are under `Licenses`. The user's `Data` folder is created on first use and is never shipped.
+2. If a trusted code-signing process is configured, sign the executable before generating the final ownership manifest or archive. Any binary change after manifest generation requires regenerating and verifying the manifest. For an unsigned release, state that fact in the release notes; a checksum is an integrity check, not a signature.
+3. Generate the final manifest and run `tools/Verify-Publish.ps1` and `tools/Test-PackagedHost.ps1` as shown above. The package verifier checks the embedded runtime directory, external OCR/models, documentation and notices, and rejects accidental private state, including database WAL/journal files, rotated logs, environment files, and signing keys. It checks names without opening personal files and refuses symbolic links or junctions. The host check then exercises the real runtime and native libraries.
+4. Archive the complete directory contents as `KeeStashDock-<version>-win-x64.zip`, with the executable and manifest directly at the ZIP root, without an extra containing folder. Save the ZIP outside the published directory. Standard packages include OCR models and offline translation setup scripts; they do not include the much larger optional translation runtime. If preinstalling that runtime, retain Python/wheel/model license files and exclude downloads, logs, process state, and bytecode caches.
+5. Generate `KeeStashDock-<version>-win-x64.zip.sha256` from the final ZIP. Its single line must contain the 64-character SHA-256, two spaces, and the exact ZIP filename. Extract that ZIP into another fresh directory and repeat package and host verification against the extracted contents. Do not modify the archive after hashing.
 6. Run available security scans and record their scope and outcome. Do not describe an unperformed scan as passed.
 
 ## 4. Publish

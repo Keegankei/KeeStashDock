@@ -27,12 +27,15 @@
 
 ## 1.2.2 候選版新增功能
 
-- **經典 / 懸浮模式：**在設定中切換。兩種模式皆有柔和投影；懸浮模式增加靠近、按壓與拖曳回饋，並遵循 Windows 減少動畫與高對比設定。
+- **經典 / 懸浮模式：**保留原有介面，增加柔和投影、層疊卡片與面板薄側層。懸浮模式可選固定透視或拖曳檢視：預設按住右鍵拖曳，放開後保留角度；右鍵單擊仍開啟卡片選單。設定中可改用中鍵或自訂滑鼠鍵與修飾鍵。卡片仍回應靠近，動效遵循 Windows 減少動畫與高對比設定。
+- **收縮與貼邊：**傳統 44 DIP 收縮列保留六個按鈕，展開時恢復原有尺寸。可選貼邊自動收起，在螢幕任一邊緣保留厚 6 DIP、長 72 DIP 的把手，懸停即可恢復面板。
 - **截圖三種操作：**框選後儲存截圖、擷取文字或擷取並翻譯。Enter 儲存，Esc 或右鍵取消。僅擷取文字不會建立項目或自動複製。
 - **複製與翻譯並列：**選取文字的氣泡可同時顯示兩個獨立按鈕。複製仍會收納到文字塢；翻譯使用同一段原文而不新增項目。
 - **檢查更新：**位於系統匣選單與設定的「關於」。點選下載並驗證 SHA-256，再確認重新啟動升級；只替換清單管理的程式檔案。詳見[升級與復原說明](docs/UPDATING.md)。
 
-候選版預覽：[經典面板](docs/images/classic-panel.png) · [懸浮面板](docs/images/floating-panel.png) · [複製 / 翻譯](docs/images/selection-actions.png) · [擷取文字](docs/images/screenshot-text.png) · [檢查更新](docs/images/update-check.png)。[圖片來源說明](docs/images/README.md)。
+第五候選版將 `KeeStashDock.exe`、`StartHere.md` 與 `update-manifest.json` 保留在根目錄，說明、授權、語言包與元件資料依資料夾分類。請保持解壓縮套件完整，便攜 `Data` 仍位於程式旁。
+
+候選版預覽：[經典面板](docs/images/classic-panel.png) · [懸浮面板](docs/images/floating-panel.png) · [懸停與拖曳檢視](docs/images/floating-panel-motion.gif) · [複製 / 翻譯](docs/images/selection-actions.png) · [擷取文字](docs/images/screenshot-text.png) · [檢查更新](docs/images/update-check.png)。[圖片來源說明](docs/images/README.md)。
 
 ## 下載與啟動
 

@@ -40,6 +40,10 @@ public sealed class AppSettings
     /// settings.json files continue to deserialize cleanly.</summary>
     public bool EdgeDockEnabled { get; set; } = false;
 
+    /// <summary>Opt-in: a panel dragged to a work-area edge retracts to a
+    /// narrow handle while idle. Independent from the retired edge-summon flag.</summary>
+    public bool PanelEdgeAutoHideEnabled { get; set; } = false;
+
     /// <summary>"Right" or "Left". This only selects the default
     /// position of the never-dragged panel (RTL languages default Left).</summary>
     public string DockEdge { get; set; } = "Right";
@@ -61,6 +65,10 @@ public sealed class AppSettings
     /// Null = never dragged; the panel computes a default near the dock edge.</summary>
     public double? PanelPosX { get; set; }
     public double? PanelPosY { get; set; }
+
+    /// <summary>Physical monitor coordinates of the normal panel, never the hidden edge handle.</summary>
+    public int? PanelDevicePosX { get; set; }
+    public int? PanelDevicePosY { get; set; }
 
     /// <summary>User-resized panel size (edge-drag). Null = defaults
     /// (15% of work-area width x 50% of work-area height).</summary>
@@ -189,9 +197,20 @@ public sealed class AppSettings
     /// Missing settings preserve the classic appearance.</summary>
     public bool FloatingPanelEnabled { get; set; } = false;
 
-    /// <summary>Follow the nearby pointer in floating mode. False keeps a fixed
-    /// perspective; missing settings retain the existing pointer-follow behavior.</summary>
+    /// <summary>Enable deliberate drag inspection in floating mode. False keeps a fixed
+    /// perspective; the existing preference is retained for compatibility.</summary>
     public bool FloatingPanelFollowPointer { get; set; } = true;
+
+    /// <summary>Drag inspection preset: Right, Middle, or Custom. The legacy
+    /// FollowPointer preference now selects deliberate drag inspection.</summary>
+    public string FloatingInspectionGesture { get; set; } = "Right";
+
+    /// <summary>Custom inspection mouse button: Left, Right, Middle, XButton1, or XButton2.</summary>
+    public string FloatingInspectionButton { get; set; } = "Left";
+
+    /// <summary>Custom modifier combination, using Control, Alt and Shift
+    /// joined with '+', or None. Alt+Left is the initial custom gesture.</summary>
+    public string FloatingInspectionModifiers { get; set; } = "Alt";
 
     /// <summary>One-shot flag: the starter groups ("Default" + "Git BASH"
     /// with its pre-filled high-frequency git commands) have been created.
