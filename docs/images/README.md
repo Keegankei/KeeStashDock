@@ -2,8 +2,8 @@
 
 These images show the actual KeeStashDock WPF views in English with synthetic
 sample data. Light theme is used except where noted. They were rendered in memory
-on Windows for versions 1.2.1 and 1.2.2 as identified below. Revision-3 previews
-show the panel's whole-surface perspective in light and dark themes and in motion.
+on Windows for versions 1.2.1 and 1.2.2 as identified below. Revision-4 previews
+show inward perspective, layered cards, fixed presentation and pointer feedback.
 Window title bars are omitted; no real desktop or clipboard content was captured.
 
 | File | View |
@@ -12,9 +12,10 @@ Window title bars are omitted; no real desktop or clipboard content was captured
 | `screenshot-entry.png` | Image entry with an original sample note and editable sample OCR text |
 | `component-setup.png` | Settings' optional components section in the initial not-installed state (1.2.1) |
 | `classic-panel.png` | Quick panel with soft exterior/card shadows and synthetic snippets (1.2.2) |
-| `floating-panel.png` | The ordinary rounded panel rendered in a bounded whole-panel perspective pose (1.2.2 revision 3) |
-| `floating-panel-dark.png` | The same perspective view using the dark palette (1.2.2 revision 3) |
-| `floating-panel-motion.gif` | Looping animation of the actual WPF panel responding to synthetic nearby-pointer positions: 56 frames at 80 ms per frame (1.2.2 revision 3) |
+| `floating-panel.png` | The ordinary rounded panel with layered cards and proximity feedback (1.2.2 revision 4) |
+| `floating-panel-dark.png` | The same perspective and layered cards using the dark palette (1.2.2 revision 4) |
+| `floating-panel-fixed.png` | Fixed perspective with independent card feedback (1.2.2 revision 4) |
+| `floating-panel-motion.gif` | The actual WPF panel and cards responding along a synthetic pointer route: 56 frames at 80 ms per frame (1.2.2 revision 4) |
 | `selection-actions.png` | Combined Copy / Translate selection bubble (1.2.2) |
 | `screenshot-text.png` | Transient screenshot text result before any explicit copy action (1.2.2) |
 | `update-check.png` | Actual update dialog showing a simulated newer version and example installation path (1.2.2) |
@@ -45,6 +46,9 @@ GitHub, download an update, or run an installer.
 The same scenario generates `floating-panel-motion.gif` using the actual panel
 and its shadow window. A programmed sequence supplies synthetic pointer positions
 to the panel's input seam; a drawn pointer marks those positions in each frame.
+The route visits outside edges and the cards, showing inward panel tilt and
+independent card brightness/lift. Fixed mode retains a nonzero panel angle while
+keeping the same card feedback.
 The 56 frames play at 80 ms each and loop, for a 4.48-second cycle. The frames are
 rendered directly from the live WPF controls with synthetic notes, not recorded
 from the user's desktop. The scenario does not move the operating-system cursor.

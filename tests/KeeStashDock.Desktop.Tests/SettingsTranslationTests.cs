@@ -113,6 +113,25 @@ public sealed class SettingsTranslationTests
             Assert.IsTrue(appId.IsEnabled);
             Assert.AreEqual(1, saves, "Refreshing the credential controls must not trigger extra saves.");
 
+            var panelMode = Named<ComboBox>(window, "PanelModeCombo");
+            var floatingMotion = Named<ComboBox>(window, "FloatingMotionCombo");
+            Assert.IsFalse(floatingMotion.IsEnabled, "Classic must disable the floating-only presentation choice.");
+            Assert.AreEqual("Follow", ((ComboBoxItem)floatingMotion.SelectedItem).Tag);
+            panelMode.SelectedIndex = 1;
+            Assert.IsTrue(floatingMotion.IsEnabled);
+            floatingMotion.SelectedIndex = 1;
+            Assert.IsFalse(settings.Current.FloatingPanelFollowPointer);
+            var savedAppearance = new SettingsStore(settingsFile);
+            savedAppearance.Load();
+            Assert.IsTrue(savedAppearance.Current.FloatingPanelEnabled);
+            Assert.IsFalse(savedAppearance.Current.FloatingPanelFollowPointer);
+            panelMode.SelectedIndex = 0;
+            Assert.IsFalse(floatingMotion.IsEnabled);
+            panelMode.SelectedIndex = 1;
+            Assert.AreEqual("Fixed", ((ComboBoxItem)floatingMotion.SelectedItem).Tag,
+                "Switching through Classic must preserve the floating presentation preference.");
+            Assert.IsFalse(settings.Current.FloatingPanelFollowPointer);
+
             key.Text = "test-baidu-updated";
             appId.Text = "test-baidu-app-updated";
             SelectProvider(engine, "DeepL");

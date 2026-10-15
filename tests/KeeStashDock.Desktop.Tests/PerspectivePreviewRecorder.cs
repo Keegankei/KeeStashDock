@@ -27,11 +27,23 @@ internal static class PerspectivePreviewRecorder
         pointerOutline.Freeze();
         BitmapPalette? palette = null;
 
+        // Visit nearby desktop edges and each card, so the same recording shows
+        // the panel's inward tilt and the separate card proximity response.
+        Point[] route =
+        [
+            new(panel.ActualWidth + 16, 100), new(panel.ActualWidth * 0.7, 175),
+            new(panel.ActualWidth * 0.65, 275), new(panel.ActualWidth * 0.3, 380),
+            new(-16, 380), new(panel.ActualWidth * 0.4, panel.ActualHeight + 16),
+            new(panel.ActualWidth * 0.5, -16),
+        ];
         Point Position(int index)
         {
-            double phase = index * 2 * Math.PI / count;
-            return new Point(panel.ActualWidth / 2 + (panel.ActualWidth / 2 + 16) * Math.Sin(phase),
-                panel.ActualHeight / 2 + (panel.ActualHeight / 2 + 16) * Math.Sin(phase + Math.PI / 3));
+            double segment = index * route.Length / (double)count;
+            int start = (int)segment;
+            double t = segment - start;
+            t = t * t * (3 - 2 * t);
+            Point a = route[start], b = route[(start + 1) % route.Length];
+            return new Point(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
         }
 
         movePointer(Position(0));

@@ -126,6 +126,8 @@ public partial class SettingsWindow : Window
         ThemeCombo.SelectedIndex = cfg.Theme switch
         { "Light" => 1, "Dark" => 2, _ => 0 };
         PanelModeCombo.SelectedIndex = cfg.FloatingPanelEnabled ? 1 : 0;
+        FloatingMotionCombo.SelectedIndex = cfg.FloatingPanelFollowPointer ? 0 : 1;
+        FloatingMotionCombo.IsEnabled = cfg.FloatingPanelEnabled;
 
         BgPathText.Text = cfg.BackgroundImagePath ?? "—";
         BgOpacitySlider.Value = Math.Clamp(cfg.BackgroundOverlayOpacity, 0.2, 1.0) * 100;
@@ -707,8 +709,20 @@ public partial class SettingsWindow : Window
         string? mode = (PanelModeCombo.SelectedItem as ComboBoxItem)?.Tag as string;
         if (mode is not ("Classic" or "Floating")) return;
         bool enabled = mode == "Floating";
+        FloatingMotionCombo.IsEnabled = enabled;
         if (_settings.Current.FloatingPanelEnabled == enabled) return;
         _settings.Current.FloatingPanelEnabled = enabled;
+        _settings.Save();
+    }
+
+    private void OnFloatingMotionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || !_settings.Current.FloatingPanelEnabled) return;
+        string? mode = (FloatingMotionCombo.SelectedItem as ComboBoxItem)?.Tag as string;
+        if (mode is not ("Follow" or "Fixed")) return;
+        bool follow = mode == "Follow";
+        if (_settings.Current.FloatingPanelFollowPointer == follow) return;
+        _settings.Current.FloatingPanelFollowPointer = follow;
         _settings.Save();
     }
 

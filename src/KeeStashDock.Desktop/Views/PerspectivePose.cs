@@ -6,6 +6,7 @@ namespace KeeStashDock.Desktop.Views;
 internal readonly record struct PerspectivePose(double Yaw, double Pitch, double OffsetX, double OffsetY, bool Nearby)
 {
     internal const double Reach = 180;
+    internal static PerspectivePose Fixed => new(-8, 5, 0, 0, false);
 
     internal static PerspectivePose FromPointer(Point point, Size size)
     {
@@ -21,7 +22,10 @@ internal readonly record struct PerspectivePose(double Yaw, double Pitch, double
         double y = Math.Clamp((point.Y - size.Height / 2) / (size.Height / 2), -1, 1);
         // Quantization ignores sub-pixel pointer noise; unchanged poses retain
         // no animation clocks. The camera fit covers these bounded values.
-        return new(Math.Round(-x * 10 * weight, 1), Math.Round(-y * 7 * weight, 1),
-            Math.Round(x * 2 * weight, 1), Math.Round(y * 2 * weight, 1), true);
+        // The camera looks down -Z: positive yaw pushes the right edge away,
+        // and positive pitch pushes the bottom edge away. The pointer's side
+        // therefore recedes instead of rising towards the viewer.
+        return new(Math.Round(x * 10 * weight, 1), Math.Round(y * 7 * weight, 1),
+            Math.Round(-x * 2 * weight, 1), Math.Round(-y * 2 * weight, 1), true);
     }
 }

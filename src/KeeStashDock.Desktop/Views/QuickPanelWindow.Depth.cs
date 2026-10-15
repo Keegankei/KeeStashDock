@@ -25,7 +25,7 @@ public partial class QuickPanelWindow
     private DispatcherOperation? _pendingDepthShadow;
     private bool _depthClosed, _depthApproached, _nativeDepthMove;
     private int _depthPopupCount;
-    private bool? _lastFloating, _lastHighContrast, _lastMotion;
+    private bool? _lastFloating, _lastHighContrast, _lastMotion, _lastFollowPointer;
     private readonly Func<Point?>? _perspectivePointer;
 
     internal bool IsDepthPointerPolling => _depthPointerTimer.IsEnabled;
@@ -66,12 +66,15 @@ public partial class QuickPanelWindow
         bool floating = _settings.Current.FloatingPanelEnabled;
         bool highContrast = SystemParameters.HighContrast;
         bool motion = floating && FloatingCardMotion.AnimationsAllowed;
-        if (_lastFloating != floating || _lastHighContrast != highContrast || _lastMotion != motion)
+        bool followPointer = _settings.Current.FloatingPanelFollowPointer;
+        if (_lastFloating != floating || _lastHighContrast != highContrast || _lastMotion != motion ||
+            _lastFollowPointer != followPointer)
         {
             ResetDepthMotion();
             _lastFloating = floating;
             _lastHighContrast = highContrast;
             _lastMotion = motion;
+            _lastFollowPointer = followPointer;
             SetValue(FloatingDepthEnabledProperty, motion);
             Resources["Panel.CardShadowStrength"] = motion ? 0.22 : 0.14;
             Resources["Panel.ShadowVisibility"] = highContrast ? Visibility.Hidden : Visibility.Visible;
@@ -119,8 +122,11 @@ public partial class QuickPanelWindow
             return;
         }
         Point? point = _perspectivePointer is not null ? _perspectivePointer() : ReadPerspectivePointer();
-        PerspectivePose pose = point is Point cursor ? PerspectivePose.FromPointer(cursor, RenderSize) : default;
-        if (pose.Nearby) _depthPointerTimer.Start();
+        PerspectivePose pointerPose = point is Point cursor ? PerspectivePose.FromPointer(cursor, RenderSize) : default;
+        // Fixed perspective still samples nearby movement for card feedback;
+        // its panel angle is independent of that pointer position.
+        PerspectivePose pose = _settings.Current.FloatingPanelFollowPointer ? pointerPose : PerspectivePose.Fixed;
+        if (pointerPose.Nearby) _depthPointerTimer.Start();
         else _depthPointerTimer.Stop();
         _yaw?.To(pose.Yaw);
         _pitch?.To(pose.Pitch);
@@ -128,6 +134,7 @@ public partial class QuickPanelWindow
         _offsetY?.To(pose.OffsetY);
         _parallaxX?.To(pose.OffsetX * 0.5 / Math.Max(1, RootBorder.ActualWidth));
         _parallaxY?.To(pose.OffsetY * 0.5 / Math.Max(1, RootBorder.ActualHeight));
+        FloatingCardMotion.UpdateProximity(CardList, point, this);
     }
 
     private Point? ReadPerspectivePointer()
@@ -153,6 +160,7 @@ public partial class QuickPanelWindow
         // hit-tested button or text selection under the pointer.
         _yaw?.Freeze(); _pitch?.Freeze(); _offsetX?.Freeze(); _offsetY?.Freeze();
         _parallaxX?.Freeze(); _parallaxY?.Freeze();
+        FloatingCardMotion.FreezeProximity(CardList);
         _depthPointerTimer.Stop();
     }
 

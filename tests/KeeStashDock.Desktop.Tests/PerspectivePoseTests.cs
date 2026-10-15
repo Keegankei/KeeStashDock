@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using KeeStashDock.Desktop.Views;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,7 +16,8 @@ public sealed class PerspectivePoseTests
         PerspectivePose right = PerspectivePose.FromPointer(new Point(460, 300), size);
         Assert.IsTrue(left.Nearby && right.Nearby,
             "Pointer movement outside the HWND must still drive nearby perspective.");
-        Assert.IsTrue(left.Yaw > 0 && right.Yaw < 0);
+        Assert.IsTrue(left.Yaw < 0 && right.Yaw > 0);
+        Assert.IsTrue(left.OffsetX > 0 && right.OffsetX < 0);
         Assert.AreEqual(left.Yaw, -right.Yaw);
         Assert.AreEqual(left.OffsetX, -right.OffsetX);
         Assert.AreEqual(0.0, left.Pitch);
@@ -24,11 +26,75 @@ public sealed class PerspectivePoseTests
         PerspectivePose above = PerspectivePose.FromPointer(new Point(200, -60), size);
         PerspectivePose below = PerspectivePose.FromPointer(new Point(200, 660), size);
         Assert.IsTrue(above.Nearby && below.Nearby);
-        Assert.IsTrue(above.Pitch > 0 && below.Pitch < 0);
+        Assert.IsTrue(above.Pitch < 0 && below.Pitch > 0);
+        Assert.IsTrue(above.OffsetY > 0 && below.OffsetY < 0);
         Assert.AreEqual(above.Pitch, -below.Pitch);
         Assert.AreEqual(above.OffsetY, -below.OffsetY);
         Assert.AreEqual(0.0, above.Yaw);
         Assert.AreEqual(0.0, below.Yaw);
+    }
+
+    [STATestMethod]
+    public void ApproachedEdgeRecedesAndShortensOnAllFourSides()
+    {
+        // Test the actual host projection, not just angle signs: from a camera
+        // in front of the panel, the edge pushed away must appear shorter.
+        var surface = new PerspectiveSurface { Child = new Border(), IsPerspectiveEnabled = true };
+        foreach (Size size in new[] { new Size(400, 600), new Size(700, 260), new Size(300, 1000) })
+        {
+            surface.Measure(size);
+            surface.Arrange(new Rect(size));
+            surface.UpdateLayout();
+            foreach (double distance in new[] { 0.0, 60.0 })
+            foreach (var (side, pointer, first, second, oppositeFirst, oppositeSecond) in new[]
+            {
+                ("left", new Point(-distance, size.Height / 2), new Point(0, 0), new Point(0, size.Height),
+                    new Point(size.Width, 0), new Point(size.Width, size.Height)),
+                ("right", new Point(size.Width + distance, size.Height / 2), new Point(size.Width, 0), new Point(size.Width, size.Height),
+                    new Point(0, 0), new Point(0, size.Height)),
+                ("top", new Point(size.Width / 2, -distance), new Point(0, 0), new Point(size.Width, 0),
+                    new Point(0, size.Height), new Point(size.Width, size.Height)),
+                ("bottom", new Point(size.Width / 2, size.Height + distance), new Point(0, size.Height), new Point(size.Width, size.Height),
+                    new Point(0, 0), new Point(size.Width, 0)),
+            })
+            {
+                Apply(default);
+                double neutralEdge = EdgeLength(first, second);
+                PerspectivePose pose = PerspectivePose.FromPointer(pointer, size);
+                Apply(pose);
+                double approachedEdge = EdgeLength(first, second);
+                double oppositeEdge = EdgeLength(oppositeFirst, oppositeSecond);
+                Assert.IsTrue(approachedEdge < neutralEdge - 0.1,
+                    $"Approaching {side} at {distance} DIPs outside {size} must push that edge away, not raise it.");
+                Assert.IsTrue(oppositeEdge > neutralEdge + 0.1,
+                    $"The opposite edge must approach the viewer when {side} is pressed down.");
+                Assert.IsTrue(approachedEdge < oppositeEdge,
+                    "The resulting trapezoid must retain the near/far perspective difference.");
+            }
+        }
+
+        double EdgeLength(Point first, Point second)
+            => (surface.ProjectPoint(second) - surface.ProjectPoint(first)).Length;
+
+        void Apply(PerspectivePose pose)
+        {
+            surface.Yaw = pose.Yaw;
+            surface.Pitch = pose.Pitch;
+            surface.OffsetX = pose.OffsetX;
+            surface.OffsetY = pose.OffsetY;
+        }
+    }
+
+    [TestMethod]
+    public void FixedPoseRetainsDepthWithoutRequestingPointerFollowing()
+    {
+        PerspectivePose fixedPose = PerspectivePose.Fixed;
+        Assert.IsFalse(fixedPose.Nearby,
+            "The fixed panel pose must not itself request nearby pointer following.");
+        Assert.IsTrue(Math.Abs(fixedPose.Yaw) > 0 && Math.Abs(fixedPose.Yaw) <= PerspectiveSurface.MaximumYaw);
+        Assert.IsTrue(Math.Abs(fixedPose.Pitch) > 0 && Math.Abs(fixedPose.Pitch) <= PerspectiveSurface.MaximumPitch);
+        Assert.AreEqual(0.0, fixedPose.OffsetX);
+        Assert.AreEqual(0.0, fixedPose.OffsetY);
     }
 
     [TestMethod]
@@ -50,11 +116,11 @@ public sealed class PerspectivePoseTests
     {
         var size = new Size(400, 600);
         PerspectivePose previous = PerspectivePose.FromPointer(new Point(0, 300), size);
-        Assert.IsTrue(previous.Yaw > 0);
+        Assert.IsTrue(previous.Yaw < 0);
         for (double distance = 0.5; distance <= PerspectivePose.Reach; distance += 0.5)
         {
             PerspectivePose pose = PerspectivePose.FromPointer(new Point(-distance, 300), size);
-            Assert.IsTrue(pose.Yaw <= previous.Yaw && pose.Yaw >= 0,
+            Assert.IsTrue(pose.Yaw >= previous.Yaw && pose.Yaw <= 0,
                 "Moving away from the panel must fade the existing tilt monotonically.");
             Assert.IsTrue(Math.Abs(pose.OffsetX) <= Math.Abs(previous.OffsetX));
             // The pose deliberately rounds to 0.1 to ignore pointer noise.

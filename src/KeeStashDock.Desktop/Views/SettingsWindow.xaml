@@ -429,6 +429,23 @@
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
+                       TextWrapping="Wrap" Text="{loc:Tr Settings.FloatingMotion}"/>
+            <ComboBox Grid.Column="1" x:Name="FloatingMotionCombo" MinWidth="200"
+                      HorizontalAlignment="Stretch"
+                      SelectionChanged="OnFloatingMotionChanged">
+              <ComboBoxItem Tag="Follow" Content="{loc:Tr Settings.FloatingMotion.Follow}"/>
+              <ComboBoxItem Tag="Fixed" Content="{loc:Tr Settings.FloatingMotion.Fixed}"/>
+            </ComboBox>
+          </Grid>
+          <TextBlock Text="{loc:Tr Settings.FloatingMotion.Hint}" TextWrapping="Wrap"
+                     FontSize="11" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10"/>
+
+          <Grid Style="{StaticResource S.Row}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.PanelTextColor}"/>
             <ComboBox Grid.Column="1" x:Name="TextColorCombo" Width="200"

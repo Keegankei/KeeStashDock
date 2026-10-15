@@ -189,6 +189,10 @@ public sealed class AppSettings
     /// Missing settings preserve the classic appearance.</summary>
     public bool FloatingPanelEnabled { get; set; } = false;
 
+    /// <summary>Follow the nearby pointer in floating mode. False keeps a fixed
+    /// perspective; missing settings retain the existing pointer-follow behavior.</summary>
+    public bool FloatingPanelFollowPointer { get; set; } = true;
+
     /// <summary>One-shot flag: the starter groups ("Default" + "Git BASH"
     /// with its pre-filled high-frequency git commands) have been created.
     /// Prevents re-seeding after the user renames or deletes them.</summary>

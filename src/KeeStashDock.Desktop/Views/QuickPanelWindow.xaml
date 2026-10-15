@@ -189,7 +189,12 @@
               <Grid Margin="8,7" Background="Transparent"
                     MouseLeftButtonUp="OnCardClick" Tag="{Binding}"
                     v:FloatingCardMotion.Enabled="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}"
-                    v:FloatingCardMotion.Target="{Binding ElementName=CardMotionSurface}">
+                    v:FloatingCardMotion.Target="{Binding ElementName=CardMotionSurface}"
+                    v:FloatingCardMotion.Decoration="{Binding ElementName=CardDepthLayers}"
+                    v:FloatingCardMotion.Highlight="{Binding ElementName=CardDepthHighlight}">
+                <v:CardDepthDecoration x:Name="CardDepthLayers"
+                    OutlineBrush="{DynamicResource B.Border}"
+                    Visibility="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}, Converter={StaticResource BoolToVis}}"/>
                 <Grid x:Name="CardMotionSurface">
                   <v:SurfaceShadow Spread="4" ShadowOffset="1"
                                    Strength="{DynamicResource Panel.CardShadowStrength}"
@@ -269,6 +274,8 @@
                   </DockPanel>
                 </Grid>
               </Border>
+                  <v:CardDepthDecoration x:Name="CardDepthHighlight" IsHighlight="True"
+                      Visibility="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}, Converter={StaticResource BoolToVis}}"/>
                 </Grid>
               </Grid>
             </DataTemplate>

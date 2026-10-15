@@ -108,6 +108,48 @@ public sealed class SettingsStoreTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void FloatingPanel_LegacySettingsKeepPointerFollow(bool floatingEnabled)
+    {
+        File.WriteAllText(_settingsFile, $$"""
+            { "theme": "Dark", "floatingPanelEnabled": {{floatingEnabled.ToString().ToLowerInvariant()}} }
+            """);
+        var store = new SettingsStore(_settingsFile);
+
+        store.Load();
+
+        Assert.AreEqual(floatingEnabled, store.Current.FloatingPanelEnabled);
+        Assert.IsTrue(store.Current.FloatingPanelFollowPointer,
+            "Upgrading an existing configuration must retain pointer following.");
+        Assert.AreEqual("Dark", store.Current.Theme);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void FloatingPanel_PerspectiveChoiceRoundTripsAcrossClassicMode(bool followPointer)
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingPanelEnabled = true;
+        store.Current.FloatingPanelFollowPointer = followPointer;
+        store.Save();
+
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.IsTrue(reloaded.Current.FloatingPanelEnabled);
+        Assert.AreEqual(followPointer, reloaded.Current.FloatingPanelFollowPointer);
+
+        reloaded.Current.FloatingPanelEnabled = false;
+        reloaded.Save();
+        var classic = new SettingsStore(_settingsFile);
+        classic.Load();
+        Assert.IsFalse(classic.Current.FloatingPanelEnabled);
+        Assert.AreEqual(followPointer, classic.Current.FloatingPanelFollowPointer,
+            "Switching to Classic must retain the preferred floating perspective mode.");
+    }
+
+    [TestMethod]
     public void ExtremeFloatingPointAndGeometryValues_AreBounded()
     {
         File.WriteAllText(_settingsFile, """
