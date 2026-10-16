@@ -8,8 +8,9 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ### 1.2.2 candidate
 
-- Added a persisted Classic / Floating panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
-- Revised Floating mode to retain the ordinary rounded UI, colors, fonts and spacing, with Fixed perspective and Drag to inspect presentations. Hold and drag the right mouse button by default to inspect the panel, then release to retain its angle. A right-click without dragging keeps the card menu. Middle-button and custom button/modifier gestures are also available; Classic and accessibility fallbacks remain flat.
+- Renamed the panel presentations to Standard / Spatial across all twenty interface languages without changing saved settings. Expanded the illustrated README into nine languages, with native-language navigation and aligned feature, setup, backup, and upgrade guidance.
+- Added a persisted Standard / Spatial panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
+- Revised Spatial mode to retain the ordinary rounded UI, colors, fonts and spacing, with Fixed perspective and Drag to inspect presentations. Hold and drag the right mouse button by default to inspect the panel, then release to retain its angle. A right-click without dragging keeps the card menu. Middle-button and custom button/modifier gestures are also available; Standard and accessibility fallbacks remain flat.
 - Added a thin side layer to the perspective panel, plus layered card outlines, hollow shadows and independent proximity brightness/lift feedback. Card controls, text input, scrolling and normal window movement keep their existing actions.
 - Reduced repeated perspective hit testing, coordinate conversions and drawing allocations; card feedback shares a bounded sampler and retained drawing resources. Idle pointer movement no longer rotates the panel.
 - Added optional auto-hide on all four screen edges, with a 6-DIP-thick, 72-DIP-long handle that restores the panel on hover. The original 44-DIP compact bar retains all six actions and restores the previous expanded size.

@@ -13,10 +13,10 @@ Window title bars are omitted; no real desktop or clipboard content was captured
 | `main-window.png` | Workbench with sample text, link, and image entries |
 | `screenshot-entry.png` | Image entry with an original sample note and editable sample OCR text |
 | `component-setup.png` | Settings' optional components section in the initial not-installed state (1.2.1) |
-| `classic-panel.png` | Quick panel with soft exterior/card shadows and synthetic snippets (1.2.2) |
-| `floating-panel.png` | The ordinary rounded panel with a thin side layer, layered cards and proximity feedback (1.2.2 revision-5 fixture) |
-| `floating-panel-dark.png` | The same perspective and layered cards using the dark palette (1.2.2 revision-5 fixture) |
-| `floating-panel-fixed.png` | Fixed perspective with independent card feedback (1.2.2 revision-5 fixture) |
+| `classic-panel.png` | Standard quick panel with soft exterior/card shadows and synthetic snippets (1.2.2) |
+| `floating-panel.png` | Spatial mode with the same rounded panel and a thin side layer, layered cards and proximity feedback (1.2.2 revision-5 fixture) |
+| `floating-panel-dark.png` | Spatial mode with perspective and layered cards using the dark palette (1.2.2 revision-5 fixture) |
+| `floating-panel-fixed.png` | Spatial mode with fixed perspective and independent card feedback (1.2.2 revision-5 fixture) |
 | `floating-panel-motion.gif` | Actual WPF controls along a synthetic route: first card hover, then drag inspection marked by an orange pointer (1.2.2 revision-5 fixture) |
 | `selection-actions.png` | Combined Copy / Translate selection bubble (1.2.2) |
 | `screenshot-text.png` | Transient screenshot text result before any explicit copy action (1.2.2) |
@@ -61,7 +61,7 @@ from the user's desktop. The scenario does not move the operating-system cursor.
 These previews demonstrate appearance; they do not establish physical
 mixed-DPI coverage or animation performance on every GPU.
 
-Floating mode retains the application's ordinary rounded surfaces, palette,
+Spatial mode retains the application's ordinary rounded surfaces, palette,
 fonts and spacing. Its whole-panel perspective design follows the maintainer's
 reference screenshots of a spatial game interface. The motion preview uses
 the application's live WPF controls and synthetic pointer positions to demonstrate

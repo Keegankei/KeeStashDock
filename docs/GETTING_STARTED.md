@@ -24,13 +24,15 @@ no manual environment setup is needed. Keep the application entry point and
 
 ## First use
 
+- A fresh installation starts in **English**. Choose another interface language
+  in Settings. An upgrade that keeps existing data also keeps its saved language.
 - Press **Alt+Q** to show or hide the quick panel. The tray menu opens the workbench
   and Settings. Launching the executable again brings back the panel.
 - Type a text entry and press **Enter** to save it. **Alt+Enter** or **Shift+Enter**
   inserts a new line. Click an entry to copy it.
 - Use **Ctrl+Alt+S** or a screenshot button, select a region, then choose **Save screenshot**, **Extract text**, or **Extract and translate**. **Enter** saves; **Esc** or right-click cancels. Extracting text alone creates no library entry and does not automatically copy text.
 - Open a saved image entry and use **Recognize text** to add editable, searchable text. OCR runs locally. Translation uses only your configured provider when explicitly requested; source text remains available after failure.
-- In Settings, choose **Classic** or **Floating** panel mode. Floating keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
+- In Settings, choose **Standard** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
 - Enable **Hide at desktop edge** to tuck the panel into a small handle when dragged to an edge. Hover over or click the handle to restore it. Ordinary collapse keeps only the six toolbar buttons.
 - Select **Copy and translate** for two independent selection-bubble buttons. Copy saves the selection to the dock; Translate uses the same source text without adding an entry.
 

@@ -363,7 +363,12 @@ internal static class QuickPanelWindowScenarios
             "Native dragging must freeze card depth as well as the panel's pose.");
         SendMessage(handle, 0x0232, nint.Zero, nint.Zero);
         PumpUntil(() => decoration.Activity < 0.01 && !decoration.HasAnimatedProperties);
-        Assert.IsFalse(panel.IsDepthPointerPolling);
+        // WPF can route a layout-generated move after the card animation ends.
+        // That wakes the sampler; its next tick must stop for the outside pointer.
+        panel.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+            { RoutedEvent = UIElement.MouseMoveEvent });
+        PumpUntil(() => !panel.IsDepthPointerPolling,
+            "Pointer polling must become idle when the pointer is outside the panel.");
         CardDepthTests.VerifyProjectedScrollClippingAndFreeze();
     }
 
@@ -451,7 +456,8 @@ internal static class QuickPanelWindowScenarios
         }
     }
 
-    private static void PumpUntil(Func<bool> complete)
+    private static void PumpUntil(Func<bool> complete,
+        string message = "The panel did not finish its visibility transition.")
     {
         var frame = new DispatcherFrame();
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(10) };
@@ -460,7 +466,7 @@ internal static class QuickPanelWindowScenarios
         timer.Start();
         try { Dispatcher.PushFrame(frame); }
         finally { timer.Stop(); }
-        Assert.IsTrue(complete(), "The panel did not finish its visibility transition.");
+        Assert.IsTrue(complete(), message);
     }
 
     [DllImport("user32.dll")]

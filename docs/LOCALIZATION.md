@@ -7,6 +7,7 @@ English is the repository source language for code, comments, configuration, aut
 The intentional localization exceptions are:
 
 - Root `README.<locale>.md` files matching an existing interface language pack
+- Native language labels in the English README's links to those translations
 - `src/KeeStashDock.Desktop/Locales/*.json`
 
 The canonical application language file is `en-US.json`. All other language files must remain structurally compatible with it.
@@ -64,6 +65,25 @@ The filename is the locale tag used by the application, such as `en-US.json` or 
 4. Add `preferredFont` only when the default UI font is unsuitable.
 5. Verify live switching and application restart.
 6. Check the quick panel, workbench, settings, dialogs, tray menu, selection bubble, translation card, sticky note, and in-application help.
+
+## README translations
+
+The English `README.md` is the reference. Each translated README should keep the
+same feature sections, links, media, release-status distinctions, setup steps,
+privacy statements, and upgrade guidance. Translate visible headings, navigation
+labels, image alternatives, captions, and tables; preserve paths, explicit anchor
+IDs, commands, keyboard shortcuts, and product names.
+
+Use each language's `$meta.nativeName` in every README's language navigation,
+including the English README. Link directly to an existing `README.<locale>.md`,
+use a corresponding `lang` attribute, and do not substitute country flags for
+language names. Add the new language link to all README editions together.
+
+Interface language coverage, README coverage, OCR models, and offline translation
+models are separate capabilities. Do not imply that translating a README or the
+interface adds recognition or translation models. Mark candidate-only features
+and simulated previews clearly; identify actual application captures in the
+image provenance record.
 
 ## Validation
 

@@ -203,7 +203,10 @@ public sealed class RepositoryPolicyTests
             foreach (string line in File.ReadLines(file))
             {
                 lineNumber++;
-                char? character = line.FirstOrDefault(IsDisallowedScriptCharacter);
+                string policyText = relative == "README.md"
+                    ? RemoveNativeLanguageNavigationLabels(root, line)
+                    : line;
+                char? character = policyText.FirstOrDefault(IsDisallowedScriptCharacter);
                 if (character is null || character == '\0')
                     continue;
 
@@ -219,6 +222,24 @@ public sealed class RepositoryPolicyTests
 
         Assert.AreEqual(0, violations.Count, string.Join(Environment.NewLine, violations));
     }
+
+    // The English README links to translations using their own language names.
+    // Exempt only a real README link whose label matches its locale metadata;
+    // surrounding text and arbitrary non-English link labels remain checked.
+    private static string RemoveNativeLanguageNavigationLabels(string root, string line) =>
+        Regex.Replace(line,
+            "<a href=\"(README\\.([a-z]{2,3}-[A-Z]{2})\\.md)\" lang=\"[a-zA-Z-]+\">([^<]+)</a>",
+            match =>
+            {
+                string readme = match.Groups[1].Value;
+                string localePath = Path.Combine(root, "src", "KeeStashDock.Desktop",
+                    "Locales", match.Groups[2].Value + ".json");
+                if (!File.Exists(Path.Combine(root, readme)) || !File.Exists(localePath))
+                    return match.Value;
+                using JsonDocument locale = JsonDocument.Parse(File.ReadAllText(localePath));
+                return match.Groups[3].Value == locale.RootElement.GetProperty("$meta")
+                    .GetProperty("nativeName").GetString() ? "language navigation" : match.Value;
+            }, RegexOptions.CultureInvariant);
 
     [TestMethod]
     public void Readmes_DoNotContainPlaceholderSections()
