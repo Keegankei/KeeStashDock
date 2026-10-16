@@ -74,9 +74,11 @@ foreach ($relative in $required) {
 }
 if (-not $flat) {
     $embedded = @(Get-SingleFileBundleEntries (Join-Path $publishDirectory 'KeeStashDock.exe'))
+    # The single-file host can statically link CoreCLR instead of listing a coreclr.dll entry.
+    # Test-PackagedHost verifies actual startup in addition to this manifest inspection.
     foreach ($runtime in @('KeeStashDock.dll', 'KeeStashDock.deps.json', 'KeeStashDock.runtimeconfig.json',
         'KeeStashDock.Core.dll', 'KeeStashDock.Domain.dll', 'KeeStashDock.Infrastructure.dll',
-        'coreclr.dll', 'System.Private.CoreLib.dll', 'e_sqlite3.dll',
+        'System.Private.CoreLib.dll', 'e_sqlite3.dll',
         'PresentationCore.dll', 'PresentationFramework.dll', 'WindowsBase.dll', 'wpfgfx_cor3.dll')) {
         if (-not ($embedded | Where-Object Path -CEQ $runtime)) { throw "Missing bundled runtime file: $runtime" }
     }
