@@ -12,7 +12,7 @@ body:
     attributes:
       label: KeeStashDock version
       description: Use the version shown in Settings or the release archive.
-      placeholder: "1.2.1"
+      placeholder: "Copy the version from Settings or the release archive"
     validations:
       required: true
 

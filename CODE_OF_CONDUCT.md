@@ -12,7 +12,7 @@ This standard applies in repository issues, pull requests, reviews, discussions,
 
 ## Reporting
 
-Report conduct concerns privately to the maintainer through a non-public contact method listed on the maintainer's GitHub profile. Do not place sensitive details in a public issue. Include relevant links, dates, and a concise description of the behavior.
+Report conduct concerns privately to the maintainer at [2651570569@qq.com](mailto:2651570569@qq.com), using the subject "KeeStashDock conduct report". Do not place sensitive details in a public issue. Include relevant links, dates, and a concise description of the behavior; share only the information needed to assess the report.
 
 ## Enforcement
 

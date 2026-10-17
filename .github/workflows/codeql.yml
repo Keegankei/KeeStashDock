@@ -1,0 +1,75 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "37 4 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            os: windows-latest
+            build-mode: manual
+          - language: python
+            os: ubuntu-latest
+            build-mode: none
+          - language: actions
+            os: ubuntu-latest
+            build-mode: none
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install .NET SDK
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Install Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # Building on Windows includes WPF-generated code in the C# analysis.
+      - name: Build Release for analysis
+        if: matrix.language == 'csharp'
+        run: >-
+          dotnet build KeeStashDock.sln --configuration Release
+          --no-incremental -p:UseSharedCompilation=false
+
+      - name: Analyze and upload results
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"

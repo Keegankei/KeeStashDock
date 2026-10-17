@@ -22,7 +22,6 @@ dotnet test --solution KeeStashDock.sln --configuration Release --no-build
 A change to the WPF application should also pass a publish smoke check:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
 dotnet restore src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj --runtime win-x64 -p:PublishProfile=FolderProfile
 dotnet publish src/KeeStashDock.Desktop/KeeStashDock.Desktop.csproj `
   --configuration Release `
@@ -34,26 +33,36 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/Verify-Publish.ps1 -Pa
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PackagedHost.ps1 -Path artifacts/publish
 ```
 
-The optional translation helper has standard-library-only safety tests (Python 3.11 or later):
+The optional component helpers and packaging tools have safety tests (Python 3.11 or later for the Python helper):
 
 ```powershell
 python -B tools/offline-translation/test_runtime.py
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/offline-translation/test_process.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/native-runtime/test_setup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/test_setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Clean.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-PublishSafety.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-SingleFileBundle.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-UpdateManifest.ps1
 ```
 
-OCR model setup is an explicit, hash-verified download. Plain source builds do not
-need models; the complete release package and CI publish check do. Use a fresh
-publish directory rather than a running installation or a directory with `Data`.
-The profile bundles the application runtime; keep the complete package together
-because OCR, languages, component tools and documentation remain external. The
-host smoke check uses an isolated mode without creating user data or starting
-the normal tray application. See [the release process](docs/RELEASING.md) for
-the final ZIP layout and checksum requirements.
+Source builds and standard release packages do not require installed OCR or
+offline translation components. Standard packages exclude their engines and
+models, including when local component caches exist. The CI publish check verifies
+that these optional components are absent and that the app handles their absence.
+Use a fresh publish directory rather than a running installation or a directory
+with `Data`. The profile bundles the application runtime; keep the complete package
+together because languages, component setup tools and documentation remain external.
+The host smoke check uses an isolated mode without creating user data or starting
+the normal tray application.
+
+When a change affects real OCR or offline translation, test it separately after
+explicit component installation into an isolated test environment. Installation
+downloads additional files and may invoke Microsoft's native runtime installer;
+it is not a prerequisite for the ordinary build or publish checks above. See
+[local OCR](docs/LOCAL_OCR.md), [offline translation](docs/OFFLINE_TRANSLATION.md)
+and [the release process](docs/RELEASING.md) for setup, validation and final ZIP
+requirements.
 
 ## Cleaning local outputs
 
@@ -96,6 +105,7 @@ English is required for:
 The intentional exceptions are:
 
 - Localized `README.<locale>.md` files (the English `README.md` is the reference)
+- Localized `docs/**/<name>.<locale>.md` files with an English sibling and a matching interface language pack
 - Native language names in README navigation links to existing translations
 - JSON language packs under `src/KeeStashDock.Desktop/Locales`
 
