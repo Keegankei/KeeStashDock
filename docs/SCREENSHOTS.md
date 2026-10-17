@@ -7,7 +7,7 @@ choices; translation uses the provider configured in Settings.
 ## Capture and reuse
 
 1. Choose a group, then click the screenshot button in the quick panel or
-   workbench. Each button saves to its window's selected group. **Ctrl+Alt+S**
+   workbench. Each button saves to its window's selected group. **Alt+W**
    uses the active workbench's selected group, or the quick panel's group when
    the workbench is not active. Settings lets you change or disable this shortcut independently
    of the panel shortcut. The screenshot button remains available when the

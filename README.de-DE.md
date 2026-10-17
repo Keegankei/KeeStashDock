@@ -57,10 +57,14 @@ Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. 
 
 </details>
 
+**Voreinstellungen bei Neuinstallation · 1.2.2-r7:** Englisch; **Alt+Q** öffnet das Panel, **Alt+W** startet einen Screenshot. OCR und lokale Übersetzung sind nicht vorinstalliert. Updates behalten gespeicherte Einstellungen bei.
+
+Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard, Textleuchten aus, Schatten an. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
+
 <a id="features"></a>
 ## Funktionen
 
-Die folgenden Vorschaubilder zeigen echte Bedienelemente der Anwendung mit synthetischen Beispieldaten. Das GIF zur Ansichtsprüfung wird aus diesen Bedienelementen mit einem simulierten Zeiger erzeugt. Die Updatevorschau verwendet eine simulierte Veröffentlichung; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md).
+Die folgenden Vorschaubilder zeigen echte Bedienelemente der Anwendung mit synthetischen Beispieldaten. Das GIF zur Ansichtsprüfung wird aus diesen Bedienelementen mit einem simulierten Zeiger erzeugt. Die Updatevorschau verwendet eine simulierte Veröffentlichung; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md). Die Bilder können Einstellungen früherer Kandidaten zeigen, die von den obigen Voreinstellungen abweichen.
 
 ### 1. Erfassen, finden und organisieren
 
@@ -101,7 +105,7 @@ Wählen Sie **Einstellungen > Panelmodus**. Beide Modi behalten dieselben Bedien
 - **Feste Perspektive:** eine stabile geneigte Ansicht beibehalten, während nahe Karten auf den Zeiger reagieren.
 - **Zum Betrachten ziehen:** die **rechte Maustaste** auf einer Kartenfläche oder dem Panelhintergrund gedrückt halten und ziehen. Beim Loslassen bleibt der Winkel erhalten. Ein Rechtsklick ohne Ziehen öffnet weiterhin das Kartenmenü. In den Einstellungen lassen sich auch die mittlere Maustaste oder eine eigene Kombination aus Maustaste und Zusatztasten wählen.
 - **Kompakte Leiste:** Das eingeklappte Panel enthält sechs Aktionen: Minimieren, Ein-/Ausklappen, Sperren, Screenshot, Werkbank und Einstellungen. Beim Ausklappen erhält das Panel seine vorherige Größe zurück.
-- **Am Bildschirmrand automatisch einklappen:** diese Option aktivieren, das Panel an einen der vier Bildschirmränder ziehen und den Zeiger wegbewegen. Ein kleiner Griff bleibt sichtbar; zeigen Sie darauf oder klicken Sie ihn an, um das Panel wiederherzustellen. Durch Sperren bleibt es sichtbar.
+- **Am Bildschirmrand automatisch einklappen:** in 1.2.2-r7 standardmäßig aktiviert; das Panel an einen der vier Bildschirmränder ziehen und den Zeiger wegbewegen. Ein kleiner Griff bleibt sichtbar; zeigen Sie darauf oder klicken Sie ihn an, um das Panel wiederherzustellen. Durch Sperren bleibt es sichtbar.
 
 Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png) · [Gemessene Leistung und Grenzen](docs/performance/1.2.2-floating.md).
 
@@ -111,7 +115,7 @@ Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene 
 
 <p align="center"><img src="docs/images/screenshot-entry.png" width="720" alt="Gespeicherter Screenshot-Eintrag mit Originalbild und bearbeitbarem erkanntem Text"></p>
 
-Drücken Sie **Ctrl+Alt+S** oder eine Screenshot-Schaltfläche und ziehen Sie einen Auswahlbereich auf. Gespeicherte Screenshots werden zu Bildeinträgen in der ausgewählten Gruppe. Öffnen Sie einen Eintrag, um ihn anzusehen, zu kopieren, als PNG zu speichern oder **Text erkennen** zu wählen. Der erkannte Text lässt sich bearbeiten und durchsuchen; das Originalbild bleibt erhalten.
+Drücken Sie **Alt+W** oder eine Screenshot-Schaltfläche und ziehen Sie einen Auswahlbereich auf. Gespeicherte Screenshots werden zu Bildeinträgen in der ausgewählten Gruppe. Öffnen Sie einen Eintrag, um ihn anzusehen, zu kopieren, als PNG zu speichern oder **Text erkennen** zu wählen. Der erkannte Text lässt sich bearbeiten und durchsuchen; das Originalbild bleibt erhalten.
 
 **1.2.2-Kandidat:** Nach der Auswahl bietet eine Werkzeugleiste drei getrennte Aktionen:
 
@@ -137,7 +141,7 @@ Die Zielsprache der Übersetzung folgt der Oberflächensprache der App. Welche Z
 
 | Anbieter | Einrichtung und Verfügbarkeit |
 | --- | --- |
-| Bing (China), Google, Lingva | Kein Schlüssel nötig. Die Verfügbarkeit ist nicht garantiert. Neue Installationen verwenden standardmäßig Bing; bestehende Einstellungen bleiben erhalten. |
+| Bing (China), Google, Lingva | Kein Schlüssel nötig. Die Verfügbarkeit ist nicht garantiert. Neue Installationen verwenden standardmäßig Google; bestehende Einstellungen bleiben erhalten. |
 | Baidu, Alibaba Cloud, DeepL | Eigene Zugangsdaten erforderlich. Freikontingente und Gebühren hängen vom Anbieter und Ihrem Konto ab. Alibaba Cloud benötigt einen aktivierten Dienst für maschinelle Übersetzung sowie die Berechtigung `alimt:TranslateGeneral`. |
 | Lokal offline | Die optionale lokale Engine installieren; sie nutzt einen Loopback-Dienst ohne Konto oder API-Gebühr. |
 
@@ -150,14 +154,14 @@ Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anb
 *Die Komponentensteuerung zeigt den beispielhaften Zustand „nicht installiert“ aus 1.2.1. Die normale Einrichtung erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
 
 1. Öffnen Sie **Einstellungen > Optionale Komponenten**.
-2. Wählen Sie für OCR unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**, falls eine Komponente fehlt. Das Standard-ZIP enthält bereits die Engine und Modelle für Englisch und vereinfachtes Chinesisch; die Einrichtung prüft auch die native Laufzeit.
+2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.2-r7 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
 3. Wählen Sie für lokale Übersetzungen unter **Offline-Übersetzung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Lassen Sie die Einstellungen während des ersten Downloads geöffnet; planen Sie etwa **1 GB freien Speicherplatz** und **2 GB verfügbaren Arbeitsspeicher** ein.
 4. Folgen Sie bei Bedarf dem Installationsprogramm von Microsoft. Meldet die Einrichtung **Neustart erforderlich**, starten Sie Windows neu und versuchen Sie es erneut. Ein Abbruch der App-Einrichtung macht eine bereits gestartete Windows-Laufzeitinstallation nicht rückgängig.
 5. Wählen Sie **Lokal offline (Argos / LibreTranslate)** als Übersetzungsengine. Behalten Sie `http://127.0.0.1:5000` bei und verwenden Sie **Übersetzung testen**. Der Dienst startet bei Bedarf; **Dienst starten** und **Dienst stoppen** stehen ebenfalls zur Verfügung.
 
-Die erste Einrichtung benötigt Internetzugriff auf die jeweiligen Downloadserver von GitHub, Python, Paket- und Modellanbietern sowie Microsoft. Fehlgeschlagene Downloads können wiederholt werden; gültige zwischengespeicherte Dateien werden wiederverwendet. Nach der Installation arbeiten OCR und lokale Übersetzung offline. Der Übersetzungsdienst läuft nach dem Schließen der App weiter, bis er gestoppt wird.
+Die erste Einrichtung benötigt Internetzugriff auf die jeweiligen Downloadserver von NuGet, GitHub, Python, Paket- und Modellanbietern sowie Microsoft. Fehlgeschlagene Downloads können wiederholt werden; gültige zwischengespeicherte Dateien werden wiederverwendet. Nach der Installation arbeiten OCR und lokale Übersetzung offline. Der Übersetzungsdienst läuft nach dem Schließen der App weiter, bis er gestoppt wird.
 
-**Unterstützte Sprachen:** OCR erkennt gedrucktes Englisch und vereinfachtes Chinesisch. Die enthaltenen Übersetzungsmodelle unterstützen **Englisch ↔ vereinfachtes Chinesisch**. Die **20 Oberflächensprachen** der App bedeuten nicht, dass OCR oder Offline-Übersetzung 20 Sprachen unterstützen. Fehlende Modelle lösen niemals einen Wechsel zur Cloud-Übersetzung aus. [Offline-Einrichtung und Fehlerbehebung](docs/OFFLINE_TRANSLATION.md).
+**Unterstützte Sprachen:** OCR erkennt gedrucktes Englisch und vereinfachtes Chinesisch. Die optional heruntergeladenen Übersetzungsmodelle unterstützen **Englisch ↔ vereinfachtes Chinesisch**. Die **20 Oberflächensprachen** der App bedeuten nicht, dass OCR oder Offline-Übersetzung 20 Sprachen unterstützen. Fehlende Modelle lösen niemals einen Wechsel zur Cloud-Übersetzung aus. [Offline-Einrichtung und Fehlerbehebung](docs/OFFLINE_TRANSLATION.md).
 
 ### 6. Nach Updates suchen · 1.2.2-Kandidat
 
@@ -177,7 +181,7 @@ Das geordnete Kandidatenpaket enthält drei Dateien im Hauptverzeichnis: `KeeSta
 | Schnellpanel anzeigen/ausblenden | **Alt+Q**; konfigurierbar |
 | Eingegebenen Text speichern | **Enter** |
 | Zeilenumbruch einfügen | **Alt+Enter** oder **Shift+Enter** |
-| Screenshot | **Ctrl+Alt+S**; unabhängig konfigurierbar |
+| Screenshot | **Alt+W**; unabhängig konfigurierbar |
 | Ausgewählten Screenshot-Bereich speichern | **Enter** in der Aufnahmeleiste von 1.2.2 |
 | Screenshot abbrechen | **Esc** oder Rechtsklick |
 | Räumliches Panel betrachten | **Rechte Maustaste** gedrückt halten und ziehen; in 1.2.2 konfigurierbar |

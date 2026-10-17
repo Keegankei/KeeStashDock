@@ -7,9 +7,11 @@ internal enum PanelDockSide { None, Left, Top, Right, Bottom }
 /// <summary>Physical-pixel geometry keeps negative monitor origins and mixed DPI safe.</summary>
 internal static class EdgeDockGeometry
 {
+    internal const double SnapDistanceDip = 14;
+
     internal static PanelDockSide Detect(Rectangle bounds, Rectangle workArea, double dpiScale)
     {
-        int threshold = (int)Math.Ceiling(14 * ValidScale(dpiScale));
+        int threshold = (int)Math.Ceiling(SnapDistanceDip * ValidScale(dpiScale));
         var distances = new[]
         {
             (Side: PanelDockSide.Left, Distance: Math.Abs((long)bounds.Left - workArea.Left)),

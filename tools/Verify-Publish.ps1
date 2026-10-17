@@ -1,6 +1,6 @@
 # Check a portable win-x64 package before it is archived or distributed.
 [CmdletBinding()]
-param([Parameter(Mandatory = $true)][string] $Path)
+param([Parameter(Mandatory = $true)][string] $Path, [switch]$AllowInstalledComponents)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -27,6 +27,10 @@ while ($pending.Count -gt 0) {
         $entry.Extension -in @('.user', '.suo', '.pyc')))) {
         throw ('Private state or development files found in release package: ' + $entry.Name)
     }
+    if (-not $AllowInstalledComponents -and -not $entry.PSIsContainer -and
+        ($entry.Name -match '^(?i)(?:tesseract.*\.(?:exe|dll)|leptonica.*\.dll)$' -or $entry.Extension -ieq '.traineddata')) {
+        throw ('A fresh release must not contain an installed OCR engine or model: ' + $entry.Name)
+    }
     if ($entry.PSIsContainer) {
         foreach ($child in Get-ChildItem -LiteralPath $entry.FullName -Force) { $pending.Push($child) }
     }
@@ -34,16 +38,26 @@ while ($pending.Count -gt 0) {
 
 $required = @(
     'KeeStashDock.exe', 'StartHere.md',
-    'x64/tesseract.exe', 'x64/tesseract55.dll', 'x64/leptonica-1.85.0.dll',
     'NativeRuntime/Setup.ps1',
-    'OcrModels/Setup.ps1', 'OcrModels/README.md', 'OcrModels/LICENSE',
-    'OcrModels/eng.traineddata', 'OcrModels/chi_sim.traineddata',
+    'OcrModels/Setup.ps1', 'OcrModels/README.md',
     'OfflineTranslation/Common.ps1', 'OfflineTranslation/Setup.cmd',
     'OfflineTranslation/Setup.ps1', 'OfflineTranslation/Start.cmd',
     'OfflineTranslation/Start.ps1', 'OfflineTranslation/Stop.cmd',
     'OfflineTranslation/Stop.ps1', 'OfflineTranslation/server.py',
     'OfflineTranslation/setup_runtime.py', 'OfflineTranslation/README.md'
 )
+if ($AllowInstalledComponents) {
+    $required += @('x64/tesseract.exe', 'x64/tesseract55.dll', 'x64/leptonica-1.85.0.dll',
+        'OcrModels/LICENSE', 'OcrModels/eng.traineddata', 'OcrModels/chi_sim.traineddata')
+} else {
+    if ((Test-Path -LiteralPath (Join-Path $publishDirectory 'x64')) -or
+        (Test-Path -LiteralPath (Join-Path $publishDirectory 'x86')) -or
+        @(Get-ChildItem -LiteralPath $publishDirectory -Filter '*.traineddata' -Recurse -File).Count -gt 0 -or
+        (Test-Path -LiteralPath (Join-Path $publishDirectory 'OfflineTranslation/runtime')) -or
+        (Test-Path -LiteralPath (Join-Path $publishDirectory 'OfflineTranslation/models'))) {
+        throw 'A fresh release must not contain preinstalled OCR engines/models or offline translation runtimes/models.'
+    }
+}
 $flat = Test-Path -LiteralPath (Join-Path $publishDirectory 'KeeStashDock.dll') -PathType Leaf
 if ($flat) {
     $required += @('KeeStashDock.dll', 'KeeStashDock.deps.json', 'KeeStashDock.runtimeconfig.json',
@@ -82,7 +96,8 @@ if (-not $flat) {
         'PresentationCore.dll', 'PresentationFramework.dll', 'WindowsBase.dll', 'wpfgfx_cor3.dll')) {
         if (-not ($embedded | Where-Object Path -CEQ $runtime)) { throw "Missing bundled runtime file: $runtime" }
     }
-    if ($embedded | Where-Object { $_.Path -match '^(?:x64|x86|Locales|OcrModels|OfflineTranslation|NativeRuntime|Docs|Licenses)/' }) {
+    if ($embedded | Where-Object { $_.Path -match '^(?:x64|x86|Locales|OcrModels|OfflineTranslation|NativeRuntime|Docs|Licenses)/' -or
+            (-not $AllowInstalledComponents -and $_.Path -match '(?i)(?:^|/)(?:tesseract[^/]*|leptonica[^/]*|[^/]+\.traineddata)$') }) {
         throw 'Editable assets and the separate OCR engine must remain outside the application bundle.'
     }
     foreach ($entry in Get-ChildItem -LiteralPath $publishDirectory -File) {
@@ -92,20 +107,33 @@ if (-not $flat) {
     }
 }
 
-$modelHashes = @{
-    'eng.traineddata' = '7D4322BD2A7749724879683FC3912CB542F19906C83BCC1A52132556427170B2'
-    'chi_sim.traineddata' = 'A5FCB6F0DB1E1D6D8522F39DB4E848F05984669172E584E8D76B6B3141E1F730'
-    'LICENSE' = 'CFC7749B96F63BD31C3C42B5C471BF756814053E847C10F3EB003417BC523D30'
-}
-foreach ($name in $modelHashes.Keys) {
-    if ((Get-FileHash -LiteralPath (Join-Path $publishDirectory ('OcrModels/' + $name)) -Algorithm SHA256).Hash -ne $modelHashes[$name]) {
-        throw "The packaged OCR asset has an unexpected SHA-256: $name"
+if ($AllowInstalledComponents) {
+    $modelHashes = @{
+        'eng.traineddata' = '7D4322BD2A7749724879683FC3912CB542F19906C83BCC1A52132556427170B2'
+        'chi_sim.traineddata' = 'A5FCB6F0DB1E1D6D8522F39DB4E848F05984669172E584E8D76B6B3141E1F730'
+        'LICENSE' = 'CFC7749B96F63BD31C3C42B5C471BF756814053E847C10F3EB003417BC523D30'
+    }
+
+    $engineHashes = @{
+        'tesseract.exe' = '856D2CDDF1B7CD5F014AA92445FC26789116B1B733606D31201F5B32035E36B8'
+        'tesseract55.dll' = 'E9903623E901F2D754EB49EEA4DBFF229F599A8817055A3E3F1C292216670CA9'
+        'leptonica-1.85.0.dll' = '64BB1D584BCE83DB5E5C3625F1857E4BC12993625699CABD0A9B8B76E393BD01'
+    }
+    foreach ($name in $engineHashes.Keys) {
+        if ((Get-FileHash -LiteralPath (Join-Path $publishDirectory ('x64/' + $name)) -Algorithm SHA256).Hash -ne $engineHashes[$name]) {
+            throw "The installed OCR engine has an unexpected SHA-256: $name"
+        }
+    }
+    foreach ($name in $modelHashes.Keys) {
+        if ((Get-FileHash -LiteralPath (Join-Path $publishDirectory ('OcrModels/' + $name)) -Algorithm SHA256).Hash -ne $modelHashes[$name]) {
+            throw "The packaged OCR asset has an unexpected SHA-256: $name"
+        }
+    }
+
+    $languages = & (Join-Path $publishDirectory 'x64/tesseract.exe') --tessdata-dir (Join-Path $publishDirectory 'OcrModels') --list-langs
+    if ($LASTEXITCODE -ne 0 -or $languages -notcontains 'eng' -or $languages -notcontains 'chi_sim') {
+        throw 'The packaged OCR engine could not start or load both language models.'
     }
 }
-
-$languages = & (Join-Path $publishDirectory 'x64/tesseract.exe') --tessdata-dir (Join-Path $publishDirectory 'OcrModels') --list-langs
-if ($LASTEXITCODE -ne 0 -or $languages -notcontains 'eng' -or $languages -notcontains 'chi_sim') {
-    throw 'The packaged OCR engine could not start or load both language models.'
-}
-Write-Host 'Portable package verified: runtime, 20 locales, OCR engine/models, offline setup, licenses, and no private state.'
+Write-Host 'Portable package verified: runtime, 20 locales, optional component policy, setup tools, licenses, and no private state.'
 & (Join-Path $PSScriptRoot 'Verify-UpdateManifest.ps1') -Path $publishDirectory

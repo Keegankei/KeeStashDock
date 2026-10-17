@@ -496,6 +496,10 @@ public sealed class ReleaseUpdateServiceTests
     public void PreservedComponentAssetsAreDistinguishedFromShippedSetupScripts()
     {
         Assert.IsTrue(UpdatePathPolicy.IsPreservedAsset("OcrModels/eng.traineddata"));
+        Assert.IsTrue(UpdatePathPolicy.IsPreservedAsset("x64/tesseract.exe"));
+        Assert.IsTrue(UpdatePathPolicy.IsPreservedAsset("x64/tesseract55.dll"));
+        Assert.IsTrue(UpdatePathPolicy.IsPreservedAsset("x64/leptonica-1.85.0.dll"));
+        Assert.IsFalse(UpdatePathPolicy.IsPreservedAsset("x64/unrelated.dll"));
         Assert.IsTrue(UpdatePathPolicy.IsPreservedAsset("OfflineTranslation/runtime/installed.json"));
         Assert.IsFalse(UpdatePathPolicy.IsPreservedAsset("OcrModels/Setup.ps1"));
         Assert.IsFalse(UpdatePathPolicy.IsPreservedAsset("OfflineTranslation/service.py"));

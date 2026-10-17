@@ -87,8 +87,8 @@ public sealed class SettingsStore
             (Current.ScreenshotHotkeyModifiers & ~0x0fu) != 0 ||
             Current.ScreenshotHotkeyVirtualKey is 0 or > 0xfe or 0x10 or 0x11 or 0x12 or 0x5b or 0x5c or >= 0xa0 and <= 0xa5)
         {
-            Current.ScreenshotHotkeyModifiers = 3;
-            Current.ScreenshotHotkeyVirtualKey = 0x53;
+            Current.ScreenshotHotkeyModifiers = AppSettings.DefaultScreenshotHotkeyModifiers;
+            Current.ScreenshotHotkeyVirtualKey = AppSettings.DefaultScreenshotHotkeyVirtualKey;
         }
         // An existing user's panel shortcut takes priority over the new action.
         if (Current.ScreenshotHotkeyModifiers == Current.HotkeyModifiers &&
@@ -114,7 +114,7 @@ public sealed class SettingsStore
             Current.ExpandDelaySeconds, 0.1, 0.1, 10.0);
         Current.PanelWidth = NormalizePositiveDouble(Current.PanelWidth, 320, 200, 2000);
         Current.BackgroundOverlayOpacity = NormalizePositiveDouble(
-            Current.BackgroundOverlayOpacity, 0.30, 0.20, 1.0);
+            Current.BackgroundOverlayOpacity, AppSettings.DefaultBackgroundOverlayOpacity, 0.20, 1.0);
         Current.FrostedGlassRadius = NormalizePositiveDouble(
             Current.FrostedGlassRadius, 4, 1, 18);
         Current.CardOpacity = NormalizePositiveDouble(Current.CardOpacity, 0.9, 0.1, 1.0);
@@ -153,7 +153,9 @@ public sealed class SettingsStore
         if (string.IsNullOrWhiteSpace(Current.OfflineTranslationEndpoint))
             Current.OfflineTranslationEndpoint = AppSettings.DefaultOfflineTranslationEndpoint;
         if (string.IsNullOrWhiteSpace(Current.TranslationEngine))
-            Current.TranslationEngine = "Bing";
+            Current.TranslationEngine = AppSettings.DefaultTranslationEngine;
+        if (string.IsNullOrWhiteSpace(Current.SelectionBubbleStyle))
+            Current.SelectionBubbleStyle = AppSettings.DefaultSelectionBubbleStyle;
     }
 
     private static int NormalizePositiveInt(int value, int defaultValue, int maximum)

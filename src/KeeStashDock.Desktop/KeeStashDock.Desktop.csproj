@@ -12,7 +12,7 @@
     <AssemblyName>KeeStashDock</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- The release profile bundles the .NET host while retaining editable
-         locales, component tools, documentation, and independent OCR binaries. -->
+         locales, optional component tools, and documentation. -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +26,6 @@
     <!-- MVVM source generators and dependency-injection composition. -->
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="TesseractOCR" GeneratePathProperty="true" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,11 +43,7 @@
     <!-- Setup is explicit; OCR never downloads models while recognizing an image. -->
     <None Include="..\..\tools\native-runtime\Setup.ps1" Link="NativeRuntime\Setup.ps1"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="$(PkgTesseractOCR)\x64\tesseract.exe" Link="x64\tesseract.exe"
-          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\tools\ocr\Setup.ps1" Link="OcrModels\Setup.ps1"
-          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <None Include="..\..\tools\ocr\models\*" Link="OcrModels\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Include="..\..\docs\SCREENSHOTS.md" Link="Docs\Screenshots.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
@@ -87,9 +82,8 @@
     <None Include="..\..\docs\OFFLINE_TRANSLATION.md" Link="OfflineTranslation\README.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
-  <!-- NuGet adds the Tesseract DLL items after this project's ItemGroups.
-       Set final publish metadata after resolution and before bundling so the
-       separate tesseract.exe process can load its DLLs from its own x64 folder. -->
+  <!-- Editable assets stay outside the host; optional OCR binaries and model
+       caches are never part of a fresh release package. -->
   <Target Name="OrganizePortableBundle" BeforeTargets="_ComputeFilesToBundle"
           Condition="'$(PublishSingleFile)' == 'true'">
     <ItemGroup>

@@ -701,9 +701,11 @@ public partial class QuickPanelWindow : Window
         double w = _state == PanelState.Expanded ? ExpandedWidth : CompactToolbarWidth;
         double h = _state == PanelState.Expanded ? ExpandedHeight : ShrunkWindowHeight;
 
+        // Keep a new panel outside the snap zone until the user moves it to an edge.
+        double defaultInset = EdgeDockGeometry.SnapDistanceDip + 6;
         double x = _settings.Current.PanelPosX
                    ?? (_settings.Current.DockEdge == "Left"
-                       ? wa.Left + 12 : wa.Right - w - 12);
+                       ? wa.Left + defaultInset : wa.Right - w - defaultInset);
         double y = _settings.Current.PanelPosY
                    ?? wa.Top + (wa.Height - ExpandedHeight) / 2;
 

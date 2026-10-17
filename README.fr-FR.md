@@ -57,10 +57,14 @@ Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une 
 
 </details>
 
+**Réglages initiaux · 1.2.2-r7 :** anglais ; **Alt+Q** ouvre le panneau et **Alt+W** lance une capture. L’OCR et la traduction locale ne sont pas préinstallés. Les mises à niveau conservent les préférences enregistrées.
+
+La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut, texte lumineux désactivé, ombre activée. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
+
 <a id="features"></a>
 ## Fonctionnalités
 
-Les aperçus ci-dessous montrent de véritables contrôles de l’application avec des données d’exemple fictives. Le GIF d’inspection est généré à partir de ces contrôles avec un pointeur simulé. L’aperçu de mise à jour utilise une publication simulée ; aucun contenu personnel du bureau ou du presse-papiers n’y figure. [Origine et reproduction des images](docs/images/README.md).
+Les aperçus ci-dessous montrent de véritables contrôles de l’application avec des données d’exemple fictives. Le GIF d’inspection est généré à partir de ces contrôles avec un pointeur simulé. L’aperçu de mise à jour utilise une publication simulée ; aucun contenu personnel du bureau ou du presse-papiers n’y figure. [Origine et reproduction des images](docs/images/README.md). Les images peuvent montrer les réglages d’anciens candidats, différents des valeurs initiales ci-dessus.
 
 ### 1. Capturer, rechercher et organiser
 
@@ -101,7 +105,7 @@ Accédez à **Paramètres > Mode du panneau**. Les deux modes conservent les mê
 - **Perspective fixe :** conservez une vue inclinée stable pendant que les cartes proches réagissent au pointeur.
 - **Glisser pour inspecter :** maintenez le **bouton droit de la souris** sur le corps d’une carte ou l’arrière-plan du panneau et faites glisser. Relâchez pour conserver l’angle. Un clic droit sans glissement ouvre toujours le menu de la carte. Les paramètres permettent aussi de choisir le bouton du milieu ou une combinaison personnalisée de bouton et de touches de modification.
 - **Barre compacte :** réduisez le panneau à six actions : minimiser, déplier/replier, verrouiller, capture d’écran, espace de travail et Paramètres. Le déplier rétablit ses dimensions précédentes.
-- **Masquer au bord du bureau :** activez cette option, faites glisser le panneau vers l’un des quatre bords de l’écran, puis éloignez le pointeur. Une petite poignée reste visible ; survolez-la ou cliquez dessus pour rétablir le panneau. Le verrouillage maintient le panneau visible.
+- **Masquer au bord du bureau :** activé par défaut dans 1.2.2-r7 ; faites glisser le panneau vers l’un des quatre bords de l’écran, puis éloignez le pointeur. Une petite poignée reste visible ; survolez-la ou cliquez dessus pour rétablir le panneau. Le verrouillage maintient le panneau visible.
 
 Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png) · [Performances mesurées et limites](docs/performance/1.2.2-floating.md).
 
@@ -111,7 +115,7 @@ Les paramètres proposent aussi des palettes de texte pour le panneau, une coule
 
 <p align="center"><img src="docs/images/screenshot-entry.png" width="720" alt="Capture d’écran enregistrée avec son image d’origine et son texte reconnu modifiable"></p>
 
-Appuyez sur **Ctrl+Alt+S** ou sur un bouton de capture, puis faites glisser pour sélectionner une zone. Les captures enregistrées deviennent des entrées contenant une image dans le groupe sélectionné. Ouvrez-en une pour l’afficher, la copier, l’enregistrer au format PNG ou choisir **Reconnaître le texte**. Vous pouvez modifier le texte reconnu et y effectuer des recherches tout en conservant l’image d’origine.
+Appuyez sur **Alt+W** ou sur un bouton de capture, puis faites glisser pour sélectionner une zone. Les captures enregistrées deviennent des entrées contenant une image dans le groupe sélectionné. Ouvrez-en une pour l’afficher, la copier, l’enregistrer au format PNG ou choisir **Reconnaître le texte**. Vous pouvez modifier le texte reconnu et y effectuer des recherches tout en conservant l’image d’origine.
 
 **Version candidate 1.2.2 :** une barre d’outils apparaît après la sélection et propose trois actions distinctes :
 
@@ -137,7 +141,7 @@ La langue cible de la traduction suit la langue de l’interface de l’applicat
 
 | Fournisseur | Configuration et disponibilité |
 | --- | --- |
-| Bing (Chine), Google, Lingva | Aucune clé requise. La disponibilité n’est pas garantie. Les nouvelles installations utilisent Bing par défaut ; les préférences existantes sont conservées. |
+| Bing (Chine), Google, Lingva | Aucune clé requise. La disponibilité n’est pas garantie. Les nouvelles installations utilisent Google par défaut ; les préférences existantes sont conservées. |
 | Baidu, Alibaba Cloud, DeepL | Fournissez vos propres identifiants. Les quotas gratuits et les frais dépendent du fournisseur et de votre compte. Alibaba Cloud nécessite l’activation du service Machine Translation et l’autorisation `alimt:TranslateGeneral`. |
 | Local hors ligne | Installez le moteur local facultatif ; il utilise un service sur l’interface de bouclage, sans compte ni frais d’API. |
 
@@ -150,14 +154,14 @@ La traduction dans le cloud envoie uniquement le texte demandé au fournisseur s
 *Les contrôles des composants sont présentés dans leur état d’exemple non installé de la version 1.2.1. L’installation habituelle se fait avec ces boutons intégrés ; aucune commande de terminal n’est nécessaire.*
 
 1. Ouvrez **Paramètres > Composants facultatifs**.
-2. Pour l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)** si un composant est manquant. Le ZIP standard comprend déjà le moteur et les modèles anglais et chinois simplifié ; l’installation vérifie également le runtime natif.
+2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.2-r7 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
 3. Pour la traduction locale, choisissez **Installer / réparer** sous **Traduction hors ligne (chinois / anglais)**. Gardez les paramètres ouverts pendant le téléchargement initial ; prévoyez environ **1 Go d’espace disque libre** et **2 Go de mémoire disponible**.
 4. Suivez l’installateur Microsoft s’il apparaît. Si l’installation indique **Redémarrage requis**, redémarrez Windows et réessayez. Annuler l’installation dans l’application n’annule pas une installation de runtime Windows déjà lancée.
 5. Sélectionnez **Local hors ligne (Argos / LibreTranslate)** comme moteur de traduction. Conservez `http://127.0.0.1:5000`, puis utilisez **Tester la traduction**. Le service démarre à la demande ; les commandes **Démarrer le service** et **Arrêter le service** sont également disponibles.
 
-L’installation initiale nécessite un accès Internet aux serveurs de téléchargement concernés de GitHub, Python, des paquets, des modèles et de Microsoft. Un téléchargement échoué peut être relancé ; les fichiers valides en cache sont réutilisés. Une fois installés, l’OCR et la traduction locale fonctionnent hors ligne. Le service de traduction continue à fonctionner après la fermeture de l’application, jusqu’à son arrêt explicite.
+L’installation initiale nécessite un accès Internet aux serveurs de téléchargement concernés de NuGet, GitHub, Python, des paquets, des modèles et de Microsoft. Un téléchargement échoué peut être relancé ; les fichiers valides en cache sont réutilisés. Une fois installés, l’OCR et la traduction locale fonctionnent hors ligne. Le service de traduction continue à fonctionner après la fermeture de l’application, jusqu’à son arrêt explicite.
 
-**Langues prises en charge :** l’OCR reconnaît l’anglais imprimé et le chinois simplifié imprimé. Les modèles de traduction inclus prennent en charge **anglais ↔ chinois simplifié**. Les **20 langues d’interface** de l’application ne signifient pas que l’OCR ou la traduction hors ligne prend en charge 20 langues. L’absence de modèles ne provoque jamais un passage à la traduction dans le cloud. [Installation hors ligne et dépannage](docs/OFFLINE_TRANSLATION.md).
+**Langues prises en charge :** l’OCR reconnaît l’anglais imprimé et le chinois simplifié imprimé. Les modèles de traduction téléchargés en option prennent en charge **anglais ↔ chinois simplifié**. Les **20 langues d’interface** de l’application ne signifient pas que l’OCR ou la traduction hors ligne prend en charge 20 langues. L’absence de modèles ne provoque jamais un passage à la traduction dans le cloud. [Installation hors ligne et dépannage](docs/OFFLINE_TRANSLATION.md).
 
 ### 6. Rechercher des mises à jour · version candidate 1.2.2
 
@@ -177,7 +181,7 @@ Le paquet réorganisé de la version candidate contient trois fichiers à la rac
 | Afficher/masquer le panneau rapide | **Alt+Q** ; configurable |
 | Enregistrer le texte saisi | **Enter** |
 | Insérer un saut de ligne | **Alt+Enter** ou **Shift+Enter** |
-| Capture d’écran | **Ctrl+Alt+S** ; configurable séparément |
+| Capture d’écran | **Alt+W** ; configurable séparément |
 | Enregistrer la zone de capture sélectionnée | **Enter** dans la barre d’outils de capture de la version 1.2.2 |
 | Annuler la capture | **Esc** ou clic droit |
 | Inspecter le panneau Spatial | Maintenir le **bouton droit de la souris** et faire glisser ; configurable dans la version 1.2.2 |

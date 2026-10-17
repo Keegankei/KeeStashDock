@@ -55,9 +55,9 @@ jobs:
         shell: pwsh
         run: ./tools/Test-SingleFileBundle.ps1
 
-      - name: Install verified local OCR models
+      - name: Test optional OCR installation
         shell: pwsh
-        run: ./tools/ocr/Setup.ps1
+        run: ./tools/ocr/test_setup.ps1
 
       - name: Restore solution
         run: dotnet restore KeeStashDock.sln

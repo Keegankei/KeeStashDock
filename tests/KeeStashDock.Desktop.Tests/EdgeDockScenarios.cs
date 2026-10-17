@@ -82,6 +82,17 @@ internal static class EdgeDockScenarios
             nint hwnd = new WindowInteropHelper(panel).Handle;
             Drawing.Rectangle work = Forms.Screen.FromHandle(hwnd).WorkingArea;
             var viewModel = (QuickPanelViewModel)panel.DataContext;
+            foreach (string initialEdge in new[] { "Left", "Right" })
+            {
+                settings.Current.DockEdge = initialEdge;
+                panel.ShowPanel();
+                Pump();
+                Assert.AreEqual(PanelDockSide.None,
+                    EdgeDockGeometry.Detect(Bounds(hwnd), work, VisualTreeHelper.GetDpi(panel).DpiScaleX),
+                    "A fresh panel must not arm edge hiding before the user moves it.");
+                panel.RetractEdgeDock();
+                Assert.IsFalse(panel.IsEdgeDockHidden);
+            }
             foreach (PanelDockSide side in new[] { PanelDockSide.Left, PanelDockSide.Top, PanelDockSide.Right, PanelDockSide.Bottom })
             {
                 Drawing.Rectangle normal = Bounds(hwnd);

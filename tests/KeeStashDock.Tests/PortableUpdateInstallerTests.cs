@@ -73,6 +73,25 @@ public sealed class PortableUpdateInstallerTests
     }
 
     [TestMethod]
+    public void OptionalOcrUpgradePreservesLegacyEngineWhileUpdatingSetup()
+    {
+        WritePackage(_install, "1.2.2", new()
+        {
+            ["KeeStashDock.exe"] = "old application", ["library.dll"] = "old library", ["obsolete.dll"] = "obsolete",
+            ["OcrModels/Setup.ps1"] = "old setup", ["OcrModels/eng.traineddata"] = "user installed model",
+            ["x64/tesseract.exe"] = "legacy engine", ["x64/tesseract55.dll"] = "legacy library",
+            ["x64/leptonica-1.85.0.dll"] = "legacy image library"
+        });
+        _installer.Prepare(_install, _package, _transaction);
+        _installer.Apply(_transaction);
+        Assert.AreEqual("legacy engine", Read(_install, "x64/tesseract.exe"));
+        Assert.AreEqual("legacy library", Read(_install, "x64/tesseract55.dll"));
+        Assert.AreEqual("legacy image library", Read(_install, "x64/leptonica-1.85.0.dll"));
+        Assert.AreEqual("new setup", Read(_install, "OcrModels/Setup.ps1"));
+        AssertPreserved();
+    }
+
+    [TestMethod]
     public void FlatPackageCanMoveToBundledLayoutAndRollBackWithoutMovingData()
     {
         // Only package ownership changes; the entry point and portable data root

@@ -9,7 +9,6 @@ KeeStashDock itself is licensed under Apache-2.0. It depends on third-party soft
 | [CommunityToolkit.Mvvm](https://www.nuget.org/packages/CommunityToolkit.Mvvm/8.4.2) | 8.4.2 | MVVM source generators and helpers | MIT |
 | [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite/10.0.10) | 10.0.10 | SQLite provider and native SQLite bundle | MIT |
 | [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/10.0.10) | 10.0.10 | Dependency-injection container | MIT |
-| [TesseractOCR](https://www.nuget.org/packages/TesseractOCR/5.5.2) | 5.5.2 | Distribution of native offline OCR engine | Apache-2.0 |
 
 ## Resolved .NET and SQLite runtime components
 
@@ -17,7 +16,6 @@ KeeStashDock itself is licensed under Apache-2.0. It depends on third-party soft
 | --- | --- | --- |
 | Microsoft.Data.Sqlite.Core | 10.0.10 | MIT; .NET Foundation and Contributors, Microsoft Corporation |
 | Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.10 | MIT; .NET Foundation and Contributors |
-| Microsoft.Extensions.Logging.Abstractions (through OCR distribution) | 10.0.3 | MIT; .NET Foundation and Contributors |
 | SQLitePCLRaw core / provider.e_sqlite3 / bundle_e_sqlite3 / lib.e_sqlite3 | 2.1.12 | Apache-2.0; Copyright 2014-2024 SourceGear, LLC |
 | Native SQLite, distributed by SQLitePCLRaw | Resolved bundled native build | Public domain; [SQLite copyright](https://www.sqlite.org/copyright.html) |
 | .NET and Windows Desktop runtime in the self-contained win-x64 package | 10.0.13 at release review; SDK-dependent | MIT with upstream third-party notices; .NET Foundation and Contributors |
@@ -30,13 +28,16 @@ notices if it changes. Development test dependencies do not ship with the app.
 
 ## Local OCR engine and models
 
-The application launches the Windows x64 CLI distributed in TesseractOCR 5.5.2.
+The standard package does not preinstall OCR binaries or models. Explicit in-app
+setup downloads and verifies the [TesseractOCR 5.5.2 archive](https://www.nuget.org/packages/TesseractOCR/5.5.2),
+extracting only the required native files. The application launches its Windows
+x64 CLI; the managed wrapper and its logging dependency are not application dependencies.
 The package's CLI reports Tesseract 5.5.0 and Leptonica 1.85.0. The native engine
 and codecs remain subject to their original licenses; complete texts and upstream
 attributions are in `third_party/ocr`, copied to `Licenses/OCR` in build and publish
 outputs. This software is based in part on the work of the Independent JPEG Group.
 
-| Component | Shipped version | License |
+| Component | Optional installed version | License |
 | --- | --- | --- |
 | TesseractOCR wrapper/distribution | 5.5.2 | Apache-2.0; Copyright 2012-2021 Charles Weld, 2021-2023 Kees van Spelde |
 | Tesseract native engine | 5.5.0 | Apache-2.0; contributors listed in the bundled AUTHORS file |
@@ -48,9 +49,11 @@ outputs. This software is based in part on the work of the Independent JPEG Grou
 | zlib | 1.2.11 | zlib license |
 | Official tessdata_fast English / Simplified Chinese models | `87416418657359cb625c412a48b6e1d6d41c29bd` | Apache-2.0 |
 
-The optional model setup verifies pinned SHA-256 hashes and retains the upstream
-license alongside the installed models. Model binaries are excluded from source
-control; preinstalled distributions must include the `OcrModels/LICENSE` file.
+The optional engine and model setup verifies pinned SHA-256 hashes. Native
+license texts remain included under `Licenses/OCR`, and setup retains the upstream
+model license alongside the installed models. Engine/model binaries are excluded
+from the standard package; these upstream terms continue to apply when components
+are downloaded or an existing portable installation is retained.
 
 ## QR encoder attribution
 

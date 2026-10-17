@@ -57,10 +57,14 @@ Uma soma de verificação confirma a integridade do arquivo; ela não é uma ass
 
 </details>
 
+**Configuração inicial · 1.2.2-r7:** inglês; **Alt+Q** abre o painel e **Alt+W** inicia uma captura. OCR e tradução local não vêm pré-instalados. Atualizações preservam as preferências salvas.
+
+O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo padrão, brilho do texto desativado e sombra ativada. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
+
 <a id="features"></a>
 ## Recursos
 
-As prévias abaixo mostram controles reais do aplicativo com conteúdo fictício de exemplo. O GIF de inspeção é gerado a partir desses controles com um ponteiro simulado. A prévia de atualização usa uma publicação simulada; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md).
+As prévias abaixo mostram controles reais do aplicativo com conteúdo fictício de exemplo. O GIF de inspeção é gerado a partir desses controles com um ponteiro simulado. A prévia de atualização usa uma publicação simulada; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md). As imagens podem mostrar configurações de candidatos anteriores, diferentes dos valores iniciais acima.
 
 ### 1. Capturar, buscar e organizar
 
@@ -101,7 +105,7 @@ Selecione **Configurações > Modo do painel**. Os dois modos mantêm os mesmos 
 - **Perspectiva fixa:** mantenha uma visualização inclinada estável enquanto os cartões próximos respondem ao ponteiro.
 - **Arrastar para inspecionar:** mantenha o **botão direito do mouse** pressionado sobre o corpo de um cartão ou o fundo do painel e arraste. Solte para manter o ângulo. Um clique direito sem arrastar continua abrindo o menu do cartão. As configurações também permitem usar o botão do meio ou uma combinação personalizada de botão e teclas modificadoras.
 - **Barra compacta:** recolha o painel para exibir seis ações: minimizar, expandir/recolher, bloquear, captura de tela, área de trabalho do aplicativo e Configurações. Ao expandir, o tamanho anterior do painel é restaurado.
-- **Ocultar na borda da área de trabalho:** ative essa opção, arraste o painel até uma das quatro bordas da tela e afaste o ponteiro. Uma pequena alça permanece visível; passe o ponteiro sobre ela ou clique para restaurar o painel. O bloqueio mantém o painel visível.
+- **Ocultar na borda da área de trabalho:** ativado por padrão em 1.2.2-r7; arraste o painel até uma das quatro bordas da tela e afaste o ponteiro. Uma pequena alça permanece visível; passe o ponteiro sobre ela ou clique para restaurar o painel. O bloqueio mantém o painel visível.
 
 Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png) · [Desempenho medido e limites](docs/performance/1.2.2-floating.md).
 
@@ -111,7 +115,7 @@ As configurações também oferecem paletas de texto para o painel, uma cor de t
 
 <p align="center"><img src="docs/images/screenshot-entry.png" width="720" alt="Entrada de captura de tela salva com a imagem original e o texto reconhecido editável"></p>
 
-Pressione **Ctrl+Alt+S** ou um botão de captura e arraste para selecionar uma região. As capturas salvas se tornam entradas de imagem no grupo selecionado. Abra uma para visualizar, copiar, salvar como PNG ou **Reconhecer texto**. Você pode editar e pesquisar o texto reconhecido mantendo a imagem original.
+Pressione **Alt+W** ou um botão de captura e arraste para selecionar uma região. As capturas salvas se tornam entradas de imagem no grupo selecionado. Abra uma para visualizar, copiar, salvar como PNG ou **Reconhecer texto**. Você pode editar e pesquisar o texto reconhecido mantendo a imagem original.
 
 **Versão candidata 1.2.2:** após a seleção, uma barra de ferramentas oferece três ações separadas:
 
@@ -137,7 +141,7 @@ O idioma de destino da tradução acompanha o idioma da interface do aplicativo.
 
 | Provedor | Configuração e disponibilidade |
 | --- | --- |
-| Bing (China), Google, Lingva | Não exigem chave. A disponibilidade não é garantida. Novas instalações usam Bing por padrão; as preferências existentes são mantidas. |
+| Bing (China), Google, Lingva | Não exigem chave. A disponibilidade não é garantida. Novas instalações usam Google por padrão; as preferências existentes são mantidas. |
 | Baidu, Alibaba Cloud, DeepL | Forneça suas próprias credenciais. As cotas gratuitas e as cobranças dependem do provedor e da sua conta. O Alibaba Cloud exige a ativação do serviço Machine Translation e a permissão `alimt:TranslateGeneral`. |
 | Local offline | Instale o mecanismo local opcional; ele usa um serviço de loopback sem conta ou tarifa de API. |
 
@@ -150,14 +154,14 @@ A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, s
 *Os controles de componentes são mostrados em um estado de exemplo não instalado da versão 1.2.1. A instalação normal usa esses botões do aplicativo; nenhum comando de terminal é necessário.*
 
 1. Abra **Configurações > Componentes opcionais**.
-2. Para OCR, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)** se algum componente estiver ausente. O ZIP padrão já inclui o mecanismo e os modelos de inglês e chinês simplificado; a instalação também verifica o runtime nativo.
+2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.2-r7 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
 3. Para tradução local, escolha **Instalar / reparar** em **Tradução offline (chinês / inglês)**. Mantenha as configurações abertas durante o download inicial; reserve aproximadamente **1 GB de espaço livre em disco** e **2 GB de memória disponível**.
 4. Siga o instalador da Microsoft, se solicitado. Se a instalação informar **Reinicialização necessária**, reinicie o Windows e tente novamente. Cancelar a instalação no aplicativo não desfaz uma instalação do runtime do Windows que já tenha começado.
 5. Selecione **Local offline (Argos / LibreTranslate)** como mecanismo de tradução. Mantenha `http://127.0.0.1:5000` e use **Testar tradução**. O serviço inicia quando necessário; **Iniciar serviço** e **Parar serviço** também estão disponíveis.
 
-A instalação inicial precisa de acesso à internet aos servidores de download correspondentes do GitHub, Python, pacotes, modelos e Microsoft. Um download que falhou pode ser tentado novamente; arquivos válidos em cache são reutilizados. Depois de instalados, o OCR e a tradução local funcionam offline. O serviço de tradução continua em execução após o aplicativo fechar, até ser interrompido.
+A instalação inicial precisa de acesso à internet aos servidores de download correspondentes do NuGet, GitHub, Python, pacotes, modelos e Microsoft. Um download que falhou pode ser tentado novamente; arquivos válidos em cache são reutilizados. Depois de instalados, o OCR e a tradução local funcionam offline. O serviço de tradução continua em execução após o aplicativo fechar, até ser interrompido.
 
-**Idiomas compatíveis:** o OCR reconhece texto impresso em inglês e chinês simplificado. Os modelos de tradução incluídos oferecem suporte a **inglês ↔ chinês simplificado**. Os **20 idiomas da interface** não significam que o OCR ou a tradução offline ofereçam suporte a 20 idiomas. A ausência de modelos nunca provoca uma troca para tradução na nuvem. [Instalação offline e solução de problemas](docs/OFFLINE_TRANSLATION.md).
+**Idiomas compatíveis:** o OCR reconhece texto impresso em inglês e chinês simplificado. Os modelos de tradução de download opcional oferecem suporte a **inglês ↔ chinês simplificado**. Os **20 idiomas da interface** não significam que o OCR ou a tradução offline ofereçam suporte a 20 idiomas. A ausência de modelos nunca provoca uma troca para tradução na nuvem. [Instalação offline e solução de problemas](docs/OFFLINE_TRANSLATION.md).
 
 ### 6. Verificar atualizações · versão candidata 1.2.2
 
@@ -177,7 +181,7 @@ O pacote organizado da versão candidata tem três arquivos na raiz: `KeeStashDo
 | Mostrar/ocultar o painel rápido | **Alt+Q**; configurável |
 | Salvar o texto digitado | **Enter** |
 | Inserir quebra de linha | **Alt+Enter** ou **Shift+Enter** |
-| Captura de tela | **Ctrl+Alt+S**; configurável separadamente |
+| Captura de tela | **Alt+W**; configurável separadamente |
 | Salvar a região selecionada da captura | **Enter** na barra de captura da versão 1.2.2 |
 | Cancelar captura | **Esc** ou clique direito |
 | Inspecionar o painel Espacial | Manter o **botão direito do mouse** pressionado e arrastar; configurável na versão 1.2.2 |

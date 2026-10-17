@@ -138,7 +138,10 @@ public static class UpdatePathPolicy
     public static bool IsPreservedAsset(string relative)
     {
         string path = ValidateRelativePath(relative);
-        return path.StartsWith("OfflineTranslation/runtime/", StringComparison.OrdinalIgnoreCase) ||
+        return path.Equals("x64/tesseract.exe", StringComparison.OrdinalIgnoreCase) ||
+               path.Equals("x64/tesseract55.dll", StringComparison.OrdinalIgnoreCase) ||
+               path.Equals("x64/leptonica-1.85.0.dll", StringComparison.OrdinalIgnoreCase) ||
+               path.StartsWith("OfflineTranslation/runtime/", StringComparison.OrdinalIgnoreCase) ||
                path.StartsWith("OfflineTranslation/models/", StringComparison.OrdinalIgnoreCase) ||
                (path.StartsWith("OcrModels/", StringComparison.OrdinalIgnoreCase) &&
                 path.EndsWith(".traineddata", StringComparison.OrdinalIgnoreCase));

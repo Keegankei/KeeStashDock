@@ -57,10 +57,14 @@ A checksum checks file integrity; it is not a publisher signature. The current p
 
 </details>
 
+**Fresh-install defaults · 1.2.2-r7:** English; **Alt+Q** opens the panel and **Alt+W** starts a screenshot. OCR and offline translation are not preinstalled. Existing saved preferences are preserved on upgrade.
+
+The selection bubble is enabled in **Copy only** mode with **Google** selected for translation, Default styling, text glow off and drop shadow on. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
+
 <a id="features"></a>
 ## Features
 
-The previews below show actual application controls with synthetic sample content. The inspection GIF is generated from those controls using a simulated pointer. The update preview uses a simulated release; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md).
+The previews below show actual application controls with synthetic sample content. The inspection GIF is generated from those controls using a simulated pointer. The update preview uses a simulated release; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md). Images may show settings from earlier candidates rather than the fresh-install defaults above.
 
 ### 1. Capture, find, and organize
 
@@ -101,7 +105,7 @@ Select **Settings > Panel mode**. Both modes keep the same controls, typography,
 - **Fixed perspective:** keep a steady tilted view while nearby cards respond to the pointer.
 - **Drag to inspect:** hold the **right mouse button** on a card body or panel background and drag. Release to keep the angle. A right-click without dragging still opens a card's menu. Settings also supports the middle button or a custom button/modifier combination.
 - **Compact bar:** collapse the panel to six actions: minimize, expand/collapse, lock, screenshot, workbench, and Settings. Expanding restores the previous panel size.
-- **Hide at desktop edge:** enable this option, drag the panel to one of the four screen edges, then move away. A small handle remains; hover over or click it to restore the panel. Locking keeps it visible.
+- **Hide at desktop edge:** enabled by default in 1.2.2-r7; drag the panel to one of the four screen edges, then move away. A small handle remains; hover over or click it to restore the panel. Locking keeps it visible.
 
 Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png) · [Measured performance and limits](docs/performance/1.2.2-floating.md).
 
@@ -111,7 +115,7 @@ Settings also offers panel text palettes, a custom text color, and automatic con
 
 <p align="center"><img src="docs/images/screenshot-entry.png" width="720" alt="A saved screenshot entry with its original image and editable recognized text"></p>
 
-Press **Ctrl+Alt+S** or a screenshot button and drag to select a region. Saved screenshots become image entries in the selected group. Open one to preview, copy, save as PNG, or **Recognize text**. You can edit and search the recognized text while retaining the original image.
+Press **Alt+W** or a screenshot button and drag to select a region. Saved screenshots become image entries in the selected group. Open one to preview, copy, save as PNG, or **Recognize text**. You can edit and search the recognized text while retaining the original image.
 
 **1.2.2 candidate:** a toolbar after selection offers three separate actions:
 
@@ -129,7 +133,7 @@ Drag again to reselect; **Esc** or right-click cancels. Temporary results suppor
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="The 1.2.2 selection bubble with independent Copy and Translate buttons"></p>
 
-Enable the selection bubble in **Settings > Behavior**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
+The selection bubble is enabled by default in **Copy only** mode; configure it in **Settings > Behavior**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
 
 **1.2.2 candidate:** choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
 
@@ -137,7 +141,7 @@ The translation target follows the app's interface language. Available target la
 
 | Provider | Setup and availability |
 | --- | --- |
-| Bing (China), Google, Lingva | No key required. Availability is not guaranteed. New installations default to Bing; existing preferences are kept. |
+| Bing (China), Google, Lingva | No key required. Availability is not guaranteed. New installations default to Google; existing preferences are kept. |
 | Baidu, Alibaba Cloud, DeepL | Supply your own credentials. Free quotas and charges depend on the provider and your account. Alibaba Cloud needs an activated Machine Translation service and `alimt:TranslateGeneral` permission. |
 | Local offline | Install the optional local engine; it uses a loopback service without an account or API fee. |
 
@@ -150,14 +154,14 @@ Cloud translation sends only the requested text to the selected provider, with n
 *Component controls shown in their 1.2.1 not-installed example state. Normal setup uses these in-app buttons; no terminal command is required.*
 
 1. Open **Settings > Optional components**.
-2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** if a component is missing. The standard ZIP already includes the engine and English/Simplified Chinese models; setup also checks the native runtime.
+2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.2-r7 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
 3. For local translation, choose **Install / repair** under **Offline translation (Chinese / English)**. Keep Settings open during the initial download; allow approximately **1 GB of free disk space** and **2 GB of available memory**.
 4. Follow Microsoft's installer if prompted. If setup reports **Restart required**, restart Windows and retry. Cancelling app setup does not undo a Windows runtime installation already started.
 5. Select **Local offline (Argos / LibreTranslate)** as the translation engine. Keep `http://127.0.0.1:5000`, then use **Test translation**. The service starts when needed; **Start service** and **Stop service** are also available.
 
-Initial setup needs internet access to the relevant GitHub, Python, package, model, and Microsoft download hosts. A failed download can be retried; valid cached files are reused. Once installed, OCR and local translation work offline. The translation service remains running after the app closes until stopped.
+Initial setup needs internet access to the relevant NuGet, GitHub, Python, package, model, and Microsoft download hosts. A failed download can be retried; valid cached files are reused. Once installed, OCR and local translation work offline. The translation service remains running after the app closes until stopped.
 
-**Language coverage:** OCR supports printed English and Simplified Chinese. Included translation models support **English ↔ Simplified Chinese**. The app's **20 interface languages** do not imply 20 OCR or offline translation languages. Missing models never trigger a switch to cloud translation. [Offline setup and troubleshooting](docs/OFFLINE_TRANSLATION.md).
+**Language coverage:** OCR supports printed English and Simplified Chinese. The optional downloaded translation models support **English ↔ Simplified Chinese**. The app's **20 interface languages** do not imply 20 OCR or offline translation languages. Missing models never trigger a switch to cloud translation. [Offline setup and troubleshooting](docs/OFFLINE_TRANSLATION.md).
 
 ### 6. Check for updates · 1.2.2 candidate
 
@@ -177,7 +181,7 @@ The organized candidate package has three root files: `KeeStashDock.exe`, `Start
 | Show/hide quick panel | **Alt+Q**; configurable |
 | Save typed text | **Enter** |
 | Insert line break | **Alt+Enter** or **Shift+Enter** |
-| Screenshot | **Ctrl+Alt+S**; independently configurable |
+| Screenshot | **Alt+W**; independently configurable |
 | Save selected screenshot region | **Enter** in the 1.2.2 capture toolbar |
 | Cancel screenshot | **Esc** or right-click |
 | Inspect Spatial panel | Hold **right mouse button** and drag; configurable in 1.2.2 |

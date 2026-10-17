@@ -8,6 +8,9 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ### 1.2.2 candidate
 
+- Finalized revision-7 fresh-install defaults: English, Alt+Q for the panel, Alt+W for screenshots, Google translation, enabled Copy-only selection bubble, edge auto-hide with 2 s / 0.1 s delays, system theme, Standard panel, right-button drag inspection, Auto text colors, 90% controls opacity, no background image and 20% overlay. Frosted glass stays off with a stored 4 px radius. Bubble styling defaults to Default with text glow off and shadow on. Startup launch, clipboard collection and direct paste stay off; scheduled 24-hour backups stay on. Existing saved preferences are preserved.
+- Removed preinstalled OCR engines/models from standard packages. OCR and offline translation now both use explicit in-app Install / repair downloads; existing installed and legacy portable components remain supported and preserved during upgrades.
+
 - Renamed the panel presentations to Standard / Spatial across all twenty interface languages without changing saved settings. Expanded the illustrated README into nine languages, with native-language navigation and aligned feature, setup, backup, and upgrade guidance.
 - Added a persisted Standard / Spatial panel mode, soft outer and card shadows, finite proximity/hover/press feedback, and static accessibility fallbacks.
 - Revised Spatial mode to retain the ordinary rounded UI, colors, fonts and spacing, with Fixed perspective and Drag to inspect presentations. Hold and drag the right mouse button by default to inspect the panel, then release to retain its angle. A right-click without dragging keeps the card menu. Middle-button and custom button/modifier gestures are also available; Standard and accessibility fallbacks remain flat.

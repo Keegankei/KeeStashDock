@@ -96,6 +96,9 @@ try {
         Write-Host 'Microsoft Visual C++ runtime installed. Restart Windows before continuing component setup.'
         exit 3010
     }
+    if (-not [string]::IsNullOrWhiteSpace($ProbeExecutable) -and -not (Test-NativeExecutable $ProbeExecutable)) {
+        throw 'The verified OCR engine still cannot start after native runtime setup.'
+    }
     Write-Host "Microsoft Visual C++ x64 runtime is ready ($outcome)."
 } finally {
     # Remove only the file and empty directory created by this invocation.

@@ -49,8 +49,11 @@ public sealed class LocalOcrService
             : ComponentInstallService.ResolveOcrModelsDirectory(_baseDirectory, _localDataDirectory);
         if (!ComponentInstallService.HasOcrModels(models))
             return new("", OcrFailure.MissingModels);
-        string executable = Path.Combine(_baseDirectory, "x64", "tesseract.exe");
-        if (!Environment.Is64BitProcess || !File.Exists(executable)) return new("", OcrFailure.EngineUnavailable);
+        string engine = _localDataDirectory is null ? Path.Combine(_baseDirectory, "x64")
+            : ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory, _localDataDirectory);
+        if (!Environment.Is64BitProcess || !ComponentInstallService.HasOcrEngine(engine))
+            return new("", OcrFailure.EngineUnavailable);
+        string executable = Path.Combine(engine, "tesseract.exe");
 
         bool entered = false;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

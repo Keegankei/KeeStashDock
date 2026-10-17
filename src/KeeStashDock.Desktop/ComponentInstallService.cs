@@ -28,6 +28,7 @@ public sealed class ComponentInstallService
     private readonly string _localDataDirectory;
     private readonly TimeSpan _timeout;
     private readonly Func<string, bool> _hasOcrModels;
+    private readonly Func<string, bool> _hasOcrEngine;
 
     internal static string DefaultLocalDataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeeStashDock");
@@ -36,12 +37,13 @@ public sealed class ComponentInstallService
         TimeSpan.FromMinutes(30)) { }
 
     internal ComponentInstallService(string baseDirectory, string localDataDirectory, TimeSpan timeout,
-        Func<string, bool>? hasOcrModels = null)
+        Func<string, bool>? hasOcrModels = null, Func<string, bool>? hasOcrEngine = null)
     {
         _baseDirectory = Path.GetFullPath(baseDirectory);
         _localDataDirectory = Path.GetFullPath(localDataDirectory);
         _timeout = timeout;
         _hasOcrModels = hasOcrModels ?? HasOcrModels;
+        _hasOcrEngine = hasOcrEngine ?? HasOcrEngine;
     }
 
     public ComponentStatus GetStatus(ComponentKind component)
@@ -49,7 +51,7 @@ public sealed class ComponentInstallService
         bool ready = component switch
         {
             ComponentKind.Ocr => _hasOcrModels(ResolveOcrModelsDirectory(_baseDirectory, _localDataDirectory, _hasOcrModels))
-                && File.Exists(Path.Combine(_baseDirectory, "x64", "tesseract.exe")),
+                && _hasOcrEngine(ResolveOcrEngineDirectory(_baseDirectory, _localDataDirectory, _hasOcrEngine)),
             ComponentKind.OfflineTranslation => File.Exists(Path.Combine(OfflineRuntimeDirectory, "installed.json"))
                 && File.Exists(Path.Combine(OfflineRuntimeDirectory, "python", "pythonw.exe")),
             _ => false
@@ -82,6 +84,31 @@ public sealed class ComponentInstallService
         return (hasOcrModels ?? HasOcrModels)(userModels) ? userModels : Path.Combine(baseDirectory, "OcrModels");
     }
 
+    internal static bool HasOcrEngine(string directory)
+    {
+        // The standalone native files come from the pinned TesseractOCR distribution.
+        return Verify("tesseract.exe", "856D2CDDF1B7CD5F014AA92445FC26789116B1B733606D31201F5B32035E36B8")
+            && Verify("tesseract55.dll", "E9903623E901F2D754EB49EEA4DBFF229F599A8817055A3E3F1C292216670CA9")
+            && Verify("leptonica-1.85.0.dll", "64BB1D584BCE83DB5E5C3625F1857E4BC12993625699CABD0A9B8B76E393BD01");
+
+        bool Verify(string name, string expectedHash)
+        {
+            try
+            {
+                using var stream = File.OpenRead(Path.Combine(directory, name));
+                return Convert.ToHexString(SHA256.HashData(stream)) == expectedHash;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
+        }
+    }
+
+    internal static string ResolveOcrEngineDirectory(string baseDirectory, string localDataDirectory,
+        Func<string, bool>? hasOcrEngine = null)
+    {
+        string userEngine = Path.Combine(localDataDirectory, "OcrEngine");
+        return (hasOcrEngine ?? HasOcrEngine)(userEngine) ? userEngine : Path.Combine(baseDirectory, "x64");
+    }
+
     private string OfflineRuntimeDirectory
     {
         get
@@ -101,21 +128,27 @@ public sealed class ComponentInstallService
                 return new(ComponentInstallFailure.Failed);
             string componentFolder = component == ComponentKind.Ocr ? "OcrModels" : "OfflineTranslation";
             string[] requiredScripts = component == ComponentKind.Ocr ? ["Setup.ps1"] : ["Setup.ps1", "Start.ps1", "Stop.ps1"];
-            if (requiredScripts.Any(name => !File.Exists(Path.Combine(_baseDirectory, componentFolder, name))) ||
-                (component == ComponentKind.Ocr && !File.Exists(Path.Combine(_baseDirectory, "x64", "tesseract.exe"))))
+            if (requiredScripts.Any(name => !File.Exists(Path.Combine(_baseDirectory, componentFolder, name))))
                 return new(ComponentInstallFailure.MissingFiles);
             // Tesseract's successful probe only proves OCR dependencies are usable.
             // Translation uses a separate native engine and must check the shared runtime.
-            string nativeProbe = component == ComponentKind.Ocr
-                ? Path.Combine(_baseDirectory, "x64", "tesseract.exe") : "";
+            string engineDirectory = ResolveOcrEngineDirectory(_baseDirectory, _localDataDirectory, _hasOcrEngine);
+            string nativeProbe = component == ComponentKind.Ocr && _hasOcrEngine(engineDirectory)
+                ? Path.Combine(engineDirectory, "tesseract.exe") : "";
             var runtime = await RunScriptAsync("NativeRuntime", "Setup.ps1",
                 ["-ProbeExecutable", nativeProbe], progress, token).ConfigureAwait(false);
             if (!runtime.IsSuccess) return runtime;
             if (component == ComponentKind.Ocr)
             {
                 var result = await RunScriptAsync("OcrModels", "Setup.ps1",
-                    ["-Destination", Path.Combine(_localDataDirectory, "OcrModels")], progress, token).ConfigureAwait(false);
+                    ["-Destination", Path.Combine(_localDataDirectory, "OcrModels"),
+                     "-EngineDirectory", Path.Combine(_localDataDirectory, "OcrEngine")], progress, token).ConfigureAwait(false);
                 if (!result.IsSuccess) return result;
+                string installedEngine = Path.Combine(_localDataDirectory, "OcrEngine");
+                if (!_hasOcrEngine(installedEngine)) return new(ComponentInstallFailure.Failed);
+                var probe = await RunScriptAsync("NativeRuntime", "Setup.ps1",
+                    ["-ProbeExecutable", Path.Combine(installedEngine, "tesseract.exe")], progress, token).ConfigureAwait(false);
+                if (!probe.IsSuccess) return probe;
             }
             else if (component == ComponentKind.OfflineTranslation)
             {

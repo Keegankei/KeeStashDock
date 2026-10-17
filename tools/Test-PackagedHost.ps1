@@ -4,7 +4,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Path,
-    [ValidateRange(10, 180)][int]$TimeoutSeconds = 90
+    [ValidateRange(10, 180)][int]$TimeoutSeconds = 90,
+    [switch]$AllowInstalledComponents
 )
 
 Set-StrictMode -Version Latest
@@ -17,7 +18,9 @@ $process = $null
 try {
     # Start-Process joins ArgumentList with spaces, so quote the generated path
     # explicitly. Windows file paths cannot contain a double quotation mark.
-    $process = Start-Process -FilePath $executable -ArgumentList @('--verify-package', ('"' + $reportPath + '"')) `
+    $arguments = @('--verify-package', ('"' + $reportPath + '"'))
+    if ($AllowInstalledComponents) { $arguments += '--installed-ocr' }
+    $process = Start-Process -FilePath $executable -ArgumentList $arguments `
         -WorkingDirectory $package -WindowStyle Hidden -PassThru
     $deadline = [Diagnostics.Stopwatch]::StartNew()
     while (-not $process.WaitForExit(1000)) {
@@ -43,8 +46,15 @@ try {
     }
     if ($report.Version -notmatch '^\d+\.\d+\.\d+$' -or $report.LocaleCount -lt 20 -or
         [string]::IsNullOrWhiteSpace($report.SqliteVersion) -or
-        -not $report.ProjectedTextRendered -or -not $report.SyntheticOcrRecognized) {
+        -not $report.ProjectedTextRendered) {
         throw 'The packaged host report is missing a required runtime check.'
+    }
+    if ($AllowInstalledComponents) {
+        if ($report.OcrMode -ne 'Installed' -or -not $report.SyntheticOcrRecognized) {
+            throw 'The installed OCR recognition check is missing.'
+        }
+    } elseif ($report.OcrMode -ne 'Optional' -or -not $report.MissingOcrHandled -or -not $report.OptionalComponentsAbsent) {
+        throw 'The fresh-package optional component checks are missing.'
     }
     Write-Output ($report | ConvertTo-Json -Depth 6)
 }

@@ -156,7 +156,7 @@ public partial class SettingsWindow : Window
         SelectionPopupCheck.IsChecked = cfg.SelectionPopupEnabled;
         SelectionActionCombo.SelectedIndex =
             cfg.SelectionAction switch { "Translate" => 1, "Both" => 2, _ => 0 };
-        BubbleStyleCombo.SelectedIndex = 1;   // fallback: FollowTheme
+        BubbleStyleCombo.SelectedIndex = 0;   // fallback: Default
         for (int i = 0; i < BubbleStyleCombo.Items.Count; i++)
             if (BubbleStyleCombo.Items[i] is ComboBoxItem bs &&
                 (string?)bs.Tag == cfg.SelectionBubbleStyle)
@@ -430,7 +430,7 @@ public partial class SettingsWindow : Window
         CancelTranslationTest();
         _settings.Current.TranslationEngine =
             (TranslateEngineCombo.SelectedItem as ComboBoxItem)?.Tag as string
-            ?? "Bing";
+            ?? AppSettings.DefaultTranslationEngine;
         _settings.Save();
         RefreshTranslationCredentials();
         RefreshSelectionActionUi();   // the API-key row follows the engine
@@ -513,7 +513,7 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         _settings.Current.SelectionBubbleStyle =
             (BubbleStyleCombo.SelectedItem as ComboBoxItem)?.Tag as string
-            ?? "FollowTheme";
+            ?? AppSettings.DefaultSelectionBubbleStyle;
         _settings.Save();
     }
 

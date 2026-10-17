@@ -36,7 +36,7 @@ public sealed class SettingsTranslationTests
         using var hotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
         using var screenshotHotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
         Assert.IsTrue(hotkey.Initialize(1, 0x51));
-        Assert.IsTrue(screenshotHotkey.Initialize(3, 0x53));
+        Assert.IsTrue(screenshotHotkey.Initialize(1, 0x57));
 
         try
         {
@@ -226,8 +226,8 @@ public sealed class SettingsTranslationTests
             CheckBox captureEnabled = Named<CheckBox>(window, "ScreenshotHotkeyCheck");
             Assert.IsTrue(captureEnabled.IsChecked);
             Assert.IsFalse(window.TryApplyHotkey(true, 1, 0x51));
-            Assert.AreEqual(0x53u, settings.Current.ScreenshotHotkeyVirtualKey);
-            Assert.IsFalse(window.TryApplyHotkey(false, 3, 0x53));
+            Assert.AreEqual(0x57u, settings.Current.ScreenshotHotkeyVirtualKey);
+            Assert.IsFalse(window.TryApplyHotkey(false, 1, 0x57));
             Assert.AreEqual(0x51u, settings.Current.HotkeyVirtualKey);
             Assert.IsTrue(window.TryApplyHotkey(true, 3, 0x54));
             Assert.AreEqual(0x54u, settings.Current.ScreenshotHotkeyVirtualKey);

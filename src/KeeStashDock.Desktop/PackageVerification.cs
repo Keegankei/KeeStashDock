@@ -21,13 +21,15 @@ internal static class PackageVerification
 
     internal static async Task<int> RunAsync(string[] args)
     {
-        if (args.Length != 2) return 2;
+        if (args.Length is < 2 or > 3 || (args.Length == 3 && args[2] != "--installed-ocr")) return 2;
+        bool installedOcr = args.Length == 3;
         var report = new Dictionary<string, object?>
         {
             ["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3),
             ["BaseDirectory"] = AppContext.BaseDirectory,
             ["ProcessPath"] = Environment.ProcessPath,
             ["RenderTier"] = RenderCapability.Tier >> 16,
+            ["OcrMode"] = installedOcr ? "Installed" : "Optional",
             ["Success"] = false
         };
         int exitCode = 1;
@@ -85,9 +87,24 @@ internal static class PackageVerification
             png.Save(stream);
             var ocr = new LocalOcrService(AppContext.BaseDirectory, TimeSpan.FromSeconds(30));
             OcrRecognitionResult recognized = await ocr.RecognizeAsync(stream.ToArray());
-            if (!recognized.IsSuccess || !recognized.Text.Contains("122", StringComparison.Ordinal))
-                throw new InvalidDataException("Packaged OCR recognition failed: " + recognized.Failure);
-            report["SyntheticOcrRecognized"] = true;
+            if (installedOcr)
+            {
+                if (!recognized.IsSuccess || !recognized.Text.Contains("122", StringComparison.Ordinal))
+                    throw new InvalidDataException("Installed OCR recognition failed: " + recognized.Failure);
+                report["SyntheticOcrRecognized"] = true;
+            }
+            else
+            {
+                // The verifier intentionally ignores any per-user installation.
+                // A fresh package must fail clearly without starting a download.
+                if (recognized.Failure != OcrFailure.MissingModels ||
+                    Directory.Exists(Path.Combine(AppContext.BaseDirectory, "x64")) ||
+                    Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "OcrModels"), "*.traineddata").Any() ||
+                    Directory.Exists(Path.Combine(AppContext.BaseDirectory, "OfflineTranslation", "runtime")))
+                    throw new InvalidDataException("A fresh package must not preinstall optional OCR or translation components.");
+                report["MissingOcrHandled"] = true;
+                report["OptionalComponentsAbsent"] = true;
+            }
             report["Success"] = true;
             exitCode = 0;
         }
