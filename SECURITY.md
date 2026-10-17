@@ -13,7 +13,7 @@ Security fixes are provided for the latest tagged release only. Users should upg
 
 Do not open a public issue for a suspected vulnerability.
 
-Use the repository's private **Report a vulnerability** workflow under the Security tab. If private vulnerability reporting is not enabled, contact the maintainer through a private method listed on the maintainer's GitHub profile and ask for a secure reporting channel before sending exploit details or sensitive data.
+Use the repository's private [Report a vulnerability](https://github.com/Keegankei/KeeStashDock/security/advisories/new) workflow under the Security tab. If that workflow is unavailable, email [2651570569@qq.com](mailto:2651570569@qq.com) with the subject "KeeStashDock security report" and ask for a secure reporting channel before sending exploit details or sensitive data.
 
 Include:
 

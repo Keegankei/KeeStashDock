@@ -8,8 +8,9 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [1.2.2] - 2026-10-17
 
-This version is being prepared for publication. Merge, validation and publication
-status are tracked in the [acceptance record](docs/releases/1.2.2.md).
+Published as [v1.2.2](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2).
+Validation results and remaining coverage limits are tracked in the
+[acceptance record](docs/releases/1.2.2.md).
 
 ### Added
 

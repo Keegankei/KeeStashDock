@@ -7,6 +7,7 @@ English is the repository source language for code, comments, configuration, aut
 The intentional localization exceptions are:
 
 - Root `README.<locale>.md` files matching an existing interface language pack
+- Localized `docs/**/<name>.<locale>.md` files with an English sibling and a matching interface language pack, including translated upgrade guides and version plans
 - Native language labels in the English README's links to those translations
 - `src/KeeStashDock.Desktop/Locales/*.json`
 
