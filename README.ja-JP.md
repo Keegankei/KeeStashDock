@@ -28,7 +28,7 @@
   <img alt="Apache-2.0 ライセンス" src="docs/assets/badges/license.svg">
 </p>
 
-> **1.2.2 正式リリースの準備中：**このガイドは **1.2.2** を説明しています。ZIP とチェックサムのリンクは GitHub Release の公開後に利用できます。変更内容、検証範囲、残る制限は[リリースノート](docs/releases/1.2.2-notes.md)と[検証記録](docs/releases/1.2.2.md)をご覧ください。
+**バージョン 1.2.2** · [リリースノート](docs/releases/1.2.2-notes.md) · [検証記録](docs/releases/1.2.2.md)
 
 [はじめに](#get-started) · [機能](#features) · [ショートカット](#shortcuts) · [データと更新](#data-and-upgrades) · [開発](#development) · [ライセンス](#license)
 

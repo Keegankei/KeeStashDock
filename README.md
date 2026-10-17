@@ -28,7 +28,7 @@
   <img alt="Apache-2.0 license" src="docs/assets/badges/license.svg">
 </p>
 
-> **1.2.2 release preparation:** this guide describes version **1.2.2**. Its ZIP and checksum links become available when the GitHub Release is published. See the [release notes](docs/releases/1.2.2-notes.md) and [acceptance record](docs/releases/1.2.2.md) for changes, verified coverage, and remaining limits.
+**Version 1.2.2** · [Release notes](docs/releases/1.2.2-notes.md) · [Acceptance record](docs/releases/1.2.2.md)
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
 

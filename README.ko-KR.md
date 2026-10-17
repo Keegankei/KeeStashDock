@@ -28,7 +28,7 @@
   <img alt="Apache-2.0 라이선스" src="docs/assets/badges/license.svg">
 </p>
 
-> **1.2.2 정식 배포 준비:** 이 가이드는 **1.2.2**를 설명합니다. ZIP과 체크섬 링크는 GitHub Release가 게시된 뒤 사용할 수 있습니다. 변경 사항, 검증 범위 및 남은 한계는 [릴리스 노트](docs/releases/1.2.2-notes.md)와 [검증 기록](docs/releases/1.2.2.md)을 참고하세요.
+**버전 1.2.2** · [릴리스 노트](docs/releases/1.2.2-notes.md) · [검증 기록](docs/releases/1.2.2.md)
 
 [시작하기](#get-started) · [기능](#features) · [단축키](#shortcuts) · [데이터 및 업그레이드](#data-and-upgrades) · [개발](#development) · [라이선스](#license)
 

@@ -28,7 +28,7 @@
   <img alt="Apache-2.0 授權條款" src="docs/assets/badges/license.svg">
 </p>
 
-> **1.2.2 正式發布準備：**本指南介紹 **1.2.2**。GitHub Release 發布後，下方 ZIP 與校驗檔連結才會生效。更新內容、已驗證範圍與剩餘限制見[版本說明](docs/releases/1.2.2-notes.md)和[驗收紀錄](docs/releases/1.2.2.md)。
+**版本 1.2.2** · [版本說明](docs/releases/1.2.2-notes.md) · [驗收紀錄](docs/releases/1.2.2.md)
 
 [快速開始](#get-started) · [功能介紹](#features) · [快捷操作](#shortcuts) · [資料與升級](#data-and-upgrades) · [開發](#development) · [授權條款](#license)
 
