@@ -28,7 +28,7 @@
   <img alt="Apache-2.0 许可证" src="docs/assets/badges/license.svg">
 </p>
 
-> **1.2.2 正式发布准备：**本指南介绍 **1.2.2**。GitHub Release 发布后，下方 ZIP 和校验文件链接才会生效。更新内容、已验证范围与剩余限制见[发布说明](docs/releases/1.2.2-notes.md)和[验收记录](docs/releases/1.2.2.md)。
+**版本 1.2.2** · [发布说明](docs/releases/1.2.2-notes.md) · [验收记录](docs/releases/1.2.2.md)
 
 [快速开始](#get-started) · [功能介绍](#features) · [快捷操作](#shortcuts) · [数据与升级](#data-and-upgrades) · [开发](#development) · [许可证](#license)
 
