@@ -121,7 +121,7 @@ The screenshot button and a separate configurable global shortcut start capture.
 
 `SnippetService.AddImage` validates both PNGs, derives an image-specific SHA-256 identity, and stores the entry and asset in one transaction. Exact duplicate live images refresh their existing row. The original image is separate from `Snippet.Content`, which holds optional OCR text; text edits preserve the image identity. FTS and CJK search index the recognized text like other entry content.
 
-`ImageEntryWindow` previews the image and edits its text. Recognition starts an isolated local Tesseract process, accepts cancellation, and returns categorized failures. Models are installed explicitly; recognition has no network transport and never invokes translation. Selecting OCR text raises an internal selection event routed through the existing action bubble and configured Capture/Translate behavior. This bridges the normal global selection hook's exclusion of product windows. See [local OCR](LOCAL_OCR.md).
+`ImageEntryWindow` previews the image and edits its text. Recognition starts an isolated local Tesseract process, accepts cancellation, and returns categorized failures. The standard package preinstalls neither an OCR engine nor models. Explicit component setup downloads a verified native engine to the per-user `OcrEngine` directory and models to `OcrModels`; existing portable assets remain supported. Recognition has no network transport and never invokes translation. Selecting OCR text raises an internal selection event routed through the existing action bubble and configured Capture/Translate behavior. This bridges the normal global selection hook's exclusion of product windows. See [local OCR](LOCAL_OCR.md).
 
 ### Editing and draft preservation
 
@@ -149,7 +149,7 @@ The search service uses FTS5 for ordinary tokenized queries. Queries containing 
 
 ### Translation
 
-Selection translation is initiated in the desktop layer and executed by `TranslationClient` in Core. Bing uses the China web endpoint and its current anonymous session token rather than the retired Edge authentication URL. New installs default to Bing; saved provider choices remain intact. Google and Lingva remain keyless alternatives. Baidu requires a user-provided App ID and secret, while DeepL uses its own separate key. No request falls back to another provider automatically.
+Selection translation is initiated in the desktop layer and executed by `TranslationClient` in Core. Bing uses the China web endpoint and its current anonymous session token rather than the retired Edge authentication URL. New installs default to Google; saved provider choices remain intact. Bing and Lingva remain keyless alternatives. Baidu requires a user-provided App ID and secret, while DeepL uses its own separate key. No request falls back to another provider automatically.
 
 Alibaba Cloud uses the official `TranslateGeneral` RPC action at the Hangzhou endpoint, with request signing and separate AccessKey ID/secret settings. Offline translation uses a separate proxy-disabled HTTP client and accepts only a literal loopback endpoint (normalizing `localhost` to loopback). It checks `/languages` before sending text to `/translate`; unsupported target models produce an actionable error. Cloud requests have a 15-second total deadline and local requests have a 60-second deadline for CPU inference. Neither transport follows redirects.
 

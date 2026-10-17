@@ -27,7 +27,7 @@ public static class ThemeManager
             _ => IsSystemDark(),
         };
         IsDark = dark;
-        var uri = new Uri(dark ? "Themes/Theme.Dark.xaml" : "Themes/Theme.Light.xaml",
+        var uri = new Uri(dark ? "/KeeStashDock;component/Themes/Theme.Dark.xaml" : "/KeeStashDock;component/Themes/Theme.Light.xaml",
                           UriKind.Relative);
         var dicts = Application.Current.Resources.MergedDictionaries;
         // Slot 0 = palette, slot 1 = Styles.xaml (order fixed by App.xaml).

@@ -70,4 +70,82 @@ public sealed class ClipboardHistoryTests
         Assert.IsTrue(guard.IsOwnWrite(sequence));
         Assert.IsFalse(guard.IsOwnWrite(sequence + 1));
     }
+
+    [TestMethod]
+    public async Task DelayedSelectionReadDoesNotBecomeHistory_AfterCancelOrAfterCompletion()
+    {
+        uint sequence = 40;
+        var guard = new ClipboardWriteGuard(() => sequence);
+        using (guard.BeginWrite())
+        {
+            await Task.Yield(); // The source app responds on a later dispatcher turn.
+            sequence++;
+            Assert.IsTrue(guard.IsOwnWrite(sequence));
+            await Task.Yield(); // Even if the requester dismissed its UI meanwhile.
+            sequence++; // The source adds its remaining clipboard formats.
+            Assert.IsTrue(guard.IsOwnWrite(sequence));
+        }
+        Assert.IsTrue(guard.IsOwnWrite(sequence), "Queued notifications after the source read are still ours.");
+        sequence++;
+        Assert.IsFalse(guard.IsOwnWrite(sequence), "A subsequent user copy must return to normal history.");
+    }
+
+    [TestMethod]
+    public void NestedReadAndWriteScopesRemainSuppressedUntilBothFinish()
+    {
+        uint sequence = 50;
+        var guard = new ClipboardWriteGuard(() => sequence);
+        using (guard.BeginWrite())
+        {
+            guard.Write(() => sequence++);
+            Assert.IsTrue(guard.IsOwnWrite(sequence + 1));
+        }
+        Assert.IsTrue(guard.IsOwnWrite(sequence));
+        Assert.IsFalse(guard.IsOwnWrite(sequence + 1));
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task SelectionTranslationStaysTransient_CopyThenTranslateCreatesOneEntry(bool historyEnabled)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "KeeStashDock.Tests", "SelectionHistory", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            using var log = new FileLogger(Path.Combine(root, "Logs"));
+            var database = new Db(Path.Combine(root, "selection.db"), new DatabaseMaintenanceCoordinator());
+            new MigrationRunner(database, log).Run();
+            var snippets = new SnippetService(new SnippetRepository(database), log);
+            var settings = new SettingsStore(Path.Combine(root, "settings.json"));
+            settings.Current.ClipboardWatchEnabled = historyEnabled;
+            uint sequence = 20;
+            string clipboard = "Synthetic test selection";
+            var guard = new ClipboardWriteGuard(() => sequence);
+            using var watcher = new ClipboardWatcher(settings, snippets, () => sequence, () => clipboard, guard);
+            using var session = new SelectionSession();
+            session.Begin(async _ =>
+            {
+                using var read = guard.BeginWrite();
+                await Task.Yield();
+                sequence++;
+                watcher.TryCollect();
+                return clipboard;
+            });
+            Assert.AreEqual(clipboard, await session.ReadAsync());
+            watcher.TryCollect();
+            Assert.AreEqual(0, snippets.AllLive().Count, "Reading text for translation must not populate history.");
+            guard.Write(() => { sequence++; watcher.TryCollect(); });
+            if (session.TryMarkCaptured(session.Revision)) snippets.Add(clipboard, SnippetSource.Clipboard);
+            watcher.TryCollect();
+            Assert.AreEqual(clipboard, await session.ReadAsync());
+            if (session.TryMarkCaptured(session.Revision)) snippets.Add(clipboard, SnippetSource.Clipboard);
+            Assert.AreEqual(1, snippets.AllLive().Count, "Copy, then Translate, then a repeated Copy produces exactly one deliberate entry.");
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }

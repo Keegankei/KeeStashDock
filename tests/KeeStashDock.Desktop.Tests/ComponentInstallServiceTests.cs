@@ -28,7 +28,8 @@ public sealed class ComponentInstallServiceTests
         _localDataDirectory = Path.Combine(_root, "local " + special);
         Directory.CreateDirectory(_baseDirectory);
         Directory.CreateDirectory(_localDataDirectory);
-        WriteFile(Path.Combine(_baseDirectory, "x64", "tesseract.exe"), "fixture, never executed");
+        foreach (string name in new[] { "tesseract.exe", "tesseract55.dll", "leptonica-1.85.0.dll" })
+            WriteFile(Path.Combine(_baseDirectory, "x64", name), "fixture, never executed");
         WriteScript("NativeRuntime", "Setup.ps1", """
             param([AllowEmptyString()][Parameter(Mandatory=$true)][string]$ProbeExecutable)
             [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'bound-probe.txt'), $ProbeExecutable)
@@ -53,13 +54,17 @@ public sealed class ComponentInstallServiceTests
     public async Task OcrInstallBindsSpecialPathsAndReportsProgressWithoutDownloading()
     {
         WriteScript("OcrModels", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$Destination)
+            param([Parameter(Mandatory=$true)][string]$Destination, [string]$EngineDirectory)
             [IO.Directory]::CreateDirectory($Destination) | Out-Null
             [IO.File]::WriteAllText((Join-Path $Destination 'argument.txt'), $Destination)
             Write-Output 'Downloading fixture model'
             Write-Output 'Verifying fixture model'
             [IO.File]::WriteAllText((Join-Path $Destination 'eng.traineddata'), 'fixture')
             [IO.File]::WriteAllText((Join-Path $Destination 'chi_sim.traineddata'), 'fixture')
+            [IO.Directory]::CreateDirectory($EngineDirectory) | Out-Null
+            foreach ($name in 'tesseract.exe', 'tesseract55.dll', 'leptonica-1.85.0.dll') {
+                [IO.File]::WriteAllText((Join-Path $EngineDirectory $name), 'fixture, never executed')
+            }
             """);
         var service = CreateService();
         var progress = new ImmediateProgress();
@@ -68,7 +73,7 @@ public sealed class ComponentInstallServiceTests
 
         Assert.IsTrue(result.IsSuccess, result.Detail);
         Assert.AreEqual(OcrDirectory, File.ReadAllText(Path.Combine(OcrDirectory, "argument.txt")));
-        Assert.AreEqual(Path.Combine(_baseDirectory, "x64", "tesseract.exe"),
+        Assert.AreEqual(Path.Combine(_localDataDirectory, "OcrEngine", "tesseract.exe"),
             File.ReadAllText(Path.Combine(_baseDirectory, "NativeRuntime", "bound-probe.txt")));
         Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.Ocr));
         CollectionAssert.AreEqual(new[] { ComponentInstallPhase.Checking, ComponentInstallPhase.Downloading,
@@ -83,6 +88,7 @@ public sealed class ComponentInstallServiceTests
         WriteOfflineScripts();
         WriteScript("NativeRuntime", "Setup.ps1", "param([AllowEmptyString()][string]$ProbeExecutable)");
         WriteSuccessfulOcrSetup();
+        foreach (string file in Directory.GetFiles(Path.Combine(_baseDirectory, "x64"))) File.Delete(file);
         var directory = new DirectoryInfo(_baseDirectory);
         DirectorySecurity originalAccess = directory.GetAccessControl();
         DirectorySecurity readOnlyAccess = directory.GetAccessControl();
@@ -114,7 +120,7 @@ public sealed class ComponentInstallServiceTests
     {
         WriteOfflineScripts();
         WriteScript("OcrModels", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$Destination)
+            param([Parameter(Mandatory=$true)][string]$Destination, [string]$EngineDirectory)
             [IO.Directory]::CreateDirectory($Destination) | Out-Null
             throw 'The OCR setup must not run'
             """);
@@ -139,7 +145,7 @@ public sealed class ComponentInstallServiceTests
     {
         WriteOfflineScripts();
         WriteScript("OcrModels", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$Destination)
+            param([Parameter(Mandatory=$true)][string]$Destination, [string]$EngineDirectory)
             [IO.Directory]::CreateDirectory($Destination) | Out-Null
             throw 'The OCR setup must not run before Windows restarts'
             """);
@@ -183,7 +189,7 @@ public sealed class ComponentInstallServiceTests
     public async Task NonzeroScriptExitAndTerminatingErrorReturnFailure()
     {
         WriteScript("OcrModels", "Setup.ps1", """
-            param([string]$Destination)
+            param([string]$Destination, [string]$EngineDirectory)
             [Console]::Error.WriteLine('Synthetic setup failure')
             exit 7
             """);
@@ -191,23 +197,40 @@ public sealed class ComponentInstallServiceTests
         Assert.AreEqual(ComponentInstallFailure.Failed, exitFailure.Failure);
         StringAssert.Contains(exitFailure.Detail, "Synthetic setup failure");
 
-        WriteScript("OcrModels", "Setup.ps1", "param([string]$Destination)\nthrow 'Synthetic terminating error'");
+        WriteScript("OcrModels", "Setup.ps1", "param([string]$Destination, [string]$EngineDirectory)\nthrow 'Synthetic terminating error'");
         ComponentInstallResult exceptionFailure = await CreateService().InstallAsync(ComponentKind.Ocr);
         Assert.AreEqual(ComponentInstallFailure.Failed, exceptionFailure.Failure);
         StringAssert.Contains(exceptionFailure.Detail, "Synthetic terminating error");
     }
 
     [TestMethod]
-    public async Task MissingScriptsOrNativeOcrFilesReturnMissingFiles()
+    public async Task MissingSetupScriptReturnsMissingFilesButMissingEngineCanBeInstalled()
     {
         var service = CreateService();
         Assert.AreEqual(ComponentInstallFailure.MissingFiles,
             (await service.InstallAsync(ComponentKind.Ocr)).Failure);
-        WriteScript("OcrModels", "Setup.ps1", "throw 'Must not run'");
+        WriteSuccessfulOcrSetup();
         File.Delete(Path.Combine(_baseDirectory, "x64", "tesseract.exe"));
-        Assert.AreEqual(ComponentInstallFailure.MissingFiles,
-            (await service.InstallAsync(ComponentKind.Ocr)).Failure);
         Assert.AreEqual(ComponentStatus.Missing, service.GetStatus(ComponentKind.Ocr));
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.Ocr)).IsSuccess);
+        Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.Ocr));
+    }
+
+    [TestMethod]
+    public void EngineResolutionRejectsPartialUserEngineAndPreservesLegacyPortableInstallation()
+    {
+        string portable = Path.Combine(_baseDirectory, "x64");
+        string user = Path.Combine(_localDataDirectory, "OcrEngine");
+        Assert.AreEqual(portable, ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory,
+            _localDataDirectory, HasFixtureOcrEngine));
+        WriteFile(Path.Combine(user, "tesseract.exe"), "partial");
+        Assert.AreEqual(portable, ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory,
+            _localDataDirectory, HasFixtureOcrEngine));
+        WriteFile(Path.Combine(user, "tesseract55.dll"), "complete");
+        WriteFile(Path.Combine(user, "leptonica-1.85.0.dll"), "complete");
+        Assert.AreEqual(user, ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory,
+            _localDataDirectory, HasFixtureOcrEngine));
+        Assert.IsFalse(ComponentInstallService.HasOcrEngine(user), "Production validation must reject fake binaries.");
     }
 
     [TestMethod]
@@ -388,7 +411,7 @@ public sealed class ComponentInstallServiceTests
             "Start-Sleep -Seconds 20; [IO.File]::WriteAllText(" + Literal(lateWrite) + ", 'must not happen')";
         string encodedChild = Convert.ToBase64String(Encoding.Unicode.GetBytes(childCode));
         WriteScript("OcrModels", "Setup.ps1", $$"""
-            param([Parameter(Mandatory=$true)][string]$Destination)
+            param([Parameter(Mandatory=$true)][string]$Destination, [string]$EngineDirectory)
             [IO.Directory]::CreateDirectory($Destination) | Out-Null
             [IO.File]::WriteAllText((Join-Path $Destination 'parent.pid'), [string]$PID)
             Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -WindowStyle Hidden -ArgumentList '-NoLogo -NoProfile -NonInteractive -EncodedCommand {{encodedChild}}'
@@ -447,7 +470,11 @@ public sealed class ComponentInstallServiceTests
         => Assert.AreEqual(expected, TranslationService.IsManagedOfflineEndpoint(endpoint));
 
     private ComponentInstallService CreateService(TimeSpan? timeout = null)
-        => new(_baseDirectory, _localDataDirectory, timeout ?? TimeSpan.FromSeconds(30), HasFixtureOcrModels);
+        => new(_baseDirectory, _localDataDirectory, timeout ?? TimeSpan.FromSeconds(30), HasFixtureOcrModels, HasFixtureOcrEngine);
+
+    private static bool HasFixtureOcrEngine(string directory)
+        => new[] { "tesseract.exe", "tesseract55.dll", "leptonica-1.85.0.dll" }
+            .All(name => File.Exists(Path.Combine(directory, name)));
 
     private static bool HasFixtureOcrModels(string directory)
         => new[] { "eng.traineddata", "chi_sim.traineddata" }.All(name =>
@@ -479,10 +506,14 @@ public sealed class ComponentInstallServiceTests
 
     private void WriteSuccessfulOcrSetup()
         => WriteScript("OcrModels", "Setup.ps1", """
-            param([Parameter(Mandatory=$true)][string]$Destination)
+            param([Parameter(Mandatory=$true)][string]$Destination, [string]$EngineDirectory)
             [IO.Directory]::CreateDirectory($Destination) | Out-Null
             [IO.File]::WriteAllText((Join-Path $Destination 'eng.traineddata'), 'fixture')
             [IO.File]::WriteAllText((Join-Path $Destination 'chi_sim.traineddata'), 'fixture')
+            [IO.Directory]::CreateDirectory($EngineDirectory) | Out-Null
+            foreach ($name in 'tesseract.exe', 'tesseract55.dll', 'leptonica-1.85.0.dll') {
+                [IO.File]::WriteAllText((Join-Path $EngineDirectory $name), 'fixture, never executed')
+            }
             """);
 
     private void WriteScript(string folder, string name, string content)

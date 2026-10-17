@@ -1,7 +1,9 @@
 # OCR distribution license sources
 
-These unmodified upstream license texts accompany the native Windows x64 engine
-bundled in the TesseractOCR 5.5.2 NuGet package. That binary reports Tesseract 5.5.0
+These unmodified upstream license texts cover the optional native Windows x64 engine
+downloaded from the TesseractOCR 5.5.2 NuGet package during explicit component setup.
+The standard KeeStashDock package ships these notices but no preinstalled OCR engine
+or models. That binary reports Tesseract 5.5.0
 and Leptonica 1.85.0, with the codecs listed below. Files were retrieved on
 2026-10-12. The application uses the CLI only for local recognition.
 

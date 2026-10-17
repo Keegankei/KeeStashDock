@@ -15,6 +15,11 @@ public sealed class AppSettings
     public const int MaxBackupKeepCount = 100;
     public const int DefaultAutoBackupIntervalHours = 24;
     public const int MaxAutoBackupIntervalHours = 24 * 30;
+    public const uint DefaultScreenshotHotkeyModifiers = 0x0001; // MOD_ALT
+    public const uint DefaultScreenshotHotkeyVirtualKey = 0x57; // 'W'
+    public const double DefaultBackgroundOverlayOpacity = 0.20;
+    public const string DefaultTranslationEngine = "Google";
+    public const string DefaultSelectionBubbleStyle = "Default";
     public const string DefaultOfflineTranslationEndpoint = "http://127.0.0.1:5000";
 
     // ---- General -------------------------------------------------------
@@ -32,13 +37,17 @@ public sealed class AppSettings
 
     /// <summary>Global screenshot shortcut; the screenshot button remains available when disabled.</summary>
     public bool ScreenshotHotkeyEnabled { get; set; } = true;
-    public uint ScreenshotHotkeyModifiers { get; set; } = 0x0003; // MOD_CONTROL | MOD_ALT
-    public uint ScreenshotHotkeyVirtualKey { get; set; } = 0x53;  // 'S'
+    public uint ScreenshotHotkeyModifiers { get; set; } = DefaultScreenshotHotkeyModifiers;
+    public uint ScreenshotHotkeyVirtualKey { get; set; } = DefaultScreenshotHotkeyVirtualKey;
 
     // ---- Quick panel ---------------------------------------------------
     /// <summary>Retired edge-summon setting, retained so older
     /// settings.json files continue to deserialize cleanly.</summary>
     public bool EdgeDockEnabled { get; set; } = false;
+
+    /// <summary>Enabled by default: a panel dragged to a work-area edge retracts to a
+    /// narrow handle while idle. Independent from the retired edge-summon flag.</summary>
+    public bool PanelEdgeAutoHideEnabled { get; set; } = true;
 
     /// <summary>"Right" or "Left". This only selects the default
     /// position of the never-dragged panel (RTL languages default Left).</summary>
@@ -62,6 +71,10 @@ public sealed class AppSettings
     public double? PanelPosX { get; set; }
     public double? PanelPosY { get; set; }
 
+    /// <summary>Physical monitor coordinates of the normal panel, never the hidden edge handle.</summary>
+    public int? PanelDevicePosX { get; set; }
+    public int? PanelDevicePosY { get; set; }
+
     /// <summary>User-resized panel size (edge-drag). Null = defaults
     /// (15% of work-area width x 50% of work-area height).</summary>
     public double? PanelUserWidth { get; set; }
@@ -74,9 +87,9 @@ public sealed class AppSettings
 
     /// <summary>Opacity (0.2-1.0) of the theme-colored scrim laid OVER the
     /// background image. Lower = more image shows through ("see-through"),
-    /// higher = closer to the plain theme. Default 0.30 lets the wallpaper
+    /// higher = closer to the plain theme. Default 0.20 lets the wallpaper
     /// show through; the auto-contrast text keeps things readable.</summary>
-    public double BackgroundOverlayOpacity { get; set; } = 0.30;
+    public double BackgroundOverlayOpacity { get; set; } = DefaultBackgroundOverlayOpacity;
 
     /// <summary>Frosted-glass: gaussian blur applied to the background IMAGE
     /// so content floats on a soft surface. Needs an image to act on.</summary>
@@ -129,12 +142,12 @@ public sealed class AppSettings
     /// <summary>Visual dress of the selection bubble / toasts / translation
     /// card: "FollowTheme" derives glass from the text-color scheme;
     /// "Default" is the classic solid accent pill.</summary>
-    public string SelectionBubbleStyle { get; set; } = "Default";
+    public string SelectionBubbleStyle { get; set; } = DefaultSelectionBubbleStyle;
 
-    /// <summary>New installs default to Bing's China endpoint. Existing choices
+    /// <summary>New installs default to Google. Existing choices
     /// are preserved. Cloud credentials are separate for each provider;
     /// Offline uses a locally installed translation service.</summary>
-    public string TranslationEngine { get; set; } = "Bing";
+    public string TranslationEngine { get; set; } = DefaultTranslationEngine;
 
     /// <summary>Bubble text glow: the blurred halo twin under the crisp
     /// text of the whole bubble family. Default OFF: crisp text only.</summary>
@@ -184,6 +197,25 @@ public sealed class AppSettings
     // ---- Appearance ----------------------------------------------------
     /// <summary>Application theme: "Light", "Dark", or "System".</summary>
     public string Theme { get; set; } = "System";
+
+    /// <summary>Opt-in floating panel depth and interaction animations.
+    /// Missing settings preserve the classic appearance.</summary>
+    public bool FloatingPanelEnabled { get; set; } = false;
+
+    /// <summary>Enable deliberate drag inspection in floating mode. False keeps a fixed
+    /// perspective; the existing preference is retained for compatibility.</summary>
+    public bool FloatingPanelFollowPointer { get; set; } = true;
+
+    /// <summary>Drag inspection preset: Right, Middle, or Custom. The legacy
+    /// FollowPointer preference now selects deliberate drag inspection.</summary>
+    public string FloatingInspectionGesture { get; set; } = "Right";
+
+    /// <summary>Custom inspection mouse button: Left, Right, Middle, XButton1, or XButton2.</summary>
+    public string FloatingInspectionButton { get; set; } = "Left";
+
+    /// <summary>Custom modifier combination, using Control, Alt and Shift
+    /// joined with '+', or None. Alt+Left is the initial custom gesture.</summary>
+    public string FloatingInspectionModifiers { get; set; } = "Alt";
 
     /// <summary>One-shot flag: the starter groups ("Default" + "Git BASH"
     /// with its pre-filled high-frequency git commands) have been created.

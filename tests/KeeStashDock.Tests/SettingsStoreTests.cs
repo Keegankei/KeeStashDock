@@ -85,8 +85,79 @@ public sealed class SettingsStoreTests
 
         store.Load();
 
-        AssertSafeDataDefaults(store.Current);
-        Assert.AreEqual("en-US", store.Current.Language);
+        AssertFreshInstallDefaults(store.Current);
+    }
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("{}")]
+    [DataRow("null")]
+    public void FreshInstallOrEmptySettings_LoadTheReleaseDefaults(string? json)
+    {
+        if (json is not null) File.WriteAllText(_settingsFile, json);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+
+        AssertFreshInstallDefaults(store.Current);
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        AssertFreshInstallDefaults(reloaded.Current);
+    }
+
+    [TestMethod]
+    public void ExistingPreferences_ArePreservedWhenReleaseDefaultsChange()
+    {
+        const string json = """
+            {
+              "language": "zh-CN",
+              "hotkeyModifiers": 3,
+              "hotkeyVirtualKey": 81,
+              "screenshotHotkeyEnabled": false,
+              "screenshotHotkeyModifiers": 3,
+              "screenshotHotkeyVirtualKey": 83,
+              "autoStart": true,
+              "selectionPopupEnabled": false,
+              "selectionAction": "Both",
+              "translationEngine": "Bing",
+              "selectionBubbleStyle": "FollowTheme",
+              "bubbleTextGlow": true,
+              "bubbleShadow": false,
+              "clipboardWatchEnabled": true,
+              "directPasteEnabled": true,
+              "panelEdgeAutoHideEnabled": false,
+              "collapseDelaySeconds": 5,
+              "expandDelaySeconds": 0.5,
+              "theme": "Dark",
+              "floatingPanelEnabled": true,
+              "floatingPanelFollowPointer": false,
+              "floatingInspectionGesture": "Middle",
+              "panelTextColorMode": "Ivory",
+              "cardOpacity": 0.8,
+              "backgroundImagePath": "C:\\Wallpapers\\existing.png",
+              "backgroundOverlayOpacity": 0.3,
+              "frostedGlassEnabled": true,
+              "frostedGlassRadius": 8,
+              "autoBackupEnabled": false,
+              "autoBackupIntervalHours": 48
+            }
+            """;
+        File.WriteAllText(_settingsFile, json);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        reloaded.Save();
+
+        using JsonDocument original = JsonDocument.Parse(json);
+        using JsonDocument persisted = JsonDocument.Parse(File.ReadAllText(_settingsFile));
+        foreach (JsonProperty preference in original.RootElement.EnumerateObject())
+        {
+            Assert.IsTrue(JsonElement.DeepEquals(preference.Value,
+                persisted.RootElement.GetProperty(preference.Name)),
+                $"The release defaults must not replace the saved {preference.Name} preference.");
+        }
     }
 
     [TestMethod]
@@ -105,6 +176,164 @@ public sealed class SettingsStoreTests
         AssertSafeDataDefaults(store.Current);
         Assert.AreEqual(2.0, store.Current.CollapseDelaySeconds);
         Assert.AreEqual(0.1, store.Current.ExpandDelaySeconds);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void FloatingPanel_LegacySettingsKeepModeAndUseSafeInspectionDefaults(bool floatingEnabled)
+    {
+        File.WriteAllText(_settingsFile, $$"""
+            { "theme": "Dark", "floatingPanelEnabled": {{floatingEnabled.ToString().ToLowerInvariant()}} }
+            """);
+        var store = new SettingsStore(_settingsFile);
+
+        store.Load();
+
+        Assert.AreEqual(floatingEnabled, store.Current.FloatingPanelEnabled);
+        Assert.IsTrue(store.Current.FloatingPanelFollowPointer,
+            "The existing floating preference remains compatible with deliberate drag inspection.");
+        Assert.AreEqual("Right", store.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", store.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", store.Current.FloatingInspectionModifiers);
+        Assert.IsTrue(store.Current.PanelEdgeAutoHideEnabled);
+        Assert.IsNull(store.Current.PanelDevicePosX);
+        Assert.IsNull(store.Current.PanelDevicePosY);
+        Assert.AreEqual("Dark", store.Current.Theme);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void FloatingPanel_PerspectiveChoiceRoundTripsAcrossClassicMode(bool followPointer)
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingPanelEnabled = true;
+        store.Current.FloatingPanelFollowPointer = followPointer;
+        store.Save();
+
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.IsTrue(reloaded.Current.FloatingPanelEnabled);
+        Assert.AreEqual(followPointer, reloaded.Current.FloatingPanelFollowPointer);
+
+        reloaded.Current.FloatingPanelEnabled = false;
+        reloaded.Save();
+        var classic = new SettingsStore(_settingsFile);
+        classic.Load();
+        Assert.IsFalse(classic.Current.FloatingPanelEnabled);
+        Assert.AreEqual(followPointer, classic.Current.FloatingPanelFollowPointer,
+            "Switching to Classic must retain the preferred floating perspective mode.");
+    }
+
+
+    [TestMethod]
+    public void InspectionGestures_AllSupportedCustomCombinationsRoundTrip()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingInspectionGesture = "Custom";
+        store.Current.PanelEdgeAutoHideEnabled = true;
+        foreach (string button in new[] { "Left", "Right", "Middle", "XButton1", "XButton2" })
+        foreach (string modifiers in new[] { "None", "Control", "Alt", "Shift", "Control+Alt", "Control+Shift", "Alt+Shift", "Control+Alt+Shift" })
+        {
+            store.Current.FloatingInspectionButton = button;
+            store.Current.FloatingInspectionModifiers = modifiers;
+            store.Save();
+            var reloaded = new SettingsStore(_settingsFile);
+            reloaded.Load();
+            Assert.AreEqual("Custom", reloaded.Current.FloatingInspectionGesture);
+            Assert.AreEqual(button, reloaded.Current.FloatingInspectionButton);
+            Assert.AreEqual(modifiers, reloaded.Current.FloatingInspectionModifiers);
+            Assert.IsTrue(reloaded.Current.PanelEdgeAutoHideEnabled);
+        }
+        foreach (string preset in new[] { "Right", "Middle" })
+        {
+            store.Current.FloatingInspectionGesture = preset;
+            store.Save();
+            var reloaded = new SettingsStore(_settingsFile);
+            reloaded.Load();
+            Assert.AreEqual(preset, reloaded.Current.FloatingInspectionGesture);
+            Assert.AreEqual("XButton2", reloaded.Current.FloatingInspectionButton);
+            Assert.AreEqual("Control+Alt+Shift", reloaded.Current.FloatingInspectionModifiers,
+                "A preset must preserve the user's saved custom combination.");
+        }
+    }
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("unknown")]
+    [DataRow("right")]
+    public void InvalidInspectionFields_LoadSafeDefaultsWithoutResettingOtherSettings(string? invalid)
+    {
+        File.WriteAllText(_settingsFile, JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["theme"] = "Dark",
+            ["floatingPanelFollowPointer"] = false,
+            ["floatingInspectionGesture"] = invalid,
+            ["floatingInspectionButton"] = invalid,
+            ["floatingInspectionModifiers"] = invalid,
+        }));
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual("Right", store.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", store.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", store.Current.FloatingInspectionModifiers);
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.IsFalse(store.Current.FloatingPanelFollowPointer);
+    }
+
+    [TestMethod]
+    [DataRow(-100_000, 100_000)]
+    [DataRow(-3840, -240)]
+    [DataRow(0, 0)]
+    public void ValidPhysicalMonitorCoordinates_RoundTrip(int x, int y)
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.PanelDevicePosX = x;
+        store.Current.PanelDevicePosY = y;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(x, reloaded.Current.PanelDevicePosX);
+        Assert.AreEqual(y, reloaded.Current.PanelDevicePosY);
+    }
+
+    [TestMethod]
+    [DataRow(100_001, 0)]
+    [DataRow(0, -100_001)]
+    [DataRow(int.MinValue, int.MaxValue)]
+    public void InvalidPhysicalMonitorCoordinates_LoadAsMissingPair(int x, int y)
+    {
+        File.WriteAllText(_settingsFile, $$"""
+            { "panelDevicePosX": {{x}}, "panelDevicePosY": {{y}}, "panelPosX": 400, "panelPosY": 120 }
+            """);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.IsNull(store.Current.PanelDevicePosX);
+        Assert.IsNull(store.Current.PanelDevicePosY);
+        Assert.AreEqual(400d, store.Current.PanelPosX);
+        Assert.AreEqual(120d, store.Current.PanelPosY);
+    }
+
+    [TestMethod]
+    public void Save_NormalizesInvalidInspectionAndIncompletePhysicalLocation()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Current.FloatingInspectionGesture = null!;
+        store.Current.FloatingInspectionButton = "Back";
+        store.Current.FloatingInspectionModifiers = "Win";
+        store.Current.PanelDevicePosX = -3840;
+        store.Current.PanelDevicePosY = null;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual("Right", reloaded.Current.FloatingInspectionGesture);
+        Assert.AreEqual("Left", reloaded.Current.FloatingInspectionButton);
+        Assert.AreEqual("Alt", reloaded.Current.FloatingInspectionModifiers);
+        Assert.IsNull(reloaded.Current.PanelDevicePosX);
+        Assert.IsNull(reloaded.Current.PanelDevicePosY);
+        Assert.IsFalse(File.Exists(_settingsFile + ".tmp"));
     }
 
     [TestMethod]
@@ -173,7 +402,7 @@ public sealed class SettingsStoreTests
     {
         var fresh = new SettingsStore(_settingsFile);
         fresh.Load();
-        Assert.AreEqual("Bing", fresh.Current.TranslationEngine);
+        Assert.AreEqual("Google", fresh.Current.TranslationEngine);
         Assert.AreEqual(AppSettings.DefaultOfflineTranslationEndpoint, fresh.Current.OfflineTranslationEndpoint);
         Assert.AreEqual(string.Empty, fresh.Current.AliyunAccessKeyId);
         Assert.AreEqual(string.Empty, fresh.Current.AliyunAccessKeySecret);
@@ -221,6 +450,9 @@ public sealed class SettingsStoreTests
         store.Current.BackupKeepCount = -10;
         store.Current.AutoBackupIntervalHours = int.MaxValue;
         store.Current.CollapseDelaySeconds = double.NaN;
+        store.Current.BackgroundOverlayOpacity = double.NaN;
+        store.Current.TranslationEngine = null!;
+        store.Current.SelectionBubbleStyle = " ";
         store.Current.TranslationApiKey = null!;
         store.Current.AliyunAccessKeyId = null!;
         store.Current.AliyunAccessKeySecret = null!;
@@ -249,6 +481,9 @@ public sealed class SettingsStoreTests
         Assert.AreEqual(string.Empty, store.Current.AliyunAccessKeyId);
         Assert.AreEqual(string.Empty, store.Current.AliyunAccessKeySecret);
         Assert.AreEqual(AppSettings.DefaultOfflineTranslationEndpoint, store.Current.OfflineTranslationEndpoint);
+        Assert.AreEqual(0.2, store.Current.BackgroundOverlayOpacity);
+        Assert.AreEqual("Google", store.Current.TranslationEngine);
+        Assert.AreEqual("Default", store.Current.SelectionBubbleStyle);
     }
 
     [TestMethod]
@@ -258,8 +493,8 @@ public sealed class SettingsStoreTests
         var store = new SettingsStore(_settingsFile);
         store.Load();
         Assert.IsTrue(store.Current.ScreenshotHotkeyEnabled);
-        Assert.AreEqual(3u, store.Current.ScreenshotHotkeyModifiers);
-        Assert.AreEqual(0x53u, store.Current.ScreenshotHotkeyVirtualKey);
+        Assert.AreEqual(1u, store.Current.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x57u, store.Current.ScreenshotHotkeyVirtualKey);
         store.Current.ScreenshotHotkeyEnabled = false;
         store.Current.ScreenshotHotkeyModifiers = 6;
         store.Current.ScreenshotHotkeyVirtualKey = 0x54;
@@ -278,14 +513,49 @@ public sealed class SettingsStoreTests
         store.Current.ScreenshotHotkeyModifiers = uint.MaxValue;
         store.Current.ScreenshotHotkeyVirtualKey = 0;
         store.ValidateAndNormalize();
-        Assert.AreEqual(3u, store.Current.ScreenshotHotkeyModifiers);
-        Assert.AreEqual(0x53u, store.Current.ScreenshotHotkeyVirtualKey);
-        store.Current.HotkeyModifiers = 3;
-        store.Current.HotkeyVirtualKey = 0x53;
+        Assert.AreEqual(1u, store.Current.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x57u, store.Current.ScreenshotHotkeyVirtualKey);
+        store.Current.HotkeyModifiers = 1;
+        store.Current.HotkeyVirtualKey = 0x57;
         store.ValidateAndNormalize();
         Assert.IsFalse(store.Current.ScreenshotHotkeyEnabled, "Keep the user's existing panel shortcut when the new default collides.");
-        Assert.AreEqual(3u, store.Current.HotkeyModifiers);
-        Assert.AreEqual(0x53u, store.Current.HotkeyVirtualKey);
+        Assert.AreEqual(1u, store.Current.HotkeyModifiers);
+        Assert.AreEqual(0x57u, store.Current.HotkeyVirtualKey);
+    }
+
+    private static void AssertFreshInstallDefaults(AppSettings settings)
+    {
+        AssertSafeDataDefaults(settings);
+        Assert.AreEqual("en-US", settings.Language);
+        Assert.AreEqual(1u, settings.HotkeyModifiers);
+        Assert.AreEqual(0x51u, settings.HotkeyVirtualKey);
+        Assert.IsTrue(settings.ScreenshotHotkeyEnabled);
+        Assert.AreEqual(1u, settings.ScreenshotHotkeyModifiers);
+        Assert.AreEqual(0x57u, settings.ScreenshotHotkeyVirtualKey);
+        Assert.IsFalse(settings.AutoStart);
+        Assert.IsTrue(settings.SelectionPopupEnabled);
+        Assert.AreEqual("Capture", settings.SelectionAction);
+        Assert.AreEqual("Google", settings.TranslationEngine);
+        Assert.AreEqual("Default", settings.SelectionBubbleStyle);
+        Assert.IsFalse(settings.BubbleTextGlow);
+        Assert.IsTrue(settings.BubbleShadow);
+        Assert.IsFalse(settings.ClipboardWatchEnabled);
+        Assert.IsFalse(settings.DirectPasteEnabled);
+        Assert.IsTrue(settings.PanelEdgeAutoHideEnabled);
+        Assert.AreEqual(2.0, settings.CollapseDelaySeconds);
+        Assert.AreEqual(0.1, settings.ExpandDelaySeconds);
+        Assert.AreEqual("System", settings.Theme);
+        Assert.IsFalse(settings.FloatingPanelEnabled);
+        Assert.IsTrue(settings.FloatingPanelFollowPointer);
+        Assert.AreEqual("Right", settings.FloatingInspectionGesture);
+        Assert.AreEqual("Auto", settings.PanelTextColorMode);
+        Assert.AreEqual(0.9, settings.CardOpacity);
+        Assert.IsNull(settings.BackgroundImagePath);
+        Assert.AreEqual(0.2, settings.BackgroundOverlayOpacity);
+        Assert.IsFalse(settings.FrostedGlassEnabled);
+        Assert.AreEqual(4.0, settings.FrostedGlassRadius);
+        Assert.IsTrue(settings.AutoBackupEnabled);
+        Assert.AreEqual(24, settings.AutoBackupIntervalHours);
     }
 
     private static void AssertSafeDataDefaults(AppSettings settings)

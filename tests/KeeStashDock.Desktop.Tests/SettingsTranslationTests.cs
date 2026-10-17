@@ -36,7 +36,7 @@ public sealed class SettingsTranslationTests
         using var hotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
         using var screenshotHotkey = new HotkeyManager(Register, id => registeredKeys.Remove(id));
         Assert.IsTrue(hotkey.Initialize(1, 0x51));
-        Assert.IsTrue(screenshotHotkey.Initialize(3, 0x53));
+        Assert.IsTrue(screenshotHotkey.Initialize(1, 0x57));
 
         try
         {
@@ -113,6 +113,25 @@ public sealed class SettingsTranslationTests
             Assert.IsTrue(appId.IsEnabled);
             Assert.AreEqual(1, saves, "Refreshing the credential controls must not trigger extra saves.");
 
+            var panelMode = Named<ComboBox>(window, "PanelModeCombo");
+            var floatingMotion = Named<ComboBox>(window, "FloatingMotionCombo");
+            Assert.IsFalse(floatingMotion.IsEnabled, "Classic must disable the floating-only presentation choice.");
+            Assert.AreEqual("Follow", ((ComboBoxItem)floatingMotion.SelectedItem).Tag);
+            panelMode.SelectedIndex = 1;
+            Assert.IsTrue(floatingMotion.IsEnabled);
+            floatingMotion.SelectedIndex = 1;
+            Assert.IsFalse(settings.Current.FloatingPanelFollowPointer);
+            var savedAppearance = new SettingsStore(settingsFile);
+            savedAppearance.Load();
+            Assert.IsTrue(savedAppearance.Current.FloatingPanelEnabled);
+            Assert.IsFalse(savedAppearance.Current.FloatingPanelFollowPointer);
+            panelMode.SelectedIndex = 0;
+            Assert.IsFalse(floatingMotion.IsEnabled);
+            panelMode.SelectedIndex = 1;
+            Assert.AreEqual("Fixed", ((ComboBoxItem)floatingMotion.SelectedItem).Tag,
+                "Switching through Classic must preserve the floating presentation preference.");
+            Assert.IsFalse(settings.Current.FloatingPanelFollowPointer);
+
             key.Text = "test-baidu-updated";
             appId.Text = "test-baidu-app-updated";
             SelectProvider(engine, "DeepL");
@@ -188,18 +207,27 @@ public sealed class SettingsTranslationTests
             Assert.AreEqual("test-aliyun-secret-updated", finalSettings.Current.AliyunAccessKeySecret);
             Assert.AreEqual("http://127.0.0.1:5010", finalSettings.Current.OfflineTranslationEndpoint);
             Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = false;
-            Assert.IsFalse(key.IsEnabled);
-            Assert.IsFalse(appId.IsEnabled);
-            Assert.IsFalse(aliyunPanel.IsEnabled);
-            Assert.IsFalse(Named<Button>(window, "TranslationTestButton").IsEnabled);
+            Assert.IsTrue(key.IsEnabled, "Screenshot translation must remain configurable with the selection bubble disabled.");
+            Assert.IsTrue(appId.IsEnabled);
+            Assert.IsTrue(aliyunPanel.IsEnabled);
+            Assert.IsTrue(Named<Button>(window, "TranslationTestButton").IsEnabled);
+            var selectionAction = Named<ComboBox>(window, "SelectionActionCombo");
+            Assert.IsFalse(selectionAction.IsEnabled);
+            Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = true;
+            selectionAction.SelectedItem = selectionAction.Items.OfType<ComboBoxItem>().Single(item => (string?)item.Tag == "Both");
+            var bothSettings = new SettingsStore(settingsFile);
+            bothSettings.Load();
+            Assert.AreEqual("Both", bothSettings.Current.SelectionAction);
+            Assert.IsTrue(Named<Grid>(window, "TranslateEngineRow").IsVisible || window.Visibility != Visibility.Visible);
+            Named<CheckBox>(window, "SelectionPopupCheck").IsChecked = false;
 
             // Both actions use an in-memory registrar: no global shortcut or
             // actual user's settings/registry are changed by this test.
             CheckBox captureEnabled = Named<CheckBox>(window, "ScreenshotHotkeyCheck");
             Assert.IsTrue(captureEnabled.IsChecked);
             Assert.IsFalse(window.TryApplyHotkey(true, 1, 0x51));
-            Assert.AreEqual(0x53u, settings.Current.ScreenshotHotkeyVirtualKey);
-            Assert.IsFalse(window.TryApplyHotkey(false, 3, 0x53));
+            Assert.AreEqual(0x57u, settings.Current.ScreenshotHotkeyVirtualKey);
+            Assert.IsFalse(window.TryApplyHotkey(false, 1, 0x57));
             Assert.AreEqual(0x51u, settings.Current.HotkeyVirtualKey);
             Assert.IsTrue(window.TryApplyHotkey(true, 3, 0x54));
             Assert.AreEqual(0x54u, settings.Current.ScreenshotHotkeyVirtualKey);
@@ -233,6 +261,13 @@ public sealed class SettingsTranslationTests
                     "A locked export destination must be a recoverable failure instead of an unhandled UI exception.");
             }
             ImageEntryWindowScenarios.Verify(root);
+            UpdateWindowScenarios.Verify(root);
+            StickyNoteWindowScenarios.Verify(root);
+            PerspectiveSurfaceTests.VerifyLiveControls();
+            EdgeDockScenarios.VerifySettings(window, settings);
+            FloatingPerformanceScenarios.RecordIfRequested(root);
+            EdgeDockScenarios.Verify(root);
+            DocumentationPreviewScenarios.RenderIfRequested(root);
         }
         finally
         {

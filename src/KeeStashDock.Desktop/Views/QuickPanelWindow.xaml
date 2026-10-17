@@ -27,6 +27,7 @@
        click-through, so the square window corners outside the 12px rounded
        border never received WM_NCHITTEST - corner resize was unreachable. -->
   <Grid Background="#01000000">
+    <v:PerspectiveSurface x:Name="SpatialSurface">
     <Border x:Name="RootBorder" Background="{DynamicResource B.PanelBg}"
             BorderBrush="{DynamicResource B.Border}" BorderThickness="1"
             CornerRadius="12">
@@ -34,10 +35,13 @@
         <!-- Optional user background image (ImageBrush set in code); the
              frosted-glass BlurEffect attaches here so it blurs ONLY the
              image, never the content above it. -->
+        <Grid x:Name="BackgroundLayer" IsHitTestVisible="False">
         <Border x:Name="BgImage" CornerRadius="11" Background="Transparent"/>
         <!-- Theme-colored scrim over the image; opacity is user-set
              (Settings > background). Transparent when no image. -->
         <Border x:Name="Scrim" CornerRadius="11" Background="Transparent"/>
+        </Grid>
+        <Border x:Name="DepthHighlight" CornerRadius="11" IsHitTestVisible="False"/>
         <Grid>
           <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>   <!-- top bar (the whole shrunk state) -->
@@ -182,8 +186,21 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <!-- One snippet card. Single click copies (the primary gesture). -->
-              <Border Style="{StaticResource S.Card}"
-                      MouseLeftButtonUp="OnCardClick" Tag="{Binding}">
+              <Grid Margin="8,7" Background="Transparent"
+                    MouseLeftButtonUp="OnCardClick" Tag="{Binding}"
+                    v:FloatingCardMotion.Enabled="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}}"
+                    v:FloatingCardMotion.Target="{Binding ElementName=CardMotionSurface}"
+                    v:FloatingCardMotion.Decoration="{Binding ElementName=CardDepthLayers}"
+                    v:FloatingCardMotion.Highlight="{Binding ElementName=CardDepthHighlight}">
+                <v:CardDepthDecoration x:Name="CardDepthLayers"
+                    OutlineBrush="{DynamicResource B.Border}"
+                    Visibility="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}, Converter={StaticResource BoolToVis}}"/>
+                <Grid x:Name="CardMotionSurface">
+                  <v:SurfaceShadow Spread="4" ShadowOffset="1"
+                                   Strength="{DynamicResource Panel.CardShadowStrength}"
+                                   Visibility="{DynamicResource Panel.ShadowVisibility}"/>
+              <Border Style="{StaticResource S.Card}" Margin="0" Effect="{x:Null}"
+                      Tag="{Binding}">
                 <Grid>
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -257,6 +274,10 @@
                   </DockPanel>
                 </Grid>
               </Border>
+                  <v:CardDepthDecoration x:Name="CardDepthHighlight" IsHighlight="True"
+                      Visibility="{Binding FloatingDepthEnabled, RelativeSource={RelativeSource AncestorType=v:QuickPanelWindow}, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+              </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
@@ -289,5 +310,9 @@
       </Grid>
       </Grid>
     </Border>
+    </v:PerspectiveSurface>
+    <Border x:Name="EdgeDockHandle" Visibility="Collapsed" CornerRadius="3"
+            Background="{DynamicResource B.Accent}" Cursor="Hand"
+            ToolTip="{loc:Tr QuickPanel.EdgeRestore}"/>
   </Grid>
 </Window>

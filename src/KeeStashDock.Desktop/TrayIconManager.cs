@@ -19,6 +19,7 @@ public sealed class TrayIconManager : IDisposable
     public event Action? ShowPanelRequested;
     public event Action? ShowWorkbenchRequested;
     public event Action? ShowSettingsRequested;
+    public event Action? CheckUpdatesRequested;
     public event Action? ExitRequested;
     public event Action? CaptureRequested;
 
@@ -47,9 +48,12 @@ public sealed class TrayIconManager : IDisposable
         menu.Items.Add(loc["App.Tray.Workbench"], null, (_, _) => ShowWorkbenchRequested?.Invoke());
         menu.Items.Add(loc["Screenshot.Capture"], null, (_, _) => CaptureRequested?.Invoke());
         menu.Items.Add(loc["App.Tray.Settings"],  null, (_, _) => ShowSettingsRequested?.Invoke());
+        menu.Items.Add(loc["Updates.Check"], null, (_, _) => CheckUpdatesRequested?.Invoke());
         menu.Items.Add(new WF.ToolStripSeparator());
         menu.Items.Add(loc["App.Tray.Exit"],      null, (_, _) => ExitRequested?.Invoke());
+        var previous = _icon.ContextMenuStrip;
         _icon.ContextMenuStrip = menu;
+        previous?.Dispose();
     }
 
     /// <summary>Balloon/toast helper (e.g. "copied" confirmations if ever needed from tray).</summary>
@@ -58,6 +62,8 @@ public sealed class TrayIconManager : IDisposable
 
     public void Dispose()
     {
+        LocalizationService.Instance.LanguageChanged -= BuildMenu;
+        _icon.ContextMenuStrip?.Dispose();
         _icon.Visible = false;
         _icon.Dispose();
     }

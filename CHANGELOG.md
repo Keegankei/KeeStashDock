@@ -6,6 +6,42 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-17
+
+This version is being prepared for publication. Merge, validation and publication
+status are tracked in the [acceptance record](docs/releases/1.2.2.md).
+
+### Added
+
+- Standard and Spatial panel modes with the same controls, fonts, colors and layout. Spatial adds perspective, layered card outlines and shadows, a thin panel edge, and independent proximity, hover and press feedback.
+- Fixed perspective and Drag to inspect. Hold the right mouse button and drag, then release to retain the angle. A right-click without dragging retains the card menu. Middle-button and custom button/modifier gestures are also supported.
+- Auto-hide at any of the four desktop edges, with a small handle that restores the panel on hover or click. The compact bar retains all six actions and restores the previous expanded size.
+- Screenshot actions to save an image, extract text, or extract and translate. OCR-only results stay in memory; recognized source text remains available after translation failures.
+- A combined selection bubble with separate Copy and Translate buttons, reusable source text, temporary keyboard shortcuts, and clipboard-history deduplication.
+- Explicit update checks in the tray and Settings, official GitHub release discovery, cancellable SHA-256-verified downloads, ownership manifests, same-path replacement, and startup-health rollback/recovery.
+- Regression coverage for screenshot/listener recovery, panel presentation and gestures, selection sessions, release metadata, unsafe packages, managed-file preservation, and interrupted updates.
+
+### Changed
+
+- Named the panel presentations Standard / Spatial in all twenty interface languages without changing saved settings. Expanded the illustrated README into nine languages with native-language navigation.
+- Finalized fresh-install defaults: English; Alt+Q for the panel; Alt+W for screenshots; Google translation; enabled Copy-only selection bubble with Default styling, text glow off and shadow on; edge auto-hide with 2 s / 0.1 s delays; system theme; Standard mode; right-button drag inspection; automatic text colors; 90% controls opacity; no background image; 20% overlay; frosting off with a stored 4 px radius. Startup launch, clipboard collection and direct paste are off; scheduled backups run every 24 hours. Upgrades retain saved preferences.
+- Removed preinstalled OCR engines/models from standard packages. OCR and offline translation both use explicit in-app Install / repair downloads; installed and supported legacy portable components remain available and are preserved during upgrades.
+- Organized the portable package around a root executable, StartHere guide and update manifest, with documentation, licenses, locales and component setup files in named folders. Portable Data remains in its existing location.
+- Reduced repeated perspective hit testing, coordinate conversions and drawing allocations. Card feedback shares a bounded sampler and retained drawing resources; ordinary pointer movement does not rotate the panel. System high-contrast and reduced-animation settings have static fallbacks.
+- Kept translation-provider settings available for screenshot translation when the selection bubble is disabled.
+- Documented manual upgrades from 1.2.1 and earlier 1.2.2 candidates, including re-registering Start with Windows after moving to a new folder.
+
+### Fixed
+
+- Restore the selection watcher after screenshot completion or cancellation so the selection bubble continues working; keep its lifecycle state consistent while screenshot capture suspends it.
+- Prevent the global selection-bubble dismissal handler from cancelling screenshot selection on the first left press.
+- Defer torn-out sticky-note shadows until their initial layout completes, preventing notes from collapsing to narrow lines.
+- Fall back to the official release page when the GitHub API is rate-limited or unreachable, with bounded checks, retry caching/backoff, and localized update errors.
+
+See the [release notes](docs/releases/1.2.2-notes.md) and
+[acceptance record](docs/releases/1.2.2.md) for validation results and remaining
+visual, clean-machine, and platform coverage limits.
+
 ## [1.2.1] - 2026-10-12
 
 First packaged release of the current feature set. Includes the fixes and validation from the earlier 1.1.2 development candidates.
@@ -101,5 +137,6 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
 
-[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

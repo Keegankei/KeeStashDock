@@ -15,6 +15,7 @@ namespace KeeStashDock.Desktop.Views;
 public sealed class HelpWindow : Window
 {
     private static HelpWindow? _open;
+    private readonly TextBlock _document;
 
     public static void ShowGuide(Window owner)
     {
@@ -30,44 +31,51 @@ public sealed class HelpWindow : Window
 
     private HelpWindow()
     {
-        Localization.LocalizationService.Instance.ApplyFlowDirection(this);
-        Localization.LocalizationService.Instance.LanguageChanged +=
-            () => Localization.LocalizationService.Instance.ApplyFlowDirection(this);
         var loc = Localization.LocalizationService.Instance;
-        Title = loc["Help.Title"];
         Width = 520; Height = 620;
         MinWidth = 420; MinHeight = 420;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         SetResourceReference(BackgroundProperty, "B.PanelBg");
 
-        var doc = new TextBlock
+        _document = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12.5,
             LineHeight = 19,
         };
-        doc.SetResourceReference(TextBlock.ForegroundProperty, "B.TextPrimary");
+        _document.SetResourceReference(TextBlock.ForegroundProperty, "B.TextPrimary");
+
+        Content = new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Padding = new Thickness(20, 14, 20, 18),
+            Content = _document,
+        };
+        RefreshContent();
+        loc.LanguageChanged += RefreshContent;
+        Closed += (_, _) => loc.LanguageChanged -= RefreshContent;
+    }
+
+    private void RefreshContent()
+    {
+        var loc = Localization.LocalizationService.Instance;
+        loc.ApplyFlowDirection(this);
+        Title = loc["Help.Title"];
+        _document.Inlines.Clear();
 
         // "## " lines become bold headings; everything else flows as body.
         foreach (string line in loc["Help.Content"].Split('\n'))
         {
             if (line.StartsWith("## ", StringComparison.Ordinal))
             {
-                doc.Inlines.Add(new Run(line[3..])
+                _document.Inlines.Add(new Run(line[3..])
                 { FontWeight = FontWeights.SemiBold, FontSize = 13.5 });
             }
             else
             {
-                doc.Inlines.Add(new Run(line));
+                _document.Inlines.Add(new Run(line));
             }
-            doc.Inlines.Add(new LineBreak());
+            _document.Inlines.Add(new LineBreak());
         }
-
-        Content = new ScrollViewer
-        {
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            Padding = new Thickness(20, 14, 20, 18),
-            Content = doc,
-        };
     }
 }

@@ -2,7 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
+using System.ComponentModel;
+using KeeStashDock.Infrastructure.Storage;
 
 namespace KeeStashDock.Desktop.Views;
 
@@ -25,6 +26,10 @@ namespace KeeStashDock.Desktop.Views;
 public sealed class StickyNoteWindow : Window
 {
     private static int _spawnOffset;
+    private readonly PanelShadowWindow _shadow;
+    private readonly SettingsStore? _settings;
+    private readonly ScaleTransform _entranceScale = new(1, 1);
+    private bool _floating, _closed;
 
     /// <param name="item">The card being torn out (title / content / badge /
     /// time render exactly as the panel shows them).</param>
@@ -32,8 +37,11 @@ public sealed class StickyNoteWindow : Window
     /// the note overrides B.CardBg with the same alpha so a translucent
     /// panel tears out an equally translucent note.</param>
     public StickyNoteWindow(ViewModels.SnippetItemViewModel item,
-                            double cardOpacity = 1.0)
+                            double cardOpacity = 1.0, bool floating = false,
+                            SettingsStore? settings = null)
     {
+        _floating = floating;
+        _settings = settings;
         Localization.LocalizationService.Instance.ApplyFlowDirection(this);
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
@@ -142,9 +150,22 @@ public sealed class StickyNoteWindow : Window
         {
             Style = (Style)Application.Current.FindResource("S.Card"),
             Margin = new Thickness(0),
+            Effect = null,
             Child = grid,
         };
         Content = card;
+        _shadow = new PanelShadowWindow(this, radius: 10);
+        SystemParameters.StaticPropertyChanged += OnSystemSettingsChanged;
+        if (_settings is not null) _settings.Changed += OnSettingsChanged;
+        Closed += (_, _) =>
+        {
+            _closed = true;
+            ResetEntrance();
+            _shadow.Dispose();
+            SystemParameters.StaticPropertyChanged -= OnSystemSettingsChanged;
+            if (_settings is not null) _settings.Changed -= OnSettingsChanged;
+        };
+        ApplyAppearance();
 
         // ---- Gestures -----------------------------------------------------
         // Drag anywhere (except the X); a press WITHOUT movement is a click
@@ -157,6 +178,7 @@ public sealed class StickyNoteWindow : Window
             if (e.OriginalSource is DependencyObject d &&
                 FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(d) is not null)
                 return;
+            ResetEntrance();
             double x = Left, y = Top;
             try { DragMove(); } catch (InvalidOperationException) { return; }
             if (Math.Abs(Left - x) < 2 && Math.Abs(Top - y) < 2)
@@ -182,23 +204,20 @@ public sealed class StickyNoteWindow : Window
         // WPF forbids RenderTransform on a WINDOW (CoerceRenderTransform
         // throws InvalidOperationException) - the scale must live on the
         // window's CONTENT; only Opacity may animate at window level.
-        Opacity = 0;
-        var scale = new ScaleTransform(0.94, 0.94);
+        bool animate = _floating && FloatingCardMotion.AnimationsAllowed;
+        Opacity = 1;
+        _entranceScale.ScaleX = _entranceScale.ScaleY = animate ? 0.96 : 1;
         if (Content is FrameworkElement root)
         {
             root.RenderTransformOrigin = new Point(0.5, 0.5);
-            root.RenderTransform = scale;
+            root.RenderTransform = _entranceScale;
         }
         Show();
-
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160))
-            { EasingFunction = ease });
-        var grow = new DoubleAnimation(0.94, 1.0, TimeSpan.FromMilliseconds(180))
-        { EasingFunction = ease };
-        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
-        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        if (animate)
+        {
+            new MotionValue(_entranceScale, ScaleTransform.ScaleXProperty).To(1);
+            new MotionValue(_entranceScale, ScaleTransform.ScaleYProperty).To(1);
+        }
 
         // Take over the in-progress drag. Queued at Input priority so the
         // window has a source; guarded in case the button was released in
@@ -207,10 +226,33 @@ public sealed class StickyNoteWindow : Window
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
             () =>
             {
+                if (_closed || !IsVisible) return;
                 Mouse.Capture(null);
                 if (Mouse.LeftButton == MouseButtonState.Pressed)
                     try { DragMove(); } catch (InvalidOperationException) { }
             });
+    }
+
+    private void OnSettingsChanged()
+    {
+        if (!_closed && !Dispatcher.HasShutdownStarted) Dispatcher.Invoke(ApplyAppearance);
+    }
+
+    private void OnSystemSettingsChanged(object? sender, PropertyChangedEventArgs e) => OnSettingsChanged();
+
+    private void ApplyAppearance()
+    {
+        if (_closed) return;
+        if (_settings is not null) _floating = _settings.Current.FloatingPanelEnabled;
+        if (!_floating || !FloatingCardMotion.AnimationsAllowed) ResetEntrance();
+        _shadow.UpdateAppearance(!SystemParameters.HighContrast, _floating, emphasized: true);
+    }
+
+    private void ResetEntrance()
+    {
+        _entranceScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        _entranceScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        _entranceScale.ScaleX = _entranceScale.ScaleY = 1;
     }
 
     private static T? FindAncestor<T>(DependencyObject? d) where T : DependencyObject

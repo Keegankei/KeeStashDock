@@ -11,27 +11,35 @@ The first version supports printed English and Simplified Chinese using official
 Tesseract `tessdata_fast` models. Handwriting, rotated text, tiny fonts, complex
 tables, and Traditional Chinese are not guaranteed. Always review recognized text.
 
-Models are local assets, not committed binaries. Standard release packages include
-them. If they are missing or damaged, open Settings and use **Install / repair OCR**.
-Installation runs in the background, shows progress and failures, and can be
-cancelled. Models installed through the app go to
-`%LOCALAPPDATA%\KeeStashDock\OcrModels`, so a read-only application directory does
-not prevent installation. Recognition prefers a complete valid user model set,
-then the models bundled with the executable. It never downloads during recognition.
+The standard 1.2.2 package does not preinstall the OCR engine or language
+models. Before first recognition, open **Settings > Optional components** and
+choose **Install / repair** for text recognition. This explicit setup downloads
+and verifies the required engine and models, shows progress and failures, and
+can be cancelled. Recognition itself never downloads components.
 
-For maintainers, prepare models before building a distributable:
+The downloaded engine lives in `%LOCALAPPDATA%\KeeStashDock\OcrEngine` and the
+models in `%LOCALAPPDATA%\KeeStashDock\OcrModels`, so a read-only application
+directory does not prevent installation. Existing portable `x64` engines and
+`OcrModels` assets remain supported. Recognition prefers a complete valid user
+model set, then a valid portable model set.
+
+For maintainers, install both engine and models into isolated diagnostic folders:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/ocr/Setup.ps1 `
+  -Destination artifacts/ocr-check/OcrModels `
+  -EngineDirectory artifacts/ocr-check/x64
 ```
 
 The script downloads `eng.traineddata`, `chi_sim.traineddata`, and their Apache 2.0
 license from the official `tesseract-ocr/tessdata_fast` repository at fixed commit
-`87416418657359cb625c412a48b6e1d6d41c29bd`, checks each SHA256, and places them in
-`tools/ocr/models`. Builds and publishes copy these assets to `OcrModels` beside
-the executable. The same setup script ships as `OcrModels/Setup.ps1` for
-manual diagnostics; ordinary users can use the Settings installation button.
-GitHub access is needed only for this explicit setup step;
+`87416418657359cb625c412a48b6e1d6d41c29bd`, checks each SHA256, and installs them
+alongside the separately verified native engine. Without explicit destinations,
+setup uses the per-user folders described above. Installed components and local
+test caches are not included in a standard publish.
+OCR setup scripts ship in `OcrModels` for diagnostics; ordinary users should use
+the Settings installation button, which handles both engine and model setup.
+NuGet and GitHub access is needed only for this explicit setup step;
 recognition works offline afterwards. The Settings installer also checks the native
 engine and, when needed, downloads Microsoft's signed Visual C++ x64 runtime.
 Windows may request administrator permission; a required restart is reported
@@ -47,7 +55,8 @@ separate OCR recognition cancel button, which stops the recognition process.
 
 ## Engine and limits
 
-The pinned `TesseractOCR` NuGet package is version 5.5.2. Its bundled Windows x64
+Explicit installation downloads the pinned `TesseractOCR` 5.5.2 NuGet archive,
+verifies its SHA-256, and extracts only allowlisted native files. Its Windows x64
 CLI reports Tesseract 5.5.0 and Leptonica 1.85.0. This package's native DLLs require
 the Microsoft Visual C++ v14 x64 runtime. If the engine cannot start, use the OCR
 **Install / repair** button in Settings; it obtains the verified installer from
@@ -69,9 +78,11 @@ portable unpackaged app.
 
 The caller hides app windows before a frozen desktop snapshot is taken. One
 selector covers each monitor. Selection coordinates are physical pixels, allowing
-negative monitor origins and different display scales. Drag a region to save;
-Escape or right-click cancels without creating an entry. Screens are held in
-memory only for selection; only the chosen region becomes the saved PNG.
+negative monitor origins and different display scales. Press Alt+W or a screenshot
+button, select a region, then choose Save screenshot, Extract text, or Extract and
+translate. Enter saves; Escape or right-click cancels without creating an entry.
+Screens are held in memory for selection; only a region explicitly saved becomes
+a stored PNG. Recognition-only results remain temporary.
 
 ## Sources and licenses
 
