@@ -231,7 +231,7 @@ internal static class UpdateWindowScenarios
         {
             // Replace only the fixture's displayed path, never its I/O destination.
             // The screenshot contains no maintainer username or temporary path.
-            target.Text = string.Format(L("Updates.Target"), @"C:\Apps\KeeStashDock (example)");
+            target.Text = string.Format(L("Updates.Target"), "[hidden for privacy]");
             window.UpdateLayout();
             var content = (FrameworkElement)window.Content;
             int width = (int)Math.Ceiling(content.ActualWidth + 44);

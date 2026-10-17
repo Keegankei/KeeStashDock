@@ -61,10 +61,21 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 選取文字泡泡預設開啟，動作為**僅複製**，翻譯引擎為 **Google**；泡泡採用預設樣式，關閉文字發光、開啟懸浮陰影。開機啟動、自動收集剪貼簿與直接貼上預設關閉。貼邊自動收納預設開啟，收起延遲 **2 秒**、展開延遲 **0.1 秒**。外觀跟隨系統，使用**標準**模式；空間模式的檢視方式預設為**按住右鍵拖曳**。面板文字配色自動，控制項不透明度 **90%**；無背景圖，遮罩不透明度 **20%**，毛玻璃關閉，預設半徑 **4 px**。定時自動備份預設開啟，每 **24 小時**執行。
 
+<details>
+<summary>全新安裝的設定 · 英文介面</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.2 設定頁面，顯示英文、Alt+Q 與 Alt+W 預設值"></p>
+
+</details>
+
 <a id="features"></a>
 ## 功能介紹
 
-以下預覽展示實際應用程式控制項，內容為合成範例。檢視動圖使用這些控制項與模擬指標產生；更新預覽使用模擬版本。圖片不包含個人桌面或剪貼簿內容。[圖片來源與產生方式](docs/images/README.md)。 圖片可能顯示早期候選版設定，與上述全新安裝預設值不同。
+以下預覽展示 **1.2.2 的實際英文介面**，內容為合成範例。標準面板使用全新安裝的外觀預設值；空間模式及同時顯示「複製 / 翻譯」的氣泡示範選用設定。空間檢視動圖使用模擬指標，更新預覽使用模擬版本。安裝路徑和資料路徑已遮蔽，不包含個人桌面或剪貼簿內容。[圖片來源與產生方式](docs/images/README.md)。
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 標準面板操作：輸入並儲存文字片段，再釘選和取消釘選卡片"></p>
+
+*標準模式 · 輸入、儲存、釘選與取消釘選 · 英文介面。使用實際控制項和範例內容示範預設操作。*
 
 ### 1. 收集、搜尋與整理
 
@@ -74,7 +85,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 | 工具 | 可以完成的操作 |
 | --- | --- |
-| 快速輸入與搜尋 | 按 Enter 儲存文字；用 Alt+Enter 或 Shift+Enter 換行；輸入搜尋內容時即時篩選項目。 |
+| 快速輸入與搜尋 | 按 Enter 儲存文字；用 Alt+Enter 或 Shift+Enter 換行；在工作台搜尋和篩選項目。 |
 | 拖入面板 | 拖入文字即可儲存，拖入檔案或資料夾則儲存其路徑。點選路徑卡片開啟目標；以右鍵選擇**複製**可複製路徑。不會匯入檔案內容。 |
 | 群組、標籤與釘選 | 將相關項目放在一起，編輯標題、內文與標籤，並釘選常用內容。 |
 | 有效期限與資源回收筒 | 可選永不過期、一天、七天或閱後即焚；過期與刪除的項目進入資源回收筒，可以還原。資源回收筒中的項目預設於 30 天後永久刪除。 |
@@ -110,6 +121,13 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 支援淺色、深色與跟隨系統佈景主題，可設定自訂背景、透明度與磨砂效果。系統高對比與減少動畫的偏好會啟用靜態替代顯示。[深色預覽](docs/images/floating-panel-dark.png) · [固定視角預覽](docs/images/floating-panel-fixed.png) · [效能測量與限制](docs/performance/1.2.2-floating.md)。
 
 設定也提供面板文字配色、自訂文字顏色與自動對比度，以及獨立的選取文字泡泡樣式、發光、陰影與透明度控制。
+
+<details>
+<summary>預設外觀設定</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="外觀設定，顯示標準模式與全新安裝預設值"></p>
+
+</details>
 
 ### 3. 螢幕擷取與本機文字辨識
 
@@ -147,11 +165,18 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 雲端翻譯僅將主動要求翻譯的文字傳送給所選服務，不會自動切換服務商。OCR 不上傳圖片。服務憑證以**明文**儲存在本機 `settings.json`；輸入欄位的遮蔽顯示不代表加密。
 
+<details>
+<summary>預設選取文字與翻譯設定</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="行為設定，預設僅複製、Google、關閉文字發光並開啟懸浮陰影"></p>
+
+</details>
+
 ### 5. 在應用程式內安裝選用元件
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="選用元件設定，提供 OCR 與離線翻譯的安裝及修復按鈕"></p>
 
-*圖中為 1.2.1 元件尚未安裝的範例狀態。一般設定透過應用程式內按鈕完成，無需終端機命令。*
+*圖中為 1.2.2 全新安裝的元件設定：OCR 和離線翻譯尚未安裝。使用這些應用程式內按鈕即可安裝，無需終端機命令。*
 
 1. 開啟**設定 > 選用元件**。
 2. 首次使用 OCR 前，在**文字辨識（中文 / 英文）**下選擇**安裝 / 修復**。1.2.2 不預先安裝 OCR 或本機翻譯引擎及模型；主動安裝時才下載並驗證所需檔案，同時檢查本機執行階段。
@@ -165,9 +190,9 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 ### 6. 檢查更新 · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="更新視窗展示模擬的新版本與範例安裝路徑"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="更新視窗展示模擬的新版本，安裝路徑已遮蔽"></p>
 
-*圖中的版本與路徑僅供示範，不表示已有該版本可供下載。*
+*圖中的版本為模擬範例，安裝路徑已遮蔽，不表示已有該版本可供下載。*
 
 在系統匣選單或**設定 > 關於**中選擇**檢查更新**。檢查不會自動下載或安裝。下載時會驗證 SHA-256 與套件內容；**重新啟動並升級**需要個別確認。更新程式在原有路徑替換受管理的應用程式檔案，保留使用者資料與已安裝元件，並在啟動失敗時保留復原資訊。
 
@@ -189,6 +214,13 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 <a id="data-and-upgrades"></a>
 ## 資料、備份與升級
+
+<details>
+<summary>備份設定 · 預設每 24 小時自動備份</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="資料設定，預設每 24 小時自動備份，路徑已遮蔽"></p>
+
+</details>
 
 項目、圖片、辨識文字與備份皆儲存在本機。可攜式資料通常位於執行檔旁的 `Data` 資料夾。如果該位置無法寫入，應用程式會改用 `%AppData%\KeeStashDock`，並在設定中提示。透過應用程式安裝的元件通常位於 `%LOCALAPPDATA%\KeeStashDock`，與收藏內容分開儲存。
 

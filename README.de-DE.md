@@ -61,10 +61,21 @@ Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. 
 
 Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard, Textleuchten aus, Schatten an. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
 
+<details>
+<summary>Einstellungen einer Neuinstallation · englische Oberfläche</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Einstellungen von 1.2.2 mit Englisch, Alt+Q und Alt+W als Voreinstellungen"></p>
+
+</details>
+
 <a id="features"></a>
 ## Funktionen
 
-Die folgenden Vorschaubilder zeigen echte Bedienelemente der Anwendung mit synthetischen Beispieldaten. Das GIF zur Ansichtsprüfung wird aus diesen Bedienelementen mit einem simulierten Zeiger erzeugt. Die Updatevorschau verwendet eine simulierte Veröffentlichung; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md). Die Bilder können Einstellungen früherer Kandidaten zeigen, die von den obigen Voreinstellungen abweichen.
+Die Vorschauen zeigen die tatsächliche **englische Oberfläche von 1.2.2** mit synthetischen Beispieldaten. Das Standardpanel verwendet die Darstellungseinstellungen einer Neuinstallation; der räumliche Modus und die Blase mit Kopieren / Übersetzen zeigen optionale Einstellungen. Der Zeiger im GIF des räumlichen Modus und die Veröffentlichung in der Updatevorschau sind simuliert. Installations- und Datenpfade sind verdeckt; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md).
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Ablauf im Standardpanel von 1.2.2: Text eingeben, speichern, Karte anheften und lösen"></p>
+
+*Standardmodus · Eingeben, Speichern, Anheften und Lösen · englische Oberfläche. Skriptgesteuerte Bedienung echter Steuerelemente mit Beispieldaten.*
 
 ### 1. Erfassen, finden und organisieren
 
@@ -74,7 +85,7 @@ Verwenden Sie das Schnellpanel für kurze Eingaben und die **Werkbank** zur Verw
 
 | Werkzeug | Möglichkeiten |
 | --- | --- |
-| Schnelleingabe und Suche | Text mit Enter speichern; mit Alt+Enter oder Shift+Enter Zeilenumbrüche einfügen; Einträge während der Eingabe durchsuchen. |
+| Schnelleingabe und Suche | Text mit Enter speichern; mit Alt+Enter oder Shift+Enter Zeilenumbrüche einfügen; Einträge in der Werkbank suchen und filtern. |
 | In das Dock ziehen | Text ablegen, um ihn zu speichern, oder Dateien und Ordner ablegen, um deren Pfade zu speichern. Ein Klick auf eine Pfadkarte öffnet das Ziel; über **Kopieren** im Rechtsklickmenü wird der Pfad kopiert. Dateiinhalte werden nicht importiert. |
 | Gruppen, Tags und Anheften | Zusammengehörige Einträge bündeln, Titel/Text/Tags bearbeiten und häufig verwendete Inhalte anheften. |
 | Ablauf und Papierkorb | Nie, einen Tag, sieben Tage oder Löschen nach dem Lesen wählen; abgelaufene und gelöschte Einträge gelangen zur Wiederherstellung in den Papierkorb. Einträge im Papierkorb werden standardmäßig nach 30 Tagen endgültig entfernt. |
@@ -110,6 +121,13 @@ Wählen Sie **Einstellungen > Panelmodus**. Beide Modi behalten dieselben Bedien
 Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png) · [Gemessene Leistung und Grenzen](docs/performance/1.2.2-floating.md).
 
 Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene Textfarbe und automatischen Kontrast sowie unabhängige Optionen für Stil, Leuchten, Schatten und Deckkraft der Auswahlblase.
+
+<details>
+<summary>Voreinstellungen für die Darstellung</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Darstellungseinstellungen mit Standardmodus und den Voreinstellungen einer Neuinstallation"></p>
+
+</details>
 
 ### 3. Screenshots und lokale Texterkennung
 
@@ -147,11 +165,18 @@ Die Zielsprache der Übersetzung folgt der Oberflächensprache der App. Welche Z
 
 Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anbieter gesendet; es erfolgt kein automatischer Anbieterwechsel. OCR lädt keine Bilder hoch. Zugangsdaten der Anbieter werden **im Klartext** in der lokalen `settings.json` gespeichert; verdeckte Eingabefelder verschlüsseln sie nicht.
 
+<details>
+<summary>Voreinstellungen für Textauswahl und Übersetzung</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Verhaltenseinstellungen mit Nur kopieren, Google, deaktiviertem Textleuchten und aktiviertem Schatten"></p>
+
+</details>
+
 ### 5. Optionale Komponenten direkt in der App installieren
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Einstellungen für optionale Komponenten mit Schaltflächen zum Installieren und Reparieren von OCR und Offline-Übersetzung"></p>
 
-*Die Komponentensteuerung zeigt den beispielhaften Zustand „nicht installiert“ aus 1.2.1. Die normale Einrichtung erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
+*Die Komponenteneinstellungen zeigen den Zustand einer Neuinstallation von 1.2.2: OCR und Offline-Übersetzung sind nicht installiert. Die Installation erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
 
 1. Öffnen Sie **Einstellungen > Optionale Komponenten**.
 2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.2 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
@@ -165,9 +190,9 @@ Die erste Einrichtung benötigt Internetzugriff auf die jeweiligen Downloadserve
 
 ### 6. Nach Updates suchen · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="Updatedialog mit einer simulierten neueren Veröffentlichung und einem beispielhaften Installationspfad"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="Updatedialog mit einer simulierten neueren Veröffentlichung und verdecktem Installationspfad"></p>
 
-*Die angezeigte Version und der Pfad dienen der Veranschaulichung; dieses Bild kündigt keine verfügbare Veröffentlichung an.*
+*Die angezeigte Veröffentlichung ist simuliert, der Installationspfad ist verdeckt. Dieses Bild kündigt keine verfügbare Veröffentlichung an.*
 
 Verwenden Sie **Nach Updates suchen** im Infobereich-Menü oder unter **Einstellungen > Über**. Eine Prüfung lädt oder installiert nichts automatisch. Beim Download werden SHA-256 und Paketinhalt geprüft; **Neu starten und aktualisieren** benötigt eine separate Bestätigung. Der Updater ersetzt verwaltete Anwendungsdateien am vorhandenen Pfad, bewahrt Benutzerdaten und installierte Komponenten und hält Wiederherstellungsinformationen bereit, falls der Start fehlschlägt.
 
@@ -189,6 +214,13 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 
 <a id="data-and-upgrades"></a>
 ## Daten, Sicherung und Upgrades
+
+<details>
+<summary>Sicherungseinstellungen · standardmäßig alle 24 Stunden</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Dateneinstellungen mit automatischen Sicherungen alle 24 Stunden und verdeckten Pfaden"></p>
+
+</details>
 
 Einträge, Bilder, erkannter Text und Sicherungen werden lokal gespeichert. Portable Daten liegen normalerweise in `Data` neben der ausführbaren Datei. Ist dieser Ordner nicht beschreibbar, verwendet die App `%AppData%\KeeStashDock` und zeigt den Ersatzpfad in den Einstellungen an. Über die App installierte Komponenten nutzen normalerweise `%LOCALAPPDATA%\KeeStashDock`, getrennt von Ihrer Sammlung.
 

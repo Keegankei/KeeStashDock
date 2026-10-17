@@ -61,10 +61,21 @@ Una suma de comprobación verifica la integridad del archivo; no es una firma de
 
 La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo predeterminado, brillo del texto desactivado y sombra activada. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Estándar**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
 
+<details>
+<summary>Ajustes de una instalación nueva · interfaz en inglés</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Ajustes de 1.2.2 con inglés, Alt+Q y Alt+W como valores iniciales"></p>
+
+</details>
+
 <a id="features"></a>
 ## Funciones
 
-Las vistas previas siguientes muestran controles reales de la aplicación con contenido de ejemplo ficticio. El GIF de inspección se genera a partir de esos controles con un puntero simulado. La vista previa de actualización utiliza una publicación simulada; no aparece contenido personal del escritorio ni del portapapeles. [Origen y reproducción de las imágenes](docs/images/README.md). Las imágenes pueden mostrar ajustes de candidatos anteriores, distintos de estos valores iniciales.
+Estas vistas previas muestran la **interfaz real en inglés de 1.2.2** con datos de ejemplo ficticios. El panel Estándar utiliza los ajustes de apariencia de una instalación nueva; el modo Espacial y la burbuja Copiar / Traducir muestran opciones configurables. El puntero del GIF del modo Espacial y la publicación de la vista previa de actualización son simulados. Las rutas de instalación y de datos están ocultas; no aparece contenido personal del escritorio ni del portapapeles. [Origen y reproducción de las imágenes](docs/images/README.md).
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Flujo del panel Estándar de 1.2.2: escribir, guardar, fijar y desfijar una tarjeta"></p>
+
+*Modo Estándar · escribir, guardar, fijar y desfijar · interfaz en inglés. Interacción automatizada con controles reales y datos de ejemplo.*
 
 ### 1. Capturar, buscar y organizar
 
@@ -74,7 +85,7 @@ Utiliza el panel rápido para capturas breves y el **área de trabajo** para ges
 
 | Herramienta | Qué puedes hacer |
 | --- | --- |
-| Entrada rápida y búsqueda | Guarda texto con Enter; inserta saltos de línea con Alt+Enter o Shift+Enter; busca entradas mientras escribes. |
+| Entrada rápida y búsqueda | Guarda texto con Enter; inserta saltos de línea con Alt+Enter o Shift+Enter; busca y filtra entradas en el área de trabajo. |
 | Arrastrar al panel | Suelta texto para guardarlo, o archivos y carpetas para guardar sus rutas. Haz clic en una tarjeta de ruta para abrir su destino; elige **Copiar** en el menú del clic derecho para copiar la ruta. No se importa el contenido de los archivos. |
 | Grupos, etiquetas y elementos fijados | Agrupa entradas relacionadas, edita su título, texto y etiquetas, y fija el contenido que utilices con frecuencia. |
 | Caducidad y papelera | Elige sin caducidad, un día, siete días o eliminación tras la lectura; las entradas caducadas y eliminadas pasan a la papelera y pueden recuperarse. De forma predeterminada, las entradas de la papelera se eliminan permanentemente después de 30 días. |
@@ -110,6 +121,13 @@ Selecciona **Configuración > Modo del panel**. Ambos modos mantienen los mismos
 Hay temas claro, oscuro y del sistema, con ajustes de fondo personalizado, opacidad y efecto esmerilado. Las preferencias del sistema de alto contraste y reducción de animaciones ofrecen alternativas estáticas. [Vista previa oscura](docs/images/floating-panel-dark.png) · [Vista previa fija](docs/images/floating-panel-fixed.png) · [Rendimiento medido y límites](docs/performance/1.2.2-floating.md).
 
 La configuración también ofrece paletas de texto para el panel, un color de texto personalizado y contraste automático, además de controles independientes de estilo, resplandor, sombra y opacidad para la burbuja de selección.
+
+<details>
+<summary>Ajustes de apariencia predeterminados</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Ajustes de apariencia con modo Estándar y valores de una instalación nueva"></p>
+
+</details>
 
 ### 3. Capturas de pantalla y reconocimiento local de texto
 
@@ -147,11 +165,18 @@ El idioma de destino de la traducción sigue el idioma de la interfaz de la apli
 
 La traducción en la nube envía únicamente el texto solicitado al proveedor seleccionado, sin cambiar automáticamente de proveedor. El OCR no sube imágenes. Las credenciales de los proveedores se almacenan **en texto plano** en el archivo local `settings.json`; ocultar los caracteres de los campos no los cifra.
 
+<details>
+<summary>Ajustes de selección y traducción predeterminados</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Ajustes de comportamiento con Solo copiar, Google, resplandor desactivado y sombra activada"></p>
+
+</details>
+
 ### 5. Instalar componentes opcionales desde la aplicación
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Configuración de componentes opcionales con botones de instalación y reparación de OCR y traducción sin conexión"></p>
 
-*Los controles de componentes se muestran en un estado de ejemplo sin instalar de la versión 1.2.1. La instalación habitual se realiza con estos botones integrados; no requiere comandos de terminal.*
+*Los ajustes de componentes muestran el estado de una instalación nueva de 1.2.2: OCR y traducción sin conexión no están instalados. Estos botones integrados permiten instalarlos sin comandos de terminal.*
 
 1. Abre **Configuración > Componentes opcionales**.
 2. Antes de usar el OCR por primera vez, elige **Instalar / reparar** en **Reconocimiento de texto (chino / inglés)**. El paquete 1.2.2 no preinstala motores ni modelos de OCR o traducción local. La instalación iniciada explícitamente descarga y verifica los archivos necesarios y comprueba el entorno de ejecución nativo.
@@ -165,9 +190,9 @@ La instalación inicial necesita acceso a Internet a los servidores de descarga 
 
 ### 6. Buscar actualizaciones · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="Diálogo de actualización con una versión más reciente simulada y una ruta de instalación de ejemplo"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="Diálogo de actualización con una versión más reciente simulada y la ruta de instalación oculta"></p>
 
-*La versión y la ruta mostradas son ilustrativas; esta imagen no anuncia una versión disponible.*
+*La publicación mostrada es simulada y la ruta de instalación está oculta. Esta imagen no anuncia una versión disponible.*
 
 Utiliza **Buscar actualizaciones** en el menú de la bandeja o en **Configuración > Acerca de**. La búsqueda no descarga ni instala nada automáticamente. La descarga verifica el SHA-256 y el contenido del paquete; **Reiniciar y actualizar** requiere una confirmación independiente. El actualizador sustituye los archivos administrados de la aplicación en la ruta existente, conserva los datos del usuario y los componentes instalados, y mantiene información de recuperación si el inicio falla.
 
@@ -189,6 +214,13 @@ El paquete organizado contiene tres archivos en la raíz: `KeeStashDock.exe`, `S
 
 <a id="data-and-upgrades"></a>
 ## Datos, copias de seguridad y actualizaciones
+
+<details>
+<summary>Copias de seguridad · cada 24 horas por defecto</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Ajustes de datos con copias automáticas cada 24 horas y rutas ocultas"></p>
+
+</details>
 
 Las entradas, imágenes, textos reconocidos y copias de seguridad se almacenan localmente. Los datos portátiles suelen estar en `Data`, junto al ejecutable. Si esa carpeta no permite escritura, la aplicación utiliza `%AppData%\KeeStashDock` e informa de la ubicación alternativa en la configuración. Los componentes instalados desde la aplicación suelen utilizar `%LOCALAPPDATA%\KeeStashDock`, separados de tu colección.
 

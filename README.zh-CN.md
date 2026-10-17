@@ -61,10 +61,21 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 划词气泡默认开启，动作为**仅复制**，翻译引擎为 **Google**；气泡采用默认样式，关闭文字发光、开启悬浮投影。开机启动、自动收集剪贴板和直接粘贴默认关闭。贴边自动收纳默认开启，收起延时 **2 秒**、展开延时 **0.1 秒**。外观跟随系统，使用**标准**模式；空间模式的检视方式预设为**按住右键拖动**。面板文字配色自动，控件不透明度 **90%**；无背景图，蒙层不透明度 **20%**，毛玻璃关闭，预设半径 **4 px**。定时自动备份默认开启，每 **24 小时**运行。
 
+<details>
+<summary>全新安装的设置 · 英文界面</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.2 设置页面，显示英文、Alt+Q 与 Alt+W 默认值"></p>
+
+</details>
+
 <a id="features"></a>
 ## 功能介绍
 
-以下预览展示实际应用控件，内容为合成示例。检视动图使用这些控件与模拟指针生成；更新预览使用模拟版本。图片不包含个人桌面或剪贴板内容。[图片来源与生成方式](docs/images/README.md)。 图片可能展示早期候选版设置，与上述全新安装默认值不同。
+以下预览展示 **1.2.2 的实际英文界面**，内容为合成示例。标准面板使用全新安装的外观默认值；空间模式及同时显示“复制 / 翻译”的气泡演示可选设置。空间检视动图使用模拟指针，更新预览使用模拟版本。安装路径和数据路径已遮蔽，不包含个人桌面或剪贴板内容。[图片来源与生成方式](docs/images/README.md)。
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 标准面板操作：输入并保存文本片段，再置顶和取消置顶卡片"></p>
+
+*标准模式 · 输入、保存、置顶与取消置顶 · 英文界面。使用实际控件和示例内容演示预设操作。*
 
 ### 1. 收集、查找与整理
 
@@ -74,7 +85,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 | 工具 | 可以完成的操作 |
 | --- | --- |
-| 快速输入与搜索 | 按 Enter 保存文字；用 Alt+Enter 或 Shift+Enter 换行；输入搜索内容时实时筛选条目。 |
+| 快速输入与搜索 | 按 Enter 保存文字；用 Alt+Enter 或 Shift+Enter 换行；在工作台搜索和筛选条目。 |
 | 拖入面板 | 拖入文字即可保存，拖入文件或文件夹则保存其路径。点击路径卡片打开目标；右键选择**复制**可复制路径。不会导入文件内容。 |
 | 分组、标签与置顶 | 将相关条目放在一起，编辑标题、正文和标签，并置顶常用内容。 |
 | 有效期与回收站 | 可选永不过期、一天、七天或阅后即焚；过期和删除的条目进入回收站，可以恢复。回收站条目默认在 30 天后永久删除。 |
@@ -110,6 +121,13 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 支持浅色、深色和跟随系统主题，可设置自定义背景、透明度和磨砂效果。系统高对比度及减少动画的偏好会启用静态回退显示。[深色预览](docs/images/floating-panel-dark.png) · [固定视角预览](docs/images/floating-panel-fixed.png) · [性能测量与限制](docs/performance/1.2.2-floating.md)。
 
 设置还提供面板文字配色方案、自定义文字颜色和自动对比度，以及独立的划词气泡样式、发光、阴影和透明度控制。
+
+<details>
+<summary>默认外观设置</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="外观设置，显示标准模式与全新安装默认值"></p>
+
+</details>
 
 ### 3. 截图与本地文字识别
 
@@ -147,11 +165,18 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 云翻译仅将主动请求翻译的文字发送给所选服务，不会自动切换服务商。OCR 不上传图片。服务凭据以**明文**保存在本地 `settings.json` 中；输入框的遮掩显示不代表加密。
 
+<details>
+<summary>默认划词与翻译设置</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="行为设置，默认仅复制、Google、关闭文字发光并开启悬浮投影"></p>
+
+</details>
+
 ### 5. 在应用内安装可选组件
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="可选组件设置，提供 OCR 和离线翻译的安装及修复按钮"></p>
 
-*图中为 1.2.1 组件尚未安装的示例状态。正常设置通过应用内按钮完成，无需终端命令。*
+*图中为 1.2.2 全新安装的组件设置：OCR 和离线翻译尚未安装。使用这些应用内按钮即可安装，无需终端命令。*
 
 1. 打开**设置 > 可选组件**。
 2. 首次使用 OCR 前，在**文字识别（中文 / 英文）**下选择**安装 / 修复**。1.2.2 不预装 OCR 或本地翻译引擎及模型；主动安装时才下载并验证所需文件，同时检查本机运行库。
@@ -165,9 +190,9 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 ### 6. 检查更新 · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="更新窗口展示模拟的新版本和示例安装路径"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="更新窗口展示模拟的新版本，安装路径已遮蔽"></p>
 
-*图中的版本与路径仅供演示，不表示已有该版本可供下载。*
+*图中的版本为模拟示例，安装路径已遮蔽，不表示已有该版本可供下载。*
 
 在托盘菜单或**设置 > 关于**中选择**检查更新**。检查不会自动下载或安装。下载时会验证 SHA-256 和软件包内容；**重启并升级**需要单独确认。更新程序在原有路径替换受管理的应用文件，保留用户数据和已安装组件，并在启动失败时保留恢复信息。
 
@@ -189,6 +214,13 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 <a id="data-and-upgrades"></a>
 ## 数据、备份与升级
+
+<details>
+<summary>备份设置 · 默认每 24 小时自动备份</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="数据设置，默认每 24 小时自动备份，路径已遮蔽"></p>
+
+</details>
 
 条目、图片、识别文字和备份均保存在本地。便携数据通常位于可执行文件旁的 `Data` 文件夹。如该位置不可写，应用会改用 `%AppData%\KeeStashDock`，并在设置中提示。通过应用安装的组件通常位于 `%LOCALAPPDATA%\KeeStashDock`，与内容收藏分开存放。
 

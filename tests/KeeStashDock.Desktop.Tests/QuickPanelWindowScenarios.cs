@@ -440,6 +440,7 @@ internal static class QuickPanelWindowScenarios
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
                 using (var output = File.Create(Path.Combine(directory, name))) encoder.Save(output);
+                if (!floating) StandardPreviewRecorder.Record(panel, directory);
                 if (floating && !dark && follow) PerspectivePreviewRecorder.Record(panel, movePointer, directory);
             }
         }

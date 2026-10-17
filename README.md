@@ -61,10 +61,21 @@ A checksum checks file integrity; it is not a publisher signature. The current p
 
 The selection bubble is enabled in **Copy only** mode with **Google** selected for translation, Default styling, text glow off and drop shadow on. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
 
+<details>
+<summary>Fresh-install settings · English interface</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="The 1.2.2 Settings page with English, Alt+Q and Alt+W defaults"></p>
+
+</details>
+
 <a id="features"></a>
 ## Features
 
-The previews below show actual application controls with synthetic sample content. The inspection GIF is generated from those controls using a simulated pointer. The update preview uses a simulated release; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md). Images may show settings from earlier candidates rather than the fresh-install defaults above.
+These previews show the actual **1.2.2 English interface** with synthetic sample content. The Standard panel uses fresh-install appearance defaults; Spatial mode and the combined Copy / Translate bubble demonstrate optional settings. The inspection GIF uses a simulated pointer, and the update preview uses a simulated release. Installation and data paths are masked; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md).
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Standard panel workflow in 1.2.2: type a snippet, save it, then pin and unpin its card"></p>
+
+*Standard mode · type, save, pin and unpin · English interface. Scripted interaction with actual controls and sample content.*
 
 ### 1. Capture, find, and organize
 
@@ -74,7 +85,7 @@ Use the quick panel for short captures and the **workbench** for managing your c
 
 | Tool | What you can do |
 | --- | --- |
-| Quick input and search | Save text with Enter; insert line breaks with Alt+Enter or Shift+Enter; search your entries as you type. |
+| Quick input and search | Save text with Enter; insert line breaks with Alt+Enter or Shift+Enter; search and filter your entries in the workbench. |
 | Drag into the dock | Drop text to save it, or drop files and folders to save their paths. Click a path card to open its target; right-click **Copy** to copy the path. File contents are not imported. |
 | Groups, tags, and pinning | Keep related entries together, edit their title/text/tags, and pin frequently used content. |
 | Expiry and Trash | Choose never, one day, seven days, or burn after read; expired and deleted entries move to Trash for recovery. Trash entries are permanently removed after 30 days by default. |
@@ -110,6 +121,13 @@ Select **Settings > Panel mode**. Both modes keep the same controls, typography,
 Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png) · [Measured performance and limits](docs/performance/1.2.2-floating.md).
 
 Settings also offers panel text palettes, a custom text color, and automatic contrast, plus independent selection-bubble style, glow, shadow, and opacity controls.
+
+<details>
+<summary>Default appearance settings</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Appearance settings with Standard mode and fresh-install defaults"></p>
+
+</details>
 
 ### 3. Screenshots and local text recognition
 
@@ -147,11 +165,18 @@ The translation target follows the app's interface language. Available target la
 
 Cloud translation sends only the requested text to the selected provider, with no automatic provider switch. OCR does not upload images. Provider credentials are stored **in plain text** in local `settings.json`; masked fields do not encrypt them.
 
+<details>
+<summary>Default selection and translation settings</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Behavior settings with Copy only, Google, text glow off and drop shadow on"></p>
+
+</details>
+
 ### 5. Install optional components inside the app
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Optional components settings with OCR and offline translation install and repair buttons"></p>
 
-*Component controls shown in their 1.2.1 not-installed example state. Normal setup uses these in-app buttons; no terminal command is required.*
+*The 1.2.2 component settings show the fresh-install state: OCR and offline translation are not installed. Use these in-app buttons to install them; no terminal command is required.*
 
 1. Open **Settings > Optional components**.
 2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.2 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
@@ -165,9 +190,9 @@ Initial setup needs internet access to the relevant NuGet, GitHub, Python, packa
 
 ### 6. Check for updates · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="Update dialog displaying a simulated newer release and an example installation path"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="Update dialog displaying a simulated newer release with the installation path masked"></p>
 
-*The version and path shown are illustrative; this image does not announce an available release.*
+*The release shown is simulated, and the installation path is masked. This image does not announce an available release.*
 
 Use **Check for updates** in the tray menu or **Settings > About**. A check does not download or install anything automatically. Downloading verifies SHA-256 and package contents; **Restart and upgrade** requires a separate confirmation. The updater replaces managed application files at the existing path, preserves user data and installed components, and retains recovery information if startup fails.
 
@@ -189,6 +214,13 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 
 <a id="data-and-upgrades"></a>
 ## Data, backup, and upgrades
+
+<details>
+<summary>Backup settings · every 24 hours by default</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Data settings with automatic backups enabled every 24 hours and masked paths"></p>
+
+</details>
 
 Entries, images, recognized text, and backups are stored locally. Portable data normally lives in `Data` beside the executable. If that folder is not writable, the app uses `%AppData%\KeeStashDock` and reports the fallback in Settings. Components installed through the app normally use `%LOCALAPPDATA%\KeeStashDock`, separately from your collection.
 

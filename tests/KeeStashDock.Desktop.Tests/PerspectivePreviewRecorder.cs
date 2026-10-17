@@ -116,7 +116,7 @@ internal static class PerspectivePreviewRecorder
     // GifBitmapEncoder writes the image frames but exposes neither global nor
     // frame metadata. Add standard animation blocks around the unchanged WIC
     // image data, rather than relying on ignored BitmapMetadata properties.
-    private static void WriteAnimationMetadata(byte[] input, Stream output, int delayCentiseconds)
+    internal static void WriteAnimationMetadata(byte[] input, Stream output, int delayCentiseconds)
     {
         if (input.Length < 14 || Encoding.ASCII.GetString(input, 0, 3) != "GIF")
             throw new InvalidDataException("The fixture encoder did not produce a GIF.");

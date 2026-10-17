@@ -61,10 +61,21 @@ Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une 
 
 La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut, texte lumineux désactivé, ombre activée. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
 
+<details>
+<summary>Réglages d’une nouvelle installation · interface anglaise</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Paramètres de 1.2.2 avec l’anglais, Alt+Q et Alt+W par défaut"></p>
+
+</details>
+
 <a id="features"></a>
 ## Fonctionnalités
 
-Les aperçus ci-dessous montrent de véritables contrôles de l’application avec des données d’exemple fictives. Le GIF d’inspection est généré à partir de ces contrôles avec un pointeur simulé. L’aperçu de mise à jour utilise une publication simulée ; aucun contenu personnel du bureau ou du presse-papiers n’y figure. [Origine et reproduction des images](docs/images/README.md). Les images peuvent montrer les réglages d’anciens candidats, différents des valeurs initiales ci-dessus.
+Ces aperçus montrent la véritable **interface anglaise de la version 1.2.2**, avec des données d’exemple fictives. Le panneau Standard utilise les réglages d’apparence d’une nouvelle installation ; le mode Spatial et la bulle Copier / Traduire illustrent des options. Le pointeur du GIF du mode Spatial et la publication de l’aperçu de mise à jour sont simulés. Les chemins d’installation et de données sont masqués ; aucun contenu personnel du bureau ou du presse-papiers n’apparaît. [Origine et reproduction des images](docs/images/README.md).
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Utilisation du panneau Standard de 1.2.2 : saisir, enregistrer, épingler puis détacher une carte"></p>
+
+*Mode Standard · saisie, enregistrement, épinglage et retrait · interface anglaise. Interactions automatisées avec les véritables contrôles et des données d’exemple.*
 
 ### 1. Capturer, rechercher et organiser
 
@@ -74,7 +85,7 @@ Utilisez le panneau rapide pour les captures ponctuelles et l’**espace de trav
 
 | Outil | Possibilités |
 | --- | --- |
-| Saisie rapide et recherche | Enregistrez du texte avec Enter ; insérez des sauts de ligne avec Alt+Enter ou Shift+Enter ; recherchez vos entrées au fil de la saisie. |
+| Saisie rapide et recherche | Enregistrez du texte avec Enter ; insérez des sauts de ligne avec Alt+Enter ou Shift+Enter ; recherchez et filtrez vos entrées dans l’espace de travail. |
 | Glisser dans le panneau | Déposez du texte pour l’enregistrer, ou des fichiers et dossiers pour enregistrer leurs chemins. Cliquez sur une carte de chemin pour ouvrir sa cible ; choisissez **Copier** dans le menu du clic droit pour copier le chemin. Le contenu des fichiers n’est pas importé. |
 | Groupes, étiquettes et épinglage | Regroupez les entrées associées, modifiez leur titre, leur texte et leurs étiquettes, et épinglez les contenus fréquents. |
 | Expiration et corbeille | Choisissez aucune expiration, un jour, sept jours ou la suppression après lecture ; les entrées expirées ou supprimées passent par la corbeille et peuvent être restaurées. Par défaut, les entrées de la corbeille sont supprimées définitivement après 30 jours. |
@@ -110,6 +121,13 @@ Accédez à **Paramètres > Mode du panneau**. Les deux modes conservent les mê
 Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png) · [Performances mesurées et limites](docs/performance/1.2.2-floating.md).
 
 Les paramètres proposent aussi des palettes de texte pour le panneau, une couleur de texte personnalisée et un contraste automatique, ainsi que des réglages indépendants de style, de lueur, d’ombre et d’opacité pour la bulle de sélection.
+
+<details>
+<summary>Réglages d’apparence par défaut</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Réglages d’apparence avec le mode Standard et les valeurs d’une nouvelle installation"></p>
+
+</details>
 
 ### 3. Captures d’écran et reconnaissance locale du texte
 
@@ -147,11 +165,18 @@ La langue cible de la traduction suit la langue de l’interface de l’applicat
 
 La traduction dans le cloud envoie uniquement le texte demandé au fournisseur sélectionné, sans changement automatique de fournisseur. L’OCR n’envoie pas d’images. Les identifiants des fournisseurs sont enregistrés **en clair** dans le fichier local `settings.json` ; le masquage des champs ne les chiffre pas.
 
+<details>
+<summary>Réglages de sélection et de traduction par défaut</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Paramètres de comportement avec Copier uniquement, Google, lueur désactivée et ombre activée"></p>
+
+</details>
+
 ### 5. Installer les composants facultatifs dans l’application
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Paramètres des composants facultatifs avec boutons d’installation et de réparation pour l’OCR et la traduction hors ligne"></p>
 
-*Les contrôles des composants sont présentés dans leur état d’exemple non installé de la version 1.2.1. L’installation habituelle se fait avec ces boutons intégrés ; aucune commande de terminal n’est nécessaire.*
+*Les paramètres des composants montrent l’état d’une nouvelle installation de 1.2.2 : l’OCR et la traduction hors ligne ne sont pas installés. Ces boutons intégrés permettent de les installer, sans commande de terminal.*
 
 1. Ouvrez **Paramètres > Composants facultatifs**.
 2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.2 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
@@ -165,9 +190,9 @@ L’installation initiale nécessite un accès Internet aux serveurs de téléch
 
 ### 6. Rechercher des mises à jour · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="Fenêtre de mise à jour affichant une nouvelle version simulée et un exemple de chemin d’installation"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="Fenêtre de mise à jour affichant une nouvelle version simulée et un chemin d’installation masqué"></p>
 
-*La version et le chemin affichés servent d’exemple ; cette image n’annonce pas la disponibilité d’une nouvelle version.*
+*La publication affichée est simulée et le chemin d’installation est masqué. Cette image n’annonce pas la disponibilité d’une nouvelle version.*
 
 Utilisez **Rechercher des mises à jour** dans le menu de la zone de notification ou dans **Paramètres > À propos**. Une vérification ne télécharge ni n’installe quoi que ce soit automatiquement. Le téléchargement vérifie le SHA-256 et le contenu du paquet ; **Redémarrer et mettre à niveau** exige une confirmation distincte. Le programme de mise à jour remplace les fichiers gérés de l’application à l’emplacement existant, préserve les données utilisateur et les composants installés, et conserve des informations de récupération en cas d’échec du démarrage.
 
@@ -189,6 +214,13 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 
 <a id="data-and-upgrades"></a>
 ## Données, sauvegarde et mises à niveau
+
+<details>
+<summary>Sauvegardes · toutes les 24 heures par défaut</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Paramètres de données avec sauvegardes automatiques toutes les 24 heures et chemins masqués"></p>
+
+</details>
 
 Les entrées, les images, le texte reconnu et les sauvegardes sont stockés localement. Les données portables se trouvent normalement dans `Data`, à côté de l’exécutable. Si ce dossier n’est pas accessible en écriture, l’application utilise `%AppData%\KeeStashDock` et signale ce changement dans les paramètres. Les composants installés depuis l’application utilisent normalement `%LOCALAPPDATA%\KeeStashDock`, séparément de votre collection.
 

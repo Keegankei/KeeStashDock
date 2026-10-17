@@ -61,10 +61,21 @@ Uma soma de verificação confirma a integridade do arquivo; ela não é uma ass
 
 O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo padrão, brilho do texto desativado e sombra ativada. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
 
+<details>
+<summary>Configurações de uma nova instalação · interface em inglês</summary>
+
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Configurações da versão 1.2.2 com inglês, Alt+Q e Alt+W como padrões"></p>
+
+</details>
+
 <a id="features"></a>
 ## Recursos
 
-As prévias abaixo mostram controles reais do aplicativo com conteúdo fictício de exemplo. O GIF de inspeção é gerado a partir desses controles com um ponteiro simulado. A prévia de atualização usa uma publicação simulada; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md). As imagens podem mostrar configurações de candidatos anteriores, diferentes dos valores iniciais acima.
+Estas prévias mostram a **interface real em inglês da versão 1.2.2**, com dados fictícios de exemplo. O painel Padrão usa as configurações de aparência de uma nova instalação; o modo Espacial e o balão Copiar / Traduzir demonstram opções configuráveis. O ponteiro do GIF do modo Espacial e a publicação da prévia de atualização são simulados. Os caminhos de instalação e de dados estão ocultos; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md).
+
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Fluxo do painel Padrão da versão 1.2.2: digitar, salvar, fixar e desafixar um cartão"></p>
+
+*Modo Padrão · digitar, salvar, fixar e desafixar · interface em inglês. Interação automatizada com controles reais e dados de exemplo.*
 
 ### 1. Capturar, buscar e organizar
 
@@ -74,7 +85,7 @@ Use o painel rápido para capturas pontuais e a **área de trabalho do aplicativ
 
 | Ferramenta | O que você pode fazer |
 | --- | --- |
-| Entrada rápida e busca | Salve texto com Enter; insira quebras de linha com Alt+Enter ou Shift+Enter; pesquise suas entradas enquanto digita. |
+| Entrada rápida e busca | Salve texto com Enter; insira quebras de linha com Alt+Enter ou Shift+Enter; busque e filtre suas entradas na área de trabalho do aplicativo. |
 | Arrastar para o painel | Solte texto para salvá-lo, ou arquivos e pastas para salvar seus caminhos. Clique em um cartão de caminho para abrir o destino; escolha **Copiar** no menu do botão direito para copiar o caminho. O conteúdo dos arquivos não é importado. |
 | Grupos, tags e fixação | Reúna entradas relacionadas, edite o título, o texto e as tags e fixe o conteúdo usado com frequência. |
 | Expiração e Lixeira | Escolha nunca expirar, um dia, sete dias ou excluir após a leitura; entradas expiradas e excluídas vão para a Lixeira e podem ser recuperadas. Por padrão, as entradas da Lixeira são removidas permanentemente após 30 dias. |
@@ -110,6 +121,13 @@ Selecione **Configurações > Modo do painel**. Os dois modos mantêm os mesmos 
 Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png) · [Desempenho medido e limites](docs/performance/1.2.2-floating.md).
 
 As configurações também oferecem paletas de texto para o painel, uma cor de texto personalizada e contraste automático, além de controles independentes de estilo, brilho, sombra e opacidade para o balão de seleção.
+
+<details>
+<summary>Configurações de aparência iniciais</summary>
+
+<p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Configurações de aparência com modo Padrão e valores de uma nova instalação"></p>
+
+</details>
 
 ### 3. Capturas de tela e reconhecimento local de texto
 
@@ -147,11 +165,18 @@ O idioma de destino da tradução acompanha o idioma da interface do aplicativo.
 
 A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, sem troca automática de provedor. O OCR não envia imagens. As credenciais dos provedores são armazenadas **em texto simples** no arquivo local `settings.json`; campos mascarados não criptografam essas informações.
 
+<details>
+<summary>Configurações iniciais de seleção e tradução</summary>
+
+<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Configurações de comportamento com Apenas copiar, Google, brilho desativado e sombra ativada"></p>
+
+</details>
+
 ### 5. Instalar componentes opcionais dentro do aplicativo
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Configurações de componentes opcionais com botões de instalação e reparo de OCR e tradução offline"></p>
 
-*Os controles de componentes são mostrados em um estado de exemplo não instalado da versão 1.2.1. A instalação normal usa esses botões do aplicativo; nenhum comando de terminal é necessário.*
+*As configurações dos componentes mostram o estado de uma nova instalação da versão 1.2.2: OCR e tradução offline não estão instalados. Use esses botões do aplicativo para instalá-los, sem comandos de terminal.*
 
 1. Abra **Configurações > Componentes opcionais**.
 2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.2 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
@@ -165,9 +190,9 @@ A instalação inicial precisa de acesso à internet aos servidores de download 
 
 ### 6. Verificar atualizações · 1.2.2
 
-<p align="center"><img src="docs/images/update-check.png" width="720" alt="Janela de atualização mostrando uma versão mais recente simulada e um caminho de instalação de exemplo"></p>
+<p align="center"><img src="docs/images/update-check.png" width="720" alt="Janela de atualização mostrando uma versão mais recente simulada e o caminho de instalação oculto"></p>
 
-*A versão e o caminho mostrados são ilustrativos; esta imagem não anuncia uma versão disponível.*
+*A publicação mostrada é simulada e o caminho de instalação está oculto. Esta imagem não anuncia uma versão disponível.*
 
 Use **Verificar atualizações** no menu da bandeja ou em **Configurações > Sobre**. A verificação não baixa nem instala nada automaticamente. O download verifica o SHA-256 e o conteúdo do pacote; **Reiniciar e atualizar** exige uma confirmação separada. O atualizador substitui os arquivos gerenciados do aplicativo no caminho existente, preserva os dados do usuário e os componentes instalados e mantém informações de recuperação se a inicialização falhar.
 
@@ -189,6 +214,13 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 
 <a id="data-and-upgrades"></a>
 ## Dados, backup e atualizações
+
+<details>
+<summary>Configurações de backup · a cada 24 horas por padrão</summary>
+
+<p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Configurações de dados com backups automáticos a cada 24 horas e caminhos ocultos"></p>
+
+</details>
 
 Entradas, imagens, textos reconhecidos e backups são armazenados localmente. Os dados portáteis normalmente ficam em `Data`, ao lado do executável. Se não for possível gravar nessa pasta, o aplicativo usa `%AppData%\KeeStashDock` e informa o local alternativo nas configurações. Componentes instalados pelo aplicativo normalmente usam `%LOCALAPPDATA%\KeeStashDock`, separados da sua coleção.
 

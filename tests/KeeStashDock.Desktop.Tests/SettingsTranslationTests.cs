@@ -267,6 +267,7 @@ public sealed class SettingsTranslationTests
             EdgeDockScenarios.VerifySettings(window, settings);
             FloatingPerformanceScenarios.RecordIfRequested(root);
             EdgeDockScenarios.Verify(root);
+            DocumentationPreviewScenarios.RenderIfRequested(root);
         }
         finally
         {
