@@ -1,6 +1,6 @@
 # Local offline translation
 
-KeeStashDock supports an optional Windows x64 local translation engine. The standard 1.2.2-r7 package includes setup tools but no preinstalled runtime or models. It uses the official Argos English/Chinese 1.9 models through CTranslate2, with SentencePiece tokenization and py3langid language detection. It provides the small LibreTranslate-compatible API used by KeeStashDock; it is not the full LibreTranslate server.
+KeeStashDock supports an optional Windows x64 local translation engine. The standard 1.2.2 package includes setup tools but no preinstalled runtime or models. It uses the official Argos English/Chinese 1.9 models through CTranslate2, with SentencePiece tokenization and py3langid language detection. It provides the small LibreTranslate-compatible API used by KeeStashDock; it is not the full LibreTranslate server.
 
 The initial setup needs internet access to **python.org**, **files.pythonhosted.org** and **argos-net.com**, plus Microsoft download hosts if the shared Visual C++ runtime is missing or damaged. These international download hosts may not be reachable on every network in mainland China. Once setup completes, starting the engine and translating require no internet, account, key or API payment. There is no automatic cloud fallback.
 

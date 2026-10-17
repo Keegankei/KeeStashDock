@@ -41,15 +41,20 @@ Version 1.2.1 has no update button or ownership manifest, so this first upgrade 
 3. Extract the complete new package into a fresh folder. Keep the previous program folder intact until acceptance.
 4. If the old installation used portable data, copy its entire `Data` folder to the new folder. If it used `%AppData%`, avoid accidentally creating an empty portable library: copy the active fallback data into the new writable `Data` folder, or keep using a non-writable installation location that resolves to the same fallback. Never overwrite a live database.
 5. Optional components installed under `%LocalAppData%\KeeStashDock` remain available. Copy an older portable `OfflineTranslation/runtime` directory separately only while its engine is stopped; do not replace the new setup scripts. The fresh package does not contain a legacy portable OCR engine or models. If these were not copied, use the in-app **Install / repair** action to install them in the per-user component directory. Use the same action if a component needs repair.
-6. Start the new application, verify the library and settings, and update any shortcuts to the new folder. Keep the backup and previous folder until satisfied.
+6. Start the new application and verify the library and settings. Update desktop/taskbar shortcuts to the new folder.
+7. If **Start with Windows** was enabled, turn it off and on again in the new app's Settings. The existing startup entry may still point to the old executable; this step registers the new path and prevents the old copy from launching at the next Windows sign-in. Keep the backup and previous folder until satisfied.
 
 For an existing 1.2.2 or newer installation, prefer the in-app flow to keep the original path. A folder without a valid ownership manifest always falls back to manual instructions; the updater does not guess which files it may delete.
 
-The 1.2.2-r7 review package replaces earlier 1.2.2 candidates manually: candidate
-revisions share version 1.2.2 and are not offered as a newer numeric version.
-Keep the previous folder and data backup until the replacement is accepted, and
-use **Install / repair** if OCR components are missing. The preservation rules
-implemented in r7 do not retroactively change an older candidate's updater.
+## Replacing an earlier 1.2.2 candidate
+
+The final 1.2.2 package must replace earlier 1.2.2 candidates manually: their
+numeric version is also 1.2.2, so Check for updates does not offer the final
+package as a newer version. Follow the manual steps above, including the startup
+registration step after moving folders. Keep the previous folder and data backup
+until the replacement is accepted, and use **Install / repair** if OCR components
+are missing. Component-preservation rules added during 1.2.2 preparation do not
+retroactively change an older candidate's updater.
 
 ## If installation or startup fails
 

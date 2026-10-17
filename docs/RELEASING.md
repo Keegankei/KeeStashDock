@@ -5,7 +5,7 @@ This checklist describes a reproducible manual release. It intentionally avoids 
 ## 1. Prepare
 
 1. Confirm that the intended version is set in `Directory.Build.props`.
-2. Update `CHANGELOG.md`, the English README, and every translated README.
+2. Update `CHANGELOG.md`, the English README, every translated README, and `docs/assets/badges/version.svg`. Prepare `docs/releases/<version>-notes.md` for the GitHub Release, with upgrade steps and known limits. Until publication, identify prospective download links as pending.
 3. Verify that `LICENSE`, `NOTICE`, README license references, and `PackageLicenseExpression` consistently identify Apache-2.0.
 4. Verify package versions in `Directory.Packages.props`, refresh `THIRD_PARTY_NOTICES.md`, and review Dependabot changes.
 5. Run localization key and placeholder checks through the test suite.
@@ -83,9 +83,10 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - Upgrade a copy of a v1/v2 database containing duplicate group names; verify group IDs, memberships, and snippet content remain intact
 - Theme switching, custom appearance, high DPI, and Arabic right-to-left layout
 - Standard/Spatial modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
-- Screenshot Save / Extract / Extract and translate, transient text, source-copy after failure, cancellation and reselection
+- Screenshot Save / Extract / Extract and translate, transient text, source-copy after failure, cancellation and reselection; confirm the selection bubble resumes after save/cancel/error and stays disabled when configured off
 - Selection Copy / Translate / Both, Copy then Translate on the same source, history on/off and stale async results
 - Update check/download cancellation, same-path managed replacement, preserved custom/component/data files, denied elevation, interrupted helper and startup-health rollback
+- Manual migration to a new folder with Start with Windows previously enabled: disable and re-enable it in the new app, then verify the startup entry points to the new executable
 
 The current build upgrades databases to schema v4 on startup. Back up existing user data before an upgrade. Older binaries that support only v1-v3 cannot open a v4 database; testing an older binary requires a separate copy of a pre-upgrade backup. Version 2 group exports preserve image assets; version 1 text imports remain supported.
 
@@ -102,7 +103,7 @@ replace the native OCR/runtime review.
 
 ## Acceptance records
 
-Keep versioned results in [docs/releases](releases/1.2.1.md). Each record identifies
+Keep versioned results in [docs/releases](releases/1.2.2.md). Each record identifies
 the release tag, build/test results, package checks, maintainer feedback, and
 remaining platform limitations. Do not convert broad user feedback into a claim
 that every hardware or provider combination was tested.
@@ -119,17 +120,17 @@ that every hardware or provider combination was tested.
 ## 4. Publish
 
 1. Push the reviewed release commit and wait for its required CI checks. Follow the repository's branch policy; use a pull request when required.
-2. Create a signed or annotated Git tag matching the version, for example `v1.2.1`.
+2. Create a signed or annotated Git tag matching the version, for example `v1.2.2`.
 3. Create a GitHub Release from the tag.
 4. Attach the archive and checksum.
-5. Paste the relevant changelog section into the release notes.
+5. Use `docs/releases/<version>-notes.md` as the release description and confirm it matches the final changelog and acceptance record.
 6. State supported Windows architecture, data migration notes, known issues, and license terms.
 
 ## 5. After release
 
 - Verify the uploaded checksum and start the downloaded artifact.
 - Mark the release as the latest stable release.
-- Confirm the changelog has the release version and date.
+- Confirm the changelog has the release version and date, then remove the temporary publication-preparation notice from all README languages only after the release assets are available.
 - Leave repository visibility changes to the owner when publication is staged in a private repository.
 - Monitor security reports, crash reports, and upgrade issues.
 

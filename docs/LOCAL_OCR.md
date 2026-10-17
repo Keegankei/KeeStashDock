@@ -11,7 +11,7 @@ The first version supports printed English and Simplified Chinese using official
 Tesseract `tessdata_fast` models. Handwriting, rotated text, tiny fonts, complex
 tables, and Traditional Chinese are not guaranteed. Always review recognized text.
 
-The standard 1.2.2-r7 package does not preinstall the OCR engine or language
+The standard 1.2.2 package does not preinstall the OCR engine or language
 models. Before first recognition, open **Settings > Optional components** and
 choose **Install / repair** for text recognition. This explicit setup downloads
 and verifies the required engine and models, shows progress and failures, and

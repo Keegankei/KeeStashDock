@@ -5,7 +5,7 @@ sample data. Light theme is used except where noted. They were rendered in memor
 on Windows for versions 1.2.1 and 1.2.2 as identified below. Revision-5 preview
 fixtures show fixed perspective, deliberate drag inspection, a thin panel side
 layer and independent card feedback. Regeneration and visual validation for the
-current candidate are recorded in the [acceptance record](../releases/1.2.2.md).
+current release preparation are recorded in the [acceptance record](../releases/1.2.2.md).
 Window title bars are omitted; no real desktop or clipboard content was captured.
 
 | File | View |

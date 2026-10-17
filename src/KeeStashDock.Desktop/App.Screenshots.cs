@@ -20,7 +20,6 @@ public partial class App
     {
         if (_exitPending || _capturingScreenshot || _preparingShutdown || _shutdownCancellation.IsCancellationRequested ||
             !_services.GetRequiredService<DatabaseMaintenanceCoordinator>().CanStartOperation) return;
-        _capturingScreenshot = true;
         var settings = _services.GetRequiredService<SettingsStore>();
         var visible = Windows.OfType<Window>().Where(window => window.IsVisible &&
             window is not SelectionPopupWindow && window is not TranslationResultWindow &&
@@ -32,14 +31,8 @@ public partial class App
         _translationCard.HideCard();
         using var request = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCancellation.Token);
         _translationCancellation = request;
-        _selectionWatcher.Stop();
-        bool restored = false;
         void RestoreWindows()
         {
-            if (restored) return;
-            restored = true;
-            _capturingScreenshot = false;
-            if (_shutdownCancellation.IsCancellationRequested) return;
             foreach (Window window in visible)
                 if (Windows.OfType<Window>().Contains(window))
                 {
@@ -47,17 +40,18 @@ public partial class App
                     else window.Show();
                 }
             if (previousForeground != nint.Zero) NativeMethods.SetForegroundWindow(previousForeground);
-            ApplySelectionPopupSetting(settings);
         }
 
         try
         {
-            foreach (Window window in visible) window.Hide();
-            // Let the compositor remove our windows before freezing the screen.
-            await Task.Delay(180, request.Token);
-            ScreenshotCaptureResult? captured = await _screenshotCapture.CaptureAsync(request.Token);
-            // OCR is asynchronous and may take seconds. Restore the workspace first.
-            RestoreWindows();
+            ScreenshotCaptureResult? captured = await _selectionWatcherController.CaptureAsync(async () =>
+            {
+                foreach (Window window in visible) window.Hide();
+                // Let the compositor remove our windows before freezing the screen.
+                await Task.Delay(180, request.Token);
+                return await _screenshotCapture.CaptureAsync(request.Token);
+            }, RestoreWindows, _shutdownCancellation.Token);
+            // The workspace and selection hook are restored before asynchronous OCR.
             if (captured is null || request.IsCancellationRequested) return;
 
             var processor = new ScreenshotActionProcessor(image =>
@@ -111,7 +105,6 @@ public partial class App
         }
         finally
         {
-            RestoreWindows();
             if (ReferenceEquals(_translationCancellation, request)) _translationCancellation = null;
         }
     }

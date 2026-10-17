@@ -37,8 +37,7 @@ public partial class App
             foreach (Window window in Windows)
                 if (window.IsEnabled) { disabledWindows.Add(window); window.IsEnabled = false; }
             _clipboardWatcher?.Dispose();
-            _selectionWatcher.Stop();
-            _selectionPopupApplied = false;
+            _selectionWatcherController.Stop();
             pausedCollection = true;
             _panel?.FlushDraft();
             var components = new ComponentInstallService();
@@ -76,7 +75,7 @@ public partial class App
                 {
                     var settings = _services.GetRequiredService<SettingsStore>();
                     _clipboardWatcher = new ClipboardWatcher(settings, _services.GetRequiredService<SnippetService>());
-                    ApplySelectionPopupSetting(settings);
+                    ApplySelectionPopupSetting();
                 }
             }
             _exitPending = false;

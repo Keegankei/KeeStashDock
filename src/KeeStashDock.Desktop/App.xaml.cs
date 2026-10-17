@@ -39,7 +39,7 @@ public partial class App : Application
     private readonly LocalOcrService _localOcr = new();
     private readonly Dictionary<long, ImageEntryWindow> _imageWindows = new();
     private readonly CancellationTokenSource _shutdownCancellation = new();
-    private bool _capturingScreenshot;
+    private bool _capturingScreenshot => _selectionWatcherController?.IsCapturingScreenshot == true;
     private bool _preparingShutdown;
     private TextBox? _internalSelectionSource;
 
@@ -182,7 +182,7 @@ public partial class App : Application
     private TranslationResultWindow _translationCard = null!;
     private CancellationTokenSource? _translationCancellation;
     private int _lastSelectionX, _lastSelectionY;
-    private bool? _selectionPopupApplied;
+    private SelectionWatcherController _selectionWatcherController = null!;
 
     /// <summary>One-shot starter content (runs after migrations, before any
     /// UI): a localized "Default" group plus a "Git BASH" group pre-filled

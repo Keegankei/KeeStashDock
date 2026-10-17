@@ -25,10 +25,13 @@ public partial class App
         _selectionWatcher = new SelectionWatcher();
         _selectionPopup = new SelectionPopupWindow(settings);
         _translationCard = new TranslationResultWindow(settings);
+        _selectionWatcherController = new SelectionWatcherController(
+            _selectionWatcher.Start, _selectionWatcher.Stop, _selectionPopup.HideBubble,
+            () => settings.Current.SelectionPopupEnabled, () => _translationCard.IsVisible);
         _translationCard.IsVisibleChanged += (_, _) =>
         {
             if (!_translationCard.IsVisible) _translationCancellation?.Cancel();
-            ApplySelectionPopupSetting(settings);
+            ApplySelectionPopupSetting();
         };
         MiniToast.Settings = settings;
         DirectPaste.Settings = settings;
@@ -65,20 +68,13 @@ public partial class App
         Exit += (_, _) => _selectionSession.Dispose();
         _selectionPopup.CaptureRequested += CaptureSelectionAsync;
         _selectionPopup.TranslateRequested += TranslateSelectionAsync;
-        ApplySelectionPopupSetting(settings);
-        settings.Changed += () => ApplySelectionPopupSetting(settings);
+        ApplySelectionPopupSetting();
+        settings.Changed += ApplySelectionPopupSetting;
 
     }
 
-    private void ApplySelectionPopupSetting(SettingsStore settings)
-    {
-        bool enable = !_capturingScreenshot && (settings.Current.SelectionPopupEnabled || _translationCard.IsVisible);
-        if (!settings.Current.SelectionPopupEnabled) _selectionPopup.HideBubble();
-        if (_selectionPopupApplied == enable) return;
-        _selectionPopupApplied = enable;
-        if (enable) _selectionWatcher.Start();
-        else { _selectionWatcher.Stop(); _selectionPopup.HideBubble(); }
-    }
+    private void ApplySelectionPopupSetting()
+        => _selectionWatcherController.Apply();
 
     /// <summary>Bubble clicked: synthesize Ctrl+C into the still-focused
     /// source app, VERIFY via the clipboard sequence number that a copy
