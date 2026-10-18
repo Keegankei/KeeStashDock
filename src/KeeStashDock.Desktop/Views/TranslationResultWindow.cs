@@ -6,6 +6,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Infrastructure.Storage;
+using KeeStashDock.Core.Services;
+using KeeStashDock.Domain.Entities;
 
 namespace KeeStashDock.Desktop.Views;
 
@@ -22,6 +24,7 @@ public sealed class TranslationResultWindow : Window
     private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
     private readonly SettingsStore _settings;
+    private readonly Action<string> _notifySaved;
     private readonly DispatcherTimer _hideTimer;
     private readonly Border _surface;
     private readonly TextBlock _body, _bodyGlow, _hint, _source;
@@ -32,10 +35,24 @@ public sealed class TranslationResultWindow : Window
     private bool _copyable, _persistentResult;
     private int _anchorX, _anchorY;
     private Action? _retry, _openSettings;
+    private readonly TemporaryTextResult _textResult = new();
+    private readonly ComboBox _targetCombo, _groupCombo;
+    private readonly TextBlock _targetLabel, _groupLabel, _saveStatus;
+    private readonly StackPanel _resultTools;
+    private readonly Button _saveSource, _saveTranslation, _saveBoth;
+    private Func<string, long?, long>? _save;
+    private Action<string>? _translateTarget;
+    private bool _updatingTools;
+    private readonly List<Task> _pendingSaves = [];
+    public Task SaveCompletion => Task.WhenAll(_pendingSaves.ToArray());
+    internal long? SelectedGroupId => (_groupCombo.SelectedItem as GroupChoice)?.Id;
+    internal bool HasResultContext => _save is not null;
+    public sealed record GroupChoice(long? Id, string Name);
 
-    public TranslationResultWindow(SettingsStore settings)
+    public TranslationResultWindow(SettingsStore settings, Action<string>? notifySaved = null)
     {
         _settings = settings;
+        _notifySaved = notifySaved ?? MiniToast.Show;
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         AllowsTransparency = true;
@@ -76,6 +93,31 @@ public sealed class TranslationResultWindow : Window
         });
         _closeButton = MakeButton(HideCard);
 
+        _targetLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 3) };
+        _targetCombo = new ComboBox { Name = "ResultTargetCombo", MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _targetCombo.SelectionChanged += (_, _) =>
+        {
+            if (!_updatingTools && _targetCombo.SelectedItem is ComboBoxItem { Tag: string target })
+                _translateTarget?.Invoke(target);
+        };
+        _groupLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 3) };
+        _groupCombo = new ComboBox { Name = "ResultGroupCombo", MinWidth = 160, DisplayMemberPath = nameof(GroupChoice.Name) };
+        _saveSource = MakeButton(async () => await SaveResultAsync(ResultTextKind.Source));
+        _saveTranslation = MakeButton(async () => await SaveResultAsync(ResultTextKind.Translation));
+        _saveBoth = MakeButton(async () => await SaveResultAsync(ResultTextKind.Both));
+        _saveStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
+        var saves = new WrapPanel();
+        saves.Children.Add(_saveSource);
+        saves.Children.Add(_saveTranslation);
+        saves.Children.Add(_saveBoth);
+        _resultTools = new StackPanel { Visibility = Visibility.Collapsed };
+        _resultTools.Children.Add(_targetLabel);
+        _resultTools.Children.Add(_targetCombo);
+        _resultTools.Children.Add(_groupLabel);
+        _resultTools.Children.Add(_groupCombo);
+        _resultTools.Children.Add(saves);
+        _resultTools.Children.Add(_saveStatus);
+
         _sourcePanel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 10) };
         _sourcePanel.Children.Add(_sourceScroll = new ScrollViewer { Content = _source, MaxHeight = 130,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
@@ -98,13 +140,18 @@ public sealed class TranslationResultWindow : Window
         stack.Children.Add(_sourcePanel);
         stack.Children.Add(_bodyScroll);
         stack.Children.Add(_hint);
+        stack.Children.Add(_resultTools);
         stack.Children.Add(actions);
         _surface = new Border
         {
             CornerRadius = new CornerRadius(14), Padding = new Thickness(14, 10, 14, 9), Child = stack,
             Margin = new Thickness(10)
         };
-        Content = _surface;
+        // Target/group controls and wrapped labels can exceed a short, scaled
+        // work area even after the text panes shrink. Keep every action reachable.
+        Content = new ScrollViewer { Content = _surface,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         ApplyStyle();
         ApplyLanguage();
         SetActions(null, null);
@@ -143,6 +190,13 @@ public sealed class TranslationResultWindow : Window
         Label(_retryButton, "Screenshot.RetryTranslation");
         Label(_settingsButton, "Screenshot.OpenComponents");
         Label(_closeButton, "Screenshot.CloseResult");
+        Label(_saveSource, "Result.SaveSource");
+        Label(_saveTranslation, "Result.SaveTranslation");
+        Label(_saveBoth, "Result.SaveBoth");
+        _targetLabel.Text = loc["Result.TemporaryTarget"];
+        _groupLabel.Text = loc["Result.SaveGroup"];
+        AutomationProperties.SetName(_targetCombo, _targetLabel.Text);
+        AutomationProperties.SetName(_groupCombo, _groupLabel.Text);
     }
 
     internal bool TryCopyResult(Action<string> copy) => _copyable && TryCopy(_resultText, copy);
@@ -165,6 +219,7 @@ public sealed class TranslationResultWindow : Window
         Color text = GlassBubble.Apply(_settings.Current, _surface);
         var fg = new SolidColorBrush(text);
         _body.Foreground = _bodyGlow.Foreground = _hint.Foreground = _source.Foreground = fg;
+        _targetLabel.Foreground = _groupLabel.Foreground = _saveStatus.Foreground = fg;
         GlassBubble.SetGlowEnabled(_bodyGlow, _settings.Current.BubbleTextGlow);
     }
 
@@ -188,9 +243,11 @@ public sealed class TranslationResultWindow : Window
 
     public void SetRecognizedSource(string text)
     {
+        _textResult.SetSource(text);
         _sourceText = _source.Text = text;
         _sourcePanel.Visibility = text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         _persistentResult = text.Length > 0;
+        RefreshSaveButtons();
         ClampIntoWorkArea();
     }
 
@@ -198,6 +255,86 @@ public sealed class TranslationResultWindow : Window
     {
         _persistentResult = true;
         ShowResult(text);
+        _textResult.SetSource(text);
+        _textResult.SetTranslation(_textResult.Revision, string.Empty);
+        RefreshSaveButtons();
+    }
+
+    /// <summary>The target here belongs to this retained source only; Settings owns global preferences.</summary>
+    public void SetResultContext(IReadOnlyList<GroupChoice> groups, long? currentGroup, string target,
+        Action<string> translateTarget, Func<string, long?, long> save)
+    {
+        _save = save;
+        _translateTarget = translateTarget;
+        _updatingTools = true;
+        try
+        {
+            _targetCombo.Items.Clear();
+            var cfg = _settings.Current;
+            bool managed = TranslationService.IsManagedOfflineEndpoint(cfg.OfflineTranslationEndpoint);
+            foreach (var language in TranslationTargets.Languages.Where(language =>
+                         TranslationTargets.IsOffered(cfg.TranslationEngine, language.Tag, managed) || language.Tag == target))
+                _targetCombo.Items.Add(new ComboBoxItem { Tag = language.Tag, Content = language.Name,
+                    IsEnabled = TranslationTargets.IsOffered(cfg.TranslationEngine, language.Tag, managed) });
+            _targetCombo.SelectedItem = _targetCombo.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == target);
+            _groupCombo.ItemsSource = groups;
+            _groupCombo.SelectedItem = groups.FirstOrDefault(group => group.Id == currentGroup) ?? groups.FirstOrDefault();
+        }
+        finally { _updatingTools = false; }
+        _resultTools.Visibility = Visibility.Visible;
+        RefreshSaveButtons();
+        ClampIntoWorkArea();
+    }
+
+    internal Task<bool> SaveResultAsync(ResultTextKind kind)
+    {
+        Task<bool> task = SaveCoreAsync(kind);
+        if (!task.IsCompleted)
+        {
+            _pendingSaves.Add(task);
+            _ = RemoveCompletedSaveAsync(task);
+        }
+        return task;
+    }
+
+    private async Task RemoveCompletedSaveAsync(Task task)
+    {
+        try { await task; }
+        finally { _pendingSaves.Remove(task); }
+    }
+
+    private async Task<bool> SaveCoreAsync(ResultTextKind kind)
+    {
+        var save = _save;
+        if (save is null || _textResult.BeginSave(kind, SelectedGroupId) is not { } request) return false;
+        RefreshSaveButtons();
+        try
+        {
+            // A database snapshot or maintenance can hold the storage gate.
+            // Keep the popup responsive while the explicit save waits for it.
+            long id = await Task.Run(() => save(request.Text, request.Group));
+            if (id <= 0) throw new InvalidOperationException("No saved entry returned.");
+            if (!_textResult.CompleteSave(request, success: true)) return false;
+            _saveStatus.Text = LocalizationService.Instance["Result.Saved"];
+            _notifySaved(_saveStatus.Text);
+            return true;
+        }
+        catch (Exception)
+        {
+            if (_textResult.CompleteSave(request, success: false))
+                _saveStatus.Text = LocalizationService.Instance["Result.SaveFailed"];
+            return false;
+        }
+        finally { RefreshSaveButtons(); ClampIntoWorkArea(); }
+    }
+
+    private void RefreshSaveButtons()
+    {
+        _saveSource.IsEnabled = !_textResult.Saving && _textResult.Content(ResultTextKind.Source) is not null;
+        _saveTranslation.IsEnabled = !_textResult.Saving && _textResult.Content(ResultTextKind.Translation) is not null;
+        _saveBoth.IsEnabled = !_textResult.Saving && _textResult.Content(ResultTextKind.Both) is not null;
+        _targetCombo.IsEnabled = !_textResult.Saving && _textResult.Source.Length > 0;
+        _groupCombo.IsEnabled = !_textResult.Saving;
     }
 
     public void SetActions(Action? retry, Action? openSettings)
@@ -212,6 +349,7 @@ public sealed class TranslationResultWindow : Window
     public void ShowResult(string translated)
     {
         _resultText = translated;
+        _textResult.SetTranslation(_textResult.Revision, translated);
         _copyable = true;
         SetBody(translated);
         _body.Cursor = System.Windows.Input.Cursors.Hand;
@@ -219,17 +357,20 @@ public sealed class TranslationResultWindow : Window
         _hint.Visibility = Visibility.Visible;
         ClampIntoWorkArea();
         StartHideTimer();
+        RefreshSaveButtons();
     }
 
     public void ShowError(string messageKey = "Translate.Failed")
     {
         _resultText = string.Empty;
+        _textResult.SetTranslation(_textResult.Revision, string.Empty);
         _copyable = false;
         SetBody(LocalizationService.Instance[messageKey]);
         _body.Cursor = System.Windows.Input.Cursors.Arrow;
         _hint.Visibility = Visibility.Collapsed;
         ClampIntoWorkArea();
         StartHideTimer();
+        RefreshSaveButtons();
     }
 
     private void StartHideTimer()
@@ -248,7 +389,8 @@ public sealed class TranslationResultWindow : Window
             var work = System.Windows.Forms.Screen.FromPoint(new(_anchorX, _anchorY)).WorkingArea;
             var dpi = VisualTreeHelper.GetDpi(this);
             MaxWidth = Math.Max(120, Math.Min(420, work.Width / dpi.DpiScaleX));
-            double contentRoom = Math.Max(80, work.Height / dpi.DpiScaleY - 190);
+            MaxHeight = Math.Max(1, work.Height / dpi.DpiScaleY);
+            double contentRoom = Math.Max(80, work.Height / dpi.DpiScaleY - 350);
             _sourceScroll.MaxHeight = Math.Min(130, contentRoom * 0.35);
             _bodyScroll.MaxHeight = Math.Min(240, contentRoom * 0.65);
             UpdateLayout();
@@ -258,6 +400,11 @@ public sealed class TranslationResultWindow : Window
 
     private void ClearContent()
     {
+        _textResult.Reset();
+        _save = null;
+        _translateTarget = null;
+        _resultTools.Visibility = Visibility.Collapsed;
+        _saveStatus.Text = string.Empty;
         _hideTimer.Stop();
         _copyable = _persistentResult = false;
         _resultText = _sourceText = _source.Text = string.Empty;

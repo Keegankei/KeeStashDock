@@ -22,13 +22,15 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.2.2" src="docs/assets/badges/version.svg">
+  <img alt="Version 1.2.3" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 and 11" src="docs/assets/badges/windows.svg">
   <img alt="Apache-2.0 license" src="docs/assets/badges/license.svg">
 </p>
 
-**Version 1.2.2** · [Release notes](docs/releases/1.2.2-notes.md) · [Acceptance record](docs/releases/1.2.2.md)
+**Source version 1.2.3** · [Release notes](docs/releases/1.2.3-notes.md) · [Acceptance record](docs/releases/1.2.3.md)
+
+The latest published stable package is **1.2.2**. The 1.2.3 features below apply to the updated source and candidate builds until its release is published. Screenshots and GIFs remain labeled as **1.2.2**; they do not show the new controls.
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
 
@@ -57,7 +59,7 @@ A checksum checks file integrity; it is not a publisher signature. The current p
 
 </details>
 
-**Fresh-install defaults · 1.2.2:** English; **Alt+Q** opens the panel and **Alt+W** starts a screenshot. OCR and offline translation are not preinstalled. Existing saved preferences are preserved on upgrade.
+**Fresh-install defaults · 1.2.3:** English; **Alt+Q** opens the panel and **Alt+W** starts a screenshot. OCR and offline translation are not preinstalled. Existing saved preferences are preserved on upgrade.
 
 The selection bubble is enabled in **Copy only** mode with **Google** selected for translation, Default styling, text glow off and drop shadow on. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
 
@@ -147,6 +149,8 @@ Press **Alt+W** or a screenshot button and drag to select a region. Saved screen
 
 Drag again to reselect; **Esc** or right-click cancels. Temporary results support explicit copying, retaining the source text after translation failure, and retrying translation. OCR is a recognition step; it does not translate automatically. [Screenshot workflows](docs/SCREENSHOTS.md) · [OCR support and limits](docs/LOCAL_OCR.md).
 
+**1.2.3:** temporary OCR and translation results offer **Save source**, **Save translation**, and **Save both**, plus a group selector initially using the current group. Save both creates one text entry with labeled source and translation sections. Saving is explicit, does not change the clipboard, and does not also save the screenshot. Translation failure still permits saving the source; save failure retains the result for retry. Duplicate text reuses the existing entry and places it in the selected group.
+
 ### 4. Selection actions and translation
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="The 1.2.2 selection bubble with independent Copy and Translate buttons"></p>
@@ -155,7 +159,7 @@ The selection bubble is enabled by default in **Copy only** mode; configure it i
 
 **1.2.2:** choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
 
-The translation target follows the app's interface language. Available target languages depend on the selected provider or installed offline models.
+**1.2.3:** choose a translation target independently of the interface language in Settings. **Follow interface language** remains the default on fresh installs and upgrades. Selection translation, screenshot translation and Test translation use the same preference. The result window shows the effective target and lets you translate the retained source into a different language for that result only, without changing Settings. Available targets depend on the provider or installed offline models; unsupported pairs produce an error without switching provider or uploading offline text.
 
 | Provider | Setup and availability |
 | --- | --- |
@@ -201,6 +205,8 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 <a id="shortcuts"></a>
 ## Shortcuts
 
+**1.2.3:** if a panel or screenshot shortcut cannot be registered at startup, a notification names it and offers Settings; the status remains visible there. Tray and button access still works. A failed shortcut change preserves the previously working binding.
+
 | Action | Default shortcut or gesture |
 | --- | --- |
 | Show/hide quick panel | **Alt+Q**; configurable |
@@ -214,6 +220,8 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 
 <a id="data-and-upgrades"></a>
 ## Data, backup, and upgrades
+
+**1.2.3:** Settings shows the last successful backup, latest check, next scheduled check, current status, backup location and snapshot count. Use **Back up now**, open the folder, or restore a listed snapshot through the guarded restore flow. Intervals include **15 / 30 / 60 minutes**, 6 / 12 / 24 / 48 hours and 7 days; the default remains **24 hours**. Existing custom intervals and retention choices are preserved. With seven snapshots at 15-minute intervals, the oldest-to-newest span is only **90 minutes**; choose retention deliberately and review the storage estimate. Every scheduled attempt creates a complete snapshot even when the database is unchanged; short intervals rotate retained history faster. These backups cover the entry database, including stored images, **not all settings, components or backgrounds**. Automatic retention does not remove manual exports or recovery copies.
 
 <details>
 <summary>Backup settings · every 24 hours by default</summary>

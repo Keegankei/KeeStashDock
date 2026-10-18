@@ -6,6 +6,25 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+## [1.2.3] - Unreleased
+
+### Added
+
+- Independent translation target language, with Follow interface language as the compatible default. Selection, screenshot and Settings tests use the same target resolution. Result windows support a temporary target and retry with retained source text.
+- Explicit saving of temporary OCR/translation source, translation, or both to a chosen group. Both produces one labeled text entry; duplicate content is reused. Save failures retain the result and do not write to the clipboard.
+- Visible backup state, last attempt/success, next scheduled check, snapshot list, Back up now, open-folder and guarded restore actions. Added 15-, 30- and 60-minute intervals alongside hourly/day options.
+- Persistent panel/screenshot shortcut status and one actionable notification per startup failure episode. Failed remapping retains the previous working shortcut.
+
+### Changed
+
+- Moved backups from hourly housekeeping to an independent minute-based scheduler, with one overdue attempt on startup/resume, maintenance deferral and serialized snapshots. UTC status survives restarts; incomplete or failed snapshots are not published or used to prune retention.
+- Preserved existing backup preferences by migrating legacy hours to minutes. Automatic retention removes only owned automatic snapshots after a successful full database snapshot; manual and recovery files remain available.
+- Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. Existing media remains accurately labeled as 1.2.2 footage.
+
+See the [release notes](docs/releases/1.2.3-notes.md) and
+[acceptance record](docs/releases/1.2.3.md). Publication is pending; the stable
+1.2.2 download links remain available until the new release is published.
+
 ## [1.2.2] - 2026-10-17
 
 Published as [v1.2.2](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2).

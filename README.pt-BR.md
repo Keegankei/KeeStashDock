@@ -22,13 +22,15 @@
 </p>
 
 <p align="center">
-  <img alt="Versão 1.2.2" src="docs/assets/badges/version.svg">
+  <img alt="Versão 1.2.3" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 e 11" src="docs/assets/badges/windows.svg">
   <img alt="Licença Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Versão 1.2.2** · [Notas da versão](docs/releases/1.2.2-notes.md) · [Registro de aceitação](docs/releases/1.2.2.md)
+**Versão do código-fonte 1.2.3** · [Notas da versão](docs/releases/1.2.3-notes.md) · [Registro de validação](docs/releases/1.2.3.md)
+
+O último pacote estável publicado é **1.2.2**. Os recursos da 1.2.3 abaixo se aplicam ao código atualizado e às compilações candidatas até a publicação. As capturas e os GIFs continuam identificados como **1.2.2** e não mostram os novos controles.
 
 [Primeiros passos](#get-started) · [Recursos](#features) · [Atalhos](#shortcuts) · [Dados e atualizações](#data-and-upgrades) · [Desenvolvimento](#development) · [Licença](#license)
 
@@ -57,7 +59,7 @@ Uma soma de verificação confirma a integridade do arquivo; ela não é uma ass
 
 </details>
 
-**Configuração inicial · 1.2.2:** inglês; **Alt+Q** abre o painel e **Alt+W** inicia uma captura. OCR e tradução local não vêm pré-instalados. Atualizações preservam as preferências salvas.
+**Configuração inicial · 1.2.3:** inglês; **Alt+Q** abre o painel e **Alt+W** inicia uma captura. OCR e tradução local não vêm pré-instalados. Atualizações preservam as preferências salvas.
 
 O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo padrão, brilho do texto desativado e sombra ativada. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
 
@@ -147,6 +149,8 @@ Pressione **Alt+W** ou um botão de captura e arraste para selecionar uma regiã
 
 Arraste novamente para refazer a seleção; **Esc** ou um clique direito cancela a captura. Os resultados temporários permitem copiar explicitamente, preservar o texto original se a tradução falhar e tentar traduzir novamente. O OCR é uma etapa de reconhecimento; ele não traduz automaticamente. [Fluxos de captura de tela](docs/SCREENSHOTS.md) · [Suporte e limites do OCR](docs/LOCAL_OCR.md).
 
+**1.2.3:** resultados temporários de OCR e tradução oferecem **Salvar original**, **Salvar tradução** e **Salvar ambos**, com o grupo atual selecionado inicialmente. Salvar ambos cria uma única entrada com seções identificadas. O salvamento é explícito, não altera a área de transferência nem salva também a captura. Se a tradução falhar, o original ainda pode ser salvo; se o salvamento falhar, o resultado permanece para tentar novamente. Texto duplicado reutiliza a entrada existente e a coloca no grupo escolhido.
+
 ### 4. Ações de seleção e tradução
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Balão de seleção da versão 1.2.2 com botões independentes de Copiar e Traduzir"></p>
@@ -155,7 +159,7 @@ Ative o balão de seleção em **Configurações > Comportamento** e selecione t
 
 **1.2.2:** escolha **Copiar e traduzir** para manter os dois botões visíveis. Depois de copiar, você ainda pode traduzir a mesma seleção antes que o balão feche. Falhas de tradução preservam o texto original.
 
-O idioma de destino da tradução acompanha o idioma da interface do aplicativo. Os idiomas de destino disponíveis dependem do provedor selecionado ou dos modelos offline instalados.
+**1.2.3:** escolha nas configurações um idioma de tradução independente da interface. **Seguir o idioma da interface** continua sendo o padrão em novas instalações e atualizações. Traduções de seleção, capturas e testes usam a mesma preferência. A janela de resultado mostra o destino efetivo e permite retraduzir temporariamente o original preservado sem alterar as configurações globais. Os destinos dependem do provedor ou dos modelos instalados. Pares não compatíveis geram um erro sem trocar de provedor nem enviar o texto offline.
 
 | Provedor | Configuração e disponibilidade |
 | --- | --- |
@@ -201,6 +205,8 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 <a id="shortcuts"></a>
 ## Atalhos
 
+**1.2.3:** se um atalho do painel ou de captura não puder ser registrado na inicialização, uma notificação identifica o atalho e oferece acesso às configurações, onde o estado permanece visível. Os botões e a bandeja continuam funcionando. Uma alteração que falha preserva o atalho anterior que funcionava.
+
 | Ação | Atalho ou gesto padrão |
 | --- | --- |
 | Mostrar/ocultar o painel rápido | **Alt+Q**; configurável |
@@ -214,6 +220,8 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 
 <a id="data-and-upgrades"></a>
 ## Dados, backup e atualizações
+
+**1.2.3:** as configurações mostram o último backup concluído, a última verificação, a próxima verificação, o estado, o local e a quantidade de snapshots. Use **Fazer backup agora**, abra a pasta ou restaure pela lista com o fluxo protegido. Intervalos: **15 / 30 / 60 minutos**, 6 / 12 / 24 / 48 horas ou 7 dias; o padrão permanece **24 horas**. Intervalos personalizados e retenção existentes são preservados. Sete snapshots a cada 15 minutos cobrem apenas **90 minutos** entre o mais antigo e o mais recente; escolha a retenção considerando o espaço estimado. Cada backup agendado cria um snapshot completo mesmo sem alterações no banco; intervalos curtos renovam o histórico mantido mais rapidamente. O backup cobre o banco de entradas e suas imagens, **não todas as configurações, componentes ou fundos**. A limpeza automática não remove exportações manuais nem cópias de recuperação.
 
 <details>
 <summary>Configurações de backup · a cada 24 horas por padrão</summary>

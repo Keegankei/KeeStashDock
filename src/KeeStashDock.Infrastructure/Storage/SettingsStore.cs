@@ -48,7 +48,25 @@ public sealed class SettingsStore
             if (File.Exists(_settingsFile))
             {
                 string json = File.ReadAllText(_settingsFile);
+                using JsonDocument document = JsonDocument.Parse(json);
+                if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                    document.RootElement.TryGetProperty("autoBackupIntervalMinutes", out JsonElement minutes) &&
+                    (minutes.ValueKind != JsonValueKind.Number || !minutes.TryGetInt32(out _)))
+                {
+                    var normalized = System.Text.Json.Nodes.JsonNode.Parse(json)!;
+                    normalized["autoBackupIntervalMinutes"] = AppSettings.DefaultAutoBackupIntervalMinutes;
+                    json = normalized.ToJsonString();
+                }
                 Current = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts) ?? new AppSettings();
+                if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                    !document.RootElement.TryGetProperty("autoBackupIntervalMinutes", out _))
+                {
+                    // Read the raw legacy value before its compatibility field
+                    // is clamped. Invalid intervals use the documented default.
+                    int hours = Current.AutoBackupIntervalHours;
+                    Current.AutoBackupIntervalMinutes = hours is > 0 and <= AppSettings.MaxAutoBackupIntervalHours
+                        ? hours * 60 : AppSettings.DefaultAutoBackupIntervalMinutes;
+                }
             }
         }
         catch
@@ -107,6 +125,8 @@ public sealed class SettingsStore
             Current.AutoBackupIntervalHours,
             AppSettings.DefaultAutoBackupIntervalHours,
             AppSettings.MaxAutoBackupIntervalHours);
+        if (Current.AutoBackupIntervalMinutes is < 15 or > AppSettings.MaxAutoBackupIntervalMinutes)
+            Current.AutoBackupIntervalMinutes = AppSettings.DefaultAutoBackupIntervalMinutes;
 
         Current.CollapseDelaySeconds = NormalizePositiveDouble(
             Current.CollapseDelaySeconds, 2.0, 0.5, 60.0);
@@ -146,6 +166,7 @@ public sealed class SettingsStore
         if (string.IsNullOrWhiteSpace(Current.Language))
             Current.Language = "en-US";
         Current.TranslationApiKey ??= string.Empty;
+        Current.TranslationTargetLanguage = TranslationTargets.Normalize(Current.TranslationTargetLanguage);
         Current.TranslationAppId ??= string.Empty;
         Current.BaiduTranslationApiKey ??= string.Empty;
         Current.AliyunAccessKeyId ??= string.Empty;

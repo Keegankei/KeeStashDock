@@ -76,7 +76,9 @@ public partial class SettingsWindow : Window
         _isAppDataFallback = isAppDataFallback;
         _translate = translate ?? TranslationService.TranslateDetailedAsync;
 
+        ConfigureHotkeyFeedback();
         ConfigureComponents(components);
+        ConfigureBackups();
         Closing += (s, e) => { e.Cancel = true; CancelTranslationTest(); _componentCancellation?.Cancel(); Hide(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) CancelTranslationTest(); };
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
@@ -111,13 +113,7 @@ public partial class SettingsWindow : Window
         LangCombo.SelectedItem = langs.FirstOrDefault(l => l.Tag == cfg.Language)
                                  ?? langs.FirstOrDefault(l => l.Tag == "en-US");
 
-        HotkeyBox.Text = FormatHotkey(cfg.HotkeyModifiers, cfg.HotkeyVirtualKey);
-        ScreenshotHotkeyCheck.IsChecked = cfg.ScreenshotHotkeyEnabled;
-        ScreenshotHotkeyCheck.IsEnabled = _screenshotHotkey is not null;
-        ScreenshotHotkeyBox.Text = FormatHotkey(cfg.ScreenshotHotkeyModifiers, cfg.ScreenshotHotkeyVirtualKey);
-        ScreenshotHotkeyBox.IsEnabled = _screenshotHotkey is not null;
-        ScreenshotHotkeyStatus.Visibility = cfg.ScreenshotHotkeyEnabled && _screenshotHotkey is { IsRegistered: false }
-            ? Visibility.Visible : Visibility.Collapsed;
+        PopulateHotkeys();
         AutoStartCheck.IsChecked = AutoStartHelper.IsEnabled();
         CollapseDelayBox.Text = cfg.CollapseDelaySeconds.ToString("0.#",
             System.Globalization.CultureInfo.InvariantCulture);
@@ -163,6 +159,7 @@ public partial class SettingsWindow : Window
             { BubbleStyleCombo.SelectedIndex = i; break; }
         TranslateEngineCombo.SelectedItem = TranslateEngineCombo.Items
             .OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == cfg.TranslationEngine);
+        RefreshTranslationTargets();
         BubbleGlowCheck.IsChecked = cfg.BubbleTextGlow;
         BubbleShadowCheck.IsChecked = cfg.BubbleShadow;
         BubbleOpacitySlider.Value = Math.Round(
@@ -170,12 +167,8 @@ public partial class SettingsWindow : Window
         BubbleOpacityValue.Text = $"{BubbleOpacitySlider.Value:0}%";
         ClipboardWatchCheck.IsChecked = cfg.ClipboardWatchEnabled;
         DirectPasteCheck.IsChecked = cfg.DirectPasteEnabled;
-        AutoBackupCheck.IsChecked = cfg.AutoBackupEnabled;
-        AutoBackupIntervalCombo.SelectedIndex = cfg.AutoBackupIntervalHours switch
-        { 6 => 0, 12 => 1, 48 => 3, 168 => 4, _ => 2 };
+        PopulateBackupSettings();
         RefreshTranslationCredentials();
-        AutoBackupIntervalCombo.IsEnabled = cfg.AutoBackupEnabled;
-        AutoBackupIntervalCombo.Opacity = cfg.AutoBackupEnabled ? 1.0 : 0.4;
         RefreshSelectionActionUi();
 
         string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
@@ -194,6 +187,7 @@ public partial class SettingsWindow : Window
         LocalizationService.Instance.SetLanguage(lang.Tag);   // whole UI hot-switches here
         _settings.Current.Language = lang.Tag;
         _settings.Save();
+        RefreshTranslationTargets();
         PopulateAboutOnly();
     }
 
@@ -204,102 +198,6 @@ public partial class SettingsWindow : Window
     {
         string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
         AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {_displayDataRoot}";
-    }
-
-    // ------------------------------------------------------------ hotkey
-
-    /// <summary>Record a modified key combination without stealing normal typing keys.</summary>
-    private void OnHotkeyRecord(object sender, KeyEventArgs e)
-    {
-        if (TryReadHotkey(e, out uint mods, out uint vk))
-            TryApplyHotkey(screenshot: false, mods, vk);
-    }
-
-    private void OnScreenshotHotkeyRecord(object sender, KeyEventArgs e)
-    {
-        if (TryReadHotkey(e, out uint mods, out uint vk))
-            TryApplyHotkey(screenshot: true, mods, vk);
-    }
-
-    private static bool TryReadHotkey(KeyEventArgs e, out uint mods, out uint vk)
-    {
-        mods = vk = 0;
-        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (key == Key.Tab && Keyboard.Modifiers is ModifierKeys.None or ModifierKeys.Shift)
-            return false; // Keep keyboard navigation available.
-        e.Handled = true;
-        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
-            or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin or Key.ImeProcessed or Key.DeadCharProcessed)
-            return false;
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) mods |= NativeMethods.MOD_CONTROL;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) mods |= NativeMethods.MOD_ALT;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) mods |= NativeMethods.MOD_SHIFT;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Windows)) mods |= NativeMethods.MOD_WIN;
-        vk = (uint)KeyInterop.VirtualKeyFromKey(key);
-        return mods != 0 && vk is > 0 and <= 0xfe;
-    }
-
-    internal bool TryApplyHotkey(bool screenshot, uint mods, uint vk)
-    {
-        var cfg = _settings.Current;
-        bool overlaps = screenshot
-            ? mods == cfg.HotkeyModifiers && vk == cfg.HotkeyVirtualKey
-            : cfg.ScreenshotHotkeyEnabled && mods == cfg.ScreenshotHotkeyModifiers && vk == cfg.ScreenshotHotkeyVirtualKey;
-        HotkeyManager? manager = screenshot ? _screenshotHotkey : _hotkey;
-        bool valid = mods != 0 && (mods & ~0x0fu) == 0 && vk is > 0 and <= 0xfe;
-        bool ok = valid && !overlaps && manager is not null &&
-            (screenshot && !cfg.ScreenshotHotkeyEnabled || manager.Rebind(mods, vk));
-        (screenshot ? ScreenshotHotkeyStatus : HotkeyStatus).Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
-        if (!ok) return false; // Rebind preserves the previous working registration.
-        if (screenshot)
-        {
-            cfg.ScreenshotHotkeyModifiers = mods;
-            cfg.ScreenshotHotkeyVirtualKey = vk;
-            ScreenshotHotkeyBox.Text = FormatHotkey(mods, vk);
-        }
-        else
-        {
-            cfg.HotkeyModifiers = mods;
-            cfg.HotkeyVirtualKey = vk;
-            HotkeyBox.Text = FormatHotkey(mods, vk);
-        }
-        _settings.Save();
-        return true;
-    }
-
-    private void OnScreenshotHotkeyEnabledChanged(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        var cfg = _settings.Current;
-        bool enabled = ScreenshotHotkeyCheck.IsChecked == true;
-        bool conflict = enabled &&
-            (cfg.ScreenshotHotkeyModifiers == cfg.HotkeyModifiers && cfg.ScreenshotHotkeyVirtualKey == cfg.HotkeyVirtualKey ||
-             _screenshotHotkey?.Initialize(cfg.ScreenshotHotkeyModifiers, cfg.ScreenshotHotkeyVirtualKey) != true);
-        if (conflict)
-        {
-            _loading = true;
-            ScreenshotHotkeyCheck.IsChecked = cfg.ScreenshotHotkeyEnabled;
-            _loading = false;
-            ScreenshotHotkeyStatus.Visibility = Visibility.Visible;
-            return;
-        }
-        if (!enabled) _screenshotHotkey?.Disable();
-        cfg.ScreenshotHotkeyEnabled = enabled;
-        ScreenshotHotkeyBox.IsEnabled = _screenshotHotkey is not null;
-        ScreenshotHotkeyStatus.Visibility = Visibility.Collapsed;
-        _settings.Save();
-    }
-
-    private static string FormatHotkey(uint mods, uint vk)
-    {
-        var parts = new List<string>(4);
-        if ((mods & NativeMethods.MOD_CONTROL) != 0) parts.Add("Ctrl");
-        if ((mods & NativeMethods.MOD_ALT) != 0) parts.Add("Alt");
-        if ((mods & NativeMethods.MOD_SHIFT) != 0) parts.Add("Shift");
-        if ((mods & NativeMethods.MOD_WIN) != 0) parts.Add("Win");
-        parts.Add(KeyInterop.KeyFromVirtualKey((int)vk).ToString());
-        return string.Join(" + ", parts);
     }
 
     // ---------------------------------------------------------- behavior
@@ -375,12 +273,13 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         _settings.Current.AutoBackupEnabled = AutoBackupCheck.IsChecked == true;
         if (int.TryParse((AutoBackupIntervalCombo.SelectedItem as ComboBoxItem)?.Tag
-                as string, out int hours))
-            _settings.Current.AutoBackupIntervalHours = hours;
+                as string, out int minutes))
+            _settings.Current.AutoBackupIntervalMinutes = minutes;
         AutoBackupIntervalCombo.IsEnabled = AutoBackupCheck.IsChecked == true;
         AutoBackupIntervalCombo.Opacity =
             AutoBackupCheck.IsChecked == true ? 1.0 : 0.4;
         _settings.Save();
+        RefreshBackupStatus();
     }
 
     private void OnApiKeyChanged(object sender, TextChangedEventArgs e)
@@ -433,6 +332,7 @@ public partial class SettingsWindow : Window
             ?? AppSettings.DefaultTranslationEngine;
         _settings.Save();
         RefreshTranslationCredentials();
+        RefreshTranslationTargets();
         RefreshSelectionActionUi();   // the API-key row follows the engine
     }
 
@@ -458,6 +358,7 @@ public partial class SettingsWindow : Window
         CancelTranslationTest();
         _settings.Current.OfflineTranslationEndpoint = OfflineEndpointBox.Text.Trim();
         _settings.Save();
+        RefreshTranslationTargets();
     }
 
     private async void OnTranslationTestClick(object sender, RoutedEventArgs e)
@@ -473,8 +374,9 @@ public partial class SettingsWindow : Window
         try
         {
             // A fixed public sample exercises the provider without reading the clipboard.
-            bool useChineseSample = _settings.Current.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-                || (_settings.Current.Language == "zh-TW" && _settings.Current.TranslationEngine == "Aliyun");
+            string target = TranslationTargets.Resolve(_settings.Current);
+            bool useChineseSample = target.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                || (target == "zh-TW" && _settings.Current.TranslationEngine == "Aliyun");
             string sample = useChineseSample
                 ? "\u8FD9\u662F\u4E00\u4E2A\u7FFB\u8BD1\u6D4B\u8BD5\u3002" : "This is a translation test.";
             TranslationResult result = await _translate(sample, _settings.Current, request.Token);
@@ -840,13 +742,17 @@ public partial class SettingsWindow : Window
     private async void OnImportClick(object sender, RoutedEventArgs e)
     {
         if (_shutdownPending) return;
+        var dlg = new OpenFileDialog
+        { Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg|SQLite database (*.db)|*.db" };
+        if (dlg.ShowDialog(this) == true) await RestoreDatabaseAsync(dlg.FileName);
+    }
+
+    private async Task RestoreDatabaseAsync(string sourceFile)
+    {
+        if (_shutdownPending) return;
         _shutdownPending = true;
         try
         {
-            var dlg = new OpenFileDialog
-            { Filter = "KeeStashDock package (*.ksdpkg)|*.ksdpkg|SQLite database (*.db)|*.db" };
-            if (dlg.ShowDialog(this) != true) return;
-
             var loc = LocalizationService.Instance;
             if (MessageBox.Show(this, loc["Settings.Backup.Import.Confirm"], loc["Common.Confirm"],
                     MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
@@ -855,7 +761,7 @@ public partial class SettingsWindow : Window
             IsEnabled = false;
             // This must finish before ImportAsync can replace the active database.
             if (!await _prepareForShutdown()) return;
-            await _databaseImport.ImportAsync(dlg.FileName);
+            await _databaseImport.ImportAsync(sourceFile);
             Application.Current.Shutdown();
         }
         catch (DatabaseImportException exception)

@@ -22,13 +22,15 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.2.2" src="docs/assets/badges/version.svg">
+  <img alt="Version 1.2.3" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 et 11" src="docs/assets/badges/windows.svg">
   <img alt="Licence Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Version 1.2.2** · [Notes de version](docs/releases/1.2.2-notes.md) · [Rapport de validation](docs/releases/1.2.2.md)
+**Version du code source 1.2.3** · [Notes de version](docs/releases/1.2.3-notes.md) · [Rapport de validation](docs/releases/1.2.3.md)
+
+Le dernier paquet stable publié est **1.2.2**. Les fonctions 1.2.3 ci-dessous concernent le code mis à jour et les versions candidates jusqu’à leur publication. Les captures et GIF restent identifiés comme **1.2.2** et ne montrent pas les nouveaux contrôles.
 
 [Premiers pas](#get-started) · [Fonctionnalités](#features) · [Raccourcis](#shortcuts) · [Données et mises à niveau](#data-and-upgrades) · [Développement](#development) · [Licence](#license)
 
@@ -57,7 +59,7 @@ Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une 
 
 </details>
 
-**Réglages initiaux · 1.2.2 :** anglais ; **Alt+Q** ouvre le panneau et **Alt+W** lance une capture. L’OCR et la traduction locale ne sont pas préinstallés. Les mises à niveau conservent les préférences enregistrées.
+**Réglages initiaux · 1.2.3 :** anglais ; **Alt+Q** ouvre le panneau et **Alt+W** lance une capture. L’OCR et la traduction locale ne sont pas préinstallés. Les mises à niveau conservent les préférences enregistrées.
 
 La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut, texte lumineux désactivé, ombre activée. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
 
@@ -147,6 +149,8 @@ Appuyez sur **Alt+W** ou sur un bouton de capture, puis faites glisser pour sél
 
 Faites à nouveau glisser pour redéfinir la zone ; **Esc** ou un clic droit annule la capture. Les résultats temporaires permettent de copier explicitement le texte, de conserver le texte source en cas d’échec de traduction et de réessayer. L’OCR est une étape de reconnaissance ; il ne traduit pas automatiquement. [Parcours de capture d’écran](docs/SCREENSHOTS.md) · [Prise en charge et limites de l’OCR](docs/LOCAL_OCR.md).
 
+**1.2.3 :** les résultats temporaires d’OCR et de traduction proposent **Enregistrer la source**, **Enregistrer la traduction** et **Enregistrer les deux**, avec le groupe actuel présélectionné. Les deux textes forment une seule entrée avec des sections identifiées. L’enregistrement est explicite, ne modifie pas le presse-papiers et n’enregistre pas également la capture. La source reste enregistrable après un échec de traduction ; un échec d’enregistrement conserve le résultat pour réessayer. Un texte identique réutilise l’entrée existante et la place dans le groupe choisi.
+
 ### 4. Actions sur la sélection et traduction
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Bulle de sélection de la version 1.2.2 avec boutons Copier et Traduire indépendants"></p>
@@ -155,7 +159,7 @@ Activez la bulle de sélection dans **Paramètres > Comportement**, puis sélect
 
 **1.2.2 :** choisissez **Copier et traduire** pour garder les deux boutons visibles. Après la copie, vous pouvez encore traduire la même sélection avant la fermeture de la bulle. Les échecs de traduction préservent le texte source.
 
-La langue cible de la traduction suit la langue de l’interface de l’application. Les langues cibles disponibles dépendent du fournisseur sélectionné ou des modèles hors ligne installés.
+**1.2.3 :** choisissez une langue cible indépendante de l’interface dans les paramètres. **Suivre la langue de l’interface** reste la valeur par défaut après installation ou mise à niveau. Traduction de sélection, de capture et test utilisent ce même réglage. La fenêtre de résultat indique la cible effective et permet de retraduire temporairement le texte source conservé sans modifier les paramètres globaux. Les langues dépendent du fournisseur ou des modèles installés. Une paire non prise en charge provoque une erreur sans changement de fournisseur ni envoi du texte hors ligne.
 
 | Fournisseur | Configuration et disponibilité |
 | --- | --- |
@@ -201,6 +205,8 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 <a id="shortcuts"></a>
 ## Raccourcis
 
+**1.2.3 :** si le raccourci du panneau ou de capture ne peut pas être enregistré au démarrage, une notification le nomme et donne accès aux paramètres, où son état reste visible. Les boutons et la zone de notification restent utilisables. Une modification refusée conserve le raccourci précédemment fonctionnel.
+
 | Action | Raccourci ou geste par défaut |
 | --- | --- |
 | Afficher/masquer le panneau rapide | **Alt+Q** ; configurable |
@@ -214,6 +220,8 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 
 <a id="data-and-upgrades"></a>
 ## Données, sauvegarde et mises à niveau
+
+**1.2.3 :** les paramètres affichent la dernière sauvegarde réussie, le dernier contrôle, le prochain contrôle prévu, l’état, le dossier et le nombre d’instantanés. Vous pouvez **Sauvegarder maintenant**, ouvrir le dossier ou restaurer un élément de la liste via la procédure protégée. Intervalles : **15 / 30 / 60 minutes**, 6 / 12 / 24 / 48 heures ou 7 jours ; la valeur par défaut reste **24 heures**. Les intervalles personnalisés et le nombre de copies conservées sont préservés. Sept instantanés espacés de 15 minutes couvrent seulement **90 minutes** du plus ancien au plus récent : choisissez la rétention en tenant compte de l’espace estimé. Chaque sauvegarde planifiée crée un instantané complet même si la base n’a pas changé ; des intervalles courts renouvellent plus vite l’historique conservé. La sauvegarde couvre la base des entrées et ses images, **pas tous les paramètres, composants ou arrière-plans**. La purge automatique ne supprime ni export manuel ni copie de récupération.
 
 <details>
 <summary>Sauvegardes · toutes les 24 heures par défaut</summary>

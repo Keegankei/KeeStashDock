@@ -1,4 +1,4 @@
-# KeeStashDock 1.2.2
+# KeeStashDock 1.2.3
 
 Windows x64 portable package. Extract the entire ZIP into a writable folder and
 run `KeeStashDock.exe`. The .NET runtime is bundled in the executable. Extract the
@@ -34,10 +34,13 @@ no manual environment setup is needed. Keep the application entry point and
 - In Settings, choose **Standard** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
 - **Hide at desktop edge** is enabled by default to tuck the panel into a small handle when dragged to an edge. Hover over or click the handle to restore it. Ordinary collapse keeps only the six toolbar buttons.
 - Select **Copy and translate** for two independent selection-bubble buttons. Copy saves the selection to the dock; Translate uses the same source text without adding an entry.
+- Choose **Translation target language** independently of the interface language. The default is **Follow interface language**. A target selected in a result window applies only to that result; retry uses the retained source text.
+- In a temporary OCR or translation result, choose a group and **Save source**, **Save translation**, or **Save both**. Saving both creates one text entry. Saving is explicit and does not copy text or save the screenshot.
+- If a shortcut cannot be registered, click the tray notification to open Settings. Each shortcut has a persistent status there; tray actions remain usable. A failed replacement keeps the previous working shortcut.
 
 ## Fresh-install defaults
 
-These defaults apply to a new configuration in 1.2.2. Upgrades preserve saved
+These defaults apply to a new configuration in 1.2.3. Upgrades preserve saved
 preferences, including language and shortcuts.
 
 | Setting | Default |
@@ -47,6 +50,7 @@ preferences, including language and shortcuts.
 | OCR / offline translation | Not preinstalled; explicit in-app installation |
 | Launch at Windows startup | Off |
 | Selection bubble / action / translator | On / Copy only / Google |
+| Translation target language | Follow interface language |
 | Bubble style / text glow / drop shadow | Default / Off / On |
 | Automatic clipboard collection / direct paste | Off / Off |
 | Auto-hide when dragged to an edge | On |
@@ -81,6 +85,20 @@ and billing terms. Their use sends selected text to that provider. Offline
 translation and OCR do not fall back to a cloud provider on failure.
 
 ## Data and upgrades
+
+**Settings > Data** shows the last backup attempt and success, next scheduled
+check, current status, location and snapshot list. **Back up now** creates a
+manual snapshot; restoring a listed snapshot uses the same guarded import flow.
+Automatic intervals include **15, 30 and 60 minutes**, 6, 12, 24 and 48 hours,
+and 7 days. The default remains 24 hours; existing hourly settings migrate.
+
+Scheduling runs only while the app is open. Startup or resume catches up once,
+without replaying every missed interval. Every successful run creates a complete
+database snapshot, including stored images and OCR text. These snapshots do not
+back up settings, downloaded components, backgrounds or desktop layout. Shorter
+intervals use more storage: seven snapshots at 15-minute intervals span about
+90 minutes from oldest to newest. Retention removes only owned automatic
+snapshots after a successful backup; manual and recovery copies are preserved.
 
 Your library and settings are under `Data` beside the program when the folder is
 writable; otherwise they are under `%AppData%\KeeStashDock`. Back up the active

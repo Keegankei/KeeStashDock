@@ -72,6 +72,10 @@ public static class TranslationService
 
     public static Task<TranslationResult> TranslateDetailedAsync(string text, AppSettings settings,
         CancellationToken cancellationToken = default)
+        => TranslateDetailedAsync(text, settings, temporaryTarget: null, cancellationToken);
+
+    public static Task<TranslationResult> TranslateDetailedAsync(string text, AppSettings settings,
+        string? temporaryTarget, CancellationToken cancellationToken = default)
     {
         string key = settings.TranslationEngine switch
         {
@@ -86,7 +90,11 @@ public static class TranslationService
             "Aliyun" => settings.AliyunAccessKeyId,
             _ => string.Empty,
         };
-        return TranslateDetailedAsync(text, settings.Language, settings.TranslationEngine,
+        string target = TranslationTargets.Resolve(settings, temporaryTarget);
+        if (temporaryTarget is not null && TranslationTargets.Normalize(temporaryTarget) == TranslationTargets.FollowInterface
+            && temporaryTarget != TranslationTargets.FollowInterface)
+            return Task.FromResult(new TranslationResult(settings.TranslationEngine, null, TranslationFailure.UnsupportedLanguage));
+        return TranslateDetailedAsync(text, target, settings.TranslationEngine,
             key, id, cancellationToken, settings.OfflineTranslationEndpoint);
     }
 

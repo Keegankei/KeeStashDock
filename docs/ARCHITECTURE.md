@@ -145,7 +145,7 @@ The search service uses FTS5 for ordinary tokenized queries. Queries containing 
 - `OneDay` and `SevenDays` calculate an absolute UTC expiry at creation or edit time.
 - `BurnAfterRead` moves the snippet to Trash after the first registered use.
 - Expired snippets and normal deletions use soft deletion first.
-- Housekeeping performs expiry, trash purging, and scheduled backups.
+- Housekeeping performs expiry and trash purging. Automatic backups have an independent minute-based scheduler.
 
 ### Translation
 
@@ -157,9 +157,33 @@ The optional `OfflineTranslation` setup scripts install a separate local runtime
 
 The client applies bounded timeouts, accepts cancellation, and returns categorized failures without remote response bodies or credentials. The UI distinguishes connection, authentication, throttling, quota, and language errors. Dismissing a translation or starting a new one cancels the old request, and stale responses cannot overwrite a newer result. Diagnostics include only provider, failure category, and HTTP status.
 
+`TranslationTargets` resolves an explicit target or the compatible FollowInterface
+default for every entry point. A result window holds a separate temporary target
+and retained source. `TemporaryTextResult` guards result revisions and repeated
+saves; `ResultTextSaveService` stores a text-only source, translation, or labeled
+pair in the selected category. Duplicate reassignment and persistence share a
+transaction. This explicit action does not write to the clipboard or save a
+temporary screenshot.
+
 ### Data and backup
 
 The application first attempts to create `Data` beside the executable and verifies actual file writability. It falls back to `%AppData%\KeeStashDock` after access or I/O failure. SQLite's online backup API is used for consistent backups while the application is running.
+
+`AutomaticBackupScheduler` uses an injectable clock independently of housekeeping.
+It re-evaluates settings, startup/resume and wall-clock changes, performs at most
+one catch-up attempt, and defers while database maintenance is active. Manual and
+automatic snapshots share an operation gate. Each complete SQLite snapshot is
+written to a temporary file, checked, flushed and atomically published with a
+unique name before automatic retention runs. No database-file timestamp shortcut
+is used, so committed WAL content remains part of the snapshot.
+
+Backup status stores UTC attempt/success times and failure state next to the
+snapshots; Settings marshals status events to the UI. Interrupted attempts do not
+appear successful. Shutdown stops the scheduler and waits for active snapshots.
+Legacy hourly preferences migrate only when the minute field is absent. Manual
+and recovery snapshots are excluded from automatic pruning. A database snapshot
+contains entries and their stored images, not the full application configuration
+or optional component installations.
 
 Database imports copy to a staging file, validate integrity and the recognized schema, migrate the staging copy, and validate it again. A maintenance lease drains active connections and blocks new writes. A verified safety backup precedes atomic replacement, with rollback on failure. A restart failure restores the original database and disables further operations until the application exits. Files from unsupported future schemas are rejected before migration.
 

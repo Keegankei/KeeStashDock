@@ -53,6 +53,15 @@ Recognition progress, empty results, missing components, and failures have
 separate messages. The component button opens the existing in-app installation
 and repair flow for missing OCR or offline translation components.
 
+In 1.2.3, temporary results also offer a group selector and explicit **Save source**,
+**Save translation**, and **Save both** actions. The last action creates one
+labeled text entry. It does not save the captured image or change the clipboard.
+An existing duplicate is reused in the chosen group. A failed save leaves the
+result available for retry. The translation target can be changed for this
+result without changing the default target in Settings; retry always uses the
+retained source text. Unsupported local model directions remain an error and
+never trigger cloud fallback.
+
 ## Storage, backups, and upgrading
 
 The original PNG and thumbnail live inside the SQLite database with their entry.

@@ -22,13 +22,15 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 1.2.2" src="docs/assets/badges/version.svg">
+  <img alt="Versión 1.2.3" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 y 11" src="docs/assets/badges/windows.svg">
   <img alt="Licencia Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Versión 1.2.2** · [Notas de la versión](docs/releases/1.2.2-notes.md) · [Registro de aceptación](docs/releases/1.2.2.md)
+**Versión del código fuente 1.2.3** · [Notas de la versión](docs/releases/1.2.3-notes.md) · [Registro de validación](docs/releases/1.2.3.md)
+
+El último paquete estable publicado es **1.2.2**. Las funciones de 1.2.3 descritas a continuación corresponden al código actualizado y a las compilaciones candidatas hasta su publicación. Las capturas y los GIF siguen identificados como **1.2.2** y no muestran los controles nuevos.
 
 [Primeros pasos](#get-started) · [Funciones](#features) · [Atajos](#shortcuts) · [Datos y actualizaciones](#data-and-upgrades) · [Desarrollo](#development) · [Licencia](#license)
 
@@ -57,7 +59,7 @@ Una suma de comprobación verifica la integridad del archivo; no es una firma de
 
 </details>
 
-**Valores iniciales · 1.2.2:** inglés; **Alt+Q** abre el panel y **Alt+W** inicia una captura. El OCR y la traducción local no vienen preinstalados. Las actualizaciones conservan las preferencias guardadas.
+**Valores iniciales · 1.2.3:** inglés; **Alt+Q** abre el panel y **Alt+W** inicia una captura. El OCR y la traducción local no vienen preinstalados. Las actualizaciones conservan las preferencias guardadas.
 
 La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo predeterminado, brillo del texto desactivado y sombra activada. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Estándar**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
 
@@ -147,6 +149,8 @@ Pulsa **Alt+W** o un botón de captura y arrastra para seleccionar una zona. Las
 
 Arrastra de nuevo para cambiar la selección; **Esc** o un clic derecho cancela la captura. Los resultados temporales permiten copiar de forma explícita, conservar el texto original si la traducción falla y volver a intentar la traducción. El OCR es un paso de reconocimiento; no traduce automáticamente. [Flujos de captura de pantalla](docs/SCREENSHOTS.md) · [Compatibilidad y límites del OCR](docs/LOCAL_OCR.md).
 
+**1.2.3:** los resultados temporales de OCR y traducción ofrecen **Guardar original**, **Guardar traducción** y **Guardar ambos**, con el grupo actual seleccionado inicialmente. Guardar ambos crea una sola entrada con secciones identificadas. El guardado es explícito, no cambia el portapapeles ni guarda además la captura. Si la traducción falla, aún puedes guardar el original; si falla el guardado, el resultado se conserva para reintentarlo. El texto duplicado reutiliza la entrada existente y la coloca en el grupo elegido.
+
 ### 4. Acciones de selección y traducción
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Burbuja de selección de la versión 1.2.2 con botones independientes de Copiar y Traducir"></p>
@@ -155,7 +159,7 @@ Activa la burbuja de selección en **Configuración > Comportamiento** y selecci
 
 **1.2.2:** elige **Copiar y traducir** para mantener ambos botones visibles. Después de copiar, puedes traducir la misma selección antes de que se cierre la burbuja. Si la traducción falla, se conserva el texto original.
 
-El idioma de destino de la traducción sigue el idioma de la interfaz de la aplicación. Los idiomas de destino disponibles dependen del proveedor seleccionado o de los modelos sin conexión instalados.
+**1.2.3:** selecciona en Configuración un idioma de traducción independiente de la interfaz. **Seguir el idioma de la interfaz** continúa siendo el valor predeterminado en instalaciones nuevas y actualizaciones. Las selecciones, capturas y pruebas de traducción usan esa misma preferencia. La ventana de resultados muestra el destino efectivo y permite volver a traducir temporalmente el original conservado sin cambiar los ajustes globales. Los destinos dependen del proveedor o de los modelos instalados. Las combinaciones no admitidas generan un error sin cambiar de proveedor ni subir el texto sin conexión.
 
 | Proveedor | Configuración y disponibilidad |
 | --- | --- |
@@ -201,6 +205,8 @@ El paquete organizado contiene tres archivos en la raíz: `KeeStashDock.exe`, `S
 <a id="shortcuts"></a>
 ## Atajos
 
+**1.2.3:** si un atajo del panel o de captura no puede registrarse al inicio, una notificación lo identifica y ofrece acceso a Configuración, donde su estado sigue visible. Los botones y la bandeja continúan funcionando. Si falla el cambio de atajo, se conserva la asignación anterior que funcionaba.
+
 | Acción | Atajo o gesto predeterminado |
 | --- | --- |
 | Mostrar/ocultar el panel rápido | **Alt+Q**; configurable |
@@ -214,6 +220,8 @@ El paquete organizado contiene tres archivos en la raíz: `KeeStashDock.exe`, `S
 
 <a id="data-and-upgrades"></a>
 ## Datos, copias de seguridad y actualizaciones
+
+**1.2.3:** Configuración muestra la última copia correcta, la última comprobación, la próxima comprobación, el estado, la ubicación y la cantidad de instantáneas. Permite **Crear copia ahora**, abrir la carpeta y restaurar desde la lista mediante el proceso protegido. Intervalos: **15 / 30 / 60 minutos**, 6 / 12 / 24 / 48 horas o 7 días; el valor predeterminado sigue siendo **24 horas**. Se conservan los intervalos personalizados y la retención existentes. Siete instantáneas cada 15 minutos abarcan solo **90 minutos** entre la más antigua y la más reciente; elige la retención teniendo en cuenta el espacio estimado. Cada copia programada crea una instantánea completa aunque la base no haya cambiado; los intervalos cortos reemplazan antes el historial conservado. Se respalda la base de entradas y sus imágenes, **no todos los ajustes, componentes o fondos**. La limpieza automática no elimina exportaciones manuales ni copias de recuperación.
 
 <details>
 <summary>Copias de seguridad · cada 24 horas por defecto</summary>

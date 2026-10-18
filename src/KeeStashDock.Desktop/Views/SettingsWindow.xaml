@@ -99,7 +99,7 @@
       </Border>
 
       <!-- ============ Hotkey ============ -->
-      <Border Style="{StaticResource S.Section}">
+      <Border x:Name="HotkeysSection" Style="{StaticResource S.Section}">
         <StackPanel>
           <TextBlock Style="{StaticResource S.SectionTitle}"
                      Text="{loc:Tr Settings.Hotkey}"/>
@@ -108,9 +108,8 @@
           <TextBox x:Name="HotkeyBox" Style="{StaticResource S.Input}"
                    IsReadOnly="True" IsReadOnlyCaretVisible="False"
                    PreviewKeyDown="OnHotkeyRecord"/>
-          <TextBlock x:Name="HotkeyStatus" FontSize="11" Margin="0,4,0,0"
-                     Foreground="{DynamicResource B.Danger}" Visibility="Collapsed"
-                     Text="{loc:Tr Settings.Hotkey.Conflict}"/>
+          <TextBlock x:Name="HotkeyStatus" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}"/>
           <CheckBox x:Name="ScreenshotHotkeyCheck" Margin="0,14,0,6"
                     Checked="OnScreenshotHotkeyEnabledChanged" Unchecked="OnScreenshotHotkeyEnabledChanged">
             <TextBlock Text="{loc:Tr Screenshot.HotkeyEnabled}" TextWrapping="Wrap"/>
@@ -121,8 +120,7 @@
                    IsReadOnly="True" IsReadOnlyCaretVisible="False"
                    PreviewKeyDown="OnScreenshotHotkeyRecord"/>
           <TextBlock x:Name="ScreenshotHotkeyStatus" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
-                     Foreground="{DynamicResource B.Danger}" Visibility="Collapsed"
-                     Text="{loc:Tr Screenshot.HotkeyConflict}"/>
+                     Foreground="{DynamicResource B.TextMuted}"/>
         </StackPanel>
       </Border>
 
@@ -198,7 +196,7 @@
             </ComboBox>
           </Grid>
 
-          <!-- Translation controls are shown while the action is Translate. -->
+          <!-- Translation also serves screenshots when the selection bubble is disabled. -->
           <Grid x:Name="TranslateEngineRow" Style="{StaticResource S.Row}">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -219,6 +217,16 @@
               <ComboBoxItem Tag="DeepL"  Content="DeepL"/>
             </ComboBox>
           </Grid>
+
+          <StackPanel Margin="0,0,0,12">
+            <TextBlock Text="{loc:Tr Settings.TranslationTarget}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+            <ComboBox x:Name="TranslationTargetCombo" HorizontalAlignment="Stretch"
+                      SelectionChanged="OnTranslationTargetChanged"/>
+            <TextBlock x:Name="TranslationTargetStatus" TextWrapping="Wrap" Margin="0,6,0,0"
+                       FontSize="11" Foreground="{DynamicResource B.TextMuted}"/>
+            <TextBlock Text="{loc:Tr Settings.TranslationTargetHint}" TextWrapping="Wrap" Margin="0,6,0,0"
+                       FontSize="11" Foreground="{DynamicResource B.TextMuted}"/>
+          </StackPanel>
 
           <TextBlock x:Name="TranslateEngineHint" Margin="0,0,0,10"
                      TextWrapping="Wrap" FontSize="11"
@@ -637,17 +645,52 @@
             <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220"
                        TextWrapping="Wrap"
                        Text="{loc:Tr Settings.AutoBackup.Interval}"/>
-            <!-- Interval options are unit literals ("6 h") - language-neutral. -->
             <ComboBox Grid.Column="1" x:Name="AutoBackupIntervalCombo" Width="120"
                       HorizontalAlignment="Left"
                       SelectionChanged="OnAutoBackupChanged">
-              <ComboBoxItem Tag="6"   Content="6 h"/>
-              <ComboBoxItem Tag="12"  Content="12 h"/>
-              <ComboBoxItem Tag="24"  Content="24 h"/>
-              <ComboBoxItem Tag="48"  Content="48 h"/>
-              <ComboBoxItem Tag="168" Content="7 d"/>
+              <ComboBoxItem Tag="15"    Content="15 min"/>
+              <ComboBoxItem Tag="30"    Content="30 min"/>
+              <ComboBoxItem Tag="60"    Content="1 h"/>
+              <ComboBoxItem Tag="360"   Content="6 h"/>
+              <ComboBoxItem Tag="720"   Content="12 h"/>
+              <ComboBoxItem Tag="1440"  Content="24 h"/>
+              <ComboBoxItem Tag="2880"  Content="48 h"/>
+              <ComboBoxItem Tag="10080" Content="7 d"/>
             </ComboBox>
           </Grid>
+          <Grid Style="{StaticResource S.Row}" Margin="22,0,12,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource S.RowLabel}" MaxWidth="220" TextWrapping="Wrap"
+                       Text="{loc:Tr Settings.Backup.KeepCount}"/>
+            <ComboBox Grid.Column="1" x:Name="BackupKeepCountCombo" Width="120"
+                      HorizontalAlignment="Left" SelectionChanged="OnBackupKeepCountChanged">
+              <ComboBoxItem Tag="7" Content="7"/>
+              <ComboBoxItem Tag="30" Content="30"/>
+              <ComboBoxItem Tag="100" Content="100"/>
+            </ComboBox>
+          </Grid>
+          <TextBlock Text="{loc:Tr Settings.Backup.Scope}" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,8"/>
+          <TextBlock x:Name="BackupStatusText" TextWrapping="Wrap" Margin="0,0,0,8"/>
+          <TextBlock x:Name="BackupRetentionText" TextWrapping="Wrap"
+                     Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,8"/>
+          <WrapPanel Margin="0,0,0,8">
+            <Button x:Name="BackupNowButton" Style="{StaticResource S.Button}"
+                    Margin="0,0,8,8" Click="OnBackupNowClick" Content="{loc:Tr Settings.Backup.Now}"/>
+            <Button Style="{StaticResource S.Button}" Margin="0,0,8,8"
+                    Click="OnOpenBackupFolderClick" Content="{loc:Tr Settings.Backup.OpenFolder}"/>
+            <Button Style="{StaticResource S.Button}" Margin="0,0,0,8"
+                    Click="OnRefreshBackupsClick" Content="{loc:Tr Settings.Backup.Refresh}"/>
+          </WrapPanel>
+          <ListBox x:Name="BackupSnapshotList" MaxHeight="150" MinHeight="44"
+                   DisplayMemberPath="DisplayName" SelectionChanged="OnBackupSelectionChanged"
+                   AutomationProperties.Name="{loc:Tr Settings.Backup.Snapshots}"/>
+          <Button x:Name="RestoreBackupButton" Style="{StaticResource S.Button}"
+                  HorizontalAlignment="Left" Margin="0,8,0,12" IsEnabled="False"
+                  Click="OnRestoreBackupClick" Content="{loc:Tr Settings.Backup.RestoreSelected}"/>
           <StackPanel>
             <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left"
                     Margin="0,0,0,8" Click="OnExportClick"

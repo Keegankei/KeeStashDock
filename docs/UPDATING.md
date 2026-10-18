@@ -30,7 +30,28 @@ Organized packages bundle the .NET runtime into the same root `KeeStashDock.exe`
 - An obsolete file is removed only when the previous manifest identifies it as an unchanged application file.
 - The upgrade keeps the installation path and does not alter existing shortcuts or startup registration.
 
-Version 1.2.2 retains database schema v4. Database rollback is not part of application-file rollback. Older programs limited to schemas v1-v3 cannot open a v4 database.
+Version 1.2.3 retains database schema v4. Database rollback is not part of application-file rollback. Older programs limited to schemas v1-v3 cannot open a v4 database.
+
+## Upgrading to 1.2.3
+
+Keep the complete active data folder and existing optional components. Saved
+language, shortcuts, provider credentials and backup preferences are preserved.
+The new translation target defaults to **Follow interface language**, matching
+earlier behavior until an explicit target is selected.
+
+The new `autoBackupIntervalMinutes` setting takes precedence when present.
+Otherwise, the previous valid `autoBackupIntervalHours` value is converted to
+minutes, including custom intervals. A new installation still uses 24 hours.
+Older app versions do not understand minute scheduling, so keep a copy of the
+pre-upgrade settings if downgrading. A 15-minute schedule is not a Windows
+background task: it runs while KeeStashDock is open and catches up once after
+startup or resume. Automatic database snapshots include stored images, but not
+settings, optional components, backgrounds or desktop layout.
+
+Once the stable 1.2.3 release is published, 1.2.2 can use **Check for updates**.
+A locally packaged candidate with the same numeric version still needs manual
+replacement to install a later 1.2.3 build. Keep its data and use the manual
+procedure below; do not overwrite a running installation.
 
 ## First upgrade from 1.2.1
 

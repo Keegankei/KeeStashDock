@@ -9,15 +9,14 @@ namespace KeeStashDock.Core.Services;
 /// <summary>
 /// Background janitor. Runs once at startup and then hourly on a timer:
 ///   1. moves expired snippets to the recycle bin,
-///   2. purges recycle-bin rows past the retention window (default 30 days),
-///   3. triggers the scheduled automatic backup (user-set interval).
+///   2. purges recycle-bin rows past the retention window (default 30 days).
+/// Automatic backups have their own minute-based scheduler.
 /// All work happens on a ThreadPool timer thread; repositories open their own
 /// connections so no UI-thread state is touched.
 /// </summary>
 public sealed class HousekeepingService : IDisposable
 {
     private readonly SnippetRepository _snippets;
-    private readonly BackupService _backup;
     private readonly SettingsStore _settings;
     private readonly FileLogger _log;
     private readonly DatabaseMaintenanceCoordinator _maintenance;
@@ -26,12 +25,10 @@ public sealed class HousekeepingService : IDisposable
     /// <summary>Raised (on a worker thread) when housekeeping changed data.</summary>
     public event Action? Swept;
 
-    public HousekeepingService(SnippetRepository snippets, BackupService backup,
-                               SettingsStore settings, FileLogger log,
+    public HousekeepingService(SnippetRepository snippets, SettingsStore settings, FileLogger log,
                                DatabaseMaintenanceCoordinator maintenance)
     {
         _snippets = snippets;
-        _backup = backup;
         _settings = settings;
         _log = log;
         _maintenance = maintenance;
@@ -56,8 +53,6 @@ public sealed class HousekeepingService : IDisposable
             AppSettings cfg = _settings.Current;
             int expired = _snippets.MoveExpiredToTrash();
             int purged = _snippets.PurgeTrash(cfg.TrashRetentionDays);
-            if (cfg.AutoBackupEnabled)
-                _backup.RunAuto(cfg.BackupKeepCount, cfg.AutoBackupIntervalHours);
 
             if (expired > 0 || purged > 0)
             {

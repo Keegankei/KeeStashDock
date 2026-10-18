@@ -22,13 +22,15 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.2.2" src="docs/assets/badges/version.svg">
+  <img alt="Version 1.2.3" src="docs/assets/badges/version.svg">
   <img alt=".NET 10" src="docs/assets/badges/dotnet.svg">
   <img alt="Windows 10 und 11" src="docs/assets/badges/windows.svg">
   <img alt="Apache-2.0-Lizenz" src="docs/assets/badges/license.svg">
 </p>
 
-**Version 1.2.2** · [Versionshinweise](docs/releases/1.2.2-notes.md) · [Abnahmeprotokoll](docs/releases/1.2.2.md)
+**Quellcodeversion 1.2.3** · [Versionshinweise](docs/releases/1.2.3-notes.md) · [Prüfprotokoll](docs/releases/1.2.3.md)
+
+Das zuletzt veröffentlichte stabile Paket ist **1.2.2**. Die folgenden Funktionen von 1.2.3 gelten bis zur Veröffentlichung für den aktualisierten Quellcode und Kandidaten-Builds. Bilder und GIFs sind weiterhin als **1.2.2** gekennzeichnet und zeigen die neuen Bedienelemente nicht.
 
 [Einstieg](#get-started) · [Funktionen](#features) · [Tastenkürzel](#shortcuts) · [Daten und Upgrades](#data-and-upgrades) · [Entwicklung](#development) · [Lizenz](#license)
 
@@ -57,7 +59,7 @@ Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. 
 
 </details>
 
-**Voreinstellungen bei Neuinstallation · 1.2.2:** Englisch; **Alt+Q** öffnet das Panel, **Alt+W** startet einen Screenshot. OCR und lokale Übersetzung sind nicht vorinstalliert. Updates behalten gespeicherte Einstellungen bei.
+**Voreinstellungen bei Neuinstallation · 1.2.3:** Englisch; **Alt+Q** öffnet das Panel, **Alt+W** startet einen Screenshot. OCR und lokale Übersetzung sind nicht vorinstalliert. Updates behalten gespeicherte Einstellungen bei.
 
 Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard, Textleuchten aus, Schatten an. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
 
@@ -147,6 +149,8 @@ Drücken Sie **Alt+W** oder eine Screenshot-Schaltfläche und ziehen Sie einen A
 
 Erneut ziehen, um den Bereich neu auszuwählen; **Esc** oder ein Rechtsklick bricht ab. Vorübergehende Ergebnisse unterstützen bewusstes Kopieren und erneute Übersetzungsversuche; der Ausgangstext bleibt bei Übersetzungsfehlern erhalten. OCR dient der Texterkennung und übersetzt nicht automatisch. [Screenshot-Abläufe](docs/SCREENSHOTS.md) · [OCR-Unterstützung und Grenzen](docs/LOCAL_OCR.md).
 
+**1.2.3:** Temporäre OCR- und Übersetzungsergebnisse bieten **Original speichern**, **Übersetzung speichern** und **Beides speichern** sowie eine Gruppenauswahl mit der aktuellen Gruppe als Vorgabe. Beides erstellt einen Texteintrag mit beschrifteten Abschnitten. Gespeichert wird nur auf ausdrücklichen Wunsch; Zwischenablage und Screenshot bleiben unverändert. Bei Übersetzungsfehlern lässt sich das Original weiterhin speichern; bei Speicherfehlern bleibt das Ergebnis zum erneuten Versuch verfügbar. Identischer Text verwendet den bestehenden Eintrag und ordnet ihn der gewählten Gruppe zu.
+
 ### 4. Aktionen für markierten Text und Übersetzung
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Auswahlblase von 1.2.2 mit getrennten Schaltflächen für Kopieren und Übersetzen"></p>
@@ -155,7 +159,7 @@ Aktivieren Sie die Auswahlblase unter **Einstellungen > Verhalten** und markiere
 
 **1.2.2:** Wählen Sie **Kopieren und übersetzen**, damit beide Schaltflächen sichtbar bleiben. Nach dem Kopieren können Sie dieselbe Auswahl noch übersetzen, solange die Blase geöffnet ist. Bei Übersetzungsfehlern bleibt der Ausgangstext erhalten.
 
-Die Zielsprache der Übersetzung folgt der Oberflächensprache der App. Welche Zielsprachen verfügbar sind, hängt vom gewählten Anbieter oder den installierten Offline-Modellen ab.
+**1.2.3:** Wählen Sie die Zielsprache in den Einstellungen unabhängig von der Oberflächensprache. **Oberflächensprache verwenden** bleibt bei Neuinstallation und Upgrade der Standard. Auswahlübersetzung, Screenshot-Übersetzung und Übersetzungstest verwenden dieselbe Einstellung. Im Ergebnisfenster lässt sich der erhaltene Ausgangstext vorübergehend in eine andere Sprache übersetzen; das ändert die globale Einstellung nicht. Verfügbare Ziele hängen vom Anbieter und den installierten Modellen ab. Nicht unterstützte Sprachpaare führen zu einer Fehlermeldung, ohne Anbieterwechsel oder Upload von Offline-Text.
 
 | Anbieter | Einrichtung und Verfügbarkeit |
 | --- | --- |
@@ -201,6 +205,8 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 <a id="shortcuts"></a>
 ## Tastenkürzel
 
+**1.2.3:** Kann ein Panel- oder Screenshot-Kürzel beim Start nicht registriert werden, nennt eine Meldung das Kürzel und bietet den Weg zu den Einstellungen. Der Status bleibt dort sichtbar; Infobereich und Schaltflächen funktionieren weiter. Eine fehlgeschlagene Änderung behält die zuvor funktionierende Belegung bei.
+
 | Aktion | Standard-Tastenkürzel oder Geste |
 | --- | --- |
 | Schnellpanel anzeigen/ausblenden | **Alt+Q**; konfigurierbar |
@@ -214,6 +220,8 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 
 <a id="data-and-upgrades"></a>
 ## Daten, Sicherung und Upgrades
+
+**1.2.3:** Die Einstellungen zeigen letzte erfolgreiche Sicherung, letzte Prüfung, nächste geplante Prüfung, Status, Speicherort und Anzahl der Snapshots. **Jetzt sichern**, Ordner öffnen und Wiederherstellen aus der Liste über den abgesicherten Ablauf sind verfügbar. Intervalle: **15 / 30 / 60 Minuten**, 6 / 12 / 24 / 48 Stunden oder 7 Tage; Standard bleibt **24 Stunden**. Vorhandene eigene Intervalle und Aufbewahrungszahlen bleiben erhalten. Sieben Snapshots im Abstand von 15 Minuten decken vom ältesten bis zum neuesten nur **90 Minuten** ab; wählen Sie die Anzahl anhand des Bedarfs und der Speicherplatzschätzung. Jede geplante Sicherung erstellt auch bei unveränderter Datenbank einen vollständigen Snapshot; kürzere Intervalle ersetzen den aufbewahrten Verlauf schneller. Gesichert wird die Eintragsdatenbank einschließlich gespeicherter Bilder, **nicht sämtliche Einstellungen, Komponenten oder Hintergründe**. Automatische Bereinigung entfernt keine manuellen Exporte oder Wiederherstellungskopien.
 
 <details>
 <summary>Sicherungseinstellungen · standardmäßig alle 24 Stunden</summary>

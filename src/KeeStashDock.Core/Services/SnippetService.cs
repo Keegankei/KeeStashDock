@@ -39,7 +39,7 @@ public sealed class SnippetService
     public long Add(string content, SnippetSource source,
                     ExpirePolicy expire = ExpirePolicy.Never,
                     string? title = null, long? categoryId = null,
-                    SnippetType? explicitType = null)
+                    SnippetType? explicitType = null, bool placeInCategoryOnDuplicate = false)
     {
         if (explicitType == SnippetType.Image) throw new ArgumentException("Use AddImage for image entries.", nameof(explicitType));
         content = NormalizeContent(content);
@@ -59,7 +59,7 @@ public sealed class SnippetService
             CreatedAt = now,
             UpdatedAt = now,
         };
-        long id = _repo.InsertOrRefresh(snippet);
+        long id = _repo.InsertOrRefresh(snippet, placeInCategoryOnDuplicate);
         _log.Debug($"Snippet #{id} recorded ({snippet.Type}, {content.Length} chars)");
         Changed?.Invoke();
         return id;
