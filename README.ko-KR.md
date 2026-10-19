@@ -30,7 +30,7 @@
 
 **버전 1.2.3** · [릴리스 노트](docs/releases/1.2.3-notes.md) · [검증 기록](docs/releases/1.2.3.md)
 
-스크린샷과 GIF는 **1.2.2**이며, 1.2.3의 새 설정 및 결과 컨트롤을 보여 주지는 않습니다.
+스크린샷과 GIF는 **1.2.3 영어 인터페이스**를 보여 줍니다. 새로 설치했을 때의 기본 설정과 선택 기능을 구분해 표시했습니다.
 
 [시작하기](#get-started) · [기능](#features) · [단축키](#shortcuts) · [데이터 및 업그레이드](#data-and-upgrades) · [개발](#development) · [라이선스](#license)
 
@@ -66,7 +66,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>새 설치의 기본 설정 · 영어 화면</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="영어, Alt+Q, Alt+W 기본값을 보여 주는 1.2.2 설정 화면"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="영어, Alt+Q, Alt+W 기본값을 보여 주는 1.2.3 설정 화면"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 백업 폴더는 **백업 및 데이터**에서, OCR과 오프라인 번역 폴더는 **로컬 구성 요소**에서 각각 선택하세요. 폴더를 바꿔도 **기존 파일은 이동하지 않습니다**. 새 폴더가 비어 있으면 구성 요소를 다시 설치하세요. **정보**에는 현재 앱 데이터 위치가 읽기 전용으로 표시됩니다. 라이브러리를 안전하게 옮기려면 내보내기와 가져오기를 사용하세요.
 
-아래 미리보기는 가상의 예시 데이터를 사용한 **1.2.2의 실제 영어 화면**입니다. 표준 패널에는 새 설치의 기본 모양 설정을 적용했으며, 공간 모드와 복사 / 번역 버튼을 함께 표시하는 말풍선은 선택 가능한 설정을 보여 줍니다. 공간 모드 GIF의 포인터와 업데이트 화면의 릴리스는 시뮬레이션입니다. 설치 및 데이터 경로는 가렸으며, 개인 데스크톱이나 클립보드 내용은 포함하지 않았습니다. [이미지 출처 및 재현 방법](docs/images/README.md).
+아래 미리보기는 가상의 예시 데이터를 사용한 **1.2.3의 실제 영어 화면**입니다. 표준 패널에는 새 설치의 기본 모양 설정을 적용했으며, 공간 모드와 복사 / 번역 버튼을 함께 표시하는 말풍선은 선택 가능한 설정을 보여 줍니다. 공간 모드 GIF의 포인터와 업데이트 화면의 릴리스는 시뮬레이션입니다. 설치 및 데이터 경로는 가렸으며, 개인 데스크톱이나 클립보드 내용은 포함하지 않았습니다. [이미지 출처 및 재현 방법](docs/images/README.md).
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 표준 패널에서 텍스트를 입력하고 저장한 다음 카드를 고정하고 해제하는 과정"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.3 표준 패널에서 텍스트를 입력하고 저장한 다음 카드를 고정하고 해제하는 과정"></p>
 
 *표준 모드 · 입력, 저장, 고정 및 해제 · 영어 화면. 실제 컨트롤과 예시 데이터를 사용한 자동 조작 데모입니다.*
 
@@ -153,7 +153,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 | 텍스트 추출 | 로컬 OCR을 실행하고 임시 텍스트를 표시합니다. 항목을 저장하거나 자동으로 복사하지 않습니다. |
 | 추출 후 번역 | 로컬 OCR을 실행한 뒤 인식한 텍스트를 선택한 번역 제공업체로 보냅니다. 스크린샷 자체는 업로드하지 않습니다. |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.2에서 사용자가 직접 텍스트를 복사할 수 있는 임시 OCR 결과"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.3에서 사용자가 직접 텍스트를 복사할 수 있는 임시 OCR 결과"></p>
 
 다시 끌면 영역을 재선택하며, **Esc** 또는 오른쪽 클릭으로 취소합니다. 임시 결과에서는 직접 복사하거나 번역을 다시 시도할 수 있고, 번역에 실패해도 원문이 유지됩니다. OCR은 문자를 인식하는 단계이며 자동으로 번역하지 않습니다. [스크린샷 사용 흐름](docs/SCREENSHOTS.md) · [OCR 지원 범위 및 한계](docs/LOCAL_OCR.md).
 
@@ -161,13 +161,29 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 ### 4. 선택한 텍스트 작업과 번역
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="복사와 번역 버튼이 각각 표시되는 1.2.2 텍스트 선택 말풍선"></p>
+<table>
+  <tr><th>기본값: 복사만</th><th>선택 사항: 복사 및 번역</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · 기본값: 복사만"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · 선택 사항: 복사 및 번역"></td>
+  </tr>
+</table>
 
 **설정 > 캡처 및 번역**에서 텍스트 선택 말풍선을 켠 뒤 다른 앱에서 텍스트를 선택하세요. **복사**는 선택한 내용을 도크의 현재 그룹에 저장하며, **번역**은 항목을 추가하지 않고 번역 결과를 표시합니다.
 
 **복사 및 번역**을 선택하면 두 버튼이 함께 표시됩니다. 복사한 뒤에도 말풍선이 닫히기 전까지 같은 선택 내용을 번역할 수 있습니다. 번역에 실패해도 원문은 유지됩니다.
 
 **1.2.3:** 설정에서 번역 대상 언어를 화면 언어와 별도로 선택할 수 있습니다. 새 설치 및 업그레이드의 기본값은 **화면 언어 따르기**입니다. 선택 텍스트, 스크린샷 번역과 번역 테스트에 같은 설정을 적용합니다. 결과 창에서 실제 대상 언어를 확인하고 보관된 원문을 다른 언어로 다시 번역할 수 있습니다. 이 임시 선택은 현재 결과에만 적용되며 전역 설정을 바꾸지 않습니다. 지원 언어는 제공업체나 설치된 모델에 따라 다릅니다. 지원하지 않는 언어 쌍은 오류로 알리며 제공업체를 자동으로 바꾸거나 오프라인 텍스트를 업로드하지 않습니다.
+
+<table>
+  <tr><th>대상 언어 및 저장 컨트롤은 기본적으로 켜짐</th><th>선택 가능한 간결한 결과 보기</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · 대상 언어 및 저장 컨트롤은 기본적으로 켜짐"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · 선택 가능한 간결한 결과 보기"></td>
+  </tr>
+</table>
+
+*미리 입력한 예시 텍스트로 실제 1.2.3 결과 창을 보여 줍니다. 이 미리보기를 만들 때 OCR이나 번역 서비스를 실행하지 않았습니다. 대상 언어와 저장 컨트롤은 기본적으로 켜져 있으며, 간결한 보기는 두 옵션을 모두 끈 모습입니다.*
 
 | 제공업체 | 설정 및 이용 조건 |
 | --- | --- |
@@ -180,7 +196,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>텍스트 선택 및 번역의 기본 설정</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="복사만, Google, 텍스트 발광 끄기 및 그림자 켜기를 보여 주는 동작 설정"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="복사만, 결과 컨트롤, Google 및 독립적인 번역 대상 언어를 보여 주는 1.2.3 캡처 및 번역 설정"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="OCR과 오프라인 번역의 설치 및 복구 버튼이 있는 선택 구성 요소 설정"></p>
 
-*1.2.2를 새로 설치했을 때의 구성 요소 설정입니다. OCR과 오프라인 번역은 설치되어 있지 않습니다. 앱 안의 이 버튼으로 설치할 수 있으며 터미널 명령은 필요하지 않습니다.*
+*1.2.3를 새로 설치했을 때의 구성 요소 설정입니다. OCR과 오프라인 번역은 설치되어 있지 않습니다. 앱 안의 이 버튼으로 설치할 수 있으며 터미널 명령은 필요하지 않습니다.*
+
+<details>
+<summary>구성 요소 설치 폴더</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="1.2.3 영어 인터페이스의 구성 요소 폴더 설정입니다. 경로는 가렸습니다."></p>
+
+*1.2.3 영어 인터페이스의 구성 요소 폴더 설정입니다. 경로는 가렸습니다.*
+
+</details>
 
 1. **설정 > 로컬 구성 요소**를 여세요.
 2. OCR을 처음 사용하기 전에 **문자 인식 (중국어 / 영어)** 아래에서 **설치 / 복구**를 선택하세요. 1.2.3에는 OCR과 로컬 번역 엔진 및 모델이 사전 설치되지 않습니다. 명시적으로 설치할 때 필요한 파일을 다운로드하고 검증하며 네이티브 런타임도 확인합니다.
@@ -235,6 +260,17 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <summary>백업 설정 · 기본값은 24시간마다</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="24시간마다 자동 백업이 켜져 있고 경로를 가린 데이터 설정"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="격리된 예시 데이터로 백업 상태, 스냅샷 및 수동 작업을 보여 줍니다. 경로는 가렸으며 기본 간격은 24시간으로 유지됩니다."></p>
+
+*격리된 예시 데이터로 백업 상태, 스냅샷 및 수동 작업을 보여 줍니다. 경로는 가렸으며 기본 간격은 24시간으로 유지됩니다.*
+
+</details>
+
+<details>
+<summary>정보 · 앱 버전 및 데이터 위치</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="앱 정보가 표시되고 데이터 경로는 가려진 1.2.3 정보 페이지"></p>
 
 </details>
 

@@ -30,7 +30,7 @@
 
 **版本 1.2.3** · [发布说明](docs/releases/1.2.3-notes.md) · [验收记录](docs/releases/1.2.3.md)
 
-截图和 GIF 展示的是 **1.2.2**，未展示 1.2.3 新增的设置和结果控件。
+截图和 GIF 展示 **1.2.3 英文界面**，包含全新安装的默认设置，并明确标注可选功能。
 
 [快速开始](#get-started) · [功能介绍](#features) · [快捷操作](#shortcuts) · [数据与升级](#data-and-upgrades) · [开发](#development) · [许可证](#license)
 
@@ -66,7 +66,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>全新安装的设置 · 英文界面</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.2 设置页面，显示英文、Alt+Q 与 Alt+W 默认值"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.3 设置页面，显示英文、Alt+Q 与 Alt+W 默认值"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 在**备份与数据**中选择备份文件夹，在**本地组件**中分别选择 OCR 和离线翻译文件夹。更改位置**不会移动已有文件**；新组件文件夹为空时需重新安装。**关于**中只读展示当前应用数据位置，迁移资料库请使用导出和导入。
 
-以下预览展示 **1.2.2 的实际英文界面**，内容为合成示例。标准面板使用全新安装的外观默认值；空间模式及同时显示“复制 / 翻译”的气泡演示可选设置。空间检视动图使用模拟指针，更新预览使用模拟版本。安装路径和数据路径已遮蔽，不包含个人桌面或剪贴板内容。[图片来源与生成方式](docs/images/README.md)。
+以下预览展示 **1.2.3 的实际英文界面**，内容为合成示例。标准面板使用全新安装的外观默认值；空间模式及同时显示“复制 / 翻译”的气泡演示可选设置。空间检视动图使用模拟指针，更新预览使用模拟版本。安装路径和数据路径已遮蔽，不包含个人桌面或剪贴板内容。[图片来源与生成方式](docs/images/README.md)。
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 标准面板操作：输入并保存文本片段，再置顶和取消置顶卡片"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.3 标准面板操作：输入并保存文本片段，再置顶和取消置顶卡片"></p>
 
 *标准模式 · 输入、保存、置顶与取消置顶 · 英文界面。使用实际控件和示例内容演示预设操作。*
 
@@ -153,7 +153,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 | 提取文字 | 运行本地 OCR 并显示临时文字，不保存条目，也不自动复制。 |
 | 提取并翻译 | 先运行本地 OCR，再将识别文字交给所选翻译服务。截图本身不会上传。 |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.2的临时 OCR 结果，提供明确的文字复制操作"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.3的临时 OCR 结果，提供明确的文字复制操作"></p>
 
 再次拖动可以重新选择区域；按 **Esc** 或右键取消。临时结果支持主动复制，翻译失败后保留原文，并可重试翻译。OCR 仅负责识别，不会自动翻译。[截图使用流程](docs/SCREENSHOTS.md) · [OCR 支持范围与限制](docs/LOCAL_OCR.md)。
 
@@ -161,13 +161,29 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 ### 4. 划词操作与翻译
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="1.2.2 划词气泡，同时提供独立的复制和翻译按钮"></p>
+<table>
+  <tr><th>默认：仅复制</th><th>可选：复制和翻译</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · 默认：仅复制"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · 可选：复制和翻译"></td>
+  </tr>
+</table>
 
 在**设置 > 截取与翻译**中启用划词气泡，然后在其他应用中选择文字。**复制**会将所选文字保存到面板当前分组；**翻译**显示译文，不添加条目。
 
 选择**复制和翻译**，即可同时显示两个按钮。复制后，在气泡关闭前仍可翻译同一段选中文字。翻译失败时会保留原文。
 
 **1.2.3：**可在设置中独立选择翻译目标语言。新安装和升级默认仍为**跟随界面语言**；划词翻译、截图翻译和翻译测试共用此设置。结果窗口显示实际目标语言，并允许使用保留的原文临时重新翻译；该选择仅作用于当前结果，不改变全局设置。可用语言取决于服务商或已安装的离线模型；不支持的语言方向会明确报错，不会自动换服务或上传离线文本。
+
+<table>
+  <tr><th>默认开启目标语言与保存控件</th><th>可选精简结果</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · 默认开启目标语言与保存控件"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · 可选精简结果"></td>
+  </tr>
+</table>
+
+*预填示例文字展示实际 1.2.3 结果窗口；生成这些预览时未运行 OCR 或调用翻译服务。目标语言与保存控件默认开启，精简视图展示两项均关闭的效果。*
 
 | 服务 | 设置与可用性 |
 | --- | --- |
@@ -180,7 +196,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>默认划词与翻译设置</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="行为设置，默认仅复制、Google、关闭文字发光并开启悬浮投影"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="1.2.3 截取与翻译设置，显示仅复制、结果控件、Google 和独立翻译目标语言"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="可选组件设置，提供 OCR 和离线翻译的安装及修复按钮"></p>
 
-*图中为 1.2.2 全新安装的组件设置：OCR 和离线翻译尚未安装。使用这些应用内按钮即可安装，无需终端命令。*
+*图中为 1.2.3 全新安装的组件设置：OCR 和离线翻译尚未安装。使用这些应用内按钮即可安装，无需终端命令。*
+
+<details>
+<summary>组件安装文件夹</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="1.2.3 英文界面的组件文件夹选项；路径已遮蔽。"></p>
+
+*1.2.3 英文界面的组件文件夹选项；路径已遮蔽。*
+
+</details>
 
 1. 打开**设置 > 本地组件**。
 2. 首次使用 OCR 前，在**文字识别（中文 / 英文）**下选择**安装 / 修复**。1.2.3 不预装 OCR 或本地翻译引擎及模型；主动安装时才下载并验证所需文件，同时检查本机运行库。
@@ -235,6 +260,17 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <summary>备份设置 · 默认每 24 小时自动备份</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="数据设置，默认每 24 小时自动备份，路径已遮蔽"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="使用隔离示例数据展示备份状态、快照与手动操作。路径已遮蔽，默认周期仍为 24 小时。"></p>
+
+*使用隔离示例数据展示备份状态、快照与手动操作。路径已遮蔽，默认周期仍为 24 小时。*
+
+</details>
+
+<details>
+<summary>关于 · 应用版本和数据位置</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="1.2.3 关于页面，显示应用信息，数据路径已遮蔽"></p>
 
 </details>
 

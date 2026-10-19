@@ -30,7 +30,7 @@
 
 **Versão 1.2.3** · [Notas da versão](docs/releases/1.2.3-notes.md) · [Registro de validação](docs/releases/1.2.3.md)
 
-As capturas e os GIFs mostram a **1.2.2**, sem as novas configurações e os controles de resultados da 1.2.3.
+As capturas e os GIFs mostram a **interface em inglês da versão 1.2.3**, com as configurações de uma nova instalação e os recursos opcionais claramente identificados.
 
 [Primeiros passos](#get-started) · [Recursos](#features) · [Atalhos](#shortcuts) · [Dados e atualizações](#data-and-upgrades) · [Desenvolvimento](#development) · [Licença](#license)
 
@@ -66,7 +66,7 @@ O balão de seleção fica ativado em **Somente copiar**, com **Google** como tr
 <details>
 <summary>Configurações de uma nova instalação · interface em inglês</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Configurações da versão 1.2.2 com inglês, Alt+Q e Alt+W como padrões"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Configurações da versão 1.2.3 com inglês, Alt+Q e Alt+W como padrões"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Em **Captura e tradução**, mostre ou oculte separadamente o seletor de idioma 
 
 Escolha a pasta de backups em **Backup e dados**, e as pastas independentes do OCR e da tradução offline em **Componentes locais**. Mudar a pasta **não move os arquivos existentes**; reinstale o componente se a nova pasta estiver vazia. **Sobre** mostra o local ativo dos dados em modo somente leitura. Use a exportação e importação para mover a biblioteca com segurança.
 
-Estas prévias mostram a **interface real em inglês da versão 1.2.2**, com dados fictícios de exemplo. O painel Padrão usa as configurações de aparência de uma nova instalação; o modo Espacial e o balão Copiar / Traduzir demonstram opções configuráveis. O ponteiro do GIF do modo Espacial e a publicação da prévia de atualização são simulados. Os caminhos de instalação e de dados estão ocultos; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md).
+Estas prévias mostram a **interface real em inglês da versão 1.2.3**, com dados fictícios de exemplo. O painel Padrão usa as configurações de aparência de uma nova instalação; o modo Espacial e o balão Copiar / Traduzir demonstram opções configuráveis. O ponteiro do GIF do modo Espacial e a publicação da prévia de atualização são simulados. Os caminhos de instalação e de dados estão ocultos; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md).
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Fluxo do painel Padrão da versão 1.2.2: digitar, salvar, fixar e desafixar um cartão"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Fluxo do painel Padrão da versão 1.2.3: digitar, salvar, fixar e desafixar um cartão"></p>
 
 *Modo Padrão · digitar, salvar, fixar e desafixar · interface em inglês. Interação automatizada com controles reais e dados de exemplo.*
 
@@ -153,7 +153,7 @@ Após a seleção, uma barra de ferramentas oferece três ações separadas:
 | Extrair texto | Executa o OCR local e mostra um texto temporário sem salvar uma entrada nem copiá-lo automaticamente. |
 | Extrair e traduzir | Executa o OCR local e envia o texto reconhecido ao provedor de tradução escolhido. A captura de tela em si não é enviada. |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Resultado temporário de OCR com controles explícitos de cópia de texto na versão 1.2.2"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Resultado temporário de OCR com controles explícitos de cópia de texto na versão 1.2.3"></p>
 
 Arraste novamente para refazer a seleção; **Esc** ou um clique direito cancela a captura. Os resultados temporários permitem copiar explicitamente, preservar o texto original se a tradução falhar e tentar traduzir novamente. O OCR é uma etapa de reconhecimento; ele não traduz automaticamente. [Fluxos de captura de tela](docs/SCREENSHOTS.md) · [Suporte e limites do OCR](docs/LOCAL_OCR.md).
 
@@ -161,13 +161,29 @@ Arraste novamente para refazer a seleção; **Esc** ou um clique direito cancela
 
 ### 4. Ações de seleção e tradução
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Balão de seleção da versão 1.2.2 com botões independentes de Copiar e Traduzir"></p>
+<table>
+  <tr><th>Padrão: Apenas copiar</th><th>Opcional: Copiar e traduzir</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · Padrão: Apenas copiar"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · Opcional: Copiar e traduzir"></td>
+  </tr>
+</table>
 
 Ative o balão de seleção em **Configurações > Captura e tradução** e selecione texto em outro aplicativo. **Copiar** salva a seleção no grupo atual do painel; **Traduzir** mostra uma tradução sem adicionar uma entrada.
 
 Escolha **Copiar e traduzir** para manter os dois botões visíveis. Depois de copiar, você ainda pode traduzir a mesma seleção antes que o balão feche. Falhas de tradução preservam o texto original.
 
 **1.2.3:** escolha nas configurações um idioma de tradução independente da interface. **Seguir o idioma da interface** continua sendo o padrão em novas instalações e atualizações. Traduções de seleção, capturas e testes usam a mesma preferência. A janela de resultado mostra o destino efetivo e permite retraduzir temporariamente o original preservado sem alterar as configurações globais. Os destinos dependem do provedor ou dos modelos instalados. Pares não compatíveis geram um erro sem trocar de provedor nem enviar o texto offline.
+
+<table>
+  <tr><th>Idioma de destino e controles de salvamento ativados por padrão</th><th>Visualização compacta opcional</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · Idioma de destino e controles de salvamento ativados por padrão"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · Visualização compacta opcional"></td>
+  </tr>
+</table>
+
+*Um texto de exemplo preenchido mostra a janela de resultados real da versão 1.2.3; nenhum OCR ou serviço de tradução foi executado para estas prévias. O idioma de destino e os controles de salvamento são ativados por padrão. A visualização compacta mostra as duas opções desativadas.*
 
 | Provedor | Configuração e disponibilidade |
 | --- | --- |
@@ -180,7 +196,7 @@ A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, s
 <details>
 <summary>Configurações iniciais de seleção e tradução</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Configurações de comportamento com Apenas copiar, Google, brilho desativado e sombra ativada"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="Configurações de captura e tradução da versão 1.2.3 com Apenas copiar, controles de resultados, Google e idioma de destino independente"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, s
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Configurações de componentes opcionais com botões de instalação e reparo de OCR e tradução offline"></p>
 
-*As configurações dos componentes mostram o estado de uma nova instalação da versão 1.2.2: OCR e tradução offline não estão instalados. Use esses botões do aplicativo para instalá-los, sem comandos de terminal.*
+*As configurações dos componentes mostram o estado de uma nova instalação da versão 1.2.3: OCR e tradução offline não estão instalados. Use esses botões do aplicativo para instalá-los, sem comandos de terminal.*
+
+<details>
+<summary>Pastas de instalação dos componentes</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="Configurações das pastas de componentes na interface em inglês da versão 1.2.3; os caminhos estão ocultos."></p>
+
+*Configurações das pastas de componentes na interface em inglês da versão 1.2.3; os caminhos estão ocultos.*
+
+</details>
 
 1. Abra **Configurações > Componentes locais**.
 2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.3 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
@@ -235,6 +260,17 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 <summary>Configurações de backup · a cada 24 horas por padrão</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Configurações de dados com backups automáticos a cada 24 horas e caminhos ocultos"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="Status de backup, instantâneos e ações manuais com dados de exemplo isolados. Os caminhos estão ocultos; o intervalo padrão permanece em 24 horas."></p>
+
+*Status de backup, instantâneos e ações manuais com dados de exemplo isolados. Os caminhos estão ocultos; o intervalo padrão permanece em 24 horas.*
+
+</details>
+
+<details>
+<summary>Sobre · versão do aplicativo e localização dos dados</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="Página Sobre da versão 1.2.3 com informações do aplicativo e caminho de dados oculto"></p>
 
 </details>
 

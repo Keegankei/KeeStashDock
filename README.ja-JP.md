@@ -30,7 +30,7 @@
 
 **バージョン 1.2.3** · [リリースノート](docs/releases/1.2.3-notes.md) · [検証記録](docs/releases/1.2.3.md)
 
-画像と GIF は **1.2.2** のもので、1.2.3 の新しい設定と結果の操作項目は表示していません。
+画像と GIF は **1.2.3 の英語画面**を示しています。新規インストール時の設定と任意の機能を区別して紹介しています。
 
 [はじめに](#get-started) · [機能](#features) · [ショートカット](#shortcuts) · [データと更新](#data-and-upgrades) · [開発](#development) · [ライセンス](#license)
 
@@ -66,7 +66,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>新規インストール時の設定 · 英語画面</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="英語、Alt+Q、Alt+W の初期値を示す 1.2.2 の設定画面"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="英語、Alt+Q、Alt+W の初期値を示す 1.2.3 の設定画面"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 バックアップ先は**バックアップとデータ**、OCR とオフライン翻訳の各フォルダーは**ローカルコンポーネント**で選択できます。変更しても**既存のファイルは移動しません**。新しいフォルダーが空ならコンポーネントを再インストールしてください。使用中のデータの場所は**このアプリについて**に読み取り専用で表示されます。ライブラリの移動にはエクスポートとインポートを使います。
 
-以下のプレビューは、架空のサンプルデータを使った **1.2.2 の実際の英語画面**です。標準パネルは新規インストール時の外観設定を使用し、空間モードと「コピー / 翻訳」を両方表示するバブルは任意の設定を示します。空間モードの GIF のポインターと更新画面のリリースは模擬のものです。インストール先やデータのパスはマスクされ、個人のデスクトップやクリップボードの内容は含みません。[画像の出典と再生成方法](docs/images/README.md)。
+以下のプレビューは、架空のサンプルデータを使った **1.2.3 の実際の英語画面**です。標準パネルは新規インストール時の外観設定を使用し、空間モードと「コピー / 翻訳」を両方表示するバブルは任意の設定を示します。空間モードの GIF のポインターと更新画面のリリースは模擬のものです。インストール先やデータのパスはマスクされ、個人のデスクトップやクリップボードの内容は含みません。[画像の出典と再生成方法](docs/images/README.md)。
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 の標準パネルで文章を入力して保存し、カードをピン留めして解除する操作"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.3 の標準パネルで文章を入力して保存し、カードをピン留めして解除する操作"></p>
 
 *標準モード · 入力、保存、ピン留めと解除 · 英語画面。実際のコントロールとサンプルデータに自動操作を適用しています。*
 
@@ -153,7 +153,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 | 文字を抽出 | ローカル OCR を実行して一時的な文章を表示します。項目の保存や自動コピーは行いません。 |
 | 抽出して翻訳 | ローカル OCR を実行し、認識した文章を選択済みの翻訳サービスへ送ります。スクリーンショット自体はアップロードしません。 |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="明示的なテキストコピー操作を備えた、1.2.2の一時的な OCR 結果"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="明示的なテキストコピー操作を備えた、1.2.3の一時的な OCR 結果"></p>
 
 もう一度ドラッグすると範囲を選び直せます。**Esc** または右クリックでキャンセルします。一時的な結果は自分でコピーでき、翻訳が失敗しても原文が残るため翻訳を再試行できます。OCR は文字認識を行う処理であり、自動では翻訳しません。[スクリーンショットの使い方](docs/SCREENSHOTS.md) · [OCR の対応範囲と制限](docs/LOCAL_OCR.md)。
 
@@ -161,13 +161,29 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 ### 4. 選択テキストの操作と翻訳
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="コピーと翻訳の独立したボタンを備えた 1.2.2 の選択バブル"></p>
+<table>
+  <tr><th>初期設定：コピーのみ</th><th>任意設定：コピーと翻訳</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · 初期設定：コピーのみ"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · 任意設定：コピーと翻訳"></td>
+  </tr>
+</table>
 
 **設定 > 取り込みと翻訳**で選択バブルを有効にし、別のアプリで文章を選択します。**コピー**は選択した文章をドックの現在のグループへ取り込み、**翻訳**は項目を追加せずに訳文を表示します。
 
 **コピーと翻訳**を選ぶと両方のボタンを表示できます。コピー後も、バブルを閉じるまでは同じ選択内容を翻訳できます。翻訳に失敗しても原文は残ります。
 
 **1.2.3:** 設定で翻訳先の言語を表示言語とは別に選べます。新規インストールと更新時の既定値は**表示言語に従う**です。選択テキスト、スクリーンショット、翻訳テストで同じ設定を使用します。結果ウィンドウには実際の翻訳先が表示され、保持した原文を別の言語に再翻訳できます。この一時的な選択は現在の結果にのみ適用され、全体設定を変更しません。利用可能な言語はサービスとインストール済みモデルによって異なり、非対応の場合はエラーを表示します。サービスの自動切り替えやオフラインテキストのアップロードは行いません。
+
+<table>
+  <tr><th>翻訳先と保存の操作項目は初期状態で有効</th><th>任意設定のコンパクトな結果表示</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · 翻訳先と保存の操作項目は初期状態で有効"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · 任意設定のコンパクトな結果表示"></td>
+  </tr>
+</table>
+
+*入力済みのサンプル文で実際の 1.2.3 の結果画面を示しています。これらのプレビュー生成時には OCR や翻訳サービスを実行していません。翻訳先と保存の操作項目は初期状態で有効で、コンパクト表示は両方をオフにした例です。*
 
 | サービス | 設定と利用条件 |
 | --- | --- |
@@ -180,7 +196,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>選択アクションと翻訳の初期設定</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="コピーのみ、Google、文字の発光オフ、ドロップシャドウオンを示す動作設定"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="コピーのみ、結果の操作項目、Google、独立した翻訳先を表示する 1.2.3 のキャプチャと翻訳の設定"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="OCR とオフライン翻訳のインストール・修復ボタンを備えた追加コンポーネント設定"></p>
 
-*1.2.2 の新規インストール時のコンポーネント設定です。OCR とオフライン翻訳は未インストールです。アプリ内のボタンから導入でき、端末のコマンドは不要です。*
+*1.2.3 の新規インストール時のコンポーネント設定です。OCR とオフライン翻訳は未インストールです。アプリ内のボタンから導入でき、端末のコマンドは不要です。*
+
+<details>
+<summary>コンポーネントのインストール先</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="1.2.3 の英語画面にあるコンポーネントのフォルダー設定です。パスはマスクされています。"></p>
+
+*1.2.3 の英語画面にあるコンポーネントのフォルダー設定です。パスはマスクされています。*
+
+</details>
 
 1. **設定 > ローカルコンポーネント**を開きます。
 2. OCR を初めて使う前に、**文字認識（中国語 / 英語）**の**インストール / 修復**を選びます。1.2.3 には OCR・ローカル翻訳のエンジンとモデルは事前インストールされません。明示的なセットアップで必要なファイルをダウンロードして検証し、ネイティブランタイムも確認します。
@@ -235,6 +260,17 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <summary>バックアップ設定 · 初期値は 24 時間ごと</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="24 時間ごとの自動バックアップとマスクされたパスを示すデータ設定"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="隔離されたサンプルデータでバックアップ状態、スナップショット、手動操作を示しています。パスはマスクされ、既定の間隔は引き続き 24 時間です。"></p>
+
+*隔離されたサンプルデータでバックアップ状態、スナップショット、手動操作を示しています。パスはマスクされ、既定の間隔は引き続き 24 時間です。*
+
+</details>
+
+<details>
+<summary>アプリ情報 · バージョンとデータの保存場所</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="データのパスをマスクした 1.2.3 のアプリ情報ページ"></p>
 
 </details>
 

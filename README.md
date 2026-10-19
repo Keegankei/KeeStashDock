@@ -30,7 +30,7 @@
 
 **Version 1.2.3** · [Release notes](docs/releases/1.2.3-notes.md) · [Acceptance record](docs/releases/1.2.3.md)
 
-Screenshots and GIFs show **1.2.2**; they do not show the new 1.2.3 settings and result controls.
+Screenshots and GIFs show the **1.2.3 English interface**, including fresh-install settings and clearly labeled optional features.
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
 
@@ -66,7 +66,7 @@ The selection bubble is enabled in **Copy only** mode with **Google** selected f
 <details>
 <summary>Fresh-install settings · English interface</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="The 1.2.2 Settings page with English, Alt+Q and Alt+W defaults"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="The 1.2.3 Settings page with English, Alt+Q and Alt+W defaults"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Under **Capture & translation**, independently show or hide the result's target-
 
 Choose the backup folder under **Backup & data**, and separate OCR and offline-translation folders under **Local components**. Changing a folder does **not move existing files**; install the component again if its new folder is empty. The active app-data folder is shown read-only under **About**; use export/import to move the library safely.
 
-These previews show the actual **1.2.2 English interface** with synthetic sample content. The Standard panel uses fresh-install appearance defaults; Spatial mode and the combined Copy / Translate bubble demonstrate optional settings. The inspection GIF uses a simulated pointer, and the update preview uses a simulated release. Installation and data paths are masked; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md).
+These previews show the actual **1.2.3 English interface** with synthetic sample content. The Standard panel uses fresh-install appearance defaults; Spatial mode and the combined Copy / Translate bubble demonstrate optional settings. The inspection GIF uses a simulated pointer, and the update preview uses a simulated release. Installation and data paths are masked; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md).
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Standard panel workflow in 1.2.2: type a snippet, save it, then pin and unpin its card"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Standard panel workflow in 1.2.3: type a snippet, save it, then pin and unpin its card"></p>
 
 *Standard mode · type, save, pin and unpin · English interface. Scripted interaction with actual controls and sample content.*
 
@@ -153,7 +153,7 @@ A toolbar after selection offers three separate actions:
 | Extract text | Run local OCR and show temporary text without saving an entry or automatically copying it. |
 | Extract and translate | Run local OCR, then send the recognized text to your chosen translation provider. The screenshot itself is not uploaded. |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Temporary OCR result with explicit text-copy controls in version 1.2.2"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Temporary OCR result with explicit text-copy controls in version 1.2.3"></p>
 
 Drag again to reselect; **Esc** or right-click cancels. Temporary results support explicit copying, retaining the source text after translation failure, and retrying translation. OCR is a recognition step; it does not translate automatically. [Screenshot workflows](docs/SCREENSHOTS.md) · [OCR support and limits](docs/LOCAL_OCR.md).
 
@@ -161,13 +161,29 @@ Drag again to reselect; **Esc** or right-click cancels. Temporary results suppor
 
 ### 4. Selection actions and translation
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="The 1.2.2 selection bubble with independent Copy and Translate buttons"></p>
+<table>
+  <tr><th>Default: Copy only</th><th>Optional: Copy and translate</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · Default: Copy only"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · Optional: Copy and translate"></td>
+  </tr>
+</table>
 
 The selection bubble is enabled by default in **Copy only** mode; configure it in **Settings > Capture & translation**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
 
 Choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
 
 **1.2.3:** choose a translation target independently of the interface language in Settings. **Follow interface language** remains the default on fresh installs and upgrades. Selection translation, screenshot translation and Test translation use the same preference. The result window shows the effective target and lets you translate the retained source into a different language for that result only, without changing Settings. Available targets depend on the provider or installed offline models; unsupported pairs produce an error without switching provider or uploading offline text.
+
+<table>
+  <tr><th>Target and save controls enabled by default</th><th>Optional compact result</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · Target and save controls enabled by default"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · Optional compact result"></td>
+  </tr>
+</table>
+
+*Prefilled example text demonstrates the actual 1.2.3 result window; no OCR or translation service was run for these previews. The target and save controls are enabled by default. The compact view shows both options turned off.*
 
 | Provider | Setup and availability |
 | --- | --- |
@@ -180,7 +196,7 @@ Cloud translation sends only the requested text to the selected provider, with n
 <details>
 <summary>Default selection and translation settings</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Behavior settings with Copy only, Google, text glow off and drop shadow on"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="1.2.3 Capture and translation settings with Copy only, result controls, Google and an independent translation target"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Cloud translation sends only the requested text to the selected provider, with n
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Optional components settings with OCR and offline translation install and repair buttons"></p>
 
-*The 1.2.2 component settings show the fresh-install state: OCR and offline translation are not installed. Use these in-app buttons to install them; no terminal command is required.*
+*The 1.2.3 component settings show the fresh-install state: OCR and offline translation are not installed. Use these in-app buttons to install them; no terminal command is required.*
+
+<details>
+<summary>Component installation folders</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="English 1.2.3 component folder controls; paths are masked."></p>
+
+*English 1.2.3 component folder controls; paths are masked.*
+
+</details>
 
 1. Open **Settings > Local components**.
 2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.3 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
@@ -235,6 +260,17 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 <summary>Backup settings · every 24 hours by default</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Data settings with automatic backups enabled every 24 hours and masked paths"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="Backup status, snapshots and manual actions with isolated sample data. Paths are masked; the default interval remains 24 hours."></p>
+
+*Backup status, snapshots and manual actions with isolated sample data. Paths are masked; the default interval remains 24 hours.*
+
+</details>
+
+<details>
+<summary>About · application version and data location</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="1.2.3 About page with application information and the data path masked"></p>
 
 </details>
 

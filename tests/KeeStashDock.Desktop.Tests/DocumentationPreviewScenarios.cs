@@ -31,6 +31,8 @@ internal static class DocumentationPreviewScenarios
         if (string.IsNullOrWhiteSpace(destination)) return;
         string directory = Path.GetFullPath(destination);
         Directory.CreateDirectory(directory);
+        isolatedRoot = Path.Combine(isolatedRoot, "documentation");
+        Directory.CreateDirectory(isolatedRoot);
         string previousLanguage = LocalizationService.Instance.CurrentLanguage;
         LocalizationService.Instance.SetLanguage("en-US");
         using var log = new FileLogger(Path.Combine(isolatedRoot, "documentation-logs"));
@@ -95,6 +97,14 @@ internal static class DocumentationPreviewScenarios
                 displayDataRoot: @"C:\Example\KeeStashDock\Data", isAppDataFallback: false,
                 screenshotHotkey: captureHotkey, components: components,
                 translate: (_, _, _) => throw new AssertFailedException("Documentation must not request translation."));
+            // Use the actual idle folder-availability logic with isolated component
+            // paths. The injected actions above still reject installs and processes.
+            var componentService = new ComponentInstallService(Path.Combine(isolatedRoot, "application"),
+                Path.Combine(isolatedRoot, "local-components"), TimeSpan.FromMinutes(30), settings: settings);
+            typeof(SettingsWindow).GetField("_componentService", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(settingsWindow, componentService);
+            typeof(SettingsWindow).GetMethod("RefreshFolderPaths", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(settingsWindow, null);
             // Autostart is a machine property, not a serialized setting. Render
             // the fresh-install unchecked state while suppressing its registry
             // handler; never change the current user's startup registration.
@@ -129,7 +139,8 @@ internal static class DocumentationPreviewScenarios
         foreach ((string page, string fileName) in pages)
         {
             window.SelectSettingsPage(page);
-            ((ScrollViewer)window.FindName(page + "Page")).ScrollToHome();
+            var scroll = (ScrollViewer)window.FindName(page + "Page");
+            scroll.ScrollToHome();
             var backupStatus = (TextBlock)window.FindName("BackupStatusText");
             string originalStatus = backupStatus.Text;
             // Replace fixture path text before layout. An overlay on an offscreen
@@ -165,6 +176,21 @@ internal static class DocumentationPreviewScenarios
                     }
                 }
                 RenderWindow(window, directory, fileName, new Size(960, 760));
+                string? detailFileName = page switch
+                {
+                    "Components" => "component-folders.png",
+                    "Data" => "backup-status.png",
+                    _ => null,
+                };
+                if (detailFileName is not null)
+                {
+                    // Apply the real page scroll while its arranged viewport is
+                    // available, retaining the same path redactions for both views.
+                    scroll.ScrollToEnd();
+                    scroll.UpdateLayout();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                    RenderWindow(window, directory, detailFileName, new Size(960, 760));
+                }
             }
             finally
             {
@@ -172,8 +198,6 @@ internal static class DocumentationPreviewScenarios
                 backupStatus.Text = originalStatus;
             }
         }
-        // Keep the established documentation asset name for the selection behavior page.
-        File.Copy(Path.Combine(directory, "default-settings.png"), Path.Combine(directory, "behavior-settings.png"), overwrite: true);
         window.SelectSettingsPage("General");
     }
 

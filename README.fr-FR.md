@@ -30,7 +30,7 @@
 
 **Version 1.2.3** · [Notes de version](docs/releases/1.2.3-notes.md) · [Rapport de validation](docs/releases/1.2.3.md)
 
-Les captures et GIF montrent **1.2.2**, sans les nouveaux réglages et contrôles de résultats de 1.2.3.
+Les captures et GIF montrent l’**interface anglaise de 1.2.3**, avec les réglages d’une nouvelle installation et des fonctions facultatives clairement identifiées.
 
 [Premiers pas](#get-started) · [Fonctionnalités](#features) · [Raccourcis](#shortcuts) · [Données et mises à niveau](#data-and-upgrades) · [Développement](#development) · [Licence](#license)
 
@@ -66,7 +66,7 @@ La bulle de sélection est activée en mode **Copier uniquement**, avec **Google
 <details>
 <summary>Réglages d’une nouvelle installation · interface anglaise</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Paramètres de 1.2.2 avec l’anglais, Alt+Q et Alt+W par défaut"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Paramètres de 1.2.3 avec l’anglais, Alt+Q et Alt+W par défaut"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Dans **Capture et traduction**, affichez ou masquez séparément le sélecteur d
 
 Choisissez le dossier de sauvegarde dans **Sauvegarde et données**, et les dossiers distincts de l’OCR et de la traduction hors ligne dans **Composants locaux**. Changer de dossier **ne déplace aucun fichier existant** ; réinstallez le composant si le nouveau dossier est vide. **À propos** affiche le dossier de données actif en lecture seule. Utilisez l’exportation et l’importation pour déplacer la bibliothèque en toute sécurité.
 
-Ces aperçus montrent la véritable **interface anglaise de la version 1.2.2**, avec des données d’exemple fictives. Le panneau Standard utilise les réglages d’apparence d’une nouvelle installation ; le mode Spatial et la bulle Copier / Traduire illustrent des options. Le pointeur du GIF du mode Spatial et la publication de l’aperçu de mise à jour sont simulés. Les chemins d’installation et de données sont masqués ; aucun contenu personnel du bureau ou du presse-papiers n’apparaît. [Origine et reproduction des images](docs/images/README.md).
+Ces aperçus montrent la véritable **interface anglaise de la version 1.2.3**, avec des données d’exemple fictives. Le panneau Standard utilise les réglages d’apparence d’une nouvelle installation ; le mode Spatial et la bulle Copier / Traduire illustrent des options. Le pointeur du GIF du mode Spatial et la publication de l’aperçu de mise à jour sont simulés. Les chemins d’installation et de données sont masqués ; aucun contenu personnel du bureau ou du presse-papiers n’apparaît. [Origine et reproduction des images](docs/images/README.md).
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Utilisation du panneau Standard de 1.2.2 : saisir, enregistrer, épingler puis détacher une carte"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Utilisation du panneau Standard de 1.2.3 : saisir, enregistrer, épingler puis détacher une carte"></p>
 
 *Mode Standard · saisie, enregistrement, épinglage et retrait · interface anglaise. Interactions automatisées avec les véritables contrôles et des données d’exemple.*
 
@@ -153,7 +153,7 @@ Une barre d’outils apparaît après la sélection et propose trois actions dis
 | Extraire le texte | Lance l’OCR local et affiche un texte temporaire, sans enregistrer d’entrée ni le copier automatiquement. |
 | Extraire et traduire | Lance l’OCR local, puis envoie le texte reconnu au fournisseur de traduction choisi. La capture elle-même n’est pas envoyée. |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Résultat OCR temporaire avec commandes explicites de copie du texte dans la version 1.2.2"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Résultat OCR temporaire avec commandes explicites de copie du texte dans la version 1.2.3"></p>
 
 Faites à nouveau glisser pour redéfinir la zone ; **Esc** ou un clic droit annule la capture. Les résultats temporaires permettent de copier explicitement le texte, de conserver le texte source en cas d’échec de traduction et de réessayer. L’OCR est une étape de reconnaissance ; il ne traduit pas automatiquement. [Parcours de capture d’écran](docs/SCREENSHOTS.md) · [Prise en charge et limites de l’OCR](docs/LOCAL_OCR.md).
 
@@ -161,13 +161,29 @@ Faites à nouveau glisser pour redéfinir la zone ; **Esc** ou un clic droit ann
 
 ### 4. Actions sur la sélection et traduction
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Bulle de sélection de la version 1.2.2 avec boutons Copier et Traduire indépendants"></p>
+<table>
+  <tr><th>Par défaut : Copier uniquement</th><th>Option : Copier et traduire</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · Par défaut : Copier uniquement"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · Option : Copier et traduire"></td>
+  </tr>
+</table>
 
 Activez la bulle de sélection dans **Paramètres > Capture et traduction**, puis sélectionnez du texte dans une autre application. **Copier** enregistre la sélection dans le groupe courant du panneau ; **Traduire** affiche une traduction sans ajouter d’entrée.
 
 Choisissez **Copier et traduire** pour garder les deux boutons visibles. Après la copie, vous pouvez encore traduire la même sélection avant la fermeture de la bulle. Les échecs de traduction préservent le texte source.
 
 **1.2.3 :** choisissez une langue cible indépendante de l’interface dans les paramètres. **Suivre la langue de l’interface** reste la valeur par défaut après installation ou mise à niveau. Traduction de sélection, de capture et test utilisent ce même réglage. La fenêtre de résultat indique la cible effective et permet de retraduire temporairement le texte source conservé sans modifier les paramètres globaux. Les langues dépendent du fournisseur ou des modèles installés. Une paire non prise en charge provoque une erreur sans changement de fournisseur ni envoi du texte hors ligne.
+
+<table>
+  <tr><th>Langue cible et options d’enregistrement activées par défaut</th><th>Vue compacte facultative</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · Langue cible et options d’enregistrement activées par défaut"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · Vue compacte facultative"></td>
+  </tr>
+</table>
+
+*Un texte d’exemple prérempli présente la véritable fenêtre de résultat de 1.2.3 ; aucun OCR ni service de traduction n’a été exécuté pour ces aperçus. La langue cible et les options d’enregistrement sont activées par défaut. La vue compacte montre les deux options désactivées.*
 
 | Fournisseur | Configuration et disponibilité |
 | --- | --- |
@@ -180,7 +196,7 @@ La traduction dans le cloud envoie uniquement le texte demandé au fournisseur s
 <details>
 <summary>Réglages de sélection et de traduction par défaut</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Paramètres de comportement avec Copier uniquement, Google, lueur désactivée et ombre activée"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="Réglages de capture et traduction de 1.2.3 avec Copier uniquement, options de résultat, Google et langue cible indépendante"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ La traduction dans le cloud envoie uniquement le texte demandé au fournisseur s
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Paramètres des composants facultatifs avec boutons d’installation et de réparation pour l’OCR et la traduction hors ligne"></p>
 
-*Les paramètres des composants montrent l’état d’une nouvelle installation de 1.2.2 : l’OCR et la traduction hors ligne ne sont pas installés. Ces boutons intégrés permettent de les installer, sans commande de terminal.*
+*Les paramètres des composants montrent l’état d’une nouvelle installation de 1.2.3 : l’OCR et la traduction hors ligne ne sont pas installés. Ces boutons intégrés permettent de les installer, sans commande de terminal.*
+
+<details>
+<summary>Dossiers d’installation des composants</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="Réglages des dossiers des composants dans l’interface anglaise de 1.2.3 ; les chemins sont masqués."></p>
+
+*Réglages des dossiers des composants dans l’interface anglaise de 1.2.3 ; les chemins sont masqués.*
+
+</details>
 
 1. Ouvrez **Paramètres > Composants locaux**.
 2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.3 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
@@ -235,6 +260,17 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 <summary>Sauvegardes · toutes les 24 heures par défaut</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Paramètres de données avec sauvegardes automatiques toutes les 24 heures et chemins masqués"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="État des sauvegardes, instantanés et actions manuelles avec des données d’exemple isolées. Les chemins sont masqués ; l’intervalle par défaut reste de 24 heures."></p>
+
+*État des sauvegardes, instantanés et actions manuelles avec des données d’exemple isolées. Les chemins sont masqués ; l’intervalle par défaut reste de 24 heures.*
+
+</details>
+
+<details>
+<summary>À propos · version de l’application et emplacement des données</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="Page À propos de 1.2.3 avec les informations de l’application et le chemin des données masqué"></p>
 
 </details>
 

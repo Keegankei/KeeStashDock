@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using KeeStashDock.Core.Services;
+using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Desktop.Views;
 using KeeStashDock.Infrastructure.Database;
 using KeeStashDock.Infrastructure.Logging;
@@ -168,19 +169,37 @@ internal static class ImageEntryWindowScenarios
         string directory = Path.GetFullPath(destination);
         Directory.CreateDirectory(directory);
         var settings = new SettingsStore(Path.Combine(isolatedRoot, "action-previews.json"));
-        settings.Current.SelectionAction = "Both";
-        settings.Current.BubbleTextGlow = false;
-        var selection = new SelectionPopupWindow(settings);
-        var recognition = new TranslationResultWindow(settings);
+        Assert.AreEqual("Capture", settings.Current.SelectionAction);
+        Assert.IsFalse(settings.Current.BubbleTextGlow);
+        var optionalSettings = new SettingsStore(Path.Combine(isolatedRoot, "optional-action-previews.json"));
+        optionalSettings.Current.SelectionAction = "Both";
+        string previousLanguage = LocalizationService.Instance.CurrentLanguage;
+        SelectionPopupWindow? selection = null;
+        SelectionPopupWindow? optionalSelection = null;
+        TranslationResultWindow? recognition = null;
         try
         {
+            LocalizationService.Instance.SetLanguage("en-US");
+            selection = new SelectionPopupWindow(settings);
+            optionalSelection = new SelectionPopupWindow(optionalSettings);
+            recognition = new TranslationResultWindow(settings);
             // Render actual view content without showing native windows, triggering
             // selection reads/hotkeys, capturing desktop pixels, or touching clipboard.
-            RenderWindow(selection, "selection-actions.png");
+            RenderWindow(selection, "selection-copy-only.png");
+            RenderWindow(optionalSelection, "selection-actions.png");
             recognition.ShowRecognizedText("Keep ideas close.\nCapture a region, extract its text, then copy only when you need it.");
+            recognition.SetResultContext([new(null, "Uncategorized"), new(7, "Writing")], null, "en-US",
+                _ => throw new AssertFailedException("Documentation must not request translation."),
+                (_, _) => throw new AssertFailedException("Documentation must not persist result entries."));
             RenderWindow(recognition, "screenshot-text.png");
         }
-        finally { selection.Close(); recognition.Close(); }
+        finally
+        {
+            selection?.Close();
+            optionalSelection?.Close();
+            recognition?.Close();
+            LocalizationService.Instance.SetLanguage(previousLanguage);
+        }
 
         void RenderWindow(Window view, string fileName)
         {

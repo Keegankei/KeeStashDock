@@ -30,7 +30,7 @@
 
 **Version 1.2.3** · [Versionshinweise](docs/releases/1.2.3-notes.md) · [Prüfprotokoll](docs/releases/1.2.3.md)
 
-Bilder und GIFs zeigen **1.2.2**, nicht die neuen Einstellungen und Ergebnis-Bedienelemente von 1.2.3.
+Bilder und GIFs zeigen die **englische Oberfläche von 1.2.3**, mit den Einstellungen einer Neuinstallation und klar gekennzeichneten optionalen Funktionen.
 
 [Einstieg](#get-started) · [Funktionen](#features) · [Tastenkürzel](#shortcuts) · [Daten und Upgrades](#data-and-upgrades) · [Entwicklung](#development) · [Lizenz](#license)
 
@@ -66,7 +66,7 @@ Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist *
 <details>
 <summary>Einstellungen einer Neuinstallation · englische Oberfläche</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Einstellungen von 1.2.2 mit Englisch, Alt+Q und Alt+W als Voreinstellungen"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="Einstellungen von 1.2.3 mit Englisch, Alt+Q und Alt+W als Voreinstellungen"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Unter **Erfassen & Übersetzen** lassen sich die Zielsprachauswahl und die Grupp
 
 Den Sicherungsordner wählen Sie unter **Sicherung & Daten**, die separaten OCR- und Offline-Übersetzungsordner unter **Lokale Komponenten**. Ein Ordnerwechsel **verschiebt keine vorhandenen Dateien**; bei einem leeren neuen Ordner installieren Sie die Komponente erneut. **Über** zeigt den aktiven Datenordner schreibgeschützt an. Nutzen Sie Export und Import, um die Bibliothek sicher zu verschieben.
 
-Die Vorschauen zeigen die tatsächliche **englische Oberfläche von 1.2.2** mit synthetischen Beispieldaten. Das Standardpanel verwendet die Darstellungseinstellungen einer Neuinstallation; der räumliche Modus und die Blase mit Kopieren / Übersetzen zeigen optionale Einstellungen. Der Zeiger im GIF des räumlichen Modus und die Veröffentlichung in der Updatevorschau sind simuliert. Installations- und Datenpfade sind verdeckt; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md).
+Die Vorschauen zeigen die tatsächliche **englische Oberfläche von 1.2.3** mit synthetischen Beispieldaten. Das Standardpanel verwendet die Darstellungseinstellungen einer Neuinstallation; der räumliche Modus und die Blase mit Kopieren / Übersetzen zeigen optionale Einstellungen. Der Zeiger im GIF des räumlichen Modus und die Veröffentlichung in der Updatevorschau sind simuliert. Installations- und Datenpfade sind verdeckt; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md).
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Ablauf im Standardpanel von 1.2.2: Text eingeben, speichern, Karte anheften und lösen"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Ablauf im Standardpanel von 1.2.3: Text eingeben, speichern, Karte anheften und lösen"></p>
 
 *Standardmodus · Eingeben, Speichern, Anheften und Lösen · englische Oberfläche. Skriptgesteuerte Bedienung echter Steuerelemente mit Beispieldaten.*
 
@@ -153,7 +153,7 @@ Nach der Auswahl bietet eine Werkzeugleiste drei getrennte Aktionen:
 | Text extrahieren | Lokale OCR ausführen und vorübergehend Text anzeigen, ohne einen Eintrag zu speichern oder automatisch zu kopieren. |
 | Extrahieren und übersetzen | Lokale OCR ausführen und den erkannten Text anschließend an den gewählten Übersetzungsanbieter senden. Der Screenshot selbst wird nicht hochgeladen. |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Vorübergehendes OCR-Ergebnis mit eigenen Schaltflächen zum Kopieren des Textes in Version 1.2.2"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="Vorübergehendes OCR-Ergebnis mit eigenen Schaltflächen zum Kopieren des Textes in Version 1.2.3"></p>
 
 Erneut ziehen, um den Bereich neu auszuwählen; **Esc** oder ein Rechtsklick bricht ab. Vorübergehende Ergebnisse unterstützen bewusstes Kopieren und erneute Übersetzungsversuche; der Ausgangstext bleibt bei Übersetzungsfehlern erhalten. OCR dient der Texterkennung und übersetzt nicht automatisch. [Screenshot-Abläufe](docs/SCREENSHOTS.md) · [OCR-Unterstützung und Grenzen](docs/LOCAL_OCR.md).
 
@@ -161,13 +161,29 @@ Erneut ziehen, um den Bereich neu auszuwählen; **Esc** oder ein Rechtsklick bri
 
 ### 4. Aktionen für markierten Text und Übersetzung
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Auswahlblase von 1.2.2 mit getrennten Schaltflächen für Kopieren und Übersetzen"></p>
+<table>
+  <tr><th>Standard: Nur kopieren</th><th>Optional: Kopieren und übersetzen</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · Standard: Nur kopieren"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · Optional: Kopieren und übersetzen"></td>
+  </tr>
+</table>
 
 Aktivieren Sie die Auswahlblase unter **Einstellungen > Erfassen & Übersetzen** und markieren Sie anschließend Text in einer anderen Anwendung. **Kopieren** übernimmt die Auswahl in die aktuelle Gruppe des Docks; **Übersetzen** zeigt eine Übersetzung an, ohne einen Eintrag anzulegen.
 
 Wählen Sie **Kopieren und übersetzen**, damit beide Schaltflächen sichtbar bleiben. Nach dem Kopieren können Sie dieselbe Auswahl noch übersetzen, solange die Blase geöffnet ist. Bei Übersetzungsfehlern bleibt der Ausgangstext erhalten.
 
 **1.2.3:** Wählen Sie die Zielsprache in den Einstellungen unabhängig von der Oberflächensprache. **Oberflächensprache verwenden** bleibt bei Neuinstallation und Upgrade der Standard. Auswahlübersetzung, Screenshot-Übersetzung und Übersetzungstest verwenden dieselbe Einstellung. Im Ergebnisfenster lässt sich der erhaltene Ausgangstext vorübergehend in eine andere Sprache übersetzen; das ändert die globale Einstellung nicht. Verfügbare Ziele hängen vom Anbieter und den installierten Modellen ab. Nicht unterstützte Sprachpaare führen zu einer Fehlermeldung, ohne Anbieterwechsel oder Upload von Offline-Text.
+
+<table>
+  <tr><th>Zielsprache und Speicheroptionen standardmäßig sichtbar</th><th>Optionale kompakte Ergebnisansicht</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · Zielsprache und Speicheroptionen standardmäßig sichtbar"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · Optionale kompakte Ergebnisansicht"></td>
+  </tr>
+</table>
+
+*Vorab eingetragener Beispieltext zeigt das tatsächliche Ergebnisfenster von 1.2.3; für diese Vorschauen wurde weder OCR noch ein Übersetzungsdienst ausgeführt. Zielsprache und Speicheroptionen sind standardmäßig sichtbar. Die kompakte Ansicht zeigt beide Optionen ausgeschaltet.*
 
 | Anbieter | Einrichtung und Verfügbarkeit |
 | --- | --- |
@@ -180,7 +196,7 @@ Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anb
 <details>
 <summary>Voreinstellungen für Textauswahl und Übersetzung</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="Verhaltenseinstellungen mit Nur kopieren, Google, deaktiviertem Textleuchten und aktiviertem Schatten"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="Aufnahme- und Übersetzungseinstellungen von 1.2.3 mit Nur kopieren, Ergebnisoptionen, Google und unabhängiger Zielsprache"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anb
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="Einstellungen für optionale Komponenten mit Schaltflächen zum Installieren und Reparieren von OCR und Offline-Übersetzung"></p>
 
-*Die Komponenteneinstellungen zeigen den Zustand einer Neuinstallation von 1.2.2: OCR und Offline-Übersetzung sind nicht installiert. Die Installation erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
+*Die Komponenteneinstellungen zeigen den Zustand einer Neuinstallation von 1.2.3: OCR und Offline-Übersetzung sind nicht installiert. Die Installation erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
+
+<details>
+<summary>Installationsordner der Komponenten</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="Komponentenordner in der englischen Oberfläche von 1.2.3; die Pfade sind verdeckt."></p>
+
+*Komponentenordner in der englischen Oberfläche von 1.2.3; die Pfade sind verdeckt.*
+
+</details>
 
 1. Öffnen Sie **Einstellungen > Lokale Komponenten**.
 2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.3 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
@@ -235,6 +260,17 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 <summary>Sicherungseinstellungen · standardmäßig alle 24 Stunden</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="Dateneinstellungen mit automatischen Sicherungen alle 24 Stunden und verdeckten Pfaden"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="Sicherungsstatus, Momentaufnahmen und manuelle Aktionen mit isolierten Beispieldaten. Die Pfade sind verdeckt; das Standardintervall bleibt bei 24 Stunden."></p>
+
+*Sicherungsstatus, Momentaufnahmen und manuelle Aktionen mit isolierten Beispieldaten. Die Pfade sind verdeckt; das Standardintervall bleibt bei 24 Stunden.*
+
+</details>
+
+<details>
+<summary>Info · Anwendungsversion und Datenordner</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="Infoseite von 1.2.3 mit Anwendungsinformationen und verdecktem Datenpfad"></p>
 
 </details>
 

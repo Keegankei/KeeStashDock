@@ -62,6 +62,15 @@ result without changing the default target in Settings; retry always uses the
 retained source text. Unsupported local model directions remain an error and
 never trigger cloud fallback.
 
+<p align="center"><img src="images/translation-result-tools.png" width="420" alt="The English 1.2.3 result window with a target language selector, group selector and save actions"></p>
+
+This preview uses prefilled example text in the actual 1.2.3 result window;
+no OCR or translation service was run to produce it. In **Settings > Capture &
+translation**, independently show or hide the target-language selector and
+save-to-group controls. Both are on by default. Hiding them keeps the result
+and copy actions available. See the [compact result preview](images/translation-result-compact.png)
+and [image sources](images/README.md) for the optional layout and reproduction details.
+
 ## Storage, backups, and upgrading
 
 The original PNG and thumbnail live inside the SQLite database with their entry.
