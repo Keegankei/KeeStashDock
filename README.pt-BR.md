@@ -30,10 +30,6 @@
 
 **Versão 1.2.3** · [Notas da versão](docs/releases/1.2.3-notes.md) · [Registro de validação](docs/releases/1.2.3.md)
 
-<!-- release-publication-pending:start -->
-> **Publicação em andamento:** os links abaixo para o ZIP e a soma de verificação da v1.2.3 estarão disponíveis após a publicação. Até lá, use a [versão publicada mais recente](https://github.com/Keegankei/KeeStashDock/releases/latest).
-<!-- release-publication-pending:end -->
-
 As capturas e os GIFs mostram a **1.2.2**, sem as novas configurações e os controles de resultados da 1.2.3.
 
 [Primeiros passos](#get-started) · [Recursos](#features) · [Atalhos](#shortcuts) · [Dados e atualizações](#data-and-upgrades) · [Desenvolvimento](#development) · [Licença](#license)
@@ -251,7 +247,7 @@ Use **Configurações > Backup e dados** para exportar ou importar um backup e c
 3. Mantenha a instalação original e o backup. Inicie a nova versão e confira suas entradas antes de remover as cópias antigas. Guarde um backup anterior à atualização para poder voltar à versão anterior; esquemas antigos de banco de dados não são intercambiáveis.
 4. Se **Iniciar com o Windows** estava ativado e você mudou de pasta, desative e ative novamente a opção nas configurações do novo aplicativo. Isso registra o novo caminho; caso contrário, o Windows poderá iniciar a cópia antiga no próximo login.
 
-Na **1.2.2**, use **Verificar atualizações** após esta publicação ou siga as etapas manuais acima. As **versões candidatas 1.2.3 (r1–r4)** precisam de substituição manual porque compartilham o número da versão final. Preserve toda a pasta de dados ativa e os backups; encerre o processo antigo antes de iniciar a nova cópia.
+Na **1.2.2**, use **Verificar atualizações** ou siga as etapas manuais acima. As **versões candidatas 1.2.3 (r1–r4)** precisam de substituição manual porque compartilham o número da versão final. Preserve toda a pasta de dados ativa e os backups; encerre o processo antigo antes de iniciar a nova cópia.
 
 Não anexe sua pasta pessoal `Data`, credenciais, backups privados ou logs a uma issue. Consulte [suporte e relatórios sem dados sensíveis](SUPPORT.md), [recuperação de atualização](docs/UPDATING.md) e a [política de segurança](SECURITY.md).
 
