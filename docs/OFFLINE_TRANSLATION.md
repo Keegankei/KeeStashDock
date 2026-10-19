@@ -6,8 +6,8 @@ The initial setup needs internet access to **python.org**, **files.pythonhosted.
 
 ## Install once
 
-Choose **Local offline translation** in Settings, then click **Install / repair
-offline translation**. KeeStashDock downloads and verifies the components in the
+Open **Settings > Local components**, then click **Install / repair** under
+**Offline translation (Chinese / English)**. KeeStashDock downloads and verifies the components in the
 background, displays the current stage, and starts the engine when installation
 finishes. You can cancel the operation, retry a failed setup, or use the Settings
 start/stop buttons. No PowerShell command is required for normal use. The app checks the shared native
@@ -25,7 +25,7 @@ with administrator privileges; cancellation does not undo it. Let that Windows
 installation finish before retrying. A cancelled or failed repair can be retried;
 valid downloads are reused.
 
-If your build contains `OfflineTranslation/runtime/installed.json`, the scripts
+With the default location, if your build contains `OfflineTranslation/runtime/installed.json`, the scripts
 prefer that preinstalled portable runtime. Otherwise they use the per-user runtime
 folder. An explicit `-RuntimeDirectory` takes priority for manual commands.
 
@@ -39,10 +39,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1
 ```
 
 In a source checkout, the scripts are in `tools/offline-translation`; published
-builds include them in `OfflineTranslation`. Settings also provides an option to
-open that folder for troubleshooting.
+builds include them in `OfflineTranslation`. **Open folder** in Settings opens the
+selected runtime folder, rather than the bundled setup-script directory.
 
-Setup installs a portable Python 3.12 x64 interpreter and exact, SHA-256-verified Windows packages into `%LOCALAPPDATA%\KeeStashDock\OfflineTranslation`. It does not change PATH, install global Python packages, register a Windows service or touch KeeStashDock's `Data` folder. Allow approximately 1 GB of free disk space and 2 GB of available memory. Initial model loading and language detection can take longer than subsequent requests.
+By default, setup installs a portable Python 3.12 x64 interpreter and exact, SHA-256-verified Windows packages into `%LOCALAPPDATA%\KeeStashDock\OfflineTranslation`. It does not change PATH, install global Python packages or register a Windows service. A custom location is used only when explicitly selected. Allow approximately 1 GB of free disk space and 2 GB of available memory. Initial model loading and language detection can take longer than subsequent requests.
 
 Setup downloads only two translation models: English to Simplified Chinese and Simplified Chinese to English. The language detector recognizes other languages so unsupported text can be rejected instead of being treated as English. Short or mixed-language snippets can still be ambiguous; a complete sentence is more reliable.
 
@@ -63,6 +63,13 @@ Stop verifies the saved process executable and start time before stopping it. Fo
 Use `-Port 5001` with Start if port 5000 is occupied, and change the app endpoint to `http://127.0.0.1:5001`.
 
 ## Custom runtime folder
+
+In **Settings > Local components**, use **Choose folder** for offline translation.
+Select an empty, writable local folder or an existing runtime. The old managed
+service is stopped before the location is saved. Files are not moved or deleted;
+choose **Install / repair** if the new location is empty. **Use default** restores
+the original per-user/portable lookup. The saved location also applies when the
+app starts the engine automatically for translation.
 
 Pass the same absolute folder to all three commands. This is useful for a portable copy or a development validation run:
 

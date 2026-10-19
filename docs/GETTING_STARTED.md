@@ -31,11 +31,12 @@ no manual environment setup is needed. Keep the application entry point and
   inserts a new line. Click an entry to copy it.
 - Use **Alt+W** or a screenshot button, select a region, then choose **Save screenshot**, **Extract text**, or **Extract and translate**. **Enter** saves; **Esc** or right-click cancels. Extracting text alone creates no library entry and does not automatically copy text.
 - Open a saved image entry and use **Recognize text** to add editable, searchable text. OCR runs locally. Translation uses only your configured provider when explicitly requested; source text remains available after failure.
-- In Settings, choose **Standard** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
+- In **Settings > Appearance**, choose **Standard** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
 - **Hide at desktop edge** is enabled by default to tuck the panel into a small handle when dragged to an edge. Hover over or click the handle to restore it. Ordinary collapse keeps only the six toolbar buttons.
 - Select **Copy and translate** for two independent selection-bubble buttons. Copy saves the selection to the dock; Translate uses the same source text without adding an entry.
 - Choose **Translation target language** independently of the interface language. The default is **Follow interface language**. A target selected in a result window applies only to that result; retry uses the retained source text.
 - In a temporary OCR or translation result, choose a group and **Save source**, **Save translation**, or **Save both**. Saving both creates one text entry. Saving is explicit and does not copy text or save the screenshot.
+- Under **Settings > Capture & translation**, independently show or hide the result's target selector and save controls. They appear after recognition or translation finishes. Hidden controls retain their saved values.
 - If a shortcut cannot be registered, click the tray notification to open Settings. Each shortcut has a persistent status there; tray actions remain usable. A failed replacement keeps the previous working shortcut.
 
 ## Fresh-install defaults
@@ -51,6 +52,7 @@ preferences, including language and shortcuts.
 | Launch at Windows startup | Off |
 | Selection bubble / action / translator | On / Copy only / Google |
 | Translation target language | Follow interface language |
+| Result target selector / save controls | On / On |
 | Bubble style / text glow / drop shadow | Default / Off / On |
 | Automatic clipboard collection / direct paste | Off / Off |
 | Auto-hide when dragged to an edge | On |
@@ -64,7 +66,7 @@ preferences, including language and shortcuts.
 
 ## Optional local components
 
-Open **Settings** and scroll to **Optional components**. Click **Install / repair**
+Open **Settings > Local components**. Click **Install / repair**
 next to **Text recognition (Chinese / English)** or
 **Offline translation (Chinese / English)**. Setup runs inside the app with
 progress and cancellation; no terminal command is needed.
@@ -76,7 +78,7 @@ Use repair if a required file or native runtime is missing.
 Offline translation requires an initial internet download of its runtime and
 English/Chinese models. After setup, choose **Local offline (Argos / LibreTranslate)** under
 **Translation engine**. The installed service starts automatically when needed;
-**Start service** and **Stop service** are also available under **Optional components**. It translates locally once the needed model is
+**Start service** and **Stop service** are also available under **Local components**. It translates locally once the needed model is
 installed. Setup may request Windows administrator permission to install the
 Microsoft Visual C++ prerequisite, and Windows may request a restart.
 
@@ -84,13 +86,25 @@ Cloud translation providers have their own availability, credentials, quotas,
 and billing terms. Their use sends selected text to that provider. Offline
 translation and OCR do not fall back to a cloud provider on failure.
 
+Each component has **Choose folder**, **Open folder**, and **Use default** actions.
+Choose an empty, writable local folder or a valid existing component installation.
+Switching locations preserves old files; install again if the new folder is empty.
+OCR uses `OcrModels` and `OcrEngine` subfolders. Offline translation uses its selected
+folder directly and stops the previous service before changing locations.
+
 ## Data and upgrades
 
-**Settings > Data** shows the last backup attempt and success, next scheduled
+**Settings > Backup & data** shows the last backup attempt and success, next scheduled
 check, current status, location and snapshot list. **Back up now** creates a
 manual snapshot; restoring a listed snapshot uses the same guarded import flow.
 Automatic intervals include **15, 30 and 60 minutes**, 6, 12, 24 and 48 hours,
 and 7 days. The default remains 24 hours; existing hourly settings migrate.
+
+Use **Choose folder** to store future database backups elsewhere. The list and
+retention policy apply to the selected folder. Old files stay in their original
+location; switch back or import a backup to restore one. **Use default** returns
+to `Backups` beside the active database. Full update-recovery copies still use
+`Data/Backups/BeforeUpdate-*`. These choices do not relocate the active library.
 
 Scheduling runs only while the app is open. Startup or resume catches up once,
 without replaying every missed interval. Every successful run creates a complete
