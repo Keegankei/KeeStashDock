@@ -23,7 +23,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 - Preserved existing backup preferences by migrating legacy hours to minutes. Automatic retention removes only owned automatic snapshots after a successful full database snapshot; manual and recovery files remain available.
 - Redesigned Settings with category navigation, clearer page headings, grouped controls, switches and themed focus/hover states. Dependent options collapse when inactive while shared translation, popup appearance, manual backup and panel-timing controls remain available.
 - Kept full update-recovery snapshots in the active data folder's `Backups/BeforeUpdate-*` directory. Recovery copying excludes owned snapshots/status from a custom backup folder and known configured component payloads without excluding unrelated user files alongside them.
-- Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. Existing media remains accurately labeled as 1.2.2 footage.
+- Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. A subsequent documentation refresh added the English 1.2.3 screenshot and GIF gallery without changing the published release assets.
 
 ### Fixed
 

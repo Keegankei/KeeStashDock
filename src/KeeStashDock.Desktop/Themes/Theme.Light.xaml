@@ -1,6 +1,6 @@
-<!-- Light theme palette. Every visual color in the app is a DynamicResource
-     pointing at one of these keys, so ThemeManager can swap Light/Dark at
-     runtime by replacing this dictionary (no window restart).
+<!-- Shared light theme palette. Controls using these DynamicResource keys
+     follow runtime Light/Dark changes when ThemeManager replaces this
+     dictionary (no window restart). Specialized surfaces may use local colors.
      The accent is dark enough for white-on-accent controls to pass AA. -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">

@@ -128,7 +128,7 @@ Accédez à **Paramètres > Apparence > Mode du panneau**. Les deux modes conser
 
 Dans les deux modes, faites glisser les bords ou les coins du panneau déployé pour le redimensionner ; sa taille est restaurée au redémarrage. La barre compacte à six boutons garde une taille fixe. La version 1.2.3 corrige aussi une exception à l’initialisation lors de la restauration de la position et aligne les zones de redimensionnement du mode Spatial sur les bords visibles du panneau.
 
-Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png) · [Performances mesurées et limites](docs/performance/1.2.2-floating.md).
+Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png).
 
 Les paramètres proposent aussi des palettes de texte pour le panneau, une couleur de texte personnalisée et un contraste automatique, ainsi que des réglages indépendants de style, de lueur, d’ombre et d’opacité pour la bulle de sélection.
 

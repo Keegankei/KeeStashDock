@@ -128,7 +128,7 @@ Selecione **Configurações > Aparência > Modo do painel**. Os dois modos mant�
 
 Nos dois modos, arraste as bordas ou os cantos do painel expandido para alterar seu tamanho; ele será restaurado ao reiniciar. A barra compacta de seis botões mantém um tamanho fixo. A versão 1.2.3 também corrige uma exceção na inicialização ao restaurar a posição salva e alinha as áreas de redimensionamento do modo Espacial às bordas visíveis do painel.
 
-Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png) · [Desempenho medido e limites](docs/performance/1.2.2-floating.md).
+Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png).
 
 As configurações também oferecem paletas de texto para o painel, uma cor de texto personalizada e contraste automático, além de controles independentes de estilo, brilho, sombra e opacidade para o balão de seleção.
 

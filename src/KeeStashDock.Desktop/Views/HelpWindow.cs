@@ -9,7 +9,7 @@ namespace KeeStashDock.Desktop.Views;
 /// locale JSON files as Help.Content - one paragraph per feature, sections
 /// separated by blank lines, "## " prefixing section headings - so
 /// translators maintain it exactly like every other string and it follows
-/// the app language (which defaults to the system language on first run).
+/// the app language (which defaults to English on first run).
 /// One instance at a time; reopening focuses the existing window.
 /// </summary>
 public sealed class HelpWindow : Window

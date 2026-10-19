@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Removes generated files without deleting application data or running packages.
+Removes known build caches without deleting releases, application data, or installed components.
 .EXAMPLE
 ./tools/Clean.ps1 -WhatIf
 .EXAMPLE
@@ -31,13 +31,30 @@ function Assert-SafeDirectory([string]$Path) {
         if (($current.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
             throw "Refusing a symbolic link or junction: $($current.FullName)"
         }
-        if ($current.FullName.TrimEnd('\', '/') -eq $repositoryRoot.TrimEnd('\', '/')) { break }
         $current = $current.Parent
     }
 }
 
+function Get-PreservedOutputReason([IO.FileSystemInfo]$Entry) {
+    $personalReason = Get-PersonalArtifactReason $Entry
+    if ($personalReason) { return $personalReason }
+    # A plain Release directory is the normal .NET build configuration.
+    if ($Entry.Name -imatch '^(?:release[-_]\d|review(?:$|[-_])|candidate(?:$|[-_])|KeeStashDock-\d)') {
+        return 'a retained release or candidate artifact'
+    }
+    if ($Entry.PSIsContainer) {
+        if ($Entry.Name -in @('OcrEngine', 'runtime', 'models')) {
+            return 'an optional component runtime or model directory'
+        }
+    } elseif ($Entry.Extension -in @('.traineddata', '.argosmodel') -or
+        $Entry.Name -imatch '^(?:tesseract.*\.(?:exe|dll)|leptonica.*\.dll)$') {
+        return 'an installed OCR or offline translation component'
+    }
+    return $null
+}
+
 function Get-ProtectedContent([string]$Path) {
-    $rootReason = Get-PersonalArtifactReason (Get-Item -LiteralPath $Path -Force)
+    $rootReason = Get-PreservedOutputReason (Get-Item -LiteralPath $Path -Force)
     if ($rootReason) { return $rootReason }
     $pending = New-Object 'System.Collections.Generic.Stack[string]'
     $pending.Push($Path)
@@ -47,7 +64,7 @@ function Get-ProtectedContent([string]$Path) {
             if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
                 return "contains a symbolic link or junction: $($item.FullName)"
             }
-            $reason = Get-PersonalArtifactReason $item
+            $reason = Get-PreservedOutputReason $item
             if ($reason) { return "contains $reason" }
             if ($item.PSIsContainer) { $pending.Push($item.FullName) }
         }
@@ -67,15 +84,9 @@ foreach ($sourceFolder in 'src', 'tests') {
 $candidates.Add((Join-Path $repositoryRoot 'TestResults'))
 if ($IncludeIdeState) { $candidates.Add((Join-Path $repositoryRoot '.vs')) }
 if ($IncludeBuildOutputs) {
-    foreach ($outputName in 'artifacts', 'publish') {
-        $outputPath = Join-Path $repositoryRoot $outputName
-        if (Test-Path -LiteralPath $outputPath -PathType Container) {
-            Assert-SafeDirectory $outputPath
-            foreach ($output in Get-ChildItem -LiteralPath $outputPath -Directory -Force) {
-                $candidates.Add($output.FullName)
-            }
-        }
-    }
+    # Only this documented CI smoke output is known to be reproducible.
+    # Never infer that arbitrary publish/artifacts children are disposable.
+    $candidates.Add((Join-Path $repositoryRoot 'artifacts/publish'))
 }
 
 $removed = 0
