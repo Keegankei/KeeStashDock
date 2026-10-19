@@ -30,7 +30,7 @@
 
 **版本 1.2.3** · [版本說明](docs/releases/1.2.3-notes.md) · [驗收記錄](docs/releases/1.2.3.md)
 
-截圖與 GIF 展示的是 **1.2.2**，未展示 1.2.3 新增的設定與結果控制項。
+截圖與 GIF 展示 **1.2.3 英文介面**，包含全新安裝的預設值，並明確標示選用功能。
 
 [快速開始](#get-started) · [功能介紹](#features) · [快捷操作](#shortcuts) · [資料與升級](#data-and-upgrades) · [開發](#development) · [授權條款](#license)
 
@@ -66,7 +66,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>全新安裝的設定 · 英文介面</summary>
 
-<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.2 設定頁面，顯示英文、Alt+Q 與 Alt+W 預設值"></p>
+<p align="center"><img src="docs/images/default-settings.png" width="720" alt="1.2.3 設定頁面，顯示英文、Alt+Q 與 Alt+W 預設值"></p>
 
 </details>
 
@@ -79,9 +79,9 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 在**備份與資料**中選擇備份資料夾，在**本機元件**中分別選擇 OCR 與離線翻譯資料夾。變更位置**不會移動現有檔案**；新的元件資料夾為空時需重新安裝。**關於**中唯讀顯示目前的應用程式資料位置，移轉資料庫請使用匯出及匯入。
 
-以下預覽展示 **1.2.2 的實際英文介面**，內容為合成範例。標準面板使用全新安裝的外觀預設值；空間模式及同時顯示「複製 / 翻譯」的氣泡示範選用設定。空間檢視動圖使用模擬指標，更新預覽使用模擬版本。安裝路徑和資料路徑已遮蔽，不包含個人桌面或剪貼簿內容。[圖片來源與產生方式](docs/images/README.md)。
+以下預覽展示 **1.2.3 的實際英文介面**，內容為合成範例。標準面板使用全新安裝的外觀預設值；空間模式及同時顯示「複製 / 翻譯」的氣泡示範選用設定。空間檢視動圖使用模擬指標，更新預覽使用模擬版本。安裝路徑和資料路徑已遮蔽，不包含個人桌面或剪貼簿內容。[圖片來源與產生方式](docs/images/README.md)。
 
-<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.2 標準面板操作：輸入並儲存文字片段，再釘選和取消釘選卡片"></p>
+<p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="1.2.3 標準面板操作：輸入並儲存文字片段，再釘選和取消釘選卡片"></p>
 
 *標準模式 · 輸入、儲存、釘選與取消釘選 · 英文介面。使用實際控制項和範例內容示範預設操作。*
 
@@ -153,7 +153,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 | 擷取文字 | 執行本機 OCR 並顯示暫存文字，不儲存項目，也不自動複製。 |
 | 擷取並翻譯 | 先執行本機 OCR，再將辨識文字交給所選翻譯服務。擷取畫面本身不會上傳。 |
 
-<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.2的暫存 OCR 結果，提供明確的文字複製操作"></p>
+<p align="center"><img src="docs/images/screenshot-text.png" width="480" alt="1.2.3的暫存 OCR 結果，提供明確的文字複製操作"></p>
 
 再次拖曳可以重新選取區域；按 **Esc** 或右鍵取消。暫存結果支援主動複製，翻譯失敗後保留原文，並可重試翻譯。OCR 僅負責辨識，不會自動翻譯。[螢幕擷取使用流程](docs/SCREENSHOTS.md) · [OCR 支援範圍與限制](docs/LOCAL_OCR.md)。
 
@@ -161,13 +161,29 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 ### 4. 選取文字操作與翻譯
 
-<p align="center"><img src="docs/images/selection-actions.png" width="480" alt="1.2.2 選取文字泡泡，同時提供獨立的複製與翻譯按鈕"></p>
+<table>
+  <tr><th>預設：僅複製</th><th>選用：複製和翻譯</th></tr>
+  <tr>
+    <td><img src="docs/images/selection-copy-only.png" width="300" alt="1.2.3 · 預設：僅複製"></td>
+    <td><img src="docs/images/selection-actions.png" width="300" alt="1.2.3 · 選用：複製和翻譯"></td>
+  </tr>
+</table>
 
 在**設定 > 擷取與翻譯**中啟用選取文字泡泡，接著在其他應用程式選取文字。**複製**會將所選文字儲存到面板目前的群組；**翻譯**顯示譯文，不新增項目。
 
 選擇**複製和翻譯**，即可同時顯示兩個按鈕。複製後，在泡泡關閉前仍可翻譯同一段選取文字。翻譯失敗時會保留原文。
 
 **1.2.3：**可在設定中獨立選擇翻譯目標語言。新安裝及升級預設仍為**跟隨介面語言**；選取文字翻譯、截圖翻譯與翻譯測試共用此設定。結果視窗顯示實際目標語言，並允許使用保留的原文暫時重新翻譯；此選擇僅作用於目前結果，不改變全域設定。可用語言取決於服務商或已安裝的離線模型；不支援的語言方向會明確回報錯誤，不會自動切換服務或上傳離線文字。
+
+<table>
+  <tr><th>預設開啟目標語言與儲存控制項</th><th>選用精簡結果</th></tr>
+  <tr>
+    <td><img src="docs/images/translation-result-tools.png" width="360" alt="1.2.3 · 預設開啟目標語言與儲存控制項"></td>
+    <td><img src="docs/images/translation-result-compact.png" width="360" alt="1.2.3 · 選用精簡結果"></td>
+  </tr>
+</table>
+
+*預填範例文字展示實際 1.2.3 結果視窗；產生這些預覽時未執行 OCR 或呼叫翻譯服務。目標語言與儲存控制項預設開啟，精簡視圖展示兩項皆關閉的效果。*
 
 | 服務 | 設定與可用性 |
 | --- | --- |
@@ -180,7 +196,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <details>
 <summary>預設選取文字與翻譯設定</summary>
 
-<p align="center"><img src="docs/images/behavior-settings.png" width="720" alt="行為設定，預設僅複製、Google、關閉文字發光並開啟懸浮陰影"></p>
+<p align="center"><img src="docs/images/translation-settings.png" width="720" alt="1.2.3 擷取與翻譯設定，顯示僅複製、結果控制項、Google 與獨立翻譯目標語言"></p>
 
 </details>
 
@@ -188,7 +204,16 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 <p align="center"><img src="docs/images/component-setup.png" width="720" alt="選用元件設定，提供 OCR 與離線翻譯的安裝及修復按鈕"></p>
 
-*圖中為 1.2.2 全新安裝的元件設定：OCR 和離線翻譯尚未安裝。使用這些應用程式內按鈕即可安裝，無需終端機命令。*
+*圖中為 1.2.3 全新安裝的元件設定：OCR 和離線翻譯尚未安裝。使用這些應用程式內按鈕即可安裝，無需終端機命令。*
+
+<details>
+<summary>元件安裝資料夾</summary>
+
+<p align="center"><img src="docs/images/component-folders.png" width="720" alt="1.2.3 英文介面的元件資料夾選項；路徑已遮蔽。"></p>
+
+*1.2.3 英文介面的元件資料夾選項；路徑已遮蔽。*
+
+</details>
 
 1. 開啟**設定 > 本機元件**。
 2. 首次使用 OCR 前，在**文字辨識（中文 / 英文）**下選擇**安裝 / 修復**。1.2.3 不預先安裝 OCR 或本機翻譯引擎及模型；主動安裝時才下載並驗證所需檔案，同時檢查本機執行階段。
@@ -235,6 +260,17 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 <summary>備份設定 · 預設每 24 小時自動備份</summary>
 
 <p align="center"><img src="docs/images/backup-settings.png" width="720" alt="資料設定，預設每 24 小時自動備份，路徑已遮蔽"></p>
+
+<p align="center"><img src="docs/images/backup-status.png" width="720" alt="使用隔離範例資料展示備份狀態、快照與手動操作。路徑已遮蔽，預設週期仍為 24 小時。"></p>
+
+*使用隔離範例資料展示備份狀態、快照與手動操作。路徑已遮蔽，預設週期仍為 24 小時。*
+
+</details>
+
+<details>
+<summary>關於 · 應用程式版本與資料位置</summary>
+
+<p align="center"><img src="docs/images/about-settings.png" width="720" alt="1.2.3 關於頁面，顯示應用程式資訊，資料路徑已遮蔽"></p>
 
 </details>
 
