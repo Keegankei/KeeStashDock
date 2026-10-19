@@ -30,10 +30,6 @@
 
 **Version 1.2.3** · [Release notes](docs/releases/1.2.3-notes.md) · [Acceptance record](docs/releases/1.2.3.md)
 
-<!-- release-publication-pending:start -->
-> **Release publication in progress:** the v1.2.3 ZIP and checksum links below become available when the release is published. Until then, use the [latest published release](https://github.com/Keegankei/KeeStashDock/releases/latest).
-<!-- release-publication-pending:end -->
-
 Screenshots and GIFs show **1.2.2**; they do not show the new 1.2.3 settings and result controls.
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
@@ -251,7 +247,7 @@ Use **Settings > Backup & data** to export/import a backup and configure schedul
 3. Keep the original installation and backup. Start the new version and confirm your entries before removing old copies. Keep a pre-upgrade backup for rollback; older database schemas are not interchangeable.
 4. If **Start with Windows** was enabled and you moved to a new folder, turn it off and on again in the new app's Settings. This registers the new executable path; otherwise Windows may launch the old copy at the next sign-in.
 
-From **1.2.2**, use **Check for updates** after this release is published, or follow the manual steps above. **1.2.3 candidate builds (r1–r4)** require manual replacement because they share the final numeric version. Preserve the complete active data folder and backups; exit the old process before starting the new copy.
+From **1.2.2**, use **Check for updates**, or follow the manual steps above. **1.2.3 candidate builds (r1–r4)** require manual replacement because they share the final numeric version. Preserve the complete active data folder and backups; exit the old process before starting the new copy.
 
 Do not attach personal `Data`, credentials, private backups, or logs to an issue. See [support and sanitized reports](SUPPORT.md), [upgrade recovery](docs/UPDATING.md), and the [security policy](SECURITY.md).
 

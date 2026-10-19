@@ -30,10 +30,6 @@
 
 **Version 1.2.3** · [Notes de version](docs/releases/1.2.3-notes.md) · [Rapport de validation](docs/releases/1.2.3.md)
 
-<!-- release-publication-pending:start -->
-> **Publication en cours :** les liens ci-dessous vers le ZIP et la somme de contrôle de v1.2.3 seront disponibles après publication. En attendant, utilisez la [dernière version publiée](https://github.com/Keegankei/KeeStashDock/releases/latest).
-<!-- release-publication-pending:end -->
-
 Les captures et GIF montrent **1.2.2**, sans les nouveaux réglages et contrôles de résultats de 1.2.3.
 
 [Premiers pas](#get-started) · [Fonctionnalités](#features) · [Raccourcis](#shortcuts) · [Données et mises à niveau](#data-and-upgrades) · [Développement](#development) · [Licence](#license)
@@ -251,7 +247,7 @@ Utilisez **Paramètres > Sauvegarde et données** pour exporter ou importer une 
 3. Conservez l’installation d’origine et la sauvegarde. Lancez la nouvelle version et vérifiez vos entrées avant de supprimer les anciennes copies. Gardez une sauvegarde antérieure à la mise à niveau pour revenir en arrière ; les anciens schémas de base de données ne sont pas interchangeables.
 4. Si **Démarrer avec Windows** était activé et que vous avez changé de dossier, désactivez puis réactivez cette option dans les paramètres de la nouvelle application. Le nouveau chemin sera enregistré ; sinon, Windows peut lancer l’ancienne copie à la prochaine connexion.
 
-Depuis **1.2.2**, utilisez **Rechercher les mises à jour** après cette publication, ou suivez les étapes manuelles ci-dessus. Les **versions candidates 1.2.3 (r1–r4)** doivent être remplacées manuellement, car elles partagent le numéro de la version finale. Conservez le dossier de données actif complet et les sauvegardes ; quittez l’ancien processus avant de lancer la nouvelle copie.
+Depuis **1.2.2**, utilisez **Rechercher les mises à jour**, ou suivez les étapes manuelles ci-dessus. Les **versions candidates 1.2.3 (r1–r4)** doivent être remplacées manuellement, car elles partagent le numéro de la version finale. Conservez le dossier de données actif complet et les sauvegardes ; quittez l’ancien processus avant de lancer la nouvelle copie.
 
 Ne joignez pas de dossier `Data` personnel, d’identifiants, de sauvegardes privées ou de journaux à un ticket. Consultez [l’assistance et les rapports expurgés](SUPPORT.md), la [récupération après mise à niveau](docs/UPDATING.md) et la [politique de sécurité](SECURITY.md).
 

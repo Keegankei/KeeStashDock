@@ -30,10 +30,6 @@
 
 **Versión 1.2.3** · [Notas de la versión](docs/releases/1.2.3-notes.md) · [Registro de validación](docs/releases/1.2.3.md)
 
-<!-- release-publication-pending:start -->
-> **Publicación en curso:** los enlaces siguientes al ZIP y a la suma de comprobación de v1.2.3 estarán disponibles cuando se publique la versión. Mientras tanto, usa la [última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest).
-<!-- release-publication-pending:end -->
-
 Las capturas y los GIF muestran **1.2.2**, sin los nuevos ajustes ni controles de resultados de 1.2.3.
 
 [Primeros pasos](#get-started) · [Funciones](#features) · [Atajos](#shortcuts) · [Datos y actualizaciones](#data-and-upgrades) · [Desarrollo](#development) · [Licencia](#license)
@@ -251,7 +247,7 @@ Usa **Configuración > Copias y datos** para exportar o importar una copia de se
 3. Conserva la instalación original y la copia de seguridad. Inicia la nueva versión y comprueba tus entradas antes de eliminar las copias antiguas. Guarda una copia de seguridad anterior a la actualización para poder volver atrás; los esquemas antiguos de la base de datos no son intercambiables.
 4. Si **Iniciar con Windows** estaba activado y has cambiado de carpeta, desactiva y vuelve a activar la opción en la configuración de la nueva aplicación. Así se registra la nueva ruta; de lo contrario, Windows podría iniciar la copia anterior al volver a iniciar sesión.
 
-Desde **1.2.2**, usa **Buscar actualizaciones** tras esta publicación o sigue los pasos manuales anteriores. Las **versiones candidatas 1.2.3 (r1–r4)** requieren sustitución manual porque comparten el número de la versión final. Conserva la carpeta de datos activa completa y las copias de seguridad; cierra el proceso anterior antes de iniciar la nueva copia.
+Desde **1.2.2**, usa **Buscar actualizaciones** o sigue los pasos manuales anteriores. Las **versiones candidatas 1.2.3 (r1–r4)** requieren sustitución manual porque comparten el número de la versión final. Conserva la carpeta de datos activa completa y las copias de seguridad; cierra el proceso anterior antes de iniciar la nueva copia.
 
 No adjuntes tu carpeta personal `Data`, credenciales, copias de seguridad privadas ni registros a una incidencia. Consulta [asistencia e informes sin datos sensibles](SUPPORT.md), [recuperación tras una actualización](docs/UPDATING.md) y la [política de seguridad](SECURITY.md).
 

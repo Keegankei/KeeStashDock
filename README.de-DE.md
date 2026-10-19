@@ -30,10 +30,6 @@
 
 **Version 1.2.3** · [Versionshinweise](docs/releases/1.2.3-notes.md) · [Prüfprotokoll](docs/releases/1.2.3.md)
 
-<!-- release-publication-pending:start -->
-> **Veröffentlichung läuft:** Die folgenden Links zum ZIP und zur Prüfsumme von v1.2.3 werden mit der Veröffentlichung verfügbar. Verwenden Sie bis dahin die [zuletzt veröffentlichte Version](https://github.com/Keegankei/KeeStashDock/releases/latest).
-<!-- release-publication-pending:end -->
-
 Bilder und GIFs zeigen **1.2.2**, nicht die neuen Einstellungen und Ergebnis-Bedienelemente von 1.2.3.
 
 [Einstieg](#get-started) · [Funktionen](#features) · [Tastenkürzel](#shortcuts) · [Daten und Upgrades](#data-and-upgrades) · [Entwicklung](#development) · [Lizenz](#license)
@@ -251,7 +247,7 @@ Unter **Einstellungen > Sicherung & Daten** können Sie eine Sicherung exportier
 3. Behalten Sie die ursprüngliche Installation und die Sicherung. Starten Sie die neue Version und prüfen Sie Ihre Einträge, bevor Sie alte Kopien entfernen. Bewahren Sie für eine Rückkehr zur alten Version eine Sicherung vor dem Upgrade auf; ältere Datenbankschemata sind nicht austauschbar.
 4. War **Mit Windows starten** aktiviert und wurde die Anwendung in einen neuen Ordner verschoben, schalten Sie die Option in den Einstellungen der neuen App aus und wieder ein. Dadurch wird der neue Programmpfad registriert; andernfalls kann Windows bei der nächsten Anmeldung die alte Kopie starten.
 
-Ab **1.2.2** können Sie nach dieser Veröffentlichung **Nach Updates suchen** verwenden oder die manuellen Schritte oben befolgen. **1.2.3-Kandidaten (r1–r4)** müssen manuell ersetzt werden, da sie dieselbe numerische Version wie die endgültige Fassung haben. Bewahren Sie den gesamten aktiven Datenordner und die Sicherungen auf; beenden Sie den alten Prozess, bevor Sie die neue Kopie starten.
+Ab **1.2.2** können Sie **Nach Updates suchen** verwenden oder die manuellen Schritte oben befolgen. **1.2.3-Kandidaten (r1–r4)** müssen manuell ersetzt werden, da sie dieselbe numerische Version wie die endgültige Fassung haben. Bewahren Sie den gesamten aktiven Datenordner und die Sicherungen auf; beenden Sie den alten Prozess, bevor Sie die neue Kopie starten.
 
 Fügen Sie einem Issue keine persönlichen `Data`-Dateien, Zugangsdaten, privaten Sicherungen oder Protokolle bei. Siehe [Support und bereinigte Fehlerberichte](SUPPORT.md), [Wiederherstellung nach Upgrades](docs/UPDATING.md) und die [Sicherheitsrichtlinie](SECURITY.md).
 
