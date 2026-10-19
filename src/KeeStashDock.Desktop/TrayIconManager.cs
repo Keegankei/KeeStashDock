@@ -15,6 +15,7 @@ namespace KeeStashDock.Desktop;
 public sealed class TrayIconManager : IDisposable
 {
     private readonly WF.NotifyIcon _icon;
+    private Action? _notificationAction;
 
     public event Action? ShowPanelRequested;
     public event Action? ShowWorkbenchRequested;
@@ -35,6 +36,12 @@ public sealed class TrayIconManager : IDisposable
         _icon.MouseClick += (_, e) =>
         {
             if (e.Button == WF.MouseButtons.Left) ShowPanelRequested?.Invoke();
+        };
+        _icon.BalloonTipClicked += (_, _) =>
+        {
+            Action? action = _notificationAction;
+            _notificationAction = null;
+            action?.Invoke();
         };
         BuildMenu();
         LocalizationService.Instance.LanguageChanged += BuildMenu;
@@ -58,11 +65,22 @@ public sealed class TrayIconManager : IDisposable
 
     /// <summary>Balloon/toast helper (e.g. "copied" confirmations if ever needed from tray).</summary>
     public void ShowInfo(string title, string message)
-        => _icon.ShowBalloonTip(2000, title, message, WF.ToolTipIcon.Info);
+    {
+        _notificationAction = null;
+        _icon.ShowBalloonTip(2000, title, message, WF.ToolTipIcon.Info);
+    }
+
+    /// <summary>Offers a non-blocking route to resolve a persistent settings issue.</summary>
+    public void ShowActionableWarning(string title, string message, Action onClick)
+    {
+        _notificationAction = onClick;
+        _icon.ShowBalloonTip(8000, title, message, WF.ToolTipIcon.Warning);
+    }
 
     public void Dispose()
     {
         LocalizationService.Instance.LanguageChanged -= BuildMenu;
+        _notificationAction = null;
         _icon.ContextMenuStrip?.Dispose();
         _icon.Visible = false;
         _icon.Dispose();

@@ -42,6 +42,8 @@ public sealed class HotkeyManager : IDisposable
 
     public bool IsRegistered => _registeredId.HasValue;
     public event Action? HotkeyPressed;
+    internal HotkeyRegistrationStatus RegistrationStatus { get; private set; } = new();
+    internal event Action? RegistrationChanged;
 
     /// <summary>Creates the hidden window. Pass zero/zero to start without a shortcut.</summary>
     public bool Initialize(uint modifiers, uint vk)
@@ -59,24 +61,38 @@ public sealed class HotkeyManager : IDisposable
             _source = new HwndSource(parameters);
         }
         _initialized = true;
-        return modifiers == 0 && vk == 0 || Rebind(modifiers, vk);
+        return modifiers == 0 && vk == 0 ? DisableAndReturn() : Rebind(modifiers, vk);
     }
 
     public bool Rebind(uint modifiers, uint vk)
     {
-        if (!_initialized || _disposed || modifiers == 0 || (modifiers & ~0x0fu) != 0 || vk == 0 || vk > 0xfe)
+        if (!_initialized || _disposed) return false;
+        var requested = new HotkeyCombination(modifiers, vk);
+        if (modifiers == 0 || (modifiers & ~0x0fu) != 0 || vk == 0 || vk > 0xfe)
+        {
+            SetStatus(RegistrationStatus with { FailedAttempt = requested });
             return false;
-        if (IsRegistered && modifiers == _modifiers && vk == _virtualKey) return true;
+        }
+        if (IsRegistered && modifiers == _modifiers && vk == _virtualKey)
+        {
+            SetStatus(new(requested));
+            return true;
+        }
 
         // A failed registration leaves the existing binding intact, without a
         // release/reacquire race with another application.
         int nextId = _registeredId == _firstId ? _firstId + 1 : _firstId;
-        if (!_register(nextId, modifiers | NativeMethods.MOD_NOREPEAT, vk)) return false;
+        if (!_register(nextId, modifiers | NativeMethods.MOD_NOREPEAT, vk))
+        {
+            SetStatus(RegistrationStatus with { FailedAttempt = requested });
+            return false;
+        }
         int? previous = _registeredId;
         _registeredId = nextId;
         _modifiers = modifiers;
         _virtualKey = vk;
         if (previous is int oldId) _unregister(oldId);
+        SetStatus(new(requested));
         return true;
     }
 
@@ -85,6 +101,14 @@ public sealed class HotkeyManager : IDisposable
     {
         if (_registeredId is int id) _unregister(id);
         _registeredId = null;
+        SetStatus(new());
+    }
+
+    private void SetStatus(HotkeyRegistrationStatus status)
+    {
+        if (RegistrationStatus == status) return;
+        RegistrationStatus = status;
+        RegistrationChanged?.Invoke();
     }
 
     private bool DisableAndReturn() { Disable(); return true; }

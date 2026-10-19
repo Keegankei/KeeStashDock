@@ -15,6 +15,8 @@ public sealed class AppSettings
     public const int MaxBackupKeepCount = 100;
     public const int DefaultAutoBackupIntervalHours = 24;
     public const int MaxAutoBackupIntervalHours = 24 * 30;
+    public const int DefaultAutoBackupIntervalMinutes = 24 * 60;
+    public const int MaxAutoBackupIntervalMinutes = MaxAutoBackupIntervalHours * 60;
     public const uint DefaultScreenshotHotkeyModifiers = 0x0001; // MOD_ALT
     public const uint DefaultScreenshotHotkeyVirtualKey = 0x57; // 'W'
     public const double DefaultBackgroundOverlayOpacity = 0.20;
@@ -149,6 +151,15 @@ public sealed class AppSettings
     /// Offline uses a locally installed translation service.</summary>
     public string TranslationEngine { get; set; } = DefaultTranslationEngine;
 
+    /// <summary>FollowInterface preserves older behavior; explicit targets never change UI language.</summary>
+    public string TranslationTargetLanguage { get; set; } = TranslationTargets.FollowInterface;
+
+    /// <summary>Show the temporary target-language selector after OCR or translation completes.</summary>
+    public bool TranslationResultShowTargetSelector { get; set; } = true;
+
+    /// <summary>Show explicit group and save actions on completed OCR or translation results.</summary>
+    public bool TranslationResultShowSavePanel { get; set; } = true;
+
     /// <summary>Bubble text glow: the blurred halo twin under the crisp
     /// text of the whole bubble family. Default OFF: crisp text only.</summary>
     public bool BubbleTextGlow { get; set; } = false;
@@ -176,6 +187,10 @@ public sealed class AppSettings
     /// <summary>Hours between automatic backups. Default: daily.</summary>
     public int AutoBackupIntervalHours { get; set; } = DefaultAutoBackupIntervalHours;
 
+    /// <summary>Automatic database snapshot interval, in minutes. The legacy
+    /// hours field is read only for migration when this field is absent.</summary>
+    public int AutoBackupIntervalMinutes { get; set; } = DefaultAutoBackupIntervalMinutes;
+
     /// <summary>User-provided DeepL key, never reused for another provider.</summary>
     public string TranslationApiKey { get; set; } = "";
 
@@ -193,6 +208,12 @@ public sealed class AppSettings
 
     /// <summary>Loopback-only LibreTranslate-compatible local service address.</summary>
     public string OfflineTranslationEndpoint { get; set; } = DefaultOfflineTranslationEndpoint;
+
+    /// <summary>Optional root containing OcrModels and OcrEngine. Null keeps the existing portable/user lookup.</summary>
+    public string? OcrInstallDirectory { get; set; }
+
+    /// <summary>Optional offline translation runtime directory. Changing it never moves or deletes existing components.</summary>
+    public string? OfflineTranslationInstallDirectory { get; set; }
 
     // ---- Appearance ----------------------------------------------------
     /// <summary>Application theme: "Light", "Dark", or "System".</summary>
@@ -223,11 +244,15 @@ public sealed class AppSettings
     public bool DefaultGroupsSeeded { get; set; }
 
     // ---- Data ----------------------------------------------------------
+    /// <summary>Optional absolute snapshot folder. Empty uses the Backups
+    /// folder beside the active database; changing it preserves old files.</summary>
+    public string? BackupDirectory { get; set; }
+
     /// <summary>Days a snippet stays in the recycle bin before physical purge.
     /// Zero is invalid and normalizes to <see cref="DefaultTrashRetentionDays"/>.</summary>
     public int TrashRetentionDays { get; set; } = DefaultTrashRetentionDays;
 
-    /// <summary>Number of daily database backups to keep. Zero is invalid
+    /// <summary>Number of automatic database snapshots to keep. Zero is invalid
     /// and normalizes to <see cref="DefaultBackupKeepCount"/>.</summary>
     public int BackupKeepCount { get; set; } = DefaultBackupKeepCount;
 }

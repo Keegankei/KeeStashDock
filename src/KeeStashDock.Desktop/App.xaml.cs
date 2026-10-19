@@ -4,6 +4,7 @@ using System.Windows.Input;
 using KeeStashDock.Domain.Entities;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using KeeStashDock.Core.Services;
 using KeeStashDock.Desktop.Interop;
 using KeeStashDock.Desktop.Localization;
@@ -36,7 +37,7 @@ public partial class App : Application
     private HotkeyManager _hotkey = null!;
     private HotkeyManager _screenshotHotkey = null!;
     private readonly ScreenshotCaptureService _screenshotCapture = new();
-    private readonly LocalOcrService _localOcr = new();
+    private LocalOcrService _localOcr = new();
     private readonly Dictionary<long, ImageEntryWindow> _imageWindows = new();
     private readonly CancellationTokenSource _shutdownCancellation = new();
     private bool _capturingScreenshot => _selectionWatcherController?.IsCapturingScreenshot == true;
@@ -102,7 +103,11 @@ public partial class App : Application
         sc.AddSingleton<TagRepository>();
         sc.AddSingleton<GroupIoService>();
         sc.AddSingleton<SettingsStore>();
-        sc.AddSingleton<BackupService>();
+        sc.AddSingleton(provider => new BackupService(
+            provider.GetRequiredService<Db>(), provider.GetRequiredService<FileLogger>(),
+            maintenance: provider.GetRequiredService<DatabaseMaintenanceCoordinator>(),
+            backupDirectory: provider.GetRequiredService<SettingsStore>().Current.BackupDirectory));
+        sc.AddSingleton<AutomaticBackupScheduler>();
         sc.AddSingleton<IDatabaseFileOperations, PhysicalDatabaseFileOperations>();
         sc.AddSingleton<IApplicationRestarter, DesktopApplicationRestarter>();
         sc.AddSingleton<DatabaseImportService>();
@@ -113,6 +118,7 @@ public partial class App : Application
 
         var settings = _services.GetRequiredService<SettingsStore>();
         settings.Load();
+        _localOcr = new LocalOcrService(settings);
 
         // ---- 4. Localization (before ANY UI text is produced) -----------
         LocalizationService.Instance.SetLanguage(settings.Current.Language);
@@ -121,6 +127,8 @@ public partial class App : Application
         _services.GetRequiredService<MigrationRunner>().Run();
         SeedStarterGroups(settings);
         _services.GetRequiredService<HousekeepingService>().Start();
+        _services.GetRequiredService<AutomaticBackupScheduler>().Start();
+        SystemEvents.PowerModeChanged += OnPowerModeChanged;
 
         // ---- 6. Theme ----------------------------------------------------
         ThemeManager.Apply(settings.Current.Theme);
@@ -134,19 +142,7 @@ public partial class App : Application
         _tray.ExitRequested += ExitApp;
         _tray.CaptureRequested += CaptureScreenshot;
 
-        _hotkey = new HotkeyManager();
-        bool hotkeyOk = _hotkey.Initialize(
-            settings.Current.HotkeyModifiers, settings.Current.HotkeyVirtualKey);
-        if (!hotkeyOk)
-            Log.Warn("Global hotkey registration failed (combination in use by another app)");
-        _hotkey.HotkeyPressed += TogglePanel;
-        _screenshotHotkey = new HotkeyManager();
-        bool screenshotHotkeyOk = settings.Current.ScreenshotHotkeyEnabled
-            ? _screenshotHotkey.Initialize(settings.Current.ScreenshotHotkeyModifiers, settings.Current.ScreenshotHotkeyVirtualKey)
-            : _screenshotHotkey.Initialize(0, 0);
-        if (!screenshotHotkeyOk)
-            _tray.ShowInfo("KeeStashDock", LocalizationService.Instance["Screenshot.HotkeyConflict"]);
-        _screenshotHotkey.HotkeyPressed += CaptureScreenshot;
+        InitializeHotkeys(settings);
 
         InitializeSelectionServices(settings);
 
@@ -337,6 +333,7 @@ public partial class App : Application
                 await imageWindow.RecognitionCompletion;
             }
             if (_workbench is not null && !await _workbench.RequestHideAsync()) return false;
+            await _translationCard.SaveCompletion;
             _translationCancellation?.Cancel();
             _selectionPopup.HideBubble();
             _translationCard.HideCard();
@@ -364,8 +361,18 @@ public partial class App : Application
 
     // ---------------------------------------------------------- lifecycle
 
+    private void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+    {
+        if (e.Mode == PowerModes.Resume)
+            _services?.GetService<AutomaticBackupScheduler>()?.NotifyResumed();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        // The worker uses no UI waits. Finish/cancel any snapshot before the
+        // logger and process are closed, including update/restart exits.
+        _services?.GetService<AutomaticBackupScheduler>()?.StopAsync().GetAwaiter().GetResult();
         _translationCancellation?.Cancel();
         _updateWindow?.CancelOperation();
         DirectPaste.StopTracking();

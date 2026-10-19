@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -195,21 +196,17 @@ internal static class EdgeDockScenarios
             "The fixture must place the card within proximity reach of the window boundary.");
         movePointer(new Point(-1000, -1000));
         panel.UpdatePerspectivePointer();
-        Pump();
-        Assert.IsFalse(panel.IsDepthPointerPolling);
+        PumpUntil(() => !panel.IsDepthPointerPolling,
+            "The depth sampler must stop after the pointer leaves the panel's proximity area.");
 
         // No MouseMove is raised: only the normal 200-ms state timer can
         // discover this virtual pointer outside the docked panel's HWND.
         movePointer(nearby);
-        Pump();
-        Pump();
-        Assert.IsTrue(decoration.Activity > 0 && decoration.Activity < 1,
+        PumpUntil(() => decoration.Activity > 0 && decoration.Activity < 1 && !decoration.HasAnimatedProperties,
             "A docked, visible panel must retain outside-card approach feedback.");
         movePointer(new Point(-1000, -1000));
-        Pump();
-        Pump();
-        Assert.IsTrue(decoration.Activity < 0.01);
-        Assert.IsFalse(panel.IsDepthPointerPolling);
+        PumpUntil(() => decoration.Activity < 0.01 && !decoration.HasAnimatedProperties && !panel.IsDepthPointerPolling,
+            "Departing the proximity area must settle card feedback and stop the fast sampler.");
     }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
@@ -230,6 +227,24 @@ internal static class EdgeDockScenarios
         timer.Start();
         try { Dispatcher.PushFrame(frame); }
         finally { timer.Stop(); }
+    }
+
+    private static void PumpUntil(Func<bool> condition, string message)
+    {
+        var frame = new DispatcherFrame();
+        var elapsed = Stopwatch.StartNew();
+        // Native input/scroll/layout can wake the normal-priority sampler
+        // near a fixed Send-priority timeout. Let those queued callbacks and
+        // finite animation clocks run before observing their settled state.
+        var timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(20) };
+        timer.Tick += (_, _) =>
+        {
+            if (condition() || elapsed.Elapsed >= TimeSpan.FromSeconds(5)) frame.Continue = false;
+        };
+        timer.Start();
+        try { Dispatcher.PushFrame(frame); }
+        finally { timer.Stop(); }
+        Assert.IsTrue(condition(), message);
     }
 
     private static Drawing.Rectangle Bounds(nint hwnd)

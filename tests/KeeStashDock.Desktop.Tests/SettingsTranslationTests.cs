@@ -19,6 +19,7 @@ public sealed class SettingsTranslationTests
     [STATestMethod]
     public void DesktopWindowWorkflows_PreserveSettingsDraftsAndVisibility()
     {
+        SynchronizationContext? previousContext = SynchronizationContext.Current;
         string parent = Path.Combine(Path.GetTempPath(), "KeeStashDock.Tests", "SettingsTranslation");
         string root = Path.Combine(parent, Guid.NewGuid().ToString("N"));
         string logs = Path.Combine(root, "Logs");
@@ -58,6 +59,9 @@ public sealed class SettingsTranslationTests
             // user data. The nested panel scenario briefly shows its own window
             // and claims an empty, test-only portable draft directory.
             application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            SynchronizationContext.SetSynchronizationContext(
+                new DispatcherSynchronizationContext(application.Dispatcher));
+            LocalizationService.Instance.SetLanguage("en-US");
             application.Resources.MergedDictionaries.Add(LoadResource("Theme.Light.xaml"));
             application.Resources.MergedDictionaries.Add(LoadResource("Styles.xaml"));
             logger = new FileLogger(logs);
@@ -74,6 +78,7 @@ public sealed class SettingsTranslationTests
             CancellationToken testToken = default;
             string? testedProvider = null;
             string? testedSample = null;
+            string? testedTarget = null;
             int shutdownPreparations = 0;
             var pendingShutdown = new TaskCompletionSource<bool>();
             var componentInstaller = new ComponentSettingsScenarios();
@@ -86,6 +91,7 @@ public sealed class SettingsTranslationTests
                 {
                     testedProvider = cfg.TranslationEngine;
                     testedSample = text;
+                    testedTarget = KeeStashDock.Domain.Entities.TranslationTargets.Resolve(cfg);
                     testToken = token;
                     return pendingTest?.Task ?? Task.FromResult(new TranslationResult(cfg.TranslationEngine, "test result"));
                 });
@@ -187,6 +193,16 @@ public sealed class SettingsTranslationTests
             Assert.AreEqual(LocalizationService.Instance["Settings.TranslationTestSuccess"],
                 Named<TextBlock>(window, "TranslationTestStatus").Text);
 
+            ComboBox targetCombo = Named<ComboBox>(window, "TranslationTargetCombo");
+            targetCombo.SelectedItem = targetCombo.Items.OfType<ComboBoxItem>().Single(item => (string?)item.Tag == "zh-CN");
+            PumpUntilCompleted(window.TestTranslationAsync());
+            Assert.AreEqual("zh-CN", testedTarget);
+            Assert.AreEqual("en-US", settings.Current.Language, "Changing the target must preserve the interface language.");
+            Assert.AreEqual("This is a translation test.", testedSample, "The Settings test must use the independent target.");
+            var targetReload = new SettingsStore(settingsFile);
+            targetReload.Load();
+            Assert.AreEqual("zh-CN", targetReload.Current.TranslationTargetLanguage);
+
             pendingTest = new TaskCompletionSource<TranslationResult>();
             Task staleTest = window.TestTranslationAsync();
             Assert.IsFalse(Named<Button>(window, "TranslationTestButton").IsEnabled);
@@ -243,6 +259,7 @@ public sealed class SettingsTranslationTests
             hotkeyReload.Load();
             Assert.AreEqual(0x55u, hotkeyReload.Current.ScreenshotHotkeyVirtualKey);
             Assert.IsTrue(hotkeyReload.Current.ScreenshotHotkeyEnabled);
+            HotkeySettingsScenarios.Verify(window, settings, hotkey, screenshotHotkey);
             Button restart = Named<Button>(window, "RestartButton");
             restart.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.AreEqual(1, shutdownPreparations);
@@ -254,6 +271,7 @@ public sealed class SettingsTranslationTests
             Assert.IsTrue(window.IsEnabled, "Cancelling a draft decision must abort restart and restore Settings.");
             componentInstaller.Verify(window);
             new MigrationRunner(database, logger).Run();
+            BackupSettingsScenarios.Verify(root, logger);
             using (var lockedExport = new FileStream(Path.Combine(root, "locked.ksdpkg"), FileMode.Create,
                 FileAccess.ReadWrite, FileShare.None))
             {
@@ -261,12 +279,14 @@ public sealed class SettingsTranslationTests
                     "A locked export destination must be a recoverable failure instead of an unhandled UI exception.");
             }
             ImageEntryWindowScenarios.Verify(root);
+            TemporaryResultScenarios.Verify(root);
             UpdateWindowScenarios.Verify(root);
             StickyNoteWindowScenarios.Verify(root);
             PerspectiveSurfaceTests.VerifyLiveControls();
             EdgeDockScenarios.VerifySettings(window, settings);
             FloatingPerformanceScenarios.RecordIfRequested(root);
             EdgeDockScenarios.Verify(root);
+            SettingsPresentationScenarios.Verify(window, settings, settingsFile);
             DocumentationPreviewScenarios.RenderIfRequested(root);
         }
         finally
@@ -279,6 +299,7 @@ public sealed class SettingsTranslationTests
                 window.Close();
             }
             application?.Shutdown();
+            SynchronizationContext.SetSynchronizationContext(previousContext);
             logger?.Dispose();
             Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             string resolvedRoot = Path.GetFullPath(root);

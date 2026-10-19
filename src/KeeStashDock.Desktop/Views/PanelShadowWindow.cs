@@ -118,11 +118,12 @@ internal sealed class PanelShadowWindow : Window, IDisposable
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
-        _source = (HwndSource)PresentationSource.FromVisual(this)!;
-        nint hwnd = _source.Handle;
+        // A native handle can be initialized before this window's visual tree.
+        nint hwnd = new WindowInteropHelper(this).Handle;
+        _source = HwndSource.FromHwnd(hwnd);
         SetWindowLongPtr(hwnd, GwlExStyle,
             new nint(GetWindowLongPtr(hwnd, GwlExStyle).ToInt64() | Transparent | ToolWindow | NoActivate));
-        _source.AddHook(WndProc);
+        _source?.AddHook(WndProc);
     }
 
     private static nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)

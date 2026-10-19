@@ -6,6 +6,34 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-10-19
+
+### Added
+
+- Independent translation target language, with Follow interface language as the compatible default. Selection, screenshot and Settings tests use the same target resolution. Result windows support a temporary target and retry with retained source text.
+- Explicit saving of temporary OCR/translation source, translation, or both to a chosen group. Both produces one labeled text entry; duplicate content is reused. Save failures retain the result and do not write to the clipboard.
+- Independent visibility switches for the temporary target selector and Save to group panel in translation results. Both remain enabled by default; hiding them preserves the current source, result and selected group.
+- Visible backup state, last attempt/success, next scheduled check, snapshot list, Back up now, open-folder and guarded restore actions. Added 15-, 30- and 60-minute intervals alongside hourly/day options.
+- Configurable backup, OCR and offline translation folders with open-folder and reset actions. Location changes preserve existing files; optional components are reused only when present at the selected location, otherwise installation remains an explicit action. Offline translation stops its previous managed service before changing folders.
+- Persistent panel/screenshot shortcut status and one actionable notification per startup failure episode. Failed remapping retains the previous working shortcut.
+
+### Changed
+
+- Moved backups from hourly housekeeping to an independent minute-based scheduler, with one overdue attempt on startup/resume, maintenance deferral and serialized snapshots. UTC status survives restarts; incomplete or failed snapshots are not published or used to prune retention.
+- Preserved existing backup preferences by migrating legacy hours to minutes. Automatic retention removes only owned automatic snapshots after a successful full database snapshot; manual and recovery files remain available.
+- Redesigned Settings with category navigation, clearer page headings, grouped controls, switches and themed focus/hover states. Dependent options collapse when inactive while shared translation, popup appearance, manual backup and panel-timing controls remain available.
+- Kept full update-recovery snapshots in the active data folder's `Backups/BeforeUpdate-*` directory. Recovery copying excludes owned snapshots/status from a custom backup folder and known configured component payloads without excluding unrelated user files alongside them.
+- Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. Existing media remains accurately labeled as 1.2.2 footage.
+
+### Fixed
+
+- Prevent an unhandled null-reference error when first opening the quick panel after restarting with a saved screen position. Native window hooks and direct-paste registration now use the window handle even before the visual tree is attached; shadow initialization uses the same safe lookup.
+- Align Spatial resize targets with the visible projected edges and corners, including inspected angles and right-to-left layouts. Keep the outer window frame resizable and scale grab areas with monitor DPI; compact and edge-hidden states remain fixed-size.
+
+See the [release notes](docs/releases/1.2.3-notes.md) and
+[acceptance record](docs/releases/1.2.3.md). Release assets are provided through
+the [v1.2.3 release page](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3).
+
 ## [1.2.2] - 2026-10-17
 
 Published as [v1.2.2](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2).
@@ -138,6 +166,7 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
 
-[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

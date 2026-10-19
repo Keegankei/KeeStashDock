@@ -25,7 +25,7 @@ public sealed partial class SnippetRepository
 
     /// <summary>Serializes duplicate lookup and insertion against other
     /// captures and edits so a concurrent capture cannot reintroduce duplicates.</summary>
-    public long InsertOrRefresh(Snippet snippet)
+    public long InsertOrRefresh(Snippet snippet, bool placeInCategoryOnDuplicate = false)
     {
         if (snippet.IsImage) throw new ArgumentException("Image entries require an image asset.", nameof(snippet));
         using var conn = _db.Open();
@@ -36,7 +36,11 @@ public sealed partial class SnippetRepository
         {
             using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
-            cmd.CommandText = "UPDATE snippets SET updated_at = $now WHERE id = $id";
+            cmd.CommandText = placeInCategoryOnDuplicate
+                ? "UPDATE snippets SET updated_at = $now, category_id = $category WHERE id = $id"
+                : "UPDATE snippets SET updated_at = $now WHERE id = $id";
+            if (placeInCategoryOnDuplicate)
+                cmd.Parameters.AddWithValue("$category", (object?)snippet.CategoryId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("$now", UtcTimestamp.Format(snippet.UpdatedAt));
             cmd.Parameters.AddWithValue("$id", existing);
             cmd.ExecuteNonQuery();

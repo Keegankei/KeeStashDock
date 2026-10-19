@@ -145,6 +145,7 @@ public partial class App
         _translationCancellation?.Cancel();
         using var request = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCancellation.Token);
         _translationCancellation = request;
+        long? category = _workbench?.IsActive == true ? _workbench.CurrentCategoryId : _panel?.CurrentCategoryId;
         try
         {
             string? text = await _selectionSession.ReadAsync(request.Token);
@@ -153,23 +154,21 @@ public partial class App
             _translationCard.ShowTranslating(_lastSelectionX, _lastSelectionY);
             _translationCard.SetRecognizedSource(text);
             var cfg = _services.GetRequiredService<SettingsStore>().Current;
+            string target = TranslationTargets.Resolve(cfg);
+            ConfigureTemporaryTextResult(text, category, target, _lastSelectionX, _lastSelectionY);
             TranslationResult result = await TranslationService.TranslateDetailedAsync(
-                text, cfg, request.Token);
+                text, cfg, target, request.Token);
 
             if (request.IsCancellationRequested ||
                 !ReferenceEquals(_translationCancellation, request) ||
                 !_translationCard.IsVisible) return;
-            if (result.IsSuccess)
-            {
-                _translationCard.ShowResult(result.Text!);
-            }
-            else if (result.Failure != TranslationFailure.Cancelled)
+            if (!result.IsSuccess && result.Failure != TranslationFailure.Cancelled)
             {
                 // Only diagnostic categories are logged, never text or credentials.
                 Log?.Warn($"Translation failed: provider={result.Provider}, " +
                     $"failure={result.Failure}, http={result.HttpStatusCode}");
-                _translationCard.ShowError(TranslationService.FailureMessageKey(result));
             }
+            ShowTemporaryTranslation(result, text, category, target, _lastSelectionX, _lastSelectionY);
         }
         catch (OperationCanceledException)
         {

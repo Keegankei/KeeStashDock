@@ -55,6 +55,8 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - First launch and portable-data creation; compare every fresh-install default with `docs/GETTING_STARTED.md`, then verify an upgrade preserves saved preferences
 - `%AppData%` fallback from a non-writable application folder
 - Tray lifecycle and single-instance activation; launching again must keep an already visible panel open
+- Move the panel, exit and restart with its saved screen position; the first tray/hotkey summon must restore the position without an exception, and resizing/moving must still persist after another restart
+- Resize Standard and Spatial panels from all visible edges and corners, before and after inspection; verify saved dimensions, high-DPI grab areas and physical directions in right-to-left layouts
 - Alt+Q and Alt+W registration, remapping, disable, and conflict handling
 - Screenshot cancellation, negative monitor coordinates, mixed display scales, and capture from both panel and workbench
 - Image preview/copy/save, local OCR success/cancel/timeout, editable text, and the shared translation bubble
@@ -103,7 +105,7 @@ replace the native OCR/runtime review.
 
 ## Acceptance records
 
-Keep versioned results in [docs/releases](releases/1.2.2.md). Each record identifies
+Keep versioned results in [docs/releases](releases/1.2.3.md). Each record identifies
 the release tag, build/test results, package checks, maintainer feedback, and
 remaining platform limitations. Do not convert broad user feedback into a claim
 that every hardware or provider combination was tested.
@@ -120,7 +122,7 @@ that every hardware or provider combination was tested.
 ## 4. Publish
 
 1. Push the reviewed release commit and wait for its required CI checks. Follow the repository's branch policy; use a pull request when required.
-2. Create a signed or annotated Git tag matching the version, for example `v1.2.2`.
+2. Create a signed or annotated Git tag matching the version, for example `v1.2.3`.
 3. Create a GitHub Release from the tag.
 4. Attach the archive and checksum.
 5. Use `docs/releases/<version>-notes.md` as the release description and confirm it matches the final changelog and acceptance record.

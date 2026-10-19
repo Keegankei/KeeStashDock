@@ -34,9 +34,10 @@ public static class TranslationService
     public static async Task<TranslationResult> TranslateDetailedAsync(string text, string localeTag,
         string engine, string apiKey = "", string appId = "",
         CancellationToken cancellationToken = default,
-        string offlineEndpoint = AppSettings.DefaultOfflineTranslationEndpoint)
+        string offlineEndpoint = AppSettings.DefaultOfflineTranslationEndpoint,
+        AppSettings? componentSettings = null)
     {
-        var components = new ComponentInstallService();
+        var components = componentSettings is null ? new ComponentInstallService() : new ComponentInstallService(componentSettings);
         return await TranslateWithOfflineStartupAsync(
             () => Client.TranslateAsync(text, localeTag, engine, apiKey, appId, cancellationToken, offlineEndpoint),
             components.StartOfflineAsync,
@@ -72,6 +73,10 @@ public static class TranslationService
 
     public static Task<TranslationResult> TranslateDetailedAsync(string text, AppSettings settings,
         CancellationToken cancellationToken = default)
+        => TranslateDetailedAsync(text, settings, temporaryTarget: null, cancellationToken);
+
+    public static Task<TranslationResult> TranslateDetailedAsync(string text, AppSettings settings,
+        string? temporaryTarget, CancellationToken cancellationToken = default)
     {
         string key = settings.TranslationEngine switch
         {
@@ -86,8 +91,12 @@ public static class TranslationService
             "Aliyun" => settings.AliyunAccessKeyId,
             _ => string.Empty,
         };
-        return TranslateDetailedAsync(text, settings.Language, settings.TranslationEngine,
-            key, id, cancellationToken, settings.OfflineTranslationEndpoint);
+        string target = TranslationTargets.Resolve(settings, temporaryTarget);
+        if (temporaryTarget is not null && TranslationTargets.Normalize(temporaryTarget) == TranslationTargets.FollowInterface
+            && temporaryTarget != TranslationTargets.FollowInterface)
+            return Task.FromResult(new TranslationResult(settings.TranslationEngine, null, TranslationFailure.UnsupportedLanguage));
+        return TranslateDetailedAsync(text, target, settings.TranslationEngine,
+            key, id, cancellationToken, settings.OfflineTranslationEndpoint, settings);
     }
 
     internal static string FailureMessageKey(TranslationResult result)

@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using KeeStashDock.Infrastructure.Storage;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KeeStashDock.Desktop.Tests;
@@ -45,6 +46,17 @@ public sealed class LocalOcrServiceTests
         token.Cancel();
         var result = await new LocalOcrService().RecognizeAsync(Header(120, 20), token.Token);
         Assert.AreEqual(OcrFailure.Cancelled, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task InvalidCustomLocationReturnsMissingModelsWithoutStartingNativeEngine()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "KeeStashDock.Tests", Guid.NewGuid().ToString("N"));
+        var settings = new SettingsStore(Path.Combine(root, "settings.json"));
+        settings.Current.OcrInstallDirectory = "relative-models";
+        var service = new LocalOcrService(root, TimeSpan.FromSeconds(1), root, settings);
+        Assert.AreEqual(OcrFailure.MissingModels, (await service.RecognizeAsync(Header(100, 40))).Failure);
+        Assert.IsFalse(Directory.Exists(root), "Invalid paths must not create any OCR installation or temporary files.");
     }
 
     [TestMethod]

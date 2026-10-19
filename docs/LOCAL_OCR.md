@@ -11,17 +11,23 @@ The first version supports printed English and Simplified Chinese using official
 Tesseract `tessdata_fast` models. Handwriting, rotated text, tiny fonts, complex
 tables, and Traditional Chinese are not guaranteed. Always review recognized text.
 
-The standard 1.2.2 package does not preinstall the OCR engine or language
-models. Before first recognition, open **Settings > Optional components** and
+The standard package does not preinstall the OCR engine or language
+models. Before first recognition, open **Settings > Local components** and
 choose **Install / repair** for text recognition. This explicit setup downloads
 and verifies the required engine and models, shows progress and failures, and
 can be cancelled. Recognition itself never downloads components.
 
-The downloaded engine lives in `%LOCALAPPDATA%\KeeStashDock\OcrEngine` and the
+By default, the downloaded engine lives in `%LOCALAPPDATA%\KeeStashDock\OcrEngine` and the
 models in `%LOCALAPPDATA%\KeeStashDock\OcrModels`, so a read-only application
 directory does not prevent installation. Existing portable `x64` engines and
 `OcrModels` assets remain supported. Recognition prefers a complete valid user
 model set, then a valid portable model set.
+
+In 1.2.3, **Choose folder** selects a different OCR installation root containing
+`OcrModels` and `OcrEngine`. A custom location is used explicitly, without silently
+falling back to models elsewhere. Select an empty folder or a valid installation;
+use **Install / repair** if components are missing. Changing locations preserves
+old files. **Use default** restores the original per-user/portable lookup.
 
 For maintainers, install both engine and models into isolated diagnostic folders:
 

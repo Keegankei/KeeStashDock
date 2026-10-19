@@ -7,6 +7,7 @@ using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Desktop.Views;
 using KeeStashDock.Infrastructure.Database;
 using KeeStashDock.Infrastructure.Storage;
+using KeeStashDock.Infrastructure.Repositories;
 
 namespace KeeStashDock.Desktop;
 
@@ -54,13 +55,14 @@ public partial class App
             // The workspace and selection hook are restored before asynchronous OCR.
             if (captured is null || request.IsCancellationRequested) return;
 
+            string target = TranslationTargets.Resolve(settings.Current);
             var processor = new ScreenshotActionProcessor(image =>
             {
                 var snippets = _services.GetRequiredService<SnippetService>();
                 long id = snippets.AddImage(image.PngBytes, ImagePresentation.Thumbnail(image.PngBytes), categoryId, expire);
                 if (categoryId is long group) snippets.AssignCategory(id, group);
             }, _localOcr.RecognizeAsync,
-                (text, token) => TranslationService.TranslateDetailedAsync(text, settings.Current, token));
+                (text, token) => TranslationService.TranslateDetailedAsync(text, settings.Current, target, token));
 
             if (captured.Action != ScreenshotAction.Save)
                 _translationCard.ShowRecognizing(captured.AnchorX, captured.AnchorY);
@@ -72,6 +74,7 @@ public partial class App
                     {
                         _translationCard.ShowTranslating(captured.AnchorX, captured.AnchorY);
                         _translationCard.SetRecognizedSource(text);
+                        ConfigureTemporaryTextResult(text, categoryId, target, captured.AnchorX, captured.AnchorY);
                     }
                 });
             if (!ReferenceEquals(_translationCancellation, request) || request.IsCancellationRequested) return;
@@ -90,9 +93,14 @@ public partial class App
                     failed.Failure is OcrFailure.MissingModels or OcrFailure.EngineUnavailable ? ShowComponentSettings : null);
             }
             else if (result.Translation is { } translation)
-                ShowScreenshotTranslation(translation, result.Recognition!.Text, captured.AnchorX, captured.AnchorY);
+                ShowTemporaryTranslation(translation, result.Recognition!.Text, categoryId, target, captured.AnchorX, captured.AnchorY);
             else
+            {
                 _translationCard.ShowRecognizedText(result.Recognition!.Text);
+                ConfigureTemporaryTextResult(result.Recognition.Text, categoryId, target, captured.AnchorX, captured.AnchorY);
+                _translationCard.SetActions(() => RetryTemporaryTranslation(result.Recognition.Text, categoryId, target,
+                    captured.AnchorX, captured.AnchorY), null);
+            }
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested) { }
         catch (Exception)
@@ -109,19 +117,33 @@ public partial class App
         }
     }
 
-    private void ShowScreenshotTranslation(TranslationResult result, string source, int x, int y)
+    private void ConfigureTemporaryTextResult(string source, long? category, string target, int x, int y)
+    {
+        var categories = _services.GetRequiredService<CategoryRepository>();
+        var saver = new ResultTextSaveService(_services.GetRequiredService<SnippetService>(), categories);
+        var groups = new List<TranslationResultWindow.GroupChoice>
+        {
+            new(null, LocalizationService.Instance["Workbench.Uncategorized"]),
+        };
+        groups.AddRange(categories.GetAll().Select(group => new TranslationResultWindow.GroupChoice(group.Id, group.Name)));
+        _translationCard.SetResultContext(groups, category, target,
+            nextTarget => RetryTemporaryTranslation(source, category, nextTarget, x, y), saver.Save);
+    }
+
+    private void ShowTemporaryTranslation(TranslationResult result, string source, long? category, string target, int x, int y)
     {
         if (result.IsSuccess) _translationCard.ShowResult(result.Text!);
         else if (result.Failure == TranslationFailure.Cancelled) { _translationCard.HideCard(); return; }
         else _translationCard.ShowError(TranslationService.FailureMessageKey(result));
-        _translationCard.SetActions(() => RetryScreenshotTranslation(source, x, y),
+        _translationCard.SetActions(() => RetryTemporaryTranslation(source, category, target, x, y),
             result.Failure is TranslationFailure.LocalServiceUnavailable or TranslationFailure.LanguageModelUnavailable
                 ? ShowComponentSettings : null);
     }
 
-    private async void RetryScreenshotTranslation(string source, int x, int y)
+    private async void RetryTemporaryTranslation(string source, long? category, string target, int x, int y)
     {
         if (_preparingShutdown || _shutdownCancellation.IsCancellationRequested) return;
+        if (_translationCard.HasResultContext) category = _translationCard.SelectedGroupId;
         _translationCancellation?.Cancel();
         using var request = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCancellation.Token);
         _translationCancellation = request;
@@ -129,16 +151,17 @@ public partial class App
         {
             _translationCard.ShowTranslating(x, y);
             _translationCard.SetRecognizedSource(source);
+            ConfigureTemporaryTextResult(source, category, target, x, y);
             TranslationResult result = await TranslationService.TranslateDetailedAsync(source,
-                _services.GetRequiredService<SettingsStore>().Current, request.Token);
+                _services.GetRequiredService<SettingsStore>().Current, target, request.Token);
             if (!request.IsCancellationRequested && ReferenceEquals(_translationCancellation, request) && _translationCard.IsVisible)
-                ShowScreenshotTranslation(result, source, x, y);
+                ShowTemporaryTranslation(result, source, category, target, x, y);
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested) { }
         catch (Exception)
         {
             if (!request.IsCancellationRequested && ReferenceEquals(_translationCancellation, request) && _translationCard.IsVisible)
-                ShowScreenshotTranslation(new TranslationResult("", null, TranslationFailure.ProviderUnavailable), source, x, y);
+                ShowTemporaryTranslation(new TranslationResult("", null, TranslationFailure.ProviderUnavailable), source, category, target, x, y);
         }
         finally
         {

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using KeeStashDock.Infrastructure.Storage;
 
 namespace KeeStashDock.Desktop;
 
@@ -28,15 +29,23 @@ public sealed class LocalOcrService
     private readonly string _baseDirectory;
     private readonly TimeSpan _timeout;
     private readonly string? _localDataDirectory;
+    private readonly ComponentInstallService? _components;
 
     public LocalOcrService() : this(AppContext.BaseDirectory, TimeSpan.FromSeconds(45),
         ComponentInstallService.DefaultLocalDataDirectory) { }
 
-    internal LocalOcrService(string baseDirectory, TimeSpan timeout, string? localDataDirectory = null)
+    public LocalOcrService(SettingsStore settings) : this(AppContext.BaseDirectory, TimeSpan.FromSeconds(45),
+        ComponentInstallService.DefaultLocalDataDirectory, settings) { }
+
+    internal LocalOcrService(string baseDirectory, TimeSpan timeout, string? localDataDirectory = null,
+        SettingsStore? settings = null)
     {
         _baseDirectory = baseDirectory;
         _timeout = timeout;
         _localDataDirectory = localDataDirectory;
+        if (settings is not null)
+            _components = new ComponentInstallService(baseDirectory,
+                localDataDirectory ?? ComponentInstallService.DefaultLocalDataDirectory, timeout, settings: settings);
     }
 
     public async Task<OcrRecognitionResult> RecognizeAsync(byte[] pngBytes,
@@ -45,12 +54,18 @@ public sealed class LocalOcrService
         OcrFailure validation = ValidateImage(pngBytes);
         if (validation != OcrFailure.None) return new("", validation);
         if (cancellationToken.IsCancellationRequested) return new("", OcrFailure.Cancelled);
-        string models = _localDataDirectory is null ? Path.Combine(_baseDirectory, "OcrModels")
-            : ComponentInstallService.ResolveOcrModelsDirectory(_baseDirectory, _localDataDirectory);
+        string models;
+        string engine;
+        try
+        {
+            models = _components?.GetOcrModelsDirectory() ?? (_localDataDirectory is null ? Path.Combine(_baseDirectory, "OcrModels")
+                : ComponentInstallService.ResolveOcrModelsDirectory(_baseDirectory, _localDataDirectory));
+            engine = _components?.GetOcrEngineDirectory() ?? (_localDataDirectory is null ? Path.Combine(_baseDirectory, "x64")
+                : ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory, _localDataDirectory));
+        }
+        catch (ArgumentException) { return new("", OcrFailure.MissingModels); }
         if (!ComponentInstallService.HasOcrModels(models))
             return new("", OcrFailure.MissingModels);
-        string engine = _localDataDirectory is null ? Path.Combine(_baseDirectory, "x64")
-            : ComponentInstallService.ResolveOcrEngineDirectory(_baseDirectory, _localDataDirectory);
         if (!Environment.Is64BitProcess || !ComponentInstallService.HasOcrEngine(engine))
             return new("", OcrFailure.EngineUnavailable);
         string executable = Path.Combine(engine, "tesseract.exe");

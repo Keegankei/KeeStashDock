@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Desktop.Views;
@@ -40,7 +41,7 @@ public partial class App
             _selectionWatcherController.Stop();
             pausedCollection = true;
             _panel?.FlushDraft();
-            var components = new ComponentInstallService();
+            var components = new ComponentInstallService(_services.GetRequiredService<SettingsStore>());
             if (components.GetStatus(ComponentKind.OfflineTranslation) == ComponentStatus.Ready)
             {
                 var stopped = await components.StopOfflineAsync(_shutdownCancellation.Token);
@@ -50,13 +51,16 @@ public partial class App
                     return false;
                 }
             }
-            _services.GetRequiredService<SettingsStore>().Save();
+            var settings = _services.GetRequiredService<SettingsStore>();
+            settings.Save();
+            var backup = _services.GetRequiredService<BackupService>();
             string snapshot = Path.Combine(PortablePaths.BackupsDir, "BeforeUpdate-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8]);
             string? recovery = await Task.Run(() =>
             {
                 Directory.CreateDirectory(snapshot);
-                _services.GetRequiredService<BackupService>().BackupTo(Path.Combine(snapshot, Path.GetFileName(PortablePaths.DatabaseFile)));
-                UpdateDataSnapshot.CopyNonDatabaseFiles(PortablePaths.DataRoot, snapshot, Path.GetFileName(PortablePaths.DatabaseFile));
+                backup.BackupTo(Path.Combine(snapshot, Path.GetFileName(PortablePaths.DatabaseFile)));
+                UpdateDataSnapshot.CopyNonDatabaseFiles(PortablePaths.DataRoot, snapshot, Path.GetFileName(PortablePaths.DatabaseFile),
+                    backup.BackupsDirectory, settings.Current.OcrInstallDirectory, settings.Current.OfflineTranslationInstallDirectory);
                 return DesktopUpdateCoordinator.Launch(staged, AppContext.BaseDirectory, out string directory) ? directory : null;
             });
             if (recovery is null) return false;
@@ -84,12 +88,16 @@ public partial class App
 }
 
 /// <summary>Back up settings, drafts and user assets without copying a live SQLite file or recursing into backups.</summary>
-internal static class UpdateDataSnapshot
+internal static partial class UpdateDataSnapshot
 {
-    internal static void CopyNonDatabaseFiles(string dataDirectory, string snapshotDirectory, string databaseFileName)
+    internal static void CopyNonDatabaseFiles(string dataDirectory, string snapshotDirectory, string databaseFileName,
+        string? backupDirectory = null, string? ocrDirectory = null, string? offlineDirectory = null)
     {
         string root = Path.GetFullPath(dataDirectory);
         string snapshot = Path.GetFullPath(snapshotDirectory);
+        string? backups = string.IsNullOrWhiteSpace(backupDirectory) ? null : Path.TrimEndingDirectorySeparator(Path.GetFullPath(backupDirectory));
+        string? ocr = ComponentInstallService.TryNormalizeInstallDirectory(ocrDirectory, out string? ocrPath) ? ocrPath : null;
+        string? offline = ComponentInstallService.TryNormalizeInstallDirectory(offlineDirectory, out string? offlinePath) ? offlinePath : null;
         UpdatePathPolicy.EnsureNoReparsePoints(root);
         UpdatePathPolicy.EnsureNoReparsePoints(snapshot);
         string relative = Path.GetRelativePath(root, snapshot).Replace('\\', '/');
@@ -102,12 +110,24 @@ internal static class UpdateDataSnapshot
         {
             if ((File.GetAttributes(source) & FileAttributes.ReparsePoint) != 0)
                 throw new IOException("The data backup cannot traverse linked directories.");
+            bool backupFolder = SameDirectory(source, backups);
+            bool ocrFolder = SameDirectory(source, ocr) && IsComponentDirectory(source, ComponentKind.Ocr);
+            bool offlineFolder = SameDirectory(source, offline) && IsComponentDirectory(source, ComponentKind.OfflineTranslation);
             foreach (var entry in new DirectoryInfo(source).EnumerateFileSystemInfos())
             {
                 if (topLevel && (entry.Name.Equals("Backups", StringComparison.OrdinalIgnoreCase) ||
                     entry.Name.Equals("Logs", StringComparison.OrdinalIgnoreCase) ||
                     entry.Name.Equals(databaseFileName, StringComparison.OrdinalIgnoreCase) ||
                     entry.Name.StartsWith(databaseFileName + "-", StringComparison.OrdinalIgnoreCase))) continue;
+                // A custom backup folder can also contain ordinary user assets, or
+                // even be Data itself. Exclude only known owned files, not the folder.
+                if (backupFolder && entry is FileInfo && (OwnedBackupFile().IsMatch(entry.Name) ||
+                    entry.Name.Equals("backup-status.json", StringComparison.OrdinalIgnoreCase) ||
+                    entry.Name.Equals("backup-status.json.tmp", StringComparison.OrdinalIgnoreCase))) continue;
+                if (ocrFolder && (entry is DirectoryInfo && (entry.Name.Equals("OcrModels", StringComparison.OrdinalIgnoreCase) ||
+                    entry.Name.Equals("OcrEngine", StringComparison.OrdinalIgnoreCase)) ||
+                    entry.Name.Equals(".keestashdock-component", StringComparison.OrdinalIgnoreCase))) continue;
+                if (offlineFolder && IsOfflinePayload(entry)) continue;
                 if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
                     throw new IOException("The data backup cannot traverse linked files.");
                 string destination = Path.Combine(target, entry.Name);
@@ -116,4 +136,32 @@ internal static class UpdateDataSnapshot
             }
         }
     }
+
+    private static bool SameDirectory(string path, string? expected) => expected is not null &&
+        Path.TrimEndingDirectorySeparator(path).Equals(expected, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsComponentDirectory(string directory, ComponentKind component)
+    {
+        string marker = Path.Combine(directory, ".keestashdock-component");
+        if (File.Exists(marker))
+        {
+            UpdatePathPolicy.EnsureNoReparsePoints(marker);
+            if (new FileInfo(marker).Length <= 64 && File.ReadAllText(marker) == component.ToString()) return true;
+        }
+        return component == ComponentKind.Ocr
+            ? ComponentInstallService.HasOcrModels(Path.Combine(directory, "OcrModels")) &&
+                ComponentInstallService.HasOcrEngine(Path.Combine(directory, "OcrEngine"))
+            : File.Exists(Path.Combine(directory, "installed.json")) && File.Exists(Path.Combine(directory, "python", "pythonw.exe"));
+    }
+
+    private static bool IsOfflinePayload(FileSystemInfo entry)
+    {
+        string name = entry.Name.ToLowerInvariant();
+        return entry is DirectoryInfo
+            ? name is "python" or "packages" or "models" or "downloads"
+            : name is "installed.json" or "service.json" or "service.stdout.log" or "service.stderr.log" or ".keestashdock-component";
+    }
+
+    [GeneratedRegex(@"^(?:keestashdock_(?:\d{8}(?:_\d{4})?|(?:auto|manual)_\d{8}_\d{6}_\d{3}_[a-f0-9]{32})|pre_(?:import|update)_\d{8}_\d{6}_\d{3}_[a-f0-9]{32})\.db$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex OwnedBackupFile();
 }

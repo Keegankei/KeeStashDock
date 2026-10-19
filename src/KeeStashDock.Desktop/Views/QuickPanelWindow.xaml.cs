@@ -66,8 +66,8 @@ public partial class QuickPanelWindow : Window
     /// <summary>Shrunk bar expands when the cursor comes within this distance
     /// of the window (DIPs), not only when it is directly over it.</summary>
     private const double ProximityDip = 48;
-    private const int ResizeBorderPx = 6;      // edge-drag hit band, device px
-    private const int CornerBandPx = 14;       // corner grab zone (bigger target)
+    private const double ResizeBorderDip = 6; // scale grab areas with monitor DPI
+    private const double CornerBandDip = 14;
 
     public QuickPanelWindow(SnippetService snippets, SearchService search,
                             SettingsStore settings,
@@ -109,12 +109,14 @@ public partial class QuickPanelWindow : Window
         LocalizationService.Instance.ApplyFlowDirection(this);
 
         // Borderless windows get no system resize frame; WM_NCHITTEST turns
-        // a 6px edge band into live resize handles (item: drag-to-resize).
+        // an edge band into live resize handles (item: drag-to-resize).
         SourceInitialized += (_, _) =>
         {
-            var source = (HwndSource)PresentationSource.FromVisual(this)!;
-            DirectPaste.RegisterPanel(source.Handle);
-            source.AddHook(WndProc);
+            // Restoring device coordinates calls EnsureHandle before Show, when
+            // the native source exists but the visual tree is not attached yet.
+            nint handle = new WindowInteropHelper(this).Handle;
+            DirectPaste.RegisterPanel(handle);
+            HwndSource.FromHwnd(handle)?.AddHook(WndProc);
         };
 
         // Per-region tint engine (see ApplyLocalTints): re-sample on layout
@@ -609,32 +611,59 @@ public partial class QuickPanelWindow : Window
         return IntPtr.Zero;
     }
 
-    /// <summary>Maps a screen point (WM_NCHITTEST lParam, device px) onto the
-    /// window's 6px edge bands. Compact and edge-handle states cannot resize;
-    /// the expanded panel exposes all eight handles.</summary>
+    /// <summary>Maps a native screen point onto the window frame and visible
+    /// perspective edges. Compact and edge-handle states cannot resize.</summary>
     private int HitTestResizeEdge(IntPtr lParam)
     {
         if (IsEdgeDockHidden || _state == PanelState.Shrunk) return 0;
         int x = unchecked((short)((long)lParam & 0xFFFF));
         int y = unchecked((short)(((long)lParam >> 16) & 0xFFFF));
 
-        var t = PresentationSource.FromVisual(this)?.CompositionTarget;
-        if (t is null) return 0;
         if (!TryGetNativeBounds(out var bounds)) return 0;
-        double l = bounds.Left, tp = bounds.Top, r = bounds.Right, b = bounds.Bottom;
+        DpiScale dpi = VisualTreeHelper.GetDpi(this);
+        int hit = HitTestResizeBounds(new Point((x - bounds.Left) / dpi.DpiScaleX,
+            (y - bounds.Top) / dpi.DpiScaleY),
+            new Size((bounds.Right - bounds.Left) / dpi.DpiScaleX,
+                (bounds.Bottom - bounds.Top) / dpi.DpiScaleY));
+        if (hit != 0) return hit;
 
-        bool left   = x >= l && x < l + ResizeBorderPx;
-        bool right  = x <= r && x > r - ResizeBorderPx;
-        bool top    = y >= tp && y < tp + ResizeBorderPx;
-        bool bottom = y <= b && y > b - ResizeBorderPx;
+        // Spatial mode draws the panel inside its HWND. The visible edge must
+        // resize too, without a 3D visual-tree hit test or changing the pose.
+        if (!SpatialSurface.IsPerspectiveEnabled || PresentationSource.FromVisual(SpatialSurface) is null ||
+            !SpatialSurface.TryUnprojectPoint(SpatialSurface.PointFromScreen(new Point(x, y)), out Point content))
+            return 0;
+        Size size = SpatialSurface.ContentSize;
+        hit = HitTestResizeBounds(content, size, outsideAllowance: 1);
+        if (hit == 0) return 0;
 
-        // Corner zones first, with a WIDER band (14px vs 6px edges): the
-        // rounded corner leaves little visible surface, so the grab target
-        // must be generous to be usable.
-        bool cLeft   = x >= l && x < l + CornerBandPx;
-        bool cRight  = x <= r && x > r - CornerBandPx;
-        bool cTop    = y >= tp && y < tp + CornerBandPx;
-        bool cBottom = y <= b && y > b - CornerBandPx;
+        // Native resize codes always name physical screen edges. WPF's RTL
+        // transform can mirror the content coordinates used by the projection.
+        double left = SpatialSurface.PointToScreen(SpatialSurface.ProjectPoint(new Point(0, size.Height / 2))).X;
+        double right = SpatialSurface.PointToScreen(SpatialSurface.ProjectPoint(new Point(size.Width, size.Height / 2))).X;
+        return left <= right ? hit : hit switch
+        {
+            HTLEFT => HTRIGHT, HTRIGHT => HTLEFT,
+            HTTOPLEFT => HTTOPRIGHT, HTTOPRIGHT => HTTOPLEFT,
+            HTBOTTOMLEFT => HTBOTTOMRIGHT, HTBOTTOMRIGHT => HTBOTTOMLEFT,
+            _ => hit,
+        };
+    }
+
+    private static int HitTestResizeBounds(Point point, Size size, double outsideAllowance = 0)
+    {
+        if (!double.IsFinite(point.X) || !double.IsFinite(point.Y) ||
+            !double.IsFinite(size.Width) || !double.IsFinite(size.Height) || size.Width <= 0 || size.Height <= 0 ||
+            point.X < -outsideAllowance || point.Y < -outsideAllowance ||
+            point.X > size.Width + outsideAllowance || point.Y > size.Height + outsideAllowance) return 0;
+
+        bool left = point.X < ResizeBorderDip;
+        bool right = point.X > size.Width - ResizeBorderDip;
+        bool top = point.Y < ResizeBorderDip;
+        bool bottom = point.Y > size.Height - ResizeBorderDip;
+        bool cLeft = point.X < CornerBandDip;
+        bool cRight = point.X > size.Width - CornerBandDip;
+        bool cTop = point.Y < CornerBandDip;
+        bool cBottom = point.Y > size.Height - CornerBandDip;
 
         if (cTop && cLeft) return HTTOPLEFT;
         if (cTop && cRight) return HTTOPRIGHT;
