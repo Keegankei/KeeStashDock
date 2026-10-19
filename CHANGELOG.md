@@ -25,6 +25,10 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 - Kept full update-recovery snapshots in the active data folder's `Backups/BeforeUpdate-*` directory. Recovery copying excludes owned snapshots/status from a custom backup folder and known configured component payloads without excluding unrelated user files alongside them.
 - Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. Existing media remains accurately labeled as 1.2.2 footage.
 
+### Fixed
+
+- Prevent an unhandled null-reference error when first opening the quick panel after restarting with a saved screen position. Native window hooks and direct-paste registration now use the window handle even before the visual tree is attached; shadow initialization uses the same safe lookup.
+
 See the [release notes](docs/releases/1.2.3-notes.md) and
 [acceptance record](docs/releases/1.2.3.md). Publication is pending; the stable
 1.2.2 download links remain available until the new release is published.

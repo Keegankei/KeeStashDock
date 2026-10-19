@@ -39,6 +39,8 @@ internal static class QuickPanelWindowScenarios
             var repository = new SnippetRepository(db);
             var snippets = new SnippetService(repository, log);
             snippets.Add("Ready when you need it\nSave useful text without breaking your flow.", Domain.Entities.SnippetSource.Manual);
+            VerifyFirstShowWithSavedDevicePosition(isolatedRoot, snippets, repository, db);
+            VerifyShadowHandleBeforeShow();
             var settings = new SettingsStore(Path.Combine(isolatedRoot, "panel-settings.json"));
             settings.Current.PanelUserWidth = 400;
             settings.Current.PanelUserHeight = 460;
@@ -97,6 +99,88 @@ internal static class QuickPanelWindowScenarios
             // safely if anything unexpected appeared in its empty draft directory.
             Directory.Delete(draftRoot, recursive: false);
         }
+    }
+
+    private static void VerifyFirstShowWithSavedDevicePosition(string isolatedRoot, SnippetService snippets,
+        SnippetRepository repository, Db database)
+    {
+        string settingsPath = Path.Combine(isolatedRoot, "restored-panel-settings.json");
+        var saved = new SettingsStore(settingsPath);
+        var work = System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
+        saved.Current.PanelDevicePosX = work.Left + 32;
+        saved.Current.PanelDevicePosY = work.Top + 32;
+        saved.Current.PanelUserWidth = 400;
+        saved.Current.PanelUserHeight = 460;
+        saved.Current.CollapseDelaySeconds = 60;
+        saved.Save();
+        var settings = new SettingsStore(settingsPath);
+        settings.Load();
+        var panel = new QuickPanelWindow(snippets, new SearchService(repository), settings,
+            new CategoryRepository(database), () => { }, () => { },
+            perspectivePointer: () => new Point(-1000, -1000));
+        try
+        {
+            Assert.AreEqual(nint.Zero, new WindowInteropHelper(panel).Handle);
+            Assert.IsNull(PresentationSource.FromVisual(panel));
+            // Restoring device coordinates creates the native window before Show
+            // attaches the visual tree. This must initialize its native hook too.
+            panel.ShowPanel();
+            PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
+            nint handle = new WindowInteropHelper(panel).Handle;
+            Assert.AreNotEqual(nint.Zero, handle);
+            Assert.IsNotNull(HwndSource.FromHwnd(handle));
+            Assert.IsTrue(IsWindowVisible(handle));
+            Assert.IsTrue(GetWindowRect(handle, out var restored));
+            Assert.AreEqual(Math.Clamp(saved.Current.PanelDevicePosX!.Value, work.Left,
+                Math.Max(work.Left, work.Right - (restored.Right - restored.Left))), restored.Left,
+                "The first summon must restore the saved device X coordinate within the work area.");
+            Assert.AreEqual(Math.Clamp(saved.Current.PanelDevicePosY!.Value, work.Top,
+                Math.Max(work.Top, work.Bottom - (restored.Bottom - restored.Top))), restored.Top,
+                "The first summon must restore the saved device Y coordinate within the work area.");
+
+            // A native move-completed message must still persist the new position;
+            // merely suppressing a missing visual source would lose this hook.
+            panel.Left += 12;
+            panel.Top += 12;
+            panel.UpdateLayout();
+            Point expected = panel.PointToScreen(new Point());
+            SendMessage(handle, 0x0232, nint.Zero, nint.Zero); // WM_EXITSIZEMOVE
+            var reloaded = new SettingsStore(settingsPath);
+            reloaded.Load();
+            Assert.AreEqual((int)expected.X, reloaded.Current.PanelDevicePosX);
+            Assert.AreEqual((int)expected.Y, reloaded.Current.PanelDevicePosY);
+            Assert.AreNotEqual(saved.Current.PanelDevicePosX, reloaded.Current.PanelDevicePosX);
+            Assert.AreNotEqual(saved.Current.PanelDevicePosY, reloaded.Current.PanelDevicePosY);
+
+            panel.HidePanel();
+            PumpUntil(() => !panel.IsVisible);
+            panel.ShowPanel();
+            PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
+            Assert.AreEqual(handle, new WindowInteropHelper(panel).Handle,
+                "A restored panel must remain usable after hiding and summoning again.");
+        }
+        finally { panel.Close(); }
+    }
+
+    private static void VerifyShadowHandleBeforeShow()
+    {
+        var owner = new Window { Width = 400, Height = 460 };
+        using var shadow = new PanelShadowWindow(owner);
+        try
+        {
+            Assert.IsNull(PresentationSource.FromVisual(shadow));
+            nint handle = new WindowInteropHelper(shadow).EnsureHandle();
+            Assert.AreNotEqual(nint.Zero, handle);
+            Assert.IsFalse(shadow.IsVisible);
+            long style = GetWindowLongPtr(handle, -20).ToInt64();
+            Assert.AreEqual(0x080000A0L, style & 0x080000A0L,
+                "Early shadow initialization must retain transparent, tool-window and no-activate styles.");
+            Assert.AreEqual(new nint(-1), SendMessage(handle, 0x0084, nint.Zero, nint.Zero),
+                "The shadow native hook must make it click-through before it is shown.");
+            Assert.AreEqual(new nint(3), SendMessage(handle, 0x0021, nint.Zero, nint.Zero),
+                "The shadow native hook must reject activation before it is shown.");
+        }
+        finally { owner.Close(); }
     }
 
     private static void VerifyDepthModes(QuickPanelWindow panel, SettingsStore settings, nint handle, List<long> openedImages)
@@ -473,6 +557,11 @@ internal static class QuickPanelWindowScenarios
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindowVisible(nint window);
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(nint window, out NativeRect rectangle);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern nint GetWindowLongPtr(nint window, int index);
     [DllImport("user32.dll")]

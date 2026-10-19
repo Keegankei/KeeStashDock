@@ -112,9 +112,11 @@ public partial class QuickPanelWindow : Window
         // a 6px edge band into live resize handles (item: drag-to-resize).
         SourceInitialized += (_, _) =>
         {
-            var source = (HwndSource)PresentationSource.FromVisual(this)!;
-            DirectPaste.RegisterPanel(source.Handle);
-            source.AddHook(WndProc);
+            // Restoring device coordinates calls EnsureHandle before Show, when
+            // the native source exists but the visual tree is not attached yet.
+            nint handle = new WindowInteropHelper(this).Handle;
+            DirectPaste.RegisterPanel(handle);
+            HwndSource.FromHwnd(handle)?.AddHook(WndProc);
         };
 
         // Per-region tint engine (see ApplyLocalTints): re-sample on layout

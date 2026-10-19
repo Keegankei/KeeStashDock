@@ -55,6 +55,7 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - First launch and portable-data creation; compare every fresh-install default with `docs/GETTING_STARTED.md`, then verify an upgrade preserves saved preferences
 - `%AppData%` fallback from a non-writable application folder
 - Tray lifecycle and single-instance activation; launching again must keep an already visible panel open
+- Move the panel, exit and restart with its saved screen position; the first tray/hotkey summon must restore the position without an exception, and resizing/moving must still persist after another restart
 - Alt+Q and Alt+W registration, remapping, disable, and conflict handling
 - Screenshot cancellation, negative monitor coordinates, mixed display scales, and capture from both panel and workbench
 - Image preview/copy/save, local OCR success/cancel/timeout, editable text, and the shared translation bubble
