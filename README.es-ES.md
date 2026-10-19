@@ -73,6 +73,12 @@ La burbuja de selección está activada en **Solo copiar**, con **Google** como 
 <a id="features"></a>
 ## Funciones
 
+**Configuración en 1.2.3:** navega entre **General**, **Captura y traducción**, **Apariencia**, **Componentes locales**, **Copias y datos** y **Acerca de**. Las opciones dependientes aparecen cuando corresponden; al ocultarlas se conservan sus valores guardados.
+
+En **Captura y traducción**, puedes mostrar u ocultar por separado el selector del idioma de destino y los controles para guardar en un grupo. Ambos están activados de forma predeterminada y aparecen al terminar el OCR o la traducción. Al desactivarlos, el resultado y las acciones de copia siguen disponibles.
+
+Elige la carpeta de copias en **Copias y datos**, y las carpetas independientes del OCR y de la traducción sin conexión en **Componentes locales**. Cambiar de carpeta **no mueve los archivos existentes**; reinstala el componente si la nueva carpeta está vacía. **Acerca de** muestra la ubicación de datos activa en modo de solo lectura. Usa la exportación e importación para trasladar la biblioteca de forma segura.
+
 Estas vistas previas muestran la **interfaz real en inglés de 1.2.2** con datos de ejemplo ficticios. El panel Estándar utiliza los ajustes de apariencia de una instalación nueva; el modo Espacial y la burbuja Copiar / Traducir muestran opciones configurables. El puntero del GIF del modo Espacial y la publicación de la vista previa de actualización son simulados. Las rutas de instalación y de datos están ocultas; no aparece contenido personal del escritorio ni del portapapeles. [Origen y reproducción de las imágenes](docs/images/README.md).
 
 <p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Flujo del panel Estándar de 1.2.2: escribir, guardar, fijar y desfijar una tarjeta"></p>
@@ -100,7 +106,7 @@ Utiliza el panel rápido para capturas breves y el **área de trabajo** para ges
 
 ### 2. Paneles Estándar y Espacial · 1.2.2
 
-Selecciona **Configuración > Modo del panel**. Ambos modos mantienen los mismos controles, tipografía, colores y distribución de tarjetas.
+Selecciona **Configuración > Apariencia > Modo del panel**. Ambos modos mantienen los mismos controles, tipografía, colores y distribución de tarjetas.
 
 <table>
   <tr><th>Estándar</th><th>Espacial</th></tr>
@@ -155,7 +161,7 @@ Arrastra de nuevo para cambiar la selección; **Esc** o un clic derecho cancela 
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Burbuja de selección de la versión 1.2.2 con botones independientes de Copiar y Traducir"></p>
 
-Activa la burbuja de selección en **Configuración > Comportamiento** y selecciona texto en otra aplicación. **Copiar** guarda la selección en el grupo actual del panel; **Traducir** muestra una traducción sin añadir una entrada.
+Activa la burbuja de selección en **Configuración > Captura y traducción** y selecciona texto en otra aplicación. **Copiar** guarda la selección en el grupo actual del panel; **Traducir** muestra una traducción sin añadir una entrada.
 
 **1.2.2:** elige **Copiar y traducir** para mantener ambos botones visibles. Después de copiar, puedes traducir la misma selección antes de que se cierre la burbuja. Si la traducción falla, se conserva el texto original.
 
@@ -182,7 +188,7 @@ La traducción en la nube envía únicamente el texto solicitado al proveedor se
 
 *Los ajustes de componentes muestran el estado de una instalación nueva de 1.2.2: OCR y traducción sin conexión no están instalados. Estos botones integrados permiten instalarlos sin comandos de terminal.*
 
-1. Abre **Configuración > Componentes opcionales**.
+1. Abre **Configuración > Componentes locales**.
 2. Antes de usar el OCR por primera vez, elige **Instalar / reparar** en **Reconocimiento de texto (chino / inglés)**. El paquete 1.2.2 no preinstala motores ni modelos de OCR o traducción local. La instalación iniciada explícitamente descarga y verifica los archivos necesarios y comprueba el entorno de ejecución nativo.
 3. Para la traducción local, elige **Instalar / reparar** en **Traducción sin conexión (chino / inglés)**. Mantén abierta la configuración durante la descarga inicial; reserva aproximadamente **1 GB de espacio libre en disco** y **2 GB de memoria disponible**.
 4. Sigue el instalador de Microsoft si aparece. Si la instalación indica **Reinicio necesario**, reinicia Windows y vuelve a intentarlo. Cancelar la instalación en la aplicación no revierte una instalación del entorno de ejecución de Windows que ya haya comenzado.
@@ -232,7 +238,7 @@ El paquete organizado contiene tres archivos en la raíz: `KeeStashDock.exe`, `S
 
 Las entradas, imágenes, textos reconocidos y copias de seguridad se almacenan localmente. Los datos portátiles suelen estar en `Data`, junto al ejecutable. Si esa carpeta no permite escritura, la aplicación utiliza `%AppData%\KeeStashDock` e informa de la ubicación alternativa en la configuración. Los componentes instalados desde la aplicación suelen utilizar `%LOCALAPPDATA%\KeeStashDock`, separados de tu colección.
 
-Usa **Configuración > Datos** para exportar o importar una copia de seguridad y configurar copias programadas. La primera actualización desde **1.2.1 es manual**:
+Usa **Configuración > Copias y datos** para exportar o importar una copia de seguridad y configurar copias programadas. La primera actualización desde **1.2.1 es manual**:
 
 1. Exporta una copia de seguridad y sal de la aplicación desde el menú de la bandeja.
 2. Extrae el nuevo ZIP en una carpeta aparte. Con la aplicación cerrada, copia **toda la carpeta de datos activa** a la carpeta `Data` de la nueva instalación. Si la configuración indica una ubicación alternativa en `%AppData%`, utiliza esa carpeta como origen.

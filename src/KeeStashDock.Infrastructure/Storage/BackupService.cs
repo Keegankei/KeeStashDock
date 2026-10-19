@@ -17,26 +17,79 @@ public sealed partial class BackupService
     private readonly DatabaseMaintenanceCoordinator? _maintenance;
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly object _statusGate = new();
-    private readonly string _statusFile;
+    private string _statusFile;
+    private string _backupsDirectory;
     private BackupStatus _status = new();
 
     public BackupService(Db db, FileLogger log, TimeProvider? clock = null,
-        DatabaseMaintenanceCoordinator? maintenance = null)
+        DatabaseMaintenanceCoordinator? maintenance = null, string? backupDirectory = null)
     {
         _db = db;
         _log = log;
         _clock = clock ?? TimeProvider.System;
         _maintenance = maintenance;
-        BackupsDirectory = Path.Combine(Path.GetDirectoryName(_db.DatabaseFile)
+        DefaultBackupsDirectory = Path.Combine(Path.GetDirectoryName(_db.DatabaseFile)
             ?? throw new InvalidOperationException("Database path has no parent directory."), "Backups");
+        try { _backupsDirectory = ResolveDirectory(backupDirectory); }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            _backupsDirectory = DefaultBackupsDirectory;
+            _log.Warn("The configured backup path is invalid; using the default folder.");
+        }
         _statusFile = Path.Combine(BackupsDirectory, "backup-status.json");
         LoadStatus();
     }
 
-    public string BackupsDirectory { get; }
+    public string DefaultBackupsDirectory { get; }
+    public string BackupsDirectory { get { lock (_statusGate) return _backupsDirectory; } }
     public BackupStatus Status { get { lock (_statusGate) return _status; } }
     /// <summary>Raised on the changing worker. UI subscribers must dispatch.</summary>
     public event Action? StatusChanged;
+
+    /// <summary>Switches future snapshots to a writable folder without moving
+    /// or deleting earlier backups. A pending snapshot finishes first. The
+    /// caller persists the selected path only after this operation succeeds.</summary>
+    public async Task SetBackupsDirectoryAsync(string? directory, CancellationToken cancellationToken = default)
+    {
+        string resolved = ResolveDirectory(directory);
+        await _operationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_maintenance is { CanStartOperation: false })
+                throw new InvalidOperationException("Wait for database maintenance before changing the backup folder.");
+            await Task.Run(() => ValidateWritableDirectory(resolved), cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            lock (_statusGate)
+            {
+                if (string.Equals(_backupsDirectory, resolved, StringComparison.OrdinalIgnoreCase)) return;
+                _backupsDirectory = resolved;
+                _statusFile = Path.Combine(resolved, "backup-status.json");
+                LoadStatus();
+            }
+        }
+        finally { _operationGate.Release(); }
+        StatusChanged?.Invoke();
+    }
+
+    private string ResolveDirectory(string? directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory)) return DefaultBackupsDirectory;
+        if (!Path.IsPathFullyQualified(directory))
+            throw new ArgumentException("The backup folder must be an absolute path.", nameof(directory));
+        return Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+    }
+
+    private static void ValidateWritableDirectory(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        // A uniquely named probe verifies write access without touching any
+        // existing backup. DeleteOnClose also cleans up failed flushes.
+        string probe = Path.Combine(directory, $".keestashdock-write-{Guid.NewGuid():N}.tmp");
+        using var stream = new FileStream(probe, FileMode.CreateNew, FileAccess.Write,
+            FileShare.None, 1, FileOptions.DeleteOnClose);
+        stream.WriteByte(0);
+        stream.Flush(flushToDisk: true);
+    }
 
     public async Task WaitForIdleAsync(CancellationToken cancellationToken = default)
     {
@@ -46,8 +99,9 @@ public sealed partial class BackupService
 
     public IReadOnlyList<BackupSnapshot> ListSnapshots()
     {
-        if (!Directory.Exists(BackupsDirectory)) return [];
-        return Directory.EnumerateFiles(BackupsDirectory, "*.db")
+        string directory = BackupsDirectory;
+        if (!Directory.Exists(directory)) return [];
+        return Directory.EnumerateFiles(directory, "*.db")
             .Where(path => OwnedSnapshotName().IsMatch(Path.GetFileName(path)) ||
                 Path.GetFileName(path).StartsWith("pre_import_", StringComparison.Ordinal) ||
                 Path.GetFileName(path).StartsWith("pre_update_", StringComparison.Ordinal))
@@ -212,6 +266,7 @@ public sealed partial class BackupService
 
     private void LoadStatus()
     {
+        _status = new();
         try
         {
             if (File.Exists(_statusFile))

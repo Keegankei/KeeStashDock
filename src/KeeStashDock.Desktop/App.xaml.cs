@@ -37,7 +37,7 @@ public partial class App : Application
     private HotkeyManager _hotkey = null!;
     private HotkeyManager _screenshotHotkey = null!;
     private readonly ScreenshotCaptureService _screenshotCapture = new();
-    private readonly LocalOcrService _localOcr = new();
+    private LocalOcrService _localOcr = new();
     private readonly Dictionary<long, ImageEntryWindow> _imageWindows = new();
     private readonly CancellationTokenSource _shutdownCancellation = new();
     private bool _capturingScreenshot => _selectionWatcherController?.IsCapturingScreenshot == true;
@@ -105,7 +105,8 @@ public partial class App : Application
         sc.AddSingleton<SettingsStore>();
         sc.AddSingleton(provider => new BackupService(
             provider.GetRequiredService<Db>(), provider.GetRequiredService<FileLogger>(),
-            maintenance: provider.GetRequiredService<DatabaseMaintenanceCoordinator>()));
+            maintenance: provider.GetRequiredService<DatabaseMaintenanceCoordinator>(),
+            backupDirectory: provider.GetRequiredService<SettingsStore>().Current.BackupDirectory));
         sc.AddSingleton<AutomaticBackupScheduler>();
         sc.AddSingleton<IDatabaseFileOperations, PhysicalDatabaseFileOperations>();
         sc.AddSingleton<IApplicationRestarter, DesktopApplicationRestarter>();
@@ -117,6 +118,7 @@ public partial class App : Application
 
         var settings = _services.GetRequiredService<SettingsStore>();
         settings.Load();
+        _localOcr = new LocalOcrService(settings);
 
         // ---- 4. Localization (before ANY UI text is produced) -----------
         LocalizationService.Instance.SetLanguage(settings.Current.Language);

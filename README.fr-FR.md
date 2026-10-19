@@ -73,6 +73,12 @@ La bulle de sélection est activée en mode **Copier uniquement**, avec **Google
 <a id="features"></a>
 ## Fonctionnalités
 
+**Paramètres dans la version 1.2.3 :** naviguez entre **Général**, **Capture et traduction**, **Apparence**, **Composants locaux**, **Sauvegarde et données** et **À propos**. Les options dépendantes s’affichent lorsqu’elles sont utiles ; les masquer conserve leurs valeurs enregistrées.
+
+Dans **Capture et traduction**, affichez ou masquez séparément le sélecteur de langue cible et les commandes d’enregistrement dans un groupe. Les deux sont activés par défaut et apparaissent après l’OCR ou la traduction. Les désactiver laisse le résultat et les actions de copie disponibles.
+
+Choisissez le dossier de sauvegarde dans **Sauvegarde et données**, et les dossiers distincts de l’OCR et de la traduction hors ligne dans **Composants locaux**. Changer de dossier **ne déplace aucun fichier existant** ; réinstallez le composant si le nouveau dossier est vide. **À propos** affiche le dossier de données actif en lecture seule. Utilisez l’exportation et l’importation pour déplacer la bibliothèque en toute sécurité.
+
 Ces aperçus montrent la véritable **interface anglaise de la version 1.2.2**, avec des données d’exemple fictives. Le panneau Standard utilise les réglages d’apparence d’une nouvelle installation ; le mode Spatial et la bulle Copier / Traduire illustrent des options. Le pointeur du GIF du mode Spatial et la publication de l’aperçu de mise à jour sont simulés. Les chemins d’installation et de données sont masqués ; aucun contenu personnel du bureau ou du presse-papiers n’apparaît. [Origine et reproduction des images](docs/images/README.md).
 
 <p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Utilisation du panneau Standard de 1.2.2 : saisir, enregistrer, épingler puis détacher une carte"></p>
@@ -100,7 +106,7 @@ Utilisez le panneau rapide pour les captures ponctuelles et l’**espace de trav
 
 ### 2. Panneaux Standard et Spatial · 1.2.2
 
-Accédez à **Paramètres > Mode du panneau**. Les deux modes conservent les mêmes contrôles, la même typographie, les mêmes couleurs et la même disposition des cartes.
+Accédez à **Paramètres > Apparence > Mode du panneau**. Les deux modes conservent les mêmes contrôles, la même typographie, les mêmes couleurs et la même disposition des cartes.
 
 <table>
   <tr><th>Standard</th><th>Spatial</th></tr>
@@ -155,7 +161,7 @@ Faites à nouveau glisser pour redéfinir la zone ; **Esc** ou un clic droit ann
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Bulle de sélection de la version 1.2.2 avec boutons Copier et Traduire indépendants"></p>
 
-Activez la bulle de sélection dans **Paramètres > Comportement**, puis sélectionnez du texte dans une autre application. **Copier** enregistre la sélection dans le groupe courant du panneau ; **Traduire** affiche une traduction sans ajouter d’entrée.
+Activez la bulle de sélection dans **Paramètres > Capture et traduction**, puis sélectionnez du texte dans une autre application. **Copier** enregistre la sélection dans le groupe courant du panneau ; **Traduire** affiche une traduction sans ajouter d’entrée.
 
 **1.2.2 :** choisissez **Copier et traduire** pour garder les deux boutons visibles. Après la copie, vous pouvez encore traduire la même sélection avant la fermeture de la bulle. Les échecs de traduction préservent le texte source.
 
@@ -182,7 +188,7 @@ La traduction dans le cloud envoie uniquement le texte demandé au fournisseur s
 
 *Les paramètres des composants montrent l’état d’une nouvelle installation de 1.2.2 : l’OCR et la traduction hors ligne ne sont pas installés. Ces boutons intégrés permettent de les installer, sans commande de terminal.*
 
-1. Ouvrez **Paramètres > Composants facultatifs**.
+1. Ouvrez **Paramètres > Composants locaux**.
 2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.2 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
 3. Pour la traduction locale, choisissez **Installer / réparer** sous **Traduction hors ligne (chinois / anglais)**. Gardez les paramètres ouverts pendant le téléchargement initial ; prévoyez environ **1 Go d’espace disque libre** et **2 Go de mémoire disponible**.
 4. Suivez l’installateur Microsoft s’il apparaît. Si l’installation indique **Redémarrage requis**, redémarrez Windows et réessayez. Annuler l’installation dans l’application n’annule pas une installation de runtime Windows déjà lancée.
@@ -232,7 +238,7 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 
 Les entrées, les images, le texte reconnu et les sauvegardes sont stockés localement. Les données portables se trouvent normalement dans `Data`, à côté de l’exécutable. Si ce dossier n’est pas accessible en écriture, l’application utilise `%AppData%\KeeStashDock` et signale ce changement dans les paramètres. Les composants installés depuis l’application utilisent normalement `%LOCALAPPDATA%\KeeStashDock`, séparément de votre collection.
 
-Utilisez **Paramètres > Données** pour exporter ou importer une sauvegarde et configurer les sauvegardes planifiées. La première mise à niveau depuis **1.2.1 est manuelle** :
+Utilisez **Paramètres > Sauvegarde et données** pour exporter ou importer une sauvegarde et configurer les sauvegardes planifiées. La première mise à niveau depuis **1.2.1 est manuelle** :
 
 1. Exportez une sauvegarde, puis quittez l’application depuis le menu de la zone de notification.
 2. Extrayez le nouveau ZIP dans un dossier distinct. L’application étant fermée, copiez **l’intégralité du dossier de données actif** dans le dossier `Data` de la nouvelle installation. Si les paramètres signalent un emplacement de secours dans `%AppData%`, utilisez ce dossier comme source.

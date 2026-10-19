@@ -79,7 +79,14 @@ public partial class SettingsWindow : Window
         ConfigureHotkeyFeedback();
         ConfigureComponents(components);
         ConfigureBackups();
-        Closing += (s, e) => { e.Cancel = true; CancelTranslationTest(); _componentCancellation?.Cancel(); Hide(); };
+        Closing += (s, e) =>
+        {
+            e.Cancel = true;
+            CancelTranslationTest();
+            _componentCancellation?.Cancel();
+            _folderCancellation?.Cancel();
+            Hide();
+        };
         IsVisibleChanged += (_, _) => { if (!IsVisible) CancelTranslationTest(); };
         ThemeManager.TrackWindowChrome(this);   // dark title bar follows theme
         LocalizationService.Instance.LanguageChanged +=
@@ -87,6 +94,7 @@ public partial class SettingsWindow : Window
         LocalizationService.Instance.ApplyFlowDirection(this);
 
         PopulateFromSettings();
+        ConfigurePresentation();
         _loading = false;
     }
 
@@ -96,6 +104,7 @@ public partial class SettingsWindow : Window
 
     public void ShowComponents()
     {
+        SelectSettingsPage("Components");
         ShowAndActivate();
         Dispatcher.BeginInvoke(new Action(() => ComponentsSection.BringIntoView()));
     }
@@ -150,6 +159,8 @@ public partial class SettingsWindow : Window
         CustomColorBox.Text = cfg.PanelTextCustomColor;
         RefreshCustomColorUi();
         SelectionPopupCheck.IsChecked = cfg.SelectionPopupEnabled;
+        ResultTargetCheck.IsChecked = cfg.TranslationResultShowTargetSelector;
+        ResultSaveCheck.IsChecked = cfg.TranslationResultShowSavePanel;
         SelectionActionCombo.SelectedIndex =
             cfg.SelectionAction switch { "Translate" => 1, "Both" => 2, _ => 0 };
         BubbleStyleCombo.SelectedIndex = 0;   // fallback: Default
@@ -171,10 +182,7 @@ public partial class SettingsWindow : Window
         RefreshTranslationCredentials();
         RefreshSelectionActionUi();
 
-        string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
-        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {_displayDataRoot}"
-            + (_isAppDataFallback
-               ? $"\n{LocalizationService.Instance["Settings.About.FallbackNote"]}" : "");
+        PopulateAboutOnly();
     }
 
     // ---------------------------------------------------------- language
@@ -197,7 +205,9 @@ public partial class SettingsWindow : Window
     private void PopulateAboutOnly()
     {
         string ver = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
-        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei\nData: {_displayDataRoot}";
+        AboutText.Text = $"KeeStashDock v{ver}\n© 2026 KeeganKei"
+            + (_isAppDataFallback
+               ? $"\n{LocalizationService.Instance["Settings.About.FallbackNote"]}" : "");
     }
 
     // ---------------------------------------------------------- behavior
@@ -278,6 +288,7 @@ public partial class SettingsWindow : Window
         AutoBackupIntervalCombo.IsEnabled = AutoBackupCheck.IsChecked == true;
         AutoBackupIntervalCombo.Opacity =
             AutoBackupCheck.IsChecked == true ? 1.0 : 0.4;
+        RefreshConditionalOptions();
         _settings.Save();
         RefreshBackupStatus();
     }
@@ -405,7 +416,7 @@ public partial class SettingsWindow : Window
         _translationTestCancellation?.Cancel();
         _translationTestCancellation = null;
         TranslationTestStatus.Text = string.Empty;
-        TranslationTestButton.IsEnabled = SelectionPopupCheck.IsChecked == true;
+        TranslationTestButton.IsEnabled = true;
     }
 
     /// <summary>Commits the bubble dress; bubble/toasts restyle live via
@@ -419,15 +430,14 @@ public partial class SettingsWindow : Window
         _settings.Save();
     }
 
-    /// <summary>The action/style combos only mean anything while the bubble
-    /// is on; lock and dim them (same treatment as the custom color row).</summary>
+    /// <summary>Selection actions depend on the selection bubble. Provider and
+    /// appearance controls also serve screenshots, results and copy toasts.</summary>
     private void RefreshSelectionActionUi()
     {
         bool on = SelectionPopupCheck.IsChecked == true;
         SelectionActionCombo.IsEnabled = on;
         SelectionActionCombo.Opacity = on ? 1.0 : 0.4;
-        BubbleStyleCombo.IsEnabled = on;
-        BubbleStyleCombo.Opacity = on ? 1.0 : 0.4;
+        SelectionActionRow.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         // Screenshot translation also uses these providers, even with the
         // selection bubble disabled or in capture-only mode.
         const bool translate = true;
@@ -454,12 +464,6 @@ public partial class SettingsWindow : Window
         TranslationAppIdBox.Opacity = 1;
         ApiKeyBox.IsEnabled = true;
         ApiKeyBox.Opacity = 1;
-        BubbleGlowCheck.IsEnabled = on;
-        BubbleGlowCheck.Opacity = on ? 1.0 : 0.4;
-        BubbleShadowCheck.IsEnabled = on;
-        BubbleShadowCheck.Opacity = on ? 1.0 : 0.4;
-        BubbleOpacitySlider.IsEnabled = on;
-        BubbleOpacitySlider.Opacity = on ? 1.0 : 0.4;
     }
 
     /// <summary>Opens the user guide (localized; follows the app language,
@@ -589,6 +593,7 @@ public partial class SettingsWindow : Window
             as string == "Custom";
         CustomColorRow.IsEnabled = custom;      // locks the hex box
         CustomColorRow.Opacity = custom ? 1.0 : 0.4;   // and reads as locked
+        CustomColorContainer.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
         try
         {
             var c = (System.Windows.Media.Color)System.Windows.Media.ColorConverter
@@ -645,6 +650,9 @@ public partial class SettingsWindow : Window
         bool enabled = (PanelModeCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Floating" &&
             (FloatingMotionCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Follow";
         InspectionGesturePanel.IsEnabled = enabled;
+        bool spatial = (PanelModeCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Floating";
+        FloatingMotionRow.Visibility = FloatingMotionHint.Visibility = spatial ? Visibility.Visible : Visibility.Collapsed;
+        InspectionGesturePanel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         InspectionCustomRow.Visibility = (InspectionGestureCombo.SelectedItem as ComboBoxItem)?.Tag as string == "Custom"
             ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -681,6 +689,7 @@ public partial class SettingsWindow : Window
         _settings.Current.BackgroundImagePath = dlg.FileName;
         _settings.Save();
         BgPathText.Text = dlg.FileName;
+        RefreshConditionalOptions();
     }
 
     private void OnClearBgClick(object sender, RoutedEventArgs e)
@@ -688,6 +697,7 @@ public partial class SettingsWindow : Window
         _settings.Current.BackgroundImagePath = null;
         _settings.Save();
         BgPathText.Text = "—";
+        RefreshConditionalOptions();
     }
 
     private void OnBgOpacityChanged(object sender,
@@ -711,6 +721,7 @@ public partial class SettingsWindow : Window
         _settings.Save();
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
         CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
+        RefreshConditionalOptions();
     }
 
     // -------------------------------------------------------------- data

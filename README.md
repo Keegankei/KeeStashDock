@@ -73,6 +73,12 @@ The selection bubble is enabled in **Copy only** mode with **Google** selected f
 <a id="features"></a>
 ## Features
 
+**Settings in 1.2.3:** use the category navigation for **General**, **Capture & translation**, **Appearance**, **Local components**, **Backup & data**, and **About**. Dependent options appear when relevant; hiding them preserves their saved values.
+
+Under **Capture & translation**, independently show or hide the result's target-language selector and save-to-group controls. Both are on by default and appear after OCR or translation finishes. Turning them off keeps the result and copy actions available.
+
+Choose the backup folder under **Backup & data**, and separate OCR and offline-translation folders under **Local components**. Changing a folder does **not move existing files**; install the component again if its new folder is empty. The active app-data folder is shown read-only under **About**; use export/import to move the library safely.
+
 These previews show the actual **1.2.2 English interface** with synthetic sample content. The Standard panel uses fresh-install appearance defaults; Spatial mode and the combined Copy / Translate bubble demonstrate optional settings. The inspection GIF uses a simulated pointer, and the update preview uses a simulated release. Installation and data paths are masked; no personal desktop or clipboard content appears. [Image sources and reproduction](docs/images/README.md).
 
 <p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Standard panel workflow in 1.2.2: type a snippet, save it, then pin and unpin its card"></p>
@@ -100,7 +106,7 @@ Use the quick panel for short captures and the **workbench** for managing your c
 
 ### 2. Standard and Spatial panels · 1.2.2
 
-Select **Settings > Panel mode**. Both modes keep the same controls, typography, colors, and card layout.
+Select **Settings > Appearance > Panel mode**. Both modes keep the same controls, typography, colors, and card layout.
 
 <table>
   <tr><th>Standard</th><th>Spatial</th></tr>
@@ -155,7 +161,7 @@ Drag again to reselect; **Esc** or right-click cancels. Temporary results suppor
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="The 1.2.2 selection bubble with independent Copy and Translate buttons"></p>
 
-The selection bubble is enabled by default in **Copy only** mode; configure it in **Settings > Behavior**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
+The selection bubble is enabled by default in **Copy only** mode; configure it in **Settings > Capture & translation**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
 
 **1.2.2:** choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
 
@@ -182,7 +188,7 @@ Cloud translation sends only the requested text to the selected provider, with n
 
 *The 1.2.2 component settings show the fresh-install state: OCR and offline translation are not installed. Use these in-app buttons to install them; no terminal command is required.*
 
-1. Open **Settings > Optional components**.
+1. Open **Settings > Local components**.
 2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.2 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
 3. For local translation, choose **Install / repair** under **Offline translation (Chinese / English)**. Keep Settings open during the initial download; allow approximately **1 GB of free disk space** and **2 GB of available memory**.
 4. Follow Microsoft's installer if prompted. If setup reports **Restart required**, restart Windows and retry. Cancelling app setup does not undo a Windows runtime installation already started.
@@ -232,7 +238,7 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 
 Entries, images, recognized text, and backups are stored locally. Portable data normally lives in `Data` beside the executable. If that folder is not writable, the app uses `%AppData%\KeeStashDock` and reports the fallback in Settings. Components installed through the app normally use `%LOCALAPPDATA%\KeeStashDock`, separately from your collection.
 
-Use **Settings > Data** to export/import a backup and configure scheduled backups. The first upgrade from **1.2.1 is manual**:
+Use **Settings > Backup & data** to export/import a backup and configure scheduled backups. The first upgrade from **1.2.1 is manual**:
 
 1. Export a backup, then exit the app from its tray menu.
 2. Extract the new ZIP into a separate folder. While the app is closed, copy the **entire active data folder** into the new installation's `Data` folder. If Settings reports an `%AppData%` fallback, use that folder as the source.

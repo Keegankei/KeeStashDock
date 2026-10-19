@@ -73,6 +73,12 @@ O balão de seleção fica ativado em **Somente copiar**, com **Google** como tr
 <a id="features"></a>
 ## Recursos
 
+**Configurações na 1.2.3:** navegue entre **Geral**, **Captura e tradução**, **Aparência**, **Componentes locais**, **Backup e dados** e **Sobre**. As opções dependentes aparecem quando necessárias; ocultá-las preserva os valores salvos.
+
+Em **Captura e tradução**, mostre ou oculte separadamente o seletor de idioma de destino e os controles para salvar em um grupo. Ambos ficam ativados por padrão e aparecem após o OCR ou a tradução. Ao desativá-los, o resultado e as ações de cópia continuam disponíveis.
+
+Escolha a pasta de backups em **Backup e dados**, e as pastas independentes do OCR e da tradução offline em **Componentes locais**. Mudar a pasta **não move os arquivos existentes**; reinstale o componente se a nova pasta estiver vazia. **Sobre** mostra o local ativo dos dados em modo somente leitura. Use a exportação e importação para mover a biblioteca com segurança.
+
 Estas prévias mostram a **interface real em inglês da versão 1.2.2**, com dados fictícios de exemplo. O painel Padrão usa as configurações de aparência de uma nova instalação; o modo Espacial e o balão Copiar / Traduzir demonstram opções configuráveis. O ponteiro do GIF do modo Espacial e a publicação da prévia de atualização são simulados. Os caminhos de instalação e de dados estão ocultos; não há conteúdo pessoal da área de trabalho ou da área de transferência. [Origem e reprodução das imagens](docs/images/README.md).
 
 <p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Fluxo do painel Padrão da versão 1.2.2: digitar, salvar, fixar e desafixar um cartão"></p>
@@ -100,7 +106,7 @@ Use o painel rápido para capturas pontuais e a **área de trabalho do aplicativ
 
 ### 2. Painéis Padrão e Espacial · 1.2.2
 
-Selecione **Configurações > Modo do painel**. Os dois modos mantêm os mesmos controles, tipografia, cores e disposição dos cartões.
+Selecione **Configurações > Aparência > Modo do painel**. Os dois modos mantêm os mesmos controles, tipografia, cores e disposição dos cartões.
 
 <table>
   <tr><th>Padrão</th><th>Espacial</th></tr>
@@ -155,7 +161,7 @@ Arraste novamente para refazer a seleção; **Esc** ou um clique direito cancela
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Balão de seleção da versão 1.2.2 com botões independentes de Copiar e Traduzir"></p>
 
-Ative o balão de seleção em **Configurações > Comportamento** e selecione texto em outro aplicativo. **Copiar** salva a seleção no grupo atual do painel; **Traduzir** mostra uma tradução sem adicionar uma entrada.
+Ative o balão de seleção em **Configurações > Captura e tradução** e selecione texto em outro aplicativo. **Copiar** salva a seleção no grupo atual do painel; **Traduzir** mostra uma tradução sem adicionar uma entrada.
 
 **1.2.2:** escolha **Copiar e traduzir** para manter os dois botões visíveis. Depois de copiar, você ainda pode traduzir a mesma seleção antes que o balão feche. Falhas de tradução preservam o texto original.
 
@@ -182,7 +188,7 @@ A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, s
 
 *As configurações dos componentes mostram o estado de uma nova instalação da versão 1.2.2: OCR e tradução offline não estão instalados. Use esses botões do aplicativo para instalá-los, sem comandos de terminal.*
 
-1. Abra **Configurações > Componentes opcionais**.
+1. Abra **Configurações > Componentes locais**.
 2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.2 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
 3. Para tradução local, escolha **Instalar / reparar** em **Tradução offline (chinês / inglês)**. Mantenha as configurações abertas durante o download inicial; reserve aproximadamente **1 GB de espaço livre em disco** e **2 GB de memória disponível**.
 4. Siga o instalador da Microsoft, se solicitado. Se a instalação informar **Reinicialização necessária**, reinicie o Windows e tente novamente. Cancelar a instalação no aplicativo não desfaz uma instalação do runtime do Windows que já tenha começado.
@@ -232,7 +238,7 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 
 Entradas, imagens, textos reconhecidos e backups são armazenados localmente. Os dados portáteis normalmente ficam em `Data`, ao lado do executável. Se não for possível gravar nessa pasta, o aplicativo usa `%AppData%\KeeStashDock` e informa o local alternativo nas configurações. Componentes instalados pelo aplicativo normalmente usam `%LOCALAPPDATA%\KeeStashDock`, separados da sua coleção.
 
-Use **Configurações > Dados** para exportar ou importar um backup e configurar backups agendados. A primeira atualização a partir da **1.2.1 é manual**:
+Use **Configurações > Backup e dados** para exportar ou importar um backup e configurar backups agendados. A primeira atualização a partir da **1.2.1 é manual**:
 
 1. Exporte um backup e saia do aplicativo pelo menu da bandeja.
 2. Extraia o novo ZIP para uma pasta separada. Com o aplicativo fechado, copie **toda a pasta de dados ativa** para a pasta `Data` da nova instalação. Se as configurações indicarem um local alternativo em `%AppData%`, use essa pasta como origem.

@@ -22,6 +22,7 @@ public sealed class AutomaticBackupScheduler : IDisposable
     private bool _enabled;
     private bool _started;
     private bool _disposed;
+    private string? _backupDirectory;
 
     public AutomaticBackupScheduler(BackupService backup, SettingsStore settings,
         DatabaseMaintenanceCoordinator maintenance, TimeProvider? clock = null)
@@ -102,6 +103,14 @@ public sealed class AutomaticBackupScheduler : IDisposable
         lock (_scheduleGate)
         {
             if (_disposed) return;
+            string directory = _backup.BackupsDirectory;
+            if (!string.Equals(_backupDirectory, directory, StringComparison.OrdinalIgnoreCase))
+            {
+                _backupDirectory = directory;
+                _dueUtc = null;
+                _deferredUntil = null;
+                _futureClockBaseline = null;
+            }
             _intervalMinutes = _settings.Current.AutoBackupIntervalMinutes;
             _enabled = _settings.Current.AutoBackupEnabled;
             DateTimeOffset now = _clock.GetUtcNow();

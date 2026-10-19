@@ -37,6 +37,8 @@ public partial class SettingsWindow
         SetHotkeyStatus(ScreenshotHotkeyStatus, screenshot);
         if (!_settings.Current.ScreenshotHotkeyEnabled && screenshot.HasFailure)
             ScreenshotHotkeyStatus.Text = LocalizationService.Instance["Hotkeys.Status.Disabled"] + " " + ScreenshotHotkeyStatus.Text;
+        ScreenshotHotkeyEditor.Visibility = _settings.Current.ScreenshotHotkeyEnabled || screenshot.HasFailure
+            ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static void SetHotkeyStatus(TextBlock text, HotkeyRegistrationStatus status)
@@ -47,6 +49,7 @@ public partial class SettingsWindow
 
     public void ShowHotkeys()
     {
+        SelectSettingsPage("General");
         ShowAndActivate();
         Dispatcher.BeginInvoke(new Action(() => { HotkeysSection.BringIntoView(); HotkeyBox.Focus(); }));
     }

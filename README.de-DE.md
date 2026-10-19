@@ -73,6 +73,12 @@ Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist *
 <a id="features"></a>
 ## Funktionen
 
+**Einstellungen in 1.2.3:** Die Navigation gliedert sich in **Allgemein**, **Erfassen & Übersetzen**, **Darstellung**, **Lokale Komponenten**, **Sicherung & Daten** und **Über**. Abhängige Optionen erscheinen bei Bedarf; ausgeblendete Werte bleiben gespeichert.
+
+Unter **Erfassen & Übersetzen** lassen sich die Zielsprachauswahl und die Gruppen-Speicherfunktionen im Ergebnisfenster unabhängig einblenden. Beide sind standardmäßig aktiv und erscheinen nach OCR oder Übersetzung. Auch ausgeschaltet bleiben Ergebnis und Kopieraktionen verfügbar.
+
+Den Sicherungsordner wählen Sie unter **Sicherung & Daten**, die separaten OCR- und Offline-Übersetzungsordner unter **Lokale Komponenten**. Ein Ordnerwechsel **verschiebt keine vorhandenen Dateien**; bei einem leeren neuen Ordner installieren Sie die Komponente erneut. **Über** zeigt den aktiven Datenordner schreibgeschützt an. Nutzen Sie Export und Import, um die Bibliothek sicher zu verschieben.
+
 Die Vorschauen zeigen die tatsächliche **englische Oberfläche von 1.2.2** mit synthetischen Beispieldaten. Das Standardpanel verwendet die Darstellungseinstellungen einer Neuinstallation; der räumliche Modus und die Blase mit Kopieren / Übersetzen zeigen optionale Einstellungen. Der Zeiger im GIF des räumlichen Modus und die Veröffentlichung in der Updatevorschau sind simuliert. Installations- und Datenpfade sind verdeckt; persönliche Desktop- oder Zwischenablageinhalte werden nicht gezeigt. [Bildquellen und Reproduktion](docs/images/README.md).
 
 <p align="center"><img src="docs/images/standard-panel-workflow.gif" width="400" alt="Ablauf im Standardpanel von 1.2.2: Text eingeben, speichern, Karte anheften und lösen"></p>
@@ -100,7 +106,7 @@ Verwenden Sie das Schnellpanel für kurze Eingaben und die **Werkbank** zur Verw
 
 ### 2. Panelmodi Standard und Räumlich · 1.2.2
 
-Wählen Sie **Einstellungen > Panelmodus**. Beide Modi behalten dieselben Bedienelemente, Schriften, Farben und Kartenanordnungen bei.
+Wählen Sie **Einstellungen > Darstellung > Panelmodus**. Beide Modi behalten dieselben Bedienelemente, Schriften, Farben und Kartenanordnungen bei.
 
 <table>
   <tr><th>Standard</th><th>Räumlich</th></tr>
@@ -155,7 +161,7 @@ Erneut ziehen, um den Bereich neu auszuwählen; **Esc** oder ein Rechtsklick bri
 
 <p align="center"><img src="docs/images/selection-actions.png" width="480" alt="Auswahlblase von 1.2.2 mit getrennten Schaltflächen für Kopieren und Übersetzen"></p>
 
-Aktivieren Sie die Auswahlblase unter **Einstellungen > Verhalten** und markieren Sie anschließend Text in einer anderen Anwendung. **Kopieren** übernimmt die Auswahl in die aktuelle Gruppe des Docks; **Übersetzen** zeigt eine Übersetzung an, ohne einen Eintrag anzulegen.
+Aktivieren Sie die Auswahlblase unter **Einstellungen > Erfassen & Übersetzen** und markieren Sie anschließend Text in einer anderen Anwendung. **Kopieren** übernimmt die Auswahl in die aktuelle Gruppe des Docks; **Übersetzen** zeigt eine Übersetzung an, ohne einen Eintrag anzulegen.
 
 **1.2.2:** Wählen Sie **Kopieren und übersetzen**, damit beide Schaltflächen sichtbar bleiben. Nach dem Kopieren können Sie dieselbe Auswahl noch übersetzen, solange die Blase geöffnet ist. Bei Übersetzungsfehlern bleibt der Ausgangstext erhalten.
 
@@ -182,7 +188,7 @@ Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anb
 
 *Die Komponenteneinstellungen zeigen den Zustand einer Neuinstallation von 1.2.2: OCR und Offline-Übersetzung sind nicht installiert. Die Installation erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
 
-1. Öffnen Sie **Einstellungen > Optionale Komponenten**.
+1. Öffnen Sie **Einstellungen > Lokale Komponenten**.
 2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.2 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
 3. Wählen Sie für lokale Übersetzungen unter **Offline-Übersetzung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Lassen Sie die Einstellungen während des ersten Downloads geöffnet; planen Sie etwa **1 GB freien Speicherplatz** und **2 GB verfügbaren Arbeitsspeicher** ein.
 4. Folgen Sie bei Bedarf dem Installationsprogramm von Microsoft. Meldet die Einrichtung **Neustart erforderlich**, starten Sie Windows neu und versuchen Sie es erneut. Ein Abbruch der App-Einrichtung macht eine bereits gestartete Windows-Laufzeitinstallation nicht rückgängig.
@@ -232,7 +238,7 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 
 Einträge, Bilder, erkannter Text und Sicherungen werden lokal gespeichert. Portable Daten liegen normalerweise in `Data` neben der ausführbaren Datei. Ist dieser Ordner nicht beschreibbar, verwendet die App `%AppData%\KeeStashDock` und zeigt den Ersatzpfad in den Einstellungen an. Über die App installierte Komponenten nutzen normalerweise `%LOCALAPPDATA%\KeeStashDock`, getrennt von Ihrer Sammlung.
 
-Unter **Einstellungen > Daten** können Sie eine Sicherung exportieren/importieren und geplante Sicherungen einrichten. Das erste Upgrade von **1.2.1 erfolgt manuell**:
+Unter **Einstellungen > Sicherung & Daten** können Sie eine Sicherung exportieren/importieren und geplante Sicherungen einrichten. Das erste Upgrade von **1.2.1 erfolgt manuell**:
 
 1. Exportieren Sie eine Sicherung und beenden Sie die App anschließend über ihr Menü im Infobereich.
 2. Entpacken Sie das neue ZIP in einen separaten Ordner. Kopieren Sie bei geschlossener App den **gesamten aktiven Datenordner** in den `Data`-Ordner der neuen Installation. Zeigen die Einstellungen einen Ersatzpfad unter `%AppData%` an, verwenden Sie diesen Ordner als Quelle.

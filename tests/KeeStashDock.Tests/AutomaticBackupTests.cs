@@ -389,6 +389,148 @@ public sealed class AutomaticBackupTests
         Assert.AreEqual(_clock.GetUtcNow().AddMinutes(15), reloaded.Status.NextCheckUtc);
     }
 
+    [TestMethod]
+    public async Task CustomFolderPersistsSettingsAndReloadsItsOwnSnapshotsAndStatus()
+    {
+        string custom = Path.Combine(_root, "Archive", "Library backups");
+        _settings.Current.BackupDirectory = custom;
+        _settings.Save();
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        settings.Load();
+        Assert.AreEqual(custom, settings.Current.BackupDirectory);
+        var backup = new BackupService(_db, _log, _clock, _maintenance, settings.Current.BackupDirectory);
+        BackupAttemptResult result = await backup.BackUpNowAsync();
+        Assert.AreEqual(BackupAttemptOutcome.Succeeded, result.Outcome);
+        Assert.AreEqual(custom, Path.GetDirectoryName(result.SnapshotPath));
+        Assert.IsFalse(Directory.Exists(backup.DefaultBackupsDirectory));
+        var reloaded = new BackupService(_db, _log, _clock, _maintenance, settings.Current.BackupDirectory);
+        Assert.AreEqual(result.SnapshotPath, reloaded.ListSnapshots().Single().Path);
+        Assert.AreEqual(_clock.GetUtcNow(), reloaded.Status.LastSuccessUtc);
+    }
+
+    [TestMethod]
+    public async Task FolderChangesPreserveEarlierBackupsAndRestoreFolderSpecificHistory()
+    {
+        BackupAttemptResult original = await _backup.BackUpNowAsync();
+        DateTimeOffset? originalSuccess = _backup.Status.LastSuccessUtc;
+        string custom = Path.Combine(_root, "Custom backups");
+        await _backup.SetBackupsDirectoryAsync(custom + Path.DirectorySeparatorChar);
+        Assert.AreEqual(custom, _backup.BackupsDirectory);
+        Assert.AreEqual(BackupRunState.Never, _backup.Status.State);
+        Assert.AreEqual(0, _backup.ListSnapshots().Count);
+        Assert.IsTrue(File.Exists(original.SnapshotPath));
+        Assert.AreEqual(0, Directory.GetFiles(custom, ".keestashdock-write-*").Length);
+        _clock.Advance(TimeSpan.FromMinutes(5));
+        BackupAttemptResult second = await _backup.BackUpNowAsync();
+        await _backup.SetBackupsDirectoryAsync(null);
+        Assert.AreEqual(_backup.DefaultBackupsDirectory, _backup.BackupsDirectory);
+        Assert.AreEqual(original.SnapshotPath, _backup.ListSnapshots().Single().Path);
+        Assert.AreEqual(originalSuccess, _backup.Status.LastSuccessUtc);
+        Assert.IsTrue(File.Exists(second.SnapshotPath));
+    }
+
+    [TestMethod]
+    public async Task InvalidFolderChangesLeaveTheActiveFolderAndHistoryUntouched()
+    {
+        await _backup.BackUpNowAsync();
+        BackupStatus before = _backup.Status;
+        string blocked = Path.Combine(_root, "blocked");
+        File.WriteAllText(blocked, "keep this file");
+        await Assert.ThrowsAsync<IOException>(() => _backup.SetBackupsDirectoryAsync(blocked));
+        await Assert.ThrowsAsync<ArgumentException>(() => _backup.SetBackupsDirectoryAsync("relative-path"));
+        Assert.AreEqual(_backup.DefaultBackupsDirectory, _backup.BackupsDirectory);
+        Assert.AreEqual(before, _backup.Status);
+        Assert.AreEqual(1, _backup.ListSnapshots().Count);
+        Assert.AreEqual("keep this file", File.ReadAllText(blocked));
+    }
+
+    [TestMethod]
+    public async Task FolderChangeWaitsForAnActiveSnapshotWithoutSplittingItsFiles()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _backup.StatusChanged += () => { if (_backup.Status.State == BackupRunState.Running) started.TrySetResult(); };
+        string custom = Path.Combine(_root, "next-backups");
+        Task<BackupAttemptResult> pending;
+        Task change;
+        using (SqliteConnection held = _db.Open())
+        {
+            pending = _backup.BackUpNowAsync();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            change = _backup.SetBackupsDirectoryAsync(custom);
+            Assert.IsFalse(change.IsCompleted);
+            Assert.AreEqual(_backup.DefaultBackupsDirectory, _backup.BackupsDirectory);
+        }
+        BackupAttemptResult result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        await change.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.AreEqual(BackupAttemptOutcome.Succeeded, result.Outcome);
+        Assert.AreEqual(_backup.DefaultBackupsDirectory, Path.GetDirectoryName(result.SnapshotPath));
+        Assert.IsTrue(File.Exists(Path.Combine(_backup.DefaultBackupsDirectory, "backup-status.json")));
+        Assert.AreEqual(custom, _backup.BackupsDirectory);
+        Assert.AreEqual(BackupRunState.Never, _backup.Status.State);
+        Assert.AreEqual(0, _backup.ListSnapshots().Count);
+    }
+
+    [TestMethod]
+    public async Task CancellingAQueuedFolderChangeDoesNotCreateOrSelectTheFolder()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _backup.StatusChanged += () => { if (_backup.Status.State == BackupRunState.Running) started.TrySetResult(); };
+        string custom = Path.Combine(_root, "cancelled-backups");
+        Task<BackupAttemptResult> pending;
+        using var cancellation = new CancellationTokenSource();
+        using (SqliteConnection held = _db.Open())
+        {
+            pending = _backup.BackUpNowAsync();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Task change = _backup.SetBackupsDirectoryAsync(custom, cancellation.Token);
+            cancellation.Cancel();
+            await Assert.ThrowsAsync<OperationCanceledException>(() => change);
+        }
+        await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.AreEqual(_backup.DefaultBackupsDirectory, _backup.BackupsDirectory);
+        Assert.IsFalse(Directory.Exists(custom));
+    }
+
+    [TestMethod]
+    public async Task NewFolderResetsTheAutomaticScheduleAndRetentionStaysWithinThatFolder()
+    {
+        BackupAttemptResult original = await _backup.CreateAutomaticSnapshotAsync(1);
+        using var scheduler = CreateScheduler();
+        scheduler.Start();
+        string custom = Path.Combine(_root, "scheduled-backups");
+        await _backup.SetBackupsDirectoryAsync(custom);
+        Assert.AreEqual(_clock.GetUtcNow().AddSeconds(5), _backup.Status.NextCheckUtc);
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        await scheduler.CheckAsync();
+        Assert.AreEqual(1, _backup.ListSnapshots().Count);
+        for (int index = 0; index < 3; index++)
+        {
+            _clock.Advance(TimeSpan.FromMinutes(15));
+            await _backup.CreateAutomaticSnapshotAsync(1);
+        }
+        Assert.AreEqual(1, _backup.ListSnapshots().Count);
+        Assert.IsTrue(File.Exists(original.SnapshotPath));
+        Assert.AreEqual(custom, Path.GetDirectoryName(_backup.ListSnapshots().Single().Path));
+    }
+
+    [TestMethod]
+    public async Task FolderCannotChangeDuringDatabaseMaintenance()
+    {
+        string custom = Path.Combine(_root, "maintenance-backups");
+        using (var lease = _maintenance.EnterMaintenance())
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _backup.SetBackupsDirectoryAsync(custom));
+        Assert.AreEqual(_backup.DefaultBackupsDirectory, _backup.BackupsDirectory);
+        Assert.IsFalse(Directory.Exists(custom));
+    }
+
+    [TestMethod]
+    public void InvalidStoredFolderCannotPreventApplicationStartup()
+    {
+        var backup = new BackupService(_db, _log, _clock, _maintenance, "not-absolute");
+        Assert.AreEqual(backup.DefaultBackupsDirectory, backup.BackupsDirectory);
+        Assert.AreEqual(BackupRunState.Never, backup.Status.State);
+    }
+
     private AutomaticBackupScheduler CreateScheduler() => new(_backup, _settings, _maintenance, _clock);
 
     private void CorruptSource()

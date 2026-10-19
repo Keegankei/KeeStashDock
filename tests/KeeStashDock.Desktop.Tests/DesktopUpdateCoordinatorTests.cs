@@ -209,6 +209,87 @@ public sealed class DesktopUpdateCoordinatorTests
         finally { if (File.Exists(link)) File.Delete(link); }
     }
 
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void CustomBackupSnapshotExclusionPreservesUnrelatedAssetsIncludingDataRoot(bool useDataRoot)
+    {
+        string data = Path.Combine(_root, "Data"), snapshot = Path.Combine(data, "Backups", "before-update");
+        string backups = useDataRoot ? data : Path.Combine(data, "custom-backups");
+        Write(data, "settings.json", "keep settings");
+        Write(data, "draft.txt", "keep draft");
+        Write(backups, "family-note.txt", "keep unrelated asset");
+        Write(backups, "pre_import_notes.db", "not an owned recovery filename");
+        string[] owned =
+        [
+            "keestashdock_20261019_1200.db",
+            "keestashdock_auto_20261019_120000_123_0123456789abcdef0123456789abcdef.db",
+            "keestashdock_manual_20261019_120000_123_0123456789abcdef0123456789abcdef.db",
+            "pre_import_20261019_120000_123_0123456789abcdef0123456789abcdef.db",
+            "pre_update_20261019_120000_123_0123456789abcdef0123456789abcdef.db",
+            "backup-status.json", "backup-status.json.tmp",
+        ];
+        foreach (string name in owned) Write(backups, name, "old backup, do not duplicate");
+        Write(snapshot, "keestashdock.db", "consistent snapshot");
+        UpdateDataSnapshot.CopyNonDatabaseFiles(data, snapshot, "keestashdock.db", backups);
+        string copiedFolder = useDataRoot ? snapshot : Path.Combine(snapshot, "custom-backups");
+        Assert.AreEqual("keep settings", File.ReadAllText(Path.Combine(snapshot, "settings.json")));
+        Assert.AreEqual("keep draft", File.ReadAllText(Path.Combine(snapshot, "draft.txt")));
+        Assert.AreEqual("keep unrelated asset", File.ReadAllText(Path.Combine(copiedFolder, "family-note.txt")));
+        Assert.AreEqual("not an owned recovery filename", File.ReadAllText(Path.Combine(copiedFolder, "pre_import_notes.db")));
+        foreach (string name in owned)
+        {
+            Assert.IsFalse(File.Exists(Path.Combine(copiedFolder, name)), "Recovery must not duplicate " + name);
+            Assert.IsTrue(File.Exists(Path.Combine(backups, name)), "Snapshotting must preserve the original " + name);
+        }
+    }
+
+    [TestMethod]
+    public void RecoverySkipsOnlyKnownPayloadsOfConfiguredComponentFolders()
+    {
+        string data = Path.Combine(_root, "Data"), snapshot = Path.Combine(data, "Backups", "before-update");
+        string ocr = Path.Combine(data, "my-ocr"), offline = Path.Combine(data, "my-offline");
+        Write(ocr, ".keestashdock-component", "Ocr");
+        Write(ocr, "OcrModels/eng.traineddata", "model fixture");
+        Write(ocr, "OcrEngine/tesseract.exe", "engine fixture, never executed");
+        Write(ocr, "personal-note.txt", "keep ordinary file");
+        Write(offline, ".keestashdock-component", "OfflineTranslation");
+        Write(offline, "python/pythonw.exe", "runtime fixture, never executed");
+        Write(offline, "packages/module.py", "package fixture");
+        Write(offline, "models/model.bin", "model fixture");
+        Write(offline, "downloads/archive.zip", "download fixture");
+        Write(offline, "installed.json", "{}");
+        Write(offline, "service.json", "{}");
+        Write(offline, "personal-note.txt", "keep another ordinary file");
+        Write(data, "unrelated/models/personal.bin", "not a component");
+        Write(snapshot, "keestashdock.db", "consistent snapshot");
+        UpdateDataSnapshot.CopyNonDatabaseFiles(data, snapshot, "keestashdock.db",
+            ocrDirectory: ocr, offlineDirectory: offline);
+        Assert.IsFalse(Directory.Exists(Path.Combine(snapshot, "my-ocr", "OcrModels")));
+        Assert.IsFalse(Directory.Exists(Path.Combine(snapshot, "my-ocr", "OcrEngine")));
+        foreach (string name in new[] { "python", "packages", "models", "downloads" })
+            Assert.IsFalse(Directory.Exists(Path.Combine(snapshot, "my-offline", name)));
+        Assert.IsFalse(File.Exists(Path.Combine(snapshot, "my-offline", "installed.json")));
+        Assert.IsFalse(File.Exists(Path.Combine(snapshot, "my-offline", "service.json")));
+        Assert.AreEqual("keep ordinary file", File.ReadAllText(Path.Combine(snapshot, "my-ocr", "personal-note.txt")));
+        Assert.AreEqual("keep another ordinary file", File.ReadAllText(Path.Combine(snapshot, "my-offline", "personal-note.txt")));
+        Assert.AreEqual("not a component", File.ReadAllText(Path.Combine(snapshot, "unrelated", "models", "personal.bin")));
+        Assert.IsTrue(File.Exists(Path.Combine(offline, "models", "model.bin")));
+        Assert.IsTrue(File.Exists(Path.Combine(ocr, "OcrEngine", "tesseract.exe")));
+    }
+
+    [TestMethod]
+    public void UnrecognizedComponentFolderNeverHidesOrdinaryUserFilesFromRecovery()
+    {
+        string data = Path.Combine(_root, "Data"), snapshot = Path.Combine(data, "Backups", "before-update");
+        Write(data, "settings.json", "keep settings");
+        Write(data, "models/private.bin", "ordinary user asset");
+        Write(snapshot, "keestashdock.db", "consistent snapshot");
+        UpdateDataSnapshot.CopyNonDatabaseFiles(data, snapshot, "keestashdock.db", offlineDirectory: data);
+        Assert.AreEqual("keep settings", File.ReadAllText(Path.Combine(snapshot, "settings.json")));
+        Assert.AreEqual("ordinary user asset", File.ReadAllText(Path.Combine(snapshot, "models", "private.bin")));
+    }
+
     private static void Write(string root, string relative, string contents)
     {
         string path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));

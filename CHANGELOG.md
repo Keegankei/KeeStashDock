@@ -12,13 +12,17 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 - Independent translation target language, with Follow interface language as the compatible default. Selection, screenshot and Settings tests use the same target resolution. Result windows support a temporary target and retry with retained source text.
 - Explicit saving of temporary OCR/translation source, translation, or both to a chosen group. Both produces one labeled text entry; duplicate content is reused. Save failures retain the result and do not write to the clipboard.
+- Independent visibility switches for the temporary target selector and Save to group panel in translation results. Both remain enabled by default; hiding them preserves the current source, result and selected group.
 - Visible backup state, last attempt/success, next scheduled check, snapshot list, Back up now, open-folder and guarded restore actions. Added 15-, 30- and 60-minute intervals alongside hourly/day options.
+- Configurable backup, OCR and offline translation folders with open-folder and reset actions. Location changes preserve existing files; optional components are reused only when present at the selected location, otherwise installation remains an explicit action. Offline translation stops its previous managed service before changing folders.
 - Persistent panel/screenshot shortcut status and one actionable notification per startup failure episode. Failed remapping retains the previous working shortcut.
 
 ### Changed
 
 - Moved backups from hourly housekeeping to an independent minute-based scheduler, with one overdue attempt on startup/resume, maintenance deferral and serialized snapshots. UTC status survives restarts; incomplete or failed snapshots are not published or used to prune retention.
 - Preserved existing backup preferences by migrating legacy hours to minutes. Automatic retention removes only owned automatic snapshots after a successful full database snapshot; manual and recovery files remain available.
+- Redesigned Settings with category navigation, clearer page headings, grouped controls, switches and themed focus/hover states. Dependent options collapse when inactive while shared translation, popup appearance, manual backup and panel-timing controls remain available.
+- Kept full update-recovery snapshots in the active data folder's `Backups/BeforeUpdate-*` directory. Recovery copying excludes owned snapshots/status from a custom backup folder and known configured component payloads without excluding unrelated user files alongside them.
 - Updated all twenty interface languages, nine README guides, upgrade instructions and first-use documentation for 1.2.3. Existing media remains accurately labeled as 1.2.2 footage.
 
 See the [release notes](docs/releases/1.2.3-notes.md) and

@@ -39,6 +39,14 @@ language, shortcuts, provider credentials and backup preferences are preserved.
 The new translation target defaults to **Follow interface language**, matching
 earlier behavior until an explicit target is selected.
 
+Settings now uses category navigation. The translation page has separate
+switches for showing the temporary target selector and the Save to group panel
+in result windows. Both default to enabled, including when an older settings
+file has no values for them. Turning them off changes the displayed controls;
+it does not erase retained source text, change the global target, or save text
+automatically. Dependent controls elsewhere collapse when inactive while
+shared translation and manual backup features remain accessible.
+
 The new `autoBackupIntervalMinutes` setting takes precedence when present.
 Otherwise, the previous valid `autoBackupIntervalHours` value is converted to
 minutes, including custom intervals. A new installation still uses 24 hours.
@@ -47,6 +55,38 @@ pre-upgrade settings if downgrading. A 15-minute schedule is not a Windows
 background task: it runs while KeeStashDock is open and catches up once after
 startup or resume. Automatic database snapshots include stored images, but not
 settings, optional components, backgrounds or desktop layout.
+
+Backup, OCR and offline translation destinations can now be changed or reset
+from Settings. Existing installations continue to use their previous default
+locations until you choose otherwise. Changing the backup folder redirects
+future database snapshots and loads that folder's history; previous backups
+are not moved, deleted or combined with the new list. Exported packages still
+use the file destination chosen for each export.
+
+This destination applies to automatic/manual database snapshots and safety
+backups taken before imports. Full update-recovery snapshots continue to use
+the active data folder's `Backups/BeforeUpdate-*` directory. If a custom backup
+folder is inside the data folder, the recovery copy omits only recognized backup
+files and status records there; other user files are retained. Known payloads
+of configured OCR/offline component folders are also omitted to avoid duplicating
+downloaded runtimes and models. Components outside the data folder are preserved
+in place rather than copied into update recovery.
+
+OCR custom folders contain `OcrModels` and `OcrEngine`; an offline translation
+custom folder is the runtime directory itself. Choose an empty folder for a
+new installation, then use **Install / repair**, or select a valid installation
+of that component to reuse it. Folder selection alone does not install or move
+anything. Changing the offline location first stops the managed service at its
+previous location. If validation, stopping the service or saving the preference
+fails, the change is not committed.
+
+Custom locations are stored as absolute machine-specific paths. When carrying
+settings to another computer or removing a drive, choose a valid local component
+folder or reset it to the default. The current data folder remains the location
+of the library, settings and drafts; its Settings entry opens that folder and
+does not migrate it. A database export does not include these path preferences
+or downloaded components. Preserve the whole active data folder when moving
+the application, and keep component folders separately if you intend to reuse them.
 
 Once the stable 1.2.3 release is published, 1.2.2 can use **Check for updates**.
 A locally packaged candidate with the same numeric version still needs manual

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -104,6 +103,8 @@ internal static class DocumentationPreviewScenarios
             try { ((CheckBox)settingsWindow.FindName("AutoStartCheck")).IsChecked = false; }
             finally { loading.SetValue(settingsWindow, false); }
             RenderSettings(settingsWindow, directory);
+            RenderSettingsVariants(settingsWindow, directory);
+            RenderResultVariants(settings, directory);
         }
         finally
         {
@@ -116,54 +117,131 @@ internal static class DocumentationPreviewScenarios
 
     private static void RenderSettings(SettingsWindow window, string directory)
     {
-        var viewer = (ScrollViewer)window.Content;
-        var page = (StackPanel)viewer.Content;
-        viewer.Content = null;
-        var frame = CreateFrame(window, page);
+        (string Page, string FileName)[] pages =
+        [
+            ("General", "default-settings.png"),
+            ("Translation", "translation-settings.png"),
+            ("Appearance", "default-appearance.png"),
+            ("Components", "component-setup.png"),
+            ("Data", "backup-settings.png"),
+            ("About", "about-settings.png"),
+        ];
+        foreach ((string page, string fileName) in pages)
+        {
+            window.SelectSettingsPage(page);
+            ((ScrollViewer)window.FindName(page + "Page")).ScrollToHome();
+            var backupStatus = (TextBlock)window.FindName("BackupStatusText");
+            string originalStatus = backupStatus.Text;
+            // Replace fixture path text before layout. An overlay on an offscreen
+            // field could otherwise paint over another card or the window footer.
+            int location = originalStatus.LastIndexOf("\nLocation:", StringComparison.Ordinal);
+            if (location >= 0) backupStatus.Text = originalStatus[..location] + "\nLocation: [path hidden for privacy]";
+            string[] privateFields = page switch
+            {
+                "Components" => ["OcrPathText", "OfflinePathText"],
+                "Data" => ["BackupPathText"],
+                "About" => ["DataPathText"],
+                _ => [],
+            };
+            var restorePaths = new List<Action>();
+            try
+            {
+                foreach (string name in privateFields)
+                {
+                    switch (window.FindName(name))
+                    {
+                        case TextBox box:
+                            string originalBox = box.Text;
+                            restorePaths.Add(() => box.Text = originalBox);
+                            box.Text = "[Path hidden for privacy]";
+                            break;
+                        case TextBlock text:
+                            string originalText = text.Text;
+                            restorePaths.Add(() => text.Text = originalText);
+                            text.Text = "[Path hidden for privacy]";
+                            break;
+                        default:
+                            throw new AssertFailedException("The settings path field could not be located.");
+                    }
+                }
+                RenderWindow(window, directory, fileName, new Size(960, 760));
+            }
+            finally
+            {
+                foreach (Action restore in restorePaths) restore();
+                backupStatus.Text = originalStatus;
+            }
+        }
+        // Keep the established documentation asset name for the selection behavior page.
+        File.Copy(Path.Combine(directory, "default-settings.png"), Path.Combine(directory, "behavior-settings.png"), overwrite: true);
+        window.SelectSettingsPage("General");
+    }
+
+    private static void RenderSettingsVariants(SettingsWindow window, string directory)
+    {
+        var dictionaries = Application.Current.Resources.MergedDictionaries;
+        ResourceDictionary[] originalDictionaries = dictionaries.ToArray();
+        string previousLanguage = LocalizationService.Instance.CurrentLanguage;
+        bool wasDark = ThemeManager.IsDark;
         try
         {
-            Arrange(frame, new Size(630, double.PositiveInfinity));
-            var components = (FrameworkElement)window.FindName("ComponentsSection");
-            var behavior = SectionOf((FrameworkElement)window.FindName("SelectionPopupCheck"), page);
-            var appearance = SectionOf((FrameworkElement)window.FindName("PanelModeCombo"), page);
-            var backup = SectionOf((FrameworkElement)window.FindName("AutoBackupCheck"), page);
-            var about = (TextBlock)window.FindName("AboutText");
-            Rect aboutBounds = BoundsIn(about, frame);
-            // Every path is synthetic already. Additionally remove the entire
-            // path line from the exported pixels, with an explicit privacy label.
-            var pathMask = new Rect(aboutBounds.X, aboutBounds.Y + aboutBounds.Height * 2 / 3,
-                aboutBounds.Width, Math.Max(20, aboutBounds.Height / 3));
-            BitmapSource full = Snapshot(frame, pathMask);
-            Rect componentBounds = BoundsIn(components, frame);
-            SaveCrop(full, new Rect(0, 0, full.PixelWidth, componentBounds.Bottom + 8), directory, "default-settings.png");
-            SaveCrop(full, componentBounds, directory, "component-setup.png", 8);
-            SaveCrop(full, BoundsIn(behavior, frame), directory, "behavior-settings.png", 8);
-            SaveCrop(full, BoundsIn(appearance, frame), directory, "default-appearance.png", 8);
-            Rect backupBounds = BoundsIn(backup, frame);
-            backupBounds.Union(BoundsIn(SectionOf(about, page), frame));
-            SaveCrop(full, backupBounds, directory, "backup-settings.png", 8);
+            LocalizationService.Instance.SetLanguage("en-US");
+            ThemeManager.Apply("Dark");
+            window.SelectSettingsPage("General");
+            ((ScrollViewer)window.FindName("GeneralPage")).ScrollToHome();
+            RenderWindow(window, directory, "settings-dark.png", new Size(960, 760));
+
+            ThemeManager.Apply("Light");
+            LocalizationService.Instance.SetLanguage("zh-CN");
+            window.SelectSettingsPage("Translation");
+            ((ScrollViewer)window.FindName("TranslationPage")).ScrollToHome();
+            RenderWindow(window, directory, "settings-zh-CN.png", new Size(760, 620));
+
+            LocalizationService.Instance.SetLanguage("ar-SA");
+            window.SelectSettingsPage("General");
+            ((ScrollViewer)window.FindName("GeneralPage")).ScrollToHome();
+            Assert.AreEqual(FlowDirection.RightToLeft, window.FlowDirection);
+            RenderWindow(window, directory, "settings-ar-SA.png", new Size(760, 620));
         }
         finally
         {
-            frame.Child = null;
-            viewer.Content = page;
+            ThemeManager.Apply(wasDark ? "Dark" : "Light");
+            dictionaries.Clear();
+            foreach (ResourceDictionary dictionary in originalDictionaries) dictionaries.Add(dictionary);
+            LocalizationService.Instance.SetLanguage(previousLanguage);
+            window.SelectSettingsPage("General");
         }
     }
 
-    private static Border SectionOf(FrameworkElement element, StackPanel page)
+    private static void RenderResultVariants(SettingsStore settings, string directory)
     {
-        DependencyObject? current = element;
-        while (current is not null)
+        bool previousTarget = settings.Current.TranslationResultShowTargetSelector;
+        bool previousSave = settings.Current.TranslationResultShowSavePanel;
+        var result = new TranslationResultWindow(settings, _ => { });
+        void SetContext() => result.SetResultContext([new(null, "Uncategorized"), new(7, "Writing")], 7, "de-DE",
+            _ => throw new AssertFailedException("Documentation must not request translation."),
+            (_, _) => throw new AssertFailedException("Documentation must not persist result entries."));
+        try
         {
-            if (current is Border border && ReferenceEquals(border.Parent, page))
-                return border;
-            current = LogicalTreeHelper.GetParent(current);
-        }
-        throw new AssertFailedException("The settings section could not be located.");
-    }
+            settings.Current.TranslationResultShowTargetSelector = true;
+            settings.Current.TranslationResultShowSavePanel = true;
+            result.SetRecognizedSource("Keep useful things within reach.");
+            result.ShowResult("Nützliche Dinge immer griffbereit.");
+            SetContext();
+            RenderWindow(result, directory, "translation-result-tools.png", new Size(420, double.PositiveInfinity));
 
-    private static Rect BoundsIn(FrameworkElement element, Visual ancestor)
-        => element.TransformToAncestor(ancestor).TransformBounds(new Rect(element.RenderSize));
+            settings.Current.TranslationResultShowTargetSelector = false;
+            settings.Current.TranslationResultShowSavePanel = false;
+            SetContext();
+            RenderWindow(result, directory, "translation-result-compact.png", new Size(420, double.PositiveInfinity));
+        }
+        finally
+        {
+            settings.Current.TranslationResultShowTargetSelector = previousTarget;
+            settings.Current.TranslationResultShowSavePanel = previousSave;
+            result.Close();
+        }
+    }
 
     private static void RenderWindow(Window window, string directory, string fileName, Size size)
     {
@@ -187,7 +265,7 @@ internal static class DocumentationPreviewScenarios
         Background = (Brush)Application.Current.FindResource("B.WindowBg"),
         Resources = window.Resources,
         DataContext = window.DataContext,
-        FlowDirection = FlowDirection.LeftToRight,
+        FlowDirection = window.FlowDirection,
         Child = content,
     };
 
@@ -200,35 +278,13 @@ internal static class DocumentationPreviewScenarios
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
     }
 
-    private static BitmapSource Snapshot(FrameworkElement element, Rect? pathMask = null)
+    private static BitmapSource Snapshot(FrameworkElement element)
     {
         int width = (int)Math.Ceiling(element.ActualWidth);
         int height = (int)Math.Ceiling(element.ActualHeight);
         var image = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
         image.Render(element);
-        if (pathMask is not { } mask) return image;
-        var overlay = new DrawingVisual();
-        using (DrawingContext drawing = overlay.RenderOpen())
-        {
-            drawing.DrawImage(image, new Rect(0, 0, width, height));
-            drawing.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(223, 229, 239)), null, mask, 3, 3);
-            var label = new FormattedText("Data: [path hidden for privacy]", CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight, new Typeface("Segoe UI"), 11,
-                new SolidColorBrush(Color.FromRgb(65, 78, 99)), 1);
-            drawing.DrawText(label, new Point(mask.X + 5, mask.Y + 2));
-        }
-        var redacted = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-        redacted.Render(overlay);
-        return redacted;
-    }
-
-    private static void SaveCrop(BitmapSource source, Rect bounds, string directory, string fileName, int padding = 0)
-    {
-        int left = Math.Max(0, (int)Math.Floor(bounds.Left) - padding);
-        int top = Math.Max(0, (int)Math.Floor(bounds.Top) - padding);
-        int right = Math.Min(source.PixelWidth, (int)Math.Ceiling(bounds.Right) + padding);
-        int bottom = Math.Min(source.PixelHeight, (int)Math.Ceiling(bounds.Bottom) + padding);
-        Save(new CroppedBitmap(source, new Int32Rect(left, top, right - left, bottom - top)), Path.Combine(directory, fileName));
+        return image;
     }
 
     private static void Save(BitmapSource image, string path)

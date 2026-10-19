@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -32,18 +34,20 @@ public sealed class TranslationResultWindow : Window
     private readonly ScrollViewer _sourceScroll, _bodyScroll;
     private readonly Button _copySource, _retryButton, _settingsButton, _closeButton;
     private string _resultText = string.Empty, _sourceText = string.Empty;
-    private bool _copyable, _persistentResult;
+    private bool _copyable, _persistentResult, _inProgress;
     private int _anchorX, _anchorY;
     private Action? _retry, _openSettings;
     private readonly TemporaryTextResult _textResult = new();
     private readonly ComboBox _targetCombo, _groupCombo;
     private readonly TextBlock _targetLabel, _groupLabel, _saveStatus;
-    private readonly StackPanel _resultTools;
+    private readonly StackPanel _resultTools, _targetTools, _saveTools;
     private readonly Button _saveSource, _saveTranslation, _saveBoth;
     private Func<string, long?, long>? _save;
     private Action<string>? _translateTarget;
     private bool _updatingTools;
     private readonly List<Task> _pendingSaves = [];
+    private static readonly string[] ContrastResourceKeys =
+        ["B.TextPrimary", "B.InputText", "B.InputBg", "B.Border", "B.CardBg", "B.AccentSoft", "B.Accent", "B.OnAccent"];
     public Task SaveCompletion => Task.WhenAll(_pendingSaves.ToArray());
     internal long? SelectedGroupId => (_groupCombo.SelectedItem as GroupChoice)?.Id;
     internal bool HasResultContext => _save is not null;
@@ -74,8 +78,10 @@ public sealed class TranslationResultWindow : Window
 
         Button MakeButton(Action action)
         {
-            var button = new Button { Padding = new Thickness(8, 4, 8, 4), Margin = new Thickness(0, 4, 5, 0),
-                Cursor = System.Windows.Input.Cursors.Arrow, MaxWidth = 240 };
+            var button = new Button { Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 6, 6, 0),
+                MinHeight = 30, MaxWidth = 240 };
+            button.SetResourceReference(StyleProperty, "S.Button");
+            button.SetResourceReference(BackgroundProperty, "B.CardBg");
             button.Click += (_, e) => { e.Handled = true; action(); };
             return button;
         }
@@ -110,13 +116,17 @@ public sealed class TranslationResultWindow : Window
         saves.Children.Add(_saveSource);
         saves.Children.Add(_saveTranslation);
         saves.Children.Add(_saveBoth);
-        _resultTools = new StackPanel { Visibility = Visibility.Collapsed };
-        _resultTools.Children.Add(_targetLabel);
-        _resultTools.Children.Add(_targetCombo);
-        _resultTools.Children.Add(_groupLabel);
-        _resultTools.Children.Add(_groupCombo);
-        _resultTools.Children.Add(saves);
-        _resultTools.Children.Add(_saveStatus);
+        _targetTools = new StackPanel { Name = "ResultTargetTools", Visibility = Visibility.Collapsed };
+        _targetTools.Children.Add(_targetLabel);
+        _targetTools.Children.Add(_targetCombo);
+        _saveTools = new StackPanel { Name = "ResultSaveTools", Visibility = Visibility.Collapsed };
+        _saveTools.Children.Add(_groupLabel);
+        _saveTools.Children.Add(_groupCombo);
+        _saveTools.Children.Add(saves);
+        _saveTools.Children.Add(_saveStatus);
+        _resultTools = new StackPanel { Name = "ResultTools", Visibility = Visibility.Collapsed };
+        _resultTools.Children.Add(_targetTools);
+        _resultTools.Children.Add(_saveTools);
 
         _sourcePanel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 10) };
         _sourcePanel.Children.Add(_sourceScroll = new ScrollViewer { Content = _source, MaxHeight = 130,
@@ -157,12 +167,14 @@ public sealed class TranslationResultWindow : Window
         SetActions(null, null);
         _settings.Changed += ApplySettings;
         ThemeManager.Changed += ApplyStyle;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         LocalizationService.Instance.LanguageChanged += ApplyLanguage;
         Closed += (_, _) =>
         {
             ClearContent();
             _settings.Changed -= ApplySettings;
             ThemeManager.Changed -= ApplyStyle;
+            SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
             LocalizationService.Instance.LanguageChanged -= ApplyLanguage;
         };
         MouseEnter += (_, _) => _hideTimer.Stop();
@@ -174,7 +186,13 @@ public sealed class TranslationResultWindow : Window
         };
     }
 
-    private void ApplySettings() => Dispatcher.Invoke(ApplyStyle);
+    private void ApplySettings() => Dispatcher.Invoke(() =>
+    {
+        ApplyStyle();
+        // Visibility is independent of the retained source and any request in flight.
+        // Toggling preferences must not recreate the context or change the chosen group.
+        RefreshToolVisibility();
+    });
 
     private void ApplyLanguage()
     {
@@ -183,7 +201,9 @@ public sealed class TranslationResultWindow : Window
         void Label(Button button, string key)
         {
             string label = loc[key];
-            button.Content = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap };
+            var text = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap };
+            text.SetBinding(TextBlock.ForegroundProperty, new Binding(nameof(Foreground)) { Source = button });
+            button.Content = text;
             AutomationProperties.SetName(button, label);
         }
         Label(_copySource, "Screenshot.CopySource");
@@ -217,10 +237,36 @@ public sealed class TranslationResultWindow : Window
     private void ApplyStyle()
     {
         Color text = GlassBubble.Apply(_settings.Current, _surface);
+        bool highContrast = SystemParameters.HighContrast;
+        if (highContrast)
+        {
+            _surface.Background = SystemColors.WindowBrush;
+            _surface.BorderBrush = SystemColors.WindowFrameBrush;
+            _surface.Effect = null;
+            text = SystemColors.WindowTextColor;
+            Resources["B.TextPrimary"] = SystemColors.ControlTextBrush;
+            Resources["B.InputText"] = SystemColors.WindowTextBrush;
+            Resources["B.InputBg"] = SystemColors.WindowBrush;
+            Resources["B.Border"] = SystemColors.WindowFrameBrush;
+            Resources["B.CardBg"] = SystemColors.ControlBrush;
+            Resources["B.AccentSoft"] = SystemColors.ControlLightBrush;
+            Resources["B.Accent"] = SystemColors.HighlightBrush;
+            Resources["B.OnAccent"] = SystemColors.HighlightTextBrush;
+        }
+        else
+        {
+            foreach (string key in ContrastResourceKeys) Resources.Remove(key);
+        }
         var fg = new SolidColorBrush(text);
         _body.Foreground = _bodyGlow.Foreground = _hint.Foreground = _source.Foreground = fg;
         _targetLabel.Foreground = _groupLabel.Foreground = _saveStatus.Foreground = fg;
-        GlassBubble.SetGlowEnabled(_bodyGlow, _settings.Current.BubbleTextGlow);
+        _hint.Opacity = highContrast ? 1 : 0.75;
+        GlassBubble.SetGlowEnabled(_bodyGlow, !highContrast && _settings.Current.BubbleTextGlow);
+    }
+
+    private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.Invoke(ApplyStyle);
     }
 
     public void ShowRecognizing(int deviceX, int deviceY)
@@ -235,6 +281,7 @@ public sealed class TranslationResultWindow : Window
     private void ShowProgress(int deviceX, int deviceY, string key)
     {
         ClearContent();
+        _inProgress = true;
         SetBody(LocalizationService.Instance[key]);
         (_anchorX, _anchorY) = (deviceX, deviceY);
         PopupPlacement.ShowNear(this, deviceX, deviceY, preferAbove: false);
@@ -281,7 +328,7 @@ public sealed class TranslationResultWindow : Window
             _groupCombo.SelectedItem = groups.FirstOrDefault(group => group.Id == currentGroup) ?? groups.FirstOrDefault();
         }
         finally { _updatingTools = false; }
-        _resultTools.Visibility = Visibility.Visible;
+        RefreshToolVisibility();
         RefreshSaveButtons();
         ClampIntoWorkArea();
     }
@@ -335,6 +382,24 @@ public sealed class TranslationResultWindow : Window
         _saveBoth.IsEnabled = !_textResult.Saving && _textResult.Content(ResultTextKind.Both) is not null;
         _targetCombo.IsEnabled = !_textResult.Saving && _textResult.Source.Length > 0;
         _groupCombo.IsEnabled = !_textResult.Saving;
+        foreach (Button button in new[] { _saveSource, _saveTranslation, _saveBoth })
+            button.Opacity = button.IsEnabled ? 1 : 0.45;
+        RefreshToolVisibility();
+    }
+
+    private void RefreshToolVisibility()
+    {
+        bool available = !_inProgress && _save is not null && _textResult.Content(ResultTextKind.Source) is not null;
+        Visibility target = available && _settings.Current.TranslationResultShowTargetSelector
+            ? Visibility.Visible : Visibility.Collapsed;
+        Visibility save = available && _settings.Current.TranslationResultShowSavePanel
+            ? Visibility.Visible : Visibility.Collapsed;
+        bool changed = _targetTools.Visibility != target || _saveTools.Visibility != save;
+        _targetTools.Visibility = target;
+        _saveTools.Visibility = save;
+        _resultTools.Visibility = target == Visibility.Visible || save == Visibility.Visible
+            ? Visibility.Visible : Visibility.Collapsed;
+        if (changed) ClampIntoWorkArea();
     }
 
     public void SetActions(Action? retry, Action? openSettings)
@@ -348,6 +413,7 @@ public sealed class TranslationResultWindow : Window
 
     public void ShowResult(string translated)
     {
+        _inProgress = false;
         _resultText = translated;
         _textResult.SetTranslation(_textResult.Revision, translated);
         _copyable = true;
@@ -362,6 +428,7 @@ public sealed class TranslationResultWindow : Window
 
     public void ShowError(string messageKey = "Translate.Failed")
     {
+        _inProgress = false;
         _resultText = string.Empty;
         _textResult.SetTranslation(_textResult.Revision, string.Empty);
         _copyable = false;
@@ -401,9 +468,11 @@ public sealed class TranslationResultWindow : Window
     private void ClearContent()
     {
         _textResult.Reset();
+        _inProgress = false;
         _save = null;
         _translateTarget = null;
         _resultTools.Visibility = Visibility.Collapsed;
+        _targetTools.Visibility = _saveTools.Visibility = Visibility.Collapsed;
         _saveStatus.Text = string.Empty;
         _hideTimer.Stop();
         _copyable = _persistentResult = false;

@@ -12,6 +12,7 @@ internal sealed record ComponentInstallerActions(
 public partial class SettingsWindow
 {
     private ComponentInstallerActions _components = null!;
+    private ComponentInstallService? _componentService;
     private CancellationTokenSource? _componentCancellation;
     private Task _componentOperation = Task.CompletedTask;
 
@@ -19,7 +20,7 @@ public partial class SettingsWindow
     {
         if (actions is null)
         {
-            var service = new ComponentInstallService();
+            var service = _componentService = new ComponentInstallService(_settings);
             actions = new(service.GetStatus,
                 (kind, progress, token) => service.InstallAsync(kind, progress, token),
                 service.StartOfflineAsync, service.StopOfflineAsync);
@@ -36,12 +37,16 @@ public partial class SettingsWindow
         OcrComponentStatus.Text = loc[$"Components.Status.{ocr}"];
         OfflineComponentStatus.Text = loc[$"Components.Status.{offline}"];
         bool idle = _componentCancellation is null;
-        OcrSetupButton.IsEnabled = idle;
-        OfflineSetupButton.IsEnabled = idle;
-        OfflineStartButton.IsEnabled = idle && offline == ComponentStatus.Ready;
-        OfflineStopButton.IsEnabled = idle && offline == ComponentStatus.Ready;
+        bool canRun = idle && _folderCancellation is null;
+        OcrSetupButton.IsEnabled = canRun;
+        OfflineSetupButton.IsEnabled = canRun;
+        OfflineStartButton.IsEnabled = canRun && offline == ComponentStatus.Ready;
+        OfflineStopButton.IsEnabled = canRun && offline == ComponentStatus.Ready;
         ComponentCancelButton.Visibility = idle ? Visibility.Collapsed : Visibility.Visible;
         ComponentProgress.Visibility = idle ? Visibility.Collapsed : Visibility.Visible;
+        ComponentOperationPanel.Visibility = idle && string.IsNullOrWhiteSpace(ComponentOperationStatus.Text)
+            ? Visibility.Collapsed : Visibility.Visible;
+        RefreshFolderAvailability();
     }
 
     private async void OnOcrSetupClick(object sender, RoutedEventArgs e)
@@ -71,6 +76,7 @@ public partial class SettingsWindow
     private Task RunComponentOperationAsync(Func<CancellationToken, Task<ComponentInstallResult>> operation)
     {
         if (_componentCancellation is not null) return _componentOperation;
+        if (_folderCancellation is not null) return _folderOperation;
         var request = new CancellationTokenSource();
         _componentCancellation = request;
         ComponentOperationStatus.Text = LocalizationService.Instance["Components.Phase.Checking"];
@@ -118,6 +124,7 @@ public partial class SettingsWindow
     public Task CancelComponentOperationAsync()
     {
         _componentCancellation?.Cancel();
-        return _componentOperation;
+        _folderCancellation?.Cancel();
+        return _folderOperation.IsCompleted ? _componentOperation : Task.WhenAll(_componentOperation, _folderOperation);
     }
 }

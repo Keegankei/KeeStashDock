@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
+using KeeStashDock.Infrastructure.Storage;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KeeStashDock.Desktop.Tests;
@@ -469,8 +470,157 @@ public sealed class ComponentInstallServiceTests
     public void OnlyBundledEndpointIsAutomaticallyManaged(string endpoint, bool expected)
         => Assert.AreEqual(expected, TranslationService.IsManagedOfflineEndpoint(endpoint));
 
-    private ComponentInstallService CreateService(TimeSpan? timeout = null)
-        => new(_baseDirectory, _localDataDirectory, timeout ?? TimeSpan.FromSeconds(30), HasFixtureOcrModels, HasFixtureOcrEngine);
+    [TestMethod]
+    public async Task CustomOcrLocationPersistsAndDoesNotFallBackToOldInstallation()
+    {
+        WriteSuccessfulOcrSetup();
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        var service = CreateService(settings: settings);
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.Ocr)).IsSuccess);
+        string destination = Path.Combine(_root, "custom OCR ' $value `literal");
+        Assert.IsTrue((await service.ChangeInstallDirectoryAsync(ComponentKind.Ocr, destination)).IsSuccess);
+        Assert.IsFalse(Directory.Exists(destination), "Selecting a location must not install or create files.");
+        Assert.AreEqual(ComponentStatus.Missing, service.GetStatus(ComponentKind.Ocr),
+            "An explicit destination must not silently use a different old component.");
+        Assert.AreEqual(Path.Combine(destination, "OcrModels"), service.GetOcrModelsDirectory());
+        Assert.AreEqual(Path.Combine(destination, "OcrEngine"), service.GetOcrEngineDirectory());
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.Ocr)).IsSuccess);
+        Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.Ocr));
+        Assert.IsTrue(HasFixtureOcrModels(OcrDirectory), "Changing locations must preserve old models.");
+        Assert.IsTrue(HasFixtureOcrModels(Path.Combine(destination, "OcrModels")));
+        var reloaded = new SettingsStore(Path.Combine(_root, "settings.json"));
+        reloaded.Load();
+        Assert.AreEqual(destination, reloaded.Current.OcrInstallDirectory);
+        Assert.IsTrue((await service.ChangeInstallDirectoryAsync(ComponentKind.Ocr, null)).IsSuccess);
+        Assert.IsNull(settings.Current.OcrInstallDirectory);
+        Assert.AreEqual(ComponentStatus.Ready, service.GetStatus(ComponentKind.Ocr));
+        Assert.IsTrue(Directory.Exists(destination), "Resetting to the default must not remove custom files.");
+    }
+
+    [TestMethod]
+    public async Task CustomOfflineLocationStopsOldEngineBeforeSwitchingAndReusesSelectedRuntime()
+    {
+        WriteOfflineScripts();
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        var service = CreateService(settings: settings);
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.OfflineTranslation)).IsSuccess);
+        string destination = Path.Combine(_root, "custom offline");
+        Assert.IsTrue((await service.ChangeInstallDirectoryAsync(ComponentKind.OfflineTranslation, destination)).IsSuccess);
+        Assert.AreEqual("stop\nsetup\nstart\nstop\n", File.ReadAllText(Path.Combine(OfflineDirectory, "order.txt")));
+        Assert.IsFalse(Directory.Exists(destination));
+        Assert.AreEqual(ComponentStatus.Missing, service.GetStatus(ComponentKind.OfflineTranslation));
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.OfflineTranslation)).IsSuccess);
+        Assert.AreEqual(destination, File.ReadAllText(Path.Combine(destination, "argument.txt")));
+        Assert.IsTrue(File.Exists(Path.Combine(OfflineDirectory, "installed.json")));
+        Assert.IsTrue((await service.StartOfflineAsync()).IsSuccess);
+        Assert.IsTrue((await service.StopOfflineAsync()).IsSuccess);
+        Assert.AreEqual("stop\nsetup\nstart\nstart\nstop\n", File.ReadAllText(Path.Combine(destination, "order.txt")));
+        var reloaded = new SettingsStore(Path.Combine(_root, "settings.json"));
+        reloaded.Load();
+        Assert.AreEqual(destination, reloaded.Current.OfflineTranslationInstallDirectory);
+    }
+
+    [TestMethod]
+    public async Task OfflineLocationRemainsUnchangedWhenOldEngineCannotStop()
+    {
+        WriteOfflineScripts();
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        var service = CreateService(settings: settings);
+        Assert.IsTrue((await service.InstallAsync(ComponentKind.OfflineTranslation)).IsSuccess);
+        WriteScript("OfflineTranslation", "Stop.ps1", "param([string]$RuntimeDirectory)\nthrow 'Fixture stop failure'");
+        Assert.IsFalse((await service.ChangeInstallDirectoryAsync(ComponentKind.OfflineTranslation,
+            Path.Combine(_root, "new-runtime"))).IsSuccess);
+        Assert.IsNull(settings.Current.OfflineTranslationInstallDirectory);
+        Assert.AreEqual(OfflineDirectory, service.GetInstallDirectory(ComponentKind.OfflineTranslation));
+        Assert.IsTrue(File.Exists(Path.Combine(OfflineDirectory, "installed.json")));
+    }
+
+    [TestMethod]
+    public async Task ComponentLocationRejectsUnrelatedFilesAndPreservesSettingsOnSaveFailure()
+    {
+        string destination = Path.Combine(_root, "personal-folder");
+        WriteFile(Path.Combine(destination, "personal.txt"), "keep this file");
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        var service = CreateService(settings: settings);
+        Assert.IsFalse((await service.ChangeInstallDirectoryAsync(ComponentKind.Ocr, destination)).IsSuccess);
+        Assert.AreEqual("keep this file", File.ReadAllText(Path.Combine(destination, "personal.txt")));
+        Assert.IsNull(settings.Current.OcrInstallDirectory);
+        Assert.IsFalse((await service.ChangeInstallDirectoryAsync(ComponentKind.Ocr, _baseDirectory)).IsSuccess);
+        string settingsFile = Path.Combine(_root, "invalid-settings-target");
+        Directory.CreateDirectory(settingsFile);
+        var badStore = new SettingsStore(settingsFile);
+        Assert.IsFalse((await CreateService(settings: badStore).ChangeInstallDirectoryAsync(ComponentKind.Ocr,
+            Path.Combine(_root, "unused-models"))).IsSuccess);
+        Assert.IsNull(badStore.Current.OcrInstallDirectory, "Failed persistence must restore the previous in-memory location.");
+    }
+
+    [TestMethod]
+    public async Task InvalidConfiguredComponentLocationCanBeResetWithoutStartingScripts()
+    {
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        settings.Current.OfflineTranslationInstallDirectory = "relative-runtime";
+        var service = CreateService(settings: settings);
+        Assert.AreEqual(ComponentStatus.Missing, service.GetStatus(ComponentKind.OfflineTranslation));
+        Assert.IsFalse(service.TryGetInstallDirectory(ComponentKind.OfflineTranslation, out string displayed));
+        Assert.AreEqual("relative-runtime", displayed, "Settings must be able to display and reset an invalid stored location.");
+        Assert.AreEqual(ComponentInstallFailure.MissingFiles, (await service.StartOfflineAsync()).Failure);
+        Assert.IsTrue((await service.ChangeInstallDirectoryAsync(ComponentKind.OfflineTranslation, null)).IsSuccess);
+        Assert.IsNull(settings.Current.OfflineTranslationInstallDirectory);
+        Assert.IsFalse(Directory.Exists(OfflineDirectory));
+    }
+
+    [TestMethod]
+    public async Task ReadOnlyComponentDestinationIsRejectedBeforeSavingTheLocation()
+    {
+        string destination = Path.Combine(_root, "read-only-component");
+        var directory = Directory.CreateDirectory(destination);
+        DirectorySecurity original = directory.GetAccessControl();
+        DirectorySecurity readOnly = directory.GetAccessControl();
+        using var identity = WindowsIdentity.GetCurrent();
+        readOnly.AddAccessRule(new FileSystemAccessRule(identity.User!, FileSystemRights.Write,
+            InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+            PropagationFlags.None, AccessControlType.Deny));
+        directory.SetAccessControl(readOnly);
+        try
+        {
+            var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+            ComponentInstallResult result = await CreateService(settings: settings)
+                .ChangeInstallDirectoryAsync(ComponentKind.Ocr, destination);
+            Assert.AreEqual(ComponentInstallFailure.AccessDenied, result.Failure);
+            Assert.IsNull(settings.Current.OcrInstallDirectory);
+            Assert.AreEqual(0, Directory.EnumerateFileSystemEntries(destination).Count());
+        }
+        finally { directory.SetAccessControl(original); }
+    }
+
+    [TestMethod]
+    public async Task CancelledComponentLocationChangeLeavesFilesAndPreferencesUntouched()
+    {
+        var settings = new SettingsStore(Path.Combine(_root, "settings.json"));
+        string destination = Path.Combine(_root, "cancelled-location");
+        using var token = new CancellationTokenSource();
+        token.Cancel();
+        var result = await CreateService(settings: settings).ChangeInstallDirectoryAsync(ComponentKind.Ocr, destination, token.Token);
+        Assert.AreEqual(ComponentInstallFailure.Cancelled, result.Failure);
+        Assert.IsNull(settings.Current.OcrInstallDirectory);
+        Assert.IsFalse(Directory.Exists(destination));
+        Assert.IsFalse(Directory.EnumerateFiles(_root, ".keestashdock-write-*", SearchOption.AllDirectories).Any());
+    }
+
+    [TestMethod]
+    [DataRow("relative/models")]
+    [DataRow("C:\\")]
+    [DataRow("C:\\models\\..\\other")]
+    [DataRow("C:\\models\\NUL")]
+    [DataRow("C:\\models\\runtime:stream")]
+    [DataRow("\\\\server\\share\\runtime")]
+    [DataRow("\\\\?\\C:\\runtime")]
+    [DataRow("C:\\models\\trailing.")]
+    public void UnsafeComponentPathsAreRejected(string path)
+        => Assert.IsFalse(ComponentInstallService.TryNormalizeInstallDirectory(path, out _));
+
+    private ComponentInstallService CreateService(TimeSpan? timeout = null, SettingsStore? settings = null)
+        => new(_baseDirectory, _localDataDirectory, timeout ?? TimeSpan.FromSeconds(30), HasFixtureOcrModels, HasFixtureOcrEngine, settings);
 
     private static bool HasFixtureOcrEngine(string directory)
         => new[] { "tesseract.exe", "tesseract55.dll", "leptonica-1.85.0.dll" }
