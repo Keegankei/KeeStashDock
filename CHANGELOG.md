@@ -6,7 +6,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
-## [1.2.3] - Unreleased
+## [1.2.3] - 2026-10-19
 
 ### Added
 
@@ -31,8 +31,8 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 - Align Spatial resize targets with the visible projected edges and corners, including inspected angles and right-to-left layouts. Keep the outer window frame resizable and scale grab areas with monitor DPI; compact and edge-hidden states remain fixed-size.
 
 See the [release notes](docs/releases/1.2.3-notes.md) and
-[acceptance record](docs/releases/1.2.3.md). Publication is pending; the stable
-1.2.2 download links remain available until the new release is published.
+[acceptance record](docs/releases/1.2.3.md). Release assets are provided through
+the [v1.2.3 release page](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3).
 
 ## [1.2.2] - 2026-10-17
 
@@ -166,6 +166,7 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
 
-[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

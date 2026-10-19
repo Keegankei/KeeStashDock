@@ -28,23 +28,27 @@
   <img alt="Apache-2.0 license" src="docs/assets/badges/license.svg">
 </p>
 
-**Source version 1.2.3** · [Release notes](docs/releases/1.2.3-notes.md) · [Acceptance record](docs/releases/1.2.3.md)
+**Version 1.2.3** · [Release notes](docs/releases/1.2.3-notes.md) · [Acceptance record](docs/releases/1.2.3.md)
 
-The latest published stable package is **1.2.2**. The 1.2.3 features below apply to the updated source and candidate builds until its release is published. Screenshots and GIFs remain labeled as **1.2.2**; they do not show the new controls.
+<!-- release-publication-pending:start -->
+> **Release publication in progress:** the v1.2.3 ZIP and checksum links below become available when the release is published. Until then, use the [latest published release](https://github.com/Keegankei/KeeStashDock/releases/latest).
+<!-- release-publication-pending:end -->
+
+Screenshots and GIFs show **1.2.2**; they do not show the new 1.2.3 settings and result controls.
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
 
 <a id="get-started"></a>
 ## Get started
 
-**[Latest release](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [SHA-256 checksum](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[Latest release](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [SHA-256 checksum](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. Download the application ZIP under **Assets**, rather than GitHub's developer-oriented **Source code** archive.
 2. Extract the complete package into a writable folder and run `KeeStashDock.exe`. Keep all accompanying folders together.
 3. Press **Alt+Q** to show the quick panel. Type a snippet and press **Enter** to save it; click its card to copy it.
 4. Open **Settings** from the panel or system tray to select a language, theme, and optional components.
 
-The Windows x64 package includes .NET; a separate .NET installation is unnecessary. Windows 11 is the primary target, with best-effort Windows 10 22H2 compatibility. OCR and offline translation may need Microsoft's Visual C++ runtime, which the in-app component installer can install. See the [1.2.2 acceptance record](docs/releases/1.2.2.md) for tested coverage.
+The Windows x64 package includes .NET; a separate .NET installation is unnecessary. Windows 11 is the primary target, with best-effort Windows 10 22H2 compatibility. OCR and offline translation may need Microsoft's Visual C++ runtime, which the in-app component installer can install. See the [1.2.3 acceptance record](docs/releases/1.2.3.md) for tested coverage.
 
 <details>
 <summary>Verify the downloaded ZIP</summary>
@@ -52,7 +56,7 @@ The Windows x64 package includes .NET; a separate .NET installation is unnecessa
 Run this in the download folder and compare the result with the accompanying `.sha256` file:
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 A checksum checks file integrity; it is not a publisher signature. The current package is unsigned.
@@ -104,7 +108,7 @@ Use the quick panel for short captures and the **workbench** for managing your c
 | Clipboard history | Optionally collect copied **text** automatically; empty and oversized text is ignored and duplicates are not added again. Off by default. |
 | Direct paste | Optionally paste a copied text entry into the previous application when its target window can be safely confirmed. Off by default. |
 
-### 2. Standard and Spatial panels · 1.2.2
+### 2. Standard and Spatial panels
 
 Select **Settings > Appearance > Panel mode**. Both modes keep the same controls, typography, colors, and card layout.
 
@@ -124,7 +128,9 @@ Select **Settings > Appearance > Panel mode**. Both modes keep the same controls
 - **Fixed perspective:** keep a steady tilted view while nearby cards respond to the pointer.
 - **Drag to inspect:** hold the **right mouse button** on a card body or panel background and drag. Release to keep the angle. A right-click without dragging still opens a card's menu. Settings also supports the middle button or a custom button/modifier combination.
 - **Compact bar:** collapse the panel to six actions: minimize, expand/collapse, lock, screenshot, workbench, and Settings. Expanding restores the previous panel size.
-- **Hide at desktop edge:** enabled by default in 1.2.2; drag the panel to one of the four screen edges, then move away. A small handle remains; hover over or click it to restore the panel. Locking keeps it visible.
+- **Hide at desktop edge:** enabled by default in 1.2.3; drag the panel to one of the four screen edges, then move away. A small handle remains; hover over or click it to restore the panel. Locking keeps it visible.
+
+Resize an expanded panel by dragging its edges or corners in either mode; its size is restored on restart. The compact six-button bar stays fixed in size. Version 1.2.3 also fixes an initialization exception when restoring a saved panel position and aligns Spatial resize hit areas with the visible panel edges.
 
 Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png) · [Measured performance and limits](docs/performance/1.2.2-floating.md).
 
@@ -143,7 +149,7 @@ Settings also offers panel text palettes, a custom text color, and automatic con
 
 Press **Alt+W** or a screenshot button and drag to select a region. Saved screenshots become image entries in the selected group. Open one to preview, copy, save as PNG, or **Recognize text**. You can edit and search the recognized text while retaining the original image.
 
-**1.2.2:** a toolbar after selection offers three separate actions:
+A toolbar after selection offers three separate actions:
 
 | Action | Result |
 | --- | --- |
@@ -163,7 +169,7 @@ Drag again to reselect; **Esc** or right-click cancels. Temporary results suppor
 
 The selection bubble is enabled by default in **Copy only** mode; configure it in **Settings > Capture & translation**, then select text in another application. **Copy** captures the selection into the dock's current group; **Translate** shows a translation without adding an entry.
 
-**1.2.2:** choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
+Choose **Copy and translate** to keep both buttons visible. After copying, you can still translate the same selection before the bubble closes. Translation failures preserve the source text.
 
 **1.2.3:** choose a translation target independently of the interface language in Settings. **Follow interface language** remains the default on fresh installs and upgrades. Selection translation, screenshot translation and Test translation use the same preference. The result window shows the effective target and lets you translate the retained source into a different language for that result only, without changing Settings. Available targets depend on the provider or installed offline models; unsupported pairs produce an error without switching provider or uploading offline text.
 
@@ -189,7 +195,7 @@ Cloud translation sends only the requested text to the selected provider, with n
 *The 1.2.2 component settings show the fresh-install state: OCR and offline translation are not installed. Use these in-app buttons to install them; no terminal command is required.*
 
 1. Open **Settings > Local components**.
-2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.2 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
+2. For OCR, choose **Install / repair** under **Text recognition (Chinese / English)** before first use. The 1.2.3 package does not preinstall OCR or offline translation engines or models; explicit setup downloads and verifies the required files and checks the native runtime.
 3. For local translation, choose **Install / repair** under **Offline translation (Chinese / English)**. Keep Settings open during the initial download; allow approximately **1 GB of free disk space** and **2 GB of available memory**.
 4. Follow Microsoft's installer if prompted. If setup reports **Restart required**, restart Windows and retry. Cancelling app setup does not undo a Windows runtime installation already started.
 5. Select **Local offline (Argos / LibreTranslate)** as the translation engine. Keep `http://127.0.0.1:5000`, then use **Test translation**. The service starts when needed; **Start service** and **Stop service** are also available.
@@ -198,7 +204,7 @@ Initial setup needs internet access to the relevant NuGet, GitHub, Python, packa
 
 **Language coverage:** OCR supports printed English and Simplified Chinese. The optional downloaded translation models support **English ↔ Simplified Chinese**. The app's **20 interface languages** do not imply 20 OCR or offline translation languages. Missing models never trigger a switch to cloud translation. [Offline setup and troubleshooting](docs/OFFLINE_TRANSLATION.md).
 
-### 6. Check for updates · 1.2.2
+### 6. Check for updates
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="Update dialog displaying a simulated newer release with the installation path masked"></p>
 
@@ -219,10 +225,10 @@ The organized package has three root files: `KeeStashDock.exe`, `StartHere.md`, 
 | Save typed text | **Enter** |
 | Insert line break | **Alt+Enter** or **Shift+Enter** |
 | Screenshot | **Alt+W**; independently configurable |
-| Save selected screenshot region | **Enter** in the 1.2.2 capture toolbar |
+| Save selected screenshot region | **Enter** in the 1.2.3 capture toolbar |
 | Cancel screenshot | **Esc** or right-click |
-| Inspect Spatial panel | Hold **right mouse button** and drag; configurable in 1.2.2 |
-| Copy/translate from the selection bubble | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** in 1.2.2, only while the bubble is visible and the shortcuts are available |
+| Inspect Spatial panel | Hold **right mouse button** and drag; configurable in 1.2.3 |
+| Copy/translate from the selection bubble | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** in 1.2.3, only while the bubble is visible and the shortcuts are available |
 
 <a id="data-and-upgrades"></a>
 ## Data, backup, and upgrades
@@ -245,7 +251,7 @@ Use **Settings > Backup & data** to export/import a backup and configure schedul
 3. Keep the original installation and backup. Start the new version and confirm your entries before removing old copies. Keep a pre-upgrade backup for rollback; older database schemas are not interchangeable.
 4. If **Start with Windows** was enabled and you moved to a new folder, turn it off and on again in the new app's Settings. This registers the new executable path; otherwise Windows may launch the old copy at the next sign-in.
 
-Earlier 1.2.2 candidates also need manual replacement because they share the final version number. Keep their data and backup; follow the same migration steps.
+From **1.2.2**, use **Check for updates** after this release is published, or follow the manual steps above. **1.2.3 candidate builds (r1–r4)** require manual replacement because they share the final numeric version. Preserve the complete active data folder and backups; exit the old process before starting the new copy.
 
 Do not attach personal `Data`, credentials, private backups, or logs to an issue. See [support and sanitized reports](SUPPORT.md), [upgrade recovery](docs/UPDATING.md), and the [security policy](SECURITY.md).
 

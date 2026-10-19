@@ -28,23 +28,27 @@
   <img alt="Licença Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Versão do código-fonte 1.2.3** · [Notas da versão](docs/releases/1.2.3-notes.md) · [Registro de validação](docs/releases/1.2.3.md)
+**Versão 1.2.3** · [Notas da versão](docs/releases/1.2.3-notes.md) · [Registro de validação](docs/releases/1.2.3.md)
 
-O último pacote estável publicado é **1.2.2**. Os recursos da 1.2.3 abaixo se aplicam ao código atualizado e às compilações candidatas até a publicação. As capturas e os GIFs continuam identificados como **1.2.2** e não mostram os novos controles.
+<!-- release-publication-pending:start -->
+> **Publicação em andamento:** os links abaixo para o ZIP e a soma de verificação da v1.2.3 estarão disponíveis após a publicação. Até lá, use a [versão publicada mais recente](https://github.com/Keegankei/KeeStashDock/releases/latest).
+<!-- release-publication-pending:end -->
+
+As capturas e os GIFs mostram a **1.2.2**, sem as novas configurações e os controles de resultados da 1.2.3.
 
 [Primeiros passos](#get-started) · [Recursos](#features) · [Atalhos](#shortcuts) · [Dados e atualizações](#data-and-upgrades) · [Desenvolvimento](#development) · [Licença](#license)
 
 <a id="get-started"></a>
 ## Primeiros passos
 
-**[Versão mais recente](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP para Windows x64 — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [Soma de verificação SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[Versão mais recente](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP para Windows x64 — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [Soma de verificação SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. Baixe o ZIP do aplicativo na seção **Assets**, em vez do arquivo **Source code** do GitHub, destinado ao desenvolvimento.
 2. Extraia o pacote completo para uma pasta com permissão de gravação e execute `KeeStashDock.exe`. Mantenha todas as pastas que acompanham o aplicativo juntas.
 3. Pressione **Alt+Q** para mostrar o painel rápido. Digite um trecho e pressione **Enter** para salvá-lo; clique no cartão para copiá-lo.
 4. Abra **Configurações** pelo painel ou pela bandeja do sistema para selecionar o idioma, o tema e os componentes opcionais.
 
-O pacote para Windows x64 inclui o .NET; não é necessário instalá-lo separadamente. O Windows 11 é a plataforma principal, com compatibilidade com o Windows 10 22H2 na medida do possível. O OCR e a tradução offline podem precisar do runtime do Visual C++ da Microsoft, que pode ser instalado pelo instalador de componentes integrado. Consulte o [registro de aceitação da versão 1.2.2](docs/releases/1.2.2.md) para conhecer a cobertura dos testes.
+O pacote para Windows x64 inclui o .NET; não é necessário instalá-lo separadamente. O Windows 11 é a plataforma principal, com compatibilidade com o Windows 10 22H2 na medida do possível. O OCR e a tradução offline podem precisar do runtime do Visual C++ da Microsoft, que pode ser instalado pelo instalador de componentes integrado. Consulte o [registro de aceitação da versão 1.2.3](docs/releases/1.2.3.md) para conhecer a cobertura dos testes.
 
 <details>
 <summary>Verificar o ZIP baixado</summary>
@@ -52,7 +56,7 @@ O pacote para Windows x64 inclui o .NET; não é necessário instalá-lo separad
 Execute o comando abaixo na pasta de download e compare o resultado com o arquivo `.sha256` que acompanha o pacote:
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 Uma soma de verificação confirma a integridade do arquivo; ela não é uma assinatura do fornecedor. O pacote atual não é assinado.
@@ -104,7 +108,7 @@ Use o painel rápido para capturas pontuais e a **área de trabalho do aplicativ
 | Histórico da área de transferência | Colete automaticamente o **texto** copiado, se ativar essa opção; textos vazios ou grandes demais são ignorados e duplicatas não são adicionadas novamente. Desativado por padrão. |
 | Colagem direta | Cole uma entrada de texto copiada no aplicativo anterior, se ativar essa opção e a janela de destino puder ser confirmada com segurança. Desativado por padrão. |
 
-### 2. Painéis Padrão e Espacial · 1.2.2
+### 2. Painéis Padrão e Espacial
 
 Selecione **Configurações > Aparência > Modo do painel**. Os dois modos mantêm os mesmos controles, tipografia, cores e disposição dos cartões.
 
@@ -124,7 +128,9 @@ Selecione **Configurações > Aparência > Modo do painel**. Os dois modos mant�
 - **Perspectiva fixa:** mantenha uma visualização inclinada estável enquanto os cartões próximos respondem ao ponteiro.
 - **Arrastar para inspecionar:** mantenha o **botão direito do mouse** pressionado sobre o corpo de um cartão ou o fundo do painel e arraste. Solte para manter o ângulo. Um clique direito sem arrastar continua abrindo o menu do cartão. As configurações também permitem usar o botão do meio ou uma combinação personalizada de botão e teclas modificadoras.
 - **Barra compacta:** recolha o painel para exibir seis ações: minimizar, expandir/recolher, bloquear, captura de tela, área de trabalho do aplicativo e Configurações. Ao expandir, o tamanho anterior do painel é restaurado.
-- **Ocultar na borda da área de trabalho:** ativado por padrão em 1.2.2; arraste o painel até uma das quatro bordas da tela e afaste o ponteiro. Uma pequena alça permanece visível; passe o ponteiro sobre ela ou clique para restaurar o painel. O bloqueio mantém o painel visível.
+- **Ocultar na borda da área de trabalho:** ativado por padrão em 1.2.3; arraste o painel até uma das quatro bordas da tela e afaste o ponteiro. Uma pequena alça permanece visível; passe o ponteiro sobre ela ou clique para restaurar o painel. O bloqueio mantém o painel visível.
+
+Nos dois modos, arraste as bordas ou os cantos do painel expandido para alterar seu tamanho; ele será restaurado ao reiniciar. A barra compacta de seis botões mantém um tamanho fixo. A versão 1.2.3 também corrige uma exceção na inicialização ao restaurar a posição salva e alinha as áreas de redimensionamento do modo Espacial às bordas visíveis do painel.
 
 Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png) · [Desempenho medido e limites](docs/performance/1.2.2-floating.md).
 
@@ -143,7 +149,7 @@ As configurações também oferecem paletas de texto para o painel, uma cor de t
 
 Pressione **Alt+W** ou um botão de captura e arraste para selecionar uma região. As capturas salvas se tornam entradas de imagem no grupo selecionado. Abra uma para visualizar, copiar, salvar como PNG ou **Reconhecer texto**. Você pode editar e pesquisar o texto reconhecido mantendo a imagem original.
 
-**1.2.2:** após a seleção, uma barra de ferramentas oferece três ações separadas:
+Após a seleção, uma barra de ferramentas oferece três ações separadas:
 
 | Ação | Resultado |
 | --- | --- |
@@ -163,7 +169,7 @@ Arraste novamente para refazer a seleção; **Esc** ou um clique direito cancela
 
 Ative o balão de seleção em **Configurações > Captura e tradução** e selecione texto em outro aplicativo. **Copiar** salva a seleção no grupo atual do painel; **Traduzir** mostra uma tradução sem adicionar uma entrada.
 
-**1.2.2:** escolha **Copiar e traduzir** para manter os dois botões visíveis. Depois de copiar, você ainda pode traduzir a mesma seleção antes que o balão feche. Falhas de tradução preservam o texto original.
+Escolha **Copiar e traduzir** para manter os dois botões visíveis. Depois de copiar, você ainda pode traduzir a mesma seleção antes que o balão feche. Falhas de tradução preservam o texto original.
 
 **1.2.3:** escolha nas configurações um idioma de tradução independente da interface. **Seguir o idioma da interface** continua sendo o padrão em novas instalações e atualizações. Traduções de seleção, capturas e testes usam a mesma preferência. A janela de resultado mostra o destino efetivo e permite retraduzir temporariamente o original preservado sem alterar as configurações globais. Os destinos dependem do provedor ou dos modelos instalados. Pares não compatíveis geram um erro sem trocar de provedor nem enviar o texto offline.
 
@@ -189,7 +195,7 @@ A tradução na nuvem envia apenas o texto solicitado ao provedor selecionado, s
 *As configurações dos componentes mostram o estado de uma nova instalação da versão 1.2.2: OCR e tradução offline não estão instalados. Use esses botões do aplicativo para instalá-los, sem comandos de terminal.*
 
 1. Abra **Configurações > Componentes locais**.
-2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.2 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
+2. Antes de usar o OCR pela primeira vez, escolha **Instalar / reparar** em **Reconhecimento de texto (chinês / inglês)**. O pacote 1.2.3 não pré-instala mecanismos nem modelos de OCR ou tradução local. A instalação iniciada explicitamente baixa e verifica os arquivos necessários e confere o runtime nativo.
 3. Para tradução local, escolha **Instalar / reparar** em **Tradução offline (chinês / inglês)**. Mantenha as configurações abertas durante o download inicial; reserve aproximadamente **1 GB de espaço livre em disco** e **2 GB de memória disponível**.
 4. Siga o instalador da Microsoft, se solicitado. Se a instalação informar **Reinicialização necessária**, reinicie o Windows e tente novamente. Cancelar a instalação no aplicativo não desfaz uma instalação do runtime do Windows que já tenha começado.
 5. Selecione **Local offline (Argos / LibreTranslate)** como mecanismo de tradução. Mantenha `http://127.0.0.1:5000` e use **Testar tradução**. O serviço inicia quando necessário; **Iniciar serviço** e **Parar serviço** também estão disponíveis.
@@ -198,7 +204,7 @@ A instalação inicial precisa de acesso à internet aos servidores de download 
 
 **Idiomas compatíveis:** o OCR reconhece texto impresso em inglês e chinês simplificado. Os modelos de tradução de download opcional oferecem suporte a **inglês ↔ chinês simplificado**. Os **20 idiomas da interface** não significam que o OCR ou a tradução offline ofereçam suporte a 20 idiomas. A ausência de modelos nunca provoca uma troca para tradução na nuvem. [Instalação offline e solução de problemas](docs/OFFLINE_TRANSLATION.md).
 
-### 6. Verificar atualizações · 1.2.2
+### 6. Verificar atualizações
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="Janela de atualização mostrando uma versão mais recente simulada e o caminho de instalação oculto"></p>
 
@@ -219,10 +225,10 @@ O pacote organizado tem três arquivos na raiz: `KeeStashDock.exe`, `StartHere.m
 | Salvar o texto digitado | **Enter** |
 | Inserir quebra de linha | **Alt+Enter** ou **Shift+Enter** |
 | Captura de tela | **Alt+W**; configurável separadamente |
-| Salvar a região selecionada da captura | **Enter** na barra de captura da versão 1.2.2 |
+| Salvar a região selecionada da captura | **Enter** na barra de captura da versão 1.2.3 |
 | Cancelar captura | **Esc** ou clique direito |
-| Inspecionar o painel Espacial | Manter o **botão direito do mouse** pressionado e arrastar; configurável na versão 1.2.2 |
-| Copiar/traduzir pelo balão de seleção | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** na versão 1.2.2, somente enquanto o balão estiver visível e os atalhos estiverem disponíveis |
+| Inspecionar o painel Espacial | Manter o **botão direito do mouse** pressionado e arrastar; configurável na versão 1.2.3 |
+| Copiar/traduzir pelo balão de seleção | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** na versão 1.2.3, somente enquanto o balão estiver visível e os atalhos estiverem disponíveis |
 
 <a id="data-and-upgrades"></a>
 ## Dados, backup e atualizações
@@ -245,7 +251,7 @@ Use **Configurações > Backup e dados** para exportar ou importar um backup e c
 3. Mantenha a instalação original e o backup. Inicie a nova versão e confira suas entradas antes de remover as cópias antigas. Guarde um backup anterior à atualização para poder voltar à versão anterior; esquemas antigos de banco de dados não são intercambiáveis.
 4. Se **Iniciar com o Windows** estava ativado e você mudou de pasta, desative e ative novamente a opção nas configurações do novo aplicativo. Isso registra o novo caminho; caso contrário, o Windows poderá iniciar a cópia antiga no próximo login.
 
-As versões candidatas anteriores de 1.2.2 também precisam ser substituídas manualmente, pois usam o mesmo número da versão final. Preserve os dados e o backup e siga o mesmo procedimento.
+Na **1.2.2**, use **Verificar atualizações** após esta publicação ou siga as etapas manuais acima. As **versões candidatas 1.2.3 (r1–r4)** precisam de substituição manual porque compartilham o número da versão final. Preserve toda a pasta de dados ativa e os backups; encerre o processo antigo antes de iniciar a nova cópia.
 
 Não anexe sua pasta pessoal `Data`, credenciais, backups privados ou logs a uma issue. Consulte [suporte e relatórios sem dados sensíveis](SUPPORT.md), [recuperação de atualização](docs/UPDATING.md) e a [política de segurança](SECURITY.md).
 

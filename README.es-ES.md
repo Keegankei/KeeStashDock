@@ -28,23 +28,27 @@
   <img alt="Licencia Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Versión del código fuente 1.2.3** · [Notas de la versión](docs/releases/1.2.3-notes.md) · [Registro de validación](docs/releases/1.2.3.md)
+**Versión 1.2.3** · [Notas de la versión](docs/releases/1.2.3-notes.md) · [Registro de validación](docs/releases/1.2.3.md)
 
-El último paquete estable publicado es **1.2.2**. Las funciones de 1.2.3 descritas a continuación corresponden al código actualizado y a las compilaciones candidatas hasta su publicación. Las capturas y los GIF siguen identificados como **1.2.2** y no muestran los controles nuevos.
+<!-- release-publication-pending:start -->
+> **Publicación en curso:** los enlaces siguientes al ZIP y a la suma de comprobación de v1.2.3 estarán disponibles cuando se publique la versión. Mientras tanto, usa la [última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest).
+<!-- release-publication-pending:end -->
+
+Las capturas y los GIF muestran **1.2.2**, sin los nuevos ajustes ni controles de resultados de 1.2.3.
 
 [Primeros pasos](#get-started) · [Funciones](#features) · [Atajos](#shortcuts) · [Datos y actualizaciones](#data-and-upgrades) · [Desarrollo](#development) · [Licencia](#license)
 
 <a id="get-started"></a>
 ## Primeros pasos
 
-**[Última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP para Windows x64 — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [Suma de comprobación SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[Última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP para Windows x64 — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [Suma de comprobación SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. Descarga el ZIP de la aplicación en **Assets**, en lugar del archivo **Source code** de GitHub, destinado al desarrollo.
 2. Extrae el paquete completo en una carpeta con permisos de escritura y ejecuta `KeeStashDock.exe`. Mantén juntas todas las carpetas que lo acompañan.
 3. Pulsa **Alt+Q** para mostrar el panel rápido. Escribe un fragmento y pulsa **Enter** para guardarlo; haz clic en su tarjeta para copiarlo.
 4. Abre **Configuración** desde el panel o la bandeja del sistema para elegir un idioma, un tema y los componentes opcionales.
 
-El paquete para Windows x64 incluye .NET; no es necesario instalar .NET por separado. Windows 11 es la plataforma principal, con compatibilidad con Windows 10 22H2 en la medida de lo posible. El OCR y la traducción sin conexión pueden necesitar el entorno de ejecución de Visual C++ de Microsoft, que puede instalarse mediante el instalador de componentes integrado. Consulta el [registro de aceptación de la versión 1.2.2](docs/releases/1.2.2.md) para conocer el alcance de las pruebas.
+El paquete para Windows x64 incluye .NET; no es necesario instalar .NET por separado. Windows 11 es la plataforma principal, con compatibilidad con Windows 10 22H2 en la medida de lo posible. El OCR y la traducción sin conexión pueden necesitar el entorno de ejecución de Visual C++ de Microsoft, que puede instalarse mediante el instalador de componentes integrado. Consulta el [registro de aceptación de la versión 1.2.3](docs/releases/1.2.3.md) para conocer el alcance de las pruebas.
 
 <details>
 <summary>Verificar el ZIP descargado</summary>
@@ -52,7 +56,7 @@ El paquete para Windows x64 incluye .NET; no es necesario instalar .NET por sepa
 Ejecuta lo siguiente en la carpeta de descargas y compara el resultado con el archivo `.sha256` adjunto:
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 Una suma de comprobación verifica la integridad del archivo; no es una firma del editor. El paquete actual no está firmado.
@@ -104,7 +108,7 @@ Utiliza el panel rápido para capturas breves y el **área de trabajo** para ges
 | Historial del portapapeles | Recopila automáticamente el **texto** copiado si activas esta opción; se ignoran los textos vacíos o demasiado grandes y no se añaden duplicados. Desactivado de forma predeterminada. |
 | Pegado directo | Pega una entrada de texto copiada en la aplicación anterior si activas esta opción y puede confirmarse de forma segura la ventana de destino. Desactivado de forma predeterminada. |
 
-### 2. Paneles Estándar y Espacial · 1.2.2
+### 2. Paneles Estándar y Espacial
 
 Selecciona **Configuración > Apariencia > Modo del panel**. Ambos modos mantienen los mismos controles, tipografía, colores y distribución de tarjetas.
 
@@ -124,7 +128,9 @@ Selecciona **Configuración > Apariencia > Modo del panel**. Ambos modos mantien
 - **Perspectiva fija:** conserva una vista inclinada estable mientras las tarjetas cercanas responden al puntero.
 - **Arrastrar para inspeccionar:** mantén pulsado el **botón derecho del ratón** sobre el cuerpo de una tarjeta o el fondo del panel y arrastra. Suelta para mantener el ángulo. Un clic derecho sin arrastrar sigue abriendo el menú de la tarjeta. La configuración también permite usar el botón central o una combinación personalizada de botón y teclas modificadoras.
 - **Barra compacta:** contrae el panel a seis acciones: minimizar, expandir/contraer, bloquear, captura de pantalla, área de trabajo y Configuración. Al expandirlo, se recupera el tamaño anterior del panel.
-- **Ocultar en el borde del escritorio:** activado por defecto en 1.2.2; arrastra el panel a uno de los cuatro bordes de la pantalla y aleja el puntero. Quedará un pequeño tirador; pasa el puntero sobre él o haz clic para recuperar el panel. El bloqueo lo mantiene visible.
+- **Ocultar en el borde del escritorio:** activado por defecto en 1.2.3; arrastra el panel a uno de los cuatro bordes de la pantalla y aleja el puntero. Quedará un pequeño tirador; pasa el puntero sobre él o haz clic para recuperar el panel. El bloqueo lo mantiene visible.
+
+En ambos modos, arrastra los bordes o las esquinas del panel expandido para cambiar su tamaño; se restaura al reiniciar. La barra compacta de seis botones mantiene un tamaño fijo. La versión 1.2.3 también corrige una excepción de inicialización al restaurar la posición guardada y alinea las zonas de cambio de tamaño del modo Espacial con los bordes visibles del panel.
 
 Hay temas claro, oscuro y del sistema, con ajustes de fondo personalizado, opacidad y efecto esmerilado. Las preferencias del sistema de alto contraste y reducción de animaciones ofrecen alternativas estáticas. [Vista previa oscura](docs/images/floating-panel-dark.png) · [Vista previa fija](docs/images/floating-panel-fixed.png) · [Rendimiento medido y límites](docs/performance/1.2.2-floating.md).
 
@@ -143,7 +149,7 @@ La configuración también ofrece paletas de texto para el panel, un color de te
 
 Pulsa **Alt+W** o un botón de captura y arrastra para seleccionar una zona. Las capturas guardadas se convierten en entradas de imagen dentro del grupo seleccionado. Abre una para verla, copiarla, guardarla como PNG o **Reconocer texto**. Puedes editar y buscar el texto reconocido conservando la imagen original.
 
-**1.2.2:** después de seleccionar una zona, una barra de herramientas ofrece tres acciones independientes:
+Después de seleccionar una zona, una barra de herramientas ofrece tres acciones independientes:
 
 | Acción | Resultado |
 | --- | --- |
@@ -163,7 +169,7 @@ Arrastra de nuevo para cambiar la selección; **Esc** o un clic derecho cancela 
 
 Activa la burbuja de selección en **Configuración > Captura y traducción** y selecciona texto en otra aplicación. **Copiar** guarda la selección en el grupo actual del panel; **Traducir** muestra una traducción sin añadir una entrada.
 
-**1.2.2:** elige **Copiar y traducir** para mantener ambos botones visibles. Después de copiar, puedes traducir la misma selección antes de que se cierre la burbuja. Si la traducción falla, se conserva el texto original.
+Elige **Copiar y traducir** para mantener ambos botones visibles. Después de copiar, puedes traducir la misma selección antes de que se cierre la burbuja. Si la traducción falla, se conserva el texto original.
 
 **1.2.3:** selecciona en Configuración un idioma de traducción independiente de la interfaz. **Seguir el idioma de la interfaz** continúa siendo el valor predeterminado en instalaciones nuevas y actualizaciones. Las selecciones, capturas y pruebas de traducción usan esa misma preferencia. La ventana de resultados muestra el destino efectivo y permite volver a traducir temporalmente el original conservado sin cambiar los ajustes globales. Los destinos dependen del proveedor o de los modelos instalados. Las combinaciones no admitidas generan un error sin cambiar de proveedor ni subir el texto sin conexión.
 
@@ -189,7 +195,7 @@ La traducción en la nube envía únicamente el texto solicitado al proveedor se
 *Los ajustes de componentes muestran el estado de una instalación nueva de 1.2.2: OCR y traducción sin conexión no están instalados. Estos botones integrados permiten instalarlos sin comandos de terminal.*
 
 1. Abre **Configuración > Componentes locales**.
-2. Antes de usar el OCR por primera vez, elige **Instalar / reparar** en **Reconocimiento de texto (chino / inglés)**. El paquete 1.2.2 no preinstala motores ni modelos de OCR o traducción local. La instalación iniciada explícitamente descarga y verifica los archivos necesarios y comprueba el entorno de ejecución nativo.
+2. Antes de usar el OCR por primera vez, elige **Instalar / reparar** en **Reconocimiento de texto (chino / inglés)**. El paquete 1.2.3 no preinstala motores ni modelos de OCR o traducción local. La instalación iniciada explícitamente descarga y verifica los archivos necesarios y comprueba el entorno de ejecución nativo.
 3. Para la traducción local, elige **Instalar / reparar** en **Traducción sin conexión (chino / inglés)**. Mantén abierta la configuración durante la descarga inicial; reserva aproximadamente **1 GB de espacio libre en disco** y **2 GB de memoria disponible**.
 4. Sigue el instalador de Microsoft si aparece. Si la instalación indica **Reinicio necesario**, reinicia Windows y vuelve a intentarlo. Cancelar la instalación en la aplicación no revierte una instalación del entorno de ejecución de Windows que ya haya comenzado.
 5. Selecciona **Local sin conexión (Argos / LibreTranslate)** como motor de traducción. Mantén `http://127.0.0.1:5000` y utiliza **Probar traducción**. El servicio se inicia cuando hace falta; también están disponibles **Iniciar servicio** y **Detener servicio**.
@@ -198,7 +204,7 @@ La instalación inicial necesita acceso a Internet a los servidores de descarga 
 
 **Idiomas compatibles:** el OCR admite texto impreso en inglés y chino simplificado. Los modelos de traducción de descarga opcional admiten **inglés ↔ chino simplificado**. Los **20 idiomas de la interfaz** no implican que el OCR o la traducción sin conexión admitan 20 idiomas. La ausencia de modelos nunca provoca un cambio a la traducción en la nube. [Instalación sin conexión y resolución de problemas](docs/OFFLINE_TRANSLATION.md).
 
-### 6. Buscar actualizaciones · 1.2.2
+### 6. Buscar actualizaciones
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="Diálogo de actualización con una versión más reciente simulada y la ruta de instalación oculta"></p>
 
@@ -219,10 +225,10 @@ El paquete organizado contiene tres archivos en la raíz: `KeeStashDock.exe`, `S
 | Guardar el texto escrito | **Enter** |
 | Insertar un salto de línea | **Alt+Enter** o **Shift+Enter** |
 | Captura de pantalla | **Alt+W**; configurable por separado |
-| Guardar la zona de captura seleccionada | **Enter** en la barra de captura de la versión 1.2.2 |
+| Guardar la zona de captura seleccionada | **Enter** en la barra de captura de la versión 1.2.3 |
 | Cancelar la captura | **Esc** o clic derecho |
-| Inspeccionar el panel Espacial | Mantener pulsado el **botón derecho del ratón** y arrastrar; configurable en la versión 1.2.2 |
-| Copiar/traducir desde la burbuja de selección | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** en la versión 1.2.2, solo mientras la burbuja esté visible y los atajos estén disponibles |
+| Inspeccionar el panel Espacial | Mantener pulsado el **botón derecho del ratón** y arrastrar; configurable en la versión 1.2.3 |
+| Copiar/traducir desde la burbuja de selección | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** en la versión 1.2.3, solo mientras la burbuja esté visible y los atajos estén disponibles |
 
 <a id="data-and-upgrades"></a>
 ## Datos, copias de seguridad y actualizaciones
@@ -245,7 +251,7 @@ Usa **Configuración > Copias y datos** para exportar o importar una copia de se
 3. Conserva la instalación original y la copia de seguridad. Inicia la nueva versión y comprueba tus entradas antes de eliminar las copias antiguas. Guarda una copia de seguridad anterior a la actualización para poder volver atrás; los esquemas antiguos de la base de datos no son intercambiables.
 4. Si **Iniciar con Windows** estaba activado y has cambiado de carpeta, desactiva y vuelve a activar la opción en la configuración de la nueva aplicación. Así se registra la nueva ruta; de lo contrario, Windows podría iniciar la copia anterior al volver a iniciar sesión.
 
-Las versiones candidatas anteriores de 1.2.2 también requieren sustitución manual, ya que comparten el número de la versión final. Conserva los datos y la copia de seguridad y sigue el mismo procedimiento.
+Desde **1.2.2**, usa **Buscar actualizaciones** tras esta publicación o sigue los pasos manuales anteriores. Las **versiones candidatas 1.2.3 (r1–r4)** requieren sustitución manual porque comparten el número de la versión final. Conserva la carpeta de datos activa completa y las copias de seguridad; cierra el proceso anterior antes de iniciar la nueva copia.
 
 No adjuntes tu carpeta personal `Data`, credenciales, copias de seguridad privadas ni registros a una incidencia. Consulta [asistencia e informes sin datos sensibles](SUPPORT.md), [recuperación tras una actualización](docs/UPDATING.md) y la [política de seguridad](SECURITY.md).
 

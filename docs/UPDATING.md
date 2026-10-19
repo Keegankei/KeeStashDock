@@ -88,7 +88,7 @@ does not migrate it. A database export does not include these path preferences
 or downloaded components. Preserve the whole active data folder when moving
 the application, and keep component folders separately if you intend to reuse them.
 
-Once the stable 1.2.3 release is published, 1.2.2 can use **Check for updates**.
+Version 1.2.2 can use **Check for updates** to install the stable 1.2.3 release.
 A locally packaged candidate with the same numeric version still needs manual
 replacement to install a later 1.2.3 build. Keep its data and use the manual
 procedure below; do not overwrite a running installation.

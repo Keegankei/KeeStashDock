@@ -28,23 +28,27 @@
   <img alt="Apache-2.0-Lizenz" src="docs/assets/badges/license.svg">
 </p>
 
-**Quellcodeversion 1.2.3** · [Versionshinweise](docs/releases/1.2.3-notes.md) · [Prüfprotokoll](docs/releases/1.2.3.md)
+**Version 1.2.3** · [Versionshinweise](docs/releases/1.2.3-notes.md) · [Prüfprotokoll](docs/releases/1.2.3.md)
 
-Das zuletzt veröffentlichte stabile Paket ist **1.2.2**. Die folgenden Funktionen von 1.2.3 gelten bis zur Veröffentlichung für den aktualisierten Quellcode und Kandidaten-Builds. Bilder und GIFs sind weiterhin als **1.2.2** gekennzeichnet und zeigen die neuen Bedienelemente nicht.
+<!-- release-publication-pending:start -->
+> **Veröffentlichung läuft:** Die folgenden Links zum ZIP und zur Prüfsumme von v1.2.3 werden mit der Veröffentlichung verfügbar. Verwenden Sie bis dahin die [zuletzt veröffentlichte Version](https://github.com/Keegankei/KeeStashDock/releases/latest).
+<!-- release-publication-pending:end -->
+
+Bilder und GIFs zeigen **1.2.2**, nicht die neuen Einstellungen und Ergebnis-Bedienelemente von 1.2.3.
 
 [Einstieg](#get-started) · [Funktionen](#features) · [Tastenkürzel](#shortcuts) · [Daten und Upgrades](#data-and-upgrades) · [Entwicklung](#development) · [Lizenz](#license)
 
 <a id="get-started"></a>
 ## Einstieg
 
-**[Neueste Veröffentlichung](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows-x64-ZIP — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [SHA-256-Prüfsumme](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[Neueste Veröffentlichung](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows-x64-ZIP — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [SHA-256-Prüfsumme](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. Laden Sie unter **Assets** das ZIP-Paket der Anwendung herunter, nicht das für die Entwicklung gedachte **Source code**-Archiv von GitHub.
 2. Entpacken Sie das vollständige Paket in einen beschreibbaren Ordner und starten Sie `KeeStashDock.exe`. Lassen Sie alle mitgelieferten Ordner beisammen.
 3. Drücken Sie **Alt+Q**, um das Schnellpanel anzuzeigen. Geben Sie einen Textbaustein ein und speichern Sie ihn mit **Enter**; ein Klick auf die Karte kopiert ihn.
 4. Öffnen Sie **Einstellungen** über das Panel oder den Infobereich der Taskleiste, um Sprache, Design und optionale Komponenten auszuwählen.
 
-Das Windows-x64-Paket enthält .NET; eine separate .NET-Installation ist nicht nötig. Windows 11 ist die primäre Zielplattform, Windows 10 22H2 wird nach Möglichkeit unterstützt. OCR und Offline-Übersetzung benötigen möglicherweise die Visual-C++-Laufzeit von Microsoft, die über die Komponenteninstallation in der App installiert werden kann. Den getesteten Umfang beschreibt das [Abnahmeprotokoll für 1.2.2](docs/releases/1.2.2.md).
+Das Windows-x64-Paket enthält .NET; eine separate .NET-Installation ist nicht nötig. Windows 11 ist die primäre Zielplattform, Windows 10 22H2 wird nach Möglichkeit unterstützt. OCR und Offline-Übersetzung benötigen möglicherweise die Visual-C++-Laufzeit von Microsoft, die über die Komponenteninstallation in der App installiert werden kann. Den getesteten Umfang beschreibt das [Abnahmeprotokoll für 1.2.3](docs/releases/1.2.3.md).
 
 <details>
 <summary>Das heruntergeladene ZIP prüfen</summary>
@@ -52,7 +56,7 @@ Das Windows-x64-Paket enthält .NET; eine separate .NET-Installation ist nicht n
 Führen Sie diesen Befehl im Downloadordner aus und vergleichen Sie das Ergebnis mit der zugehörigen `.sha256`-Datei:
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. Das aktuelle Paket ist nicht signiert.
@@ -104,7 +108,7 @@ Verwenden Sie das Schnellpanel für kurze Eingaben und die **Werkbank** zur Verw
 | Zwischenablageverlauf | Kopierten **Text** auf Wunsch automatisch sammeln; leere und zu große Texte werden ignoriert, Duplikate nicht erneut hinzugefügt. Standardmäßig deaktiviert. |
 | Direkt einfügen | Einen kopierten Texteintrag auf Wunsch in die vorherige Anwendung einfügen, wenn sich deren Zielfenster sicher bestätigen lässt. Standardmäßig deaktiviert. |
 
-### 2. Panelmodi Standard und Räumlich · 1.2.2
+### 2. Panelmodi Standard und Räumlich
 
 Wählen Sie **Einstellungen > Darstellung > Panelmodus**. Beide Modi behalten dieselben Bedienelemente, Schriften, Farben und Kartenanordnungen bei.
 
@@ -124,7 +128,9 @@ Wählen Sie **Einstellungen > Darstellung > Panelmodus**. Beide Modi behalten di
 - **Feste Perspektive:** eine stabile geneigte Ansicht beibehalten, während nahe Karten auf den Zeiger reagieren.
 - **Zum Betrachten ziehen:** die **rechte Maustaste** auf einer Kartenfläche oder dem Panelhintergrund gedrückt halten und ziehen. Beim Loslassen bleibt der Winkel erhalten. Ein Rechtsklick ohne Ziehen öffnet weiterhin das Kartenmenü. In den Einstellungen lassen sich auch die mittlere Maustaste oder eine eigene Kombination aus Maustaste und Zusatztasten wählen.
 - **Kompakte Leiste:** Das eingeklappte Panel enthält sechs Aktionen: Minimieren, Ein-/Ausklappen, Sperren, Screenshot, Werkbank und Einstellungen. Beim Ausklappen erhält das Panel seine vorherige Größe zurück.
-- **Am Bildschirmrand automatisch einklappen:** in 1.2.2 standardmäßig aktiviert; das Panel an einen der vier Bildschirmränder ziehen und den Zeiger wegbewegen. Ein kleiner Griff bleibt sichtbar; zeigen Sie darauf oder klicken Sie ihn an, um das Panel wiederherzustellen. Durch Sperren bleibt es sichtbar.
+- **Am Bildschirmrand automatisch einklappen:** in 1.2.3 standardmäßig aktiviert; das Panel an einen der vier Bildschirmränder ziehen und den Zeiger wegbewegen. Ein kleiner Griff bleibt sichtbar; zeigen Sie darauf oder klicken Sie ihn an, um das Panel wiederherzustellen. Durch Sperren bleibt es sichtbar.
+
+Ziehen Sie in beiden Modi an den Kanten oder Ecken des ausgeklappten Panels, um seine Größe zu ändern; sie wird beim Neustart wiederhergestellt. Die kompakte Leiste mit sechs Schaltflächen hat eine feste Größe. Version 1.2.3 behebt außerdem einen Initialisierungsfehler beim Wiederherstellen der gespeicherten Position und richtet die Größenänderungsbereiche im räumlichen Modus an den sichtbaren Panelkanten aus.
 
 Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png) · [Gemessene Leistung und Grenzen](docs/performance/1.2.2-floating.md).
 
@@ -143,7 +149,7 @@ Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene 
 
 Drücken Sie **Alt+W** oder eine Screenshot-Schaltfläche und ziehen Sie einen Auswahlbereich auf. Gespeicherte Screenshots werden zu Bildeinträgen in der ausgewählten Gruppe. Öffnen Sie einen Eintrag, um ihn anzusehen, zu kopieren, als PNG zu speichern oder **Text erkennen** zu wählen. Der erkannte Text lässt sich bearbeiten und durchsuchen; das Originalbild bleibt erhalten.
 
-**1.2.2:** Nach der Auswahl bietet eine Werkzeugleiste drei getrennte Aktionen:
+Nach der Auswahl bietet eine Werkzeugleiste drei getrennte Aktionen:
 
 | Aktion | Ergebnis |
 | --- | --- |
@@ -163,7 +169,7 @@ Erneut ziehen, um den Bereich neu auszuwählen; **Esc** oder ein Rechtsklick bri
 
 Aktivieren Sie die Auswahlblase unter **Einstellungen > Erfassen & Übersetzen** und markieren Sie anschließend Text in einer anderen Anwendung. **Kopieren** übernimmt die Auswahl in die aktuelle Gruppe des Docks; **Übersetzen** zeigt eine Übersetzung an, ohne einen Eintrag anzulegen.
 
-**1.2.2:** Wählen Sie **Kopieren und übersetzen**, damit beide Schaltflächen sichtbar bleiben. Nach dem Kopieren können Sie dieselbe Auswahl noch übersetzen, solange die Blase geöffnet ist. Bei Übersetzungsfehlern bleibt der Ausgangstext erhalten.
+Wählen Sie **Kopieren und übersetzen**, damit beide Schaltflächen sichtbar bleiben. Nach dem Kopieren können Sie dieselbe Auswahl noch übersetzen, solange die Blase geöffnet ist. Bei Übersetzungsfehlern bleibt der Ausgangstext erhalten.
 
 **1.2.3:** Wählen Sie die Zielsprache in den Einstellungen unabhängig von der Oberflächensprache. **Oberflächensprache verwenden** bleibt bei Neuinstallation und Upgrade der Standard. Auswahlübersetzung, Screenshot-Übersetzung und Übersetzungstest verwenden dieselbe Einstellung. Im Ergebnisfenster lässt sich der erhaltene Ausgangstext vorübergehend in eine andere Sprache übersetzen; das ändert die globale Einstellung nicht. Verfügbare Ziele hängen vom Anbieter und den installierten Modellen ab. Nicht unterstützte Sprachpaare führen zu einer Fehlermeldung, ohne Anbieterwechsel oder Upload von Offline-Text.
 
@@ -189,7 +195,7 @@ Bei Cloud-Übersetzungen wird nur der angeforderte Text an den ausgewählten Anb
 *Die Komponenteneinstellungen zeigen den Zustand einer Neuinstallation von 1.2.2: OCR und Offline-Übersetzung sind nicht installiert. Die Installation erfolgt über diese Schaltflächen in der App; ein Terminalbefehl ist nicht nötig.*
 
 1. Öffnen Sie **Einstellungen > Lokale Komponenten**.
-2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.2 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
+2. Wählen Sie vor der ersten OCR-Nutzung unter **Texterkennung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Das Paket 1.2.3 enthält keine vorinstallierten OCR- oder lokalen Übersetzungsengines und Modelle. Erst die ausdrücklich gestartete Einrichtung lädt und prüft die benötigten Dateien und kontrolliert die native Laufzeit.
 3. Wählen Sie für lokale Übersetzungen unter **Offline-Übersetzung (Chinesisch / Englisch)** die Aktion **Installieren / reparieren**. Lassen Sie die Einstellungen während des ersten Downloads geöffnet; planen Sie etwa **1 GB freien Speicherplatz** und **2 GB verfügbaren Arbeitsspeicher** ein.
 4. Folgen Sie bei Bedarf dem Installationsprogramm von Microsoft. Meldet die Einrichtung **Neustart erforderlich**, starten Sie Windows neu und versuchen Sie es erneut. Ein Abbruch der App-Einrichtung macht eine bereits gestartete Windows-Laufzeitinstallation nicht rückgängig.
 5. Wählen Sie **Lokal offline (Argos / LibreTranslate)** als Übersetzungsengine. Behalten Sie `http://127.0.0.1:5000` bei und verwenden Sie **Übersetzung testen**. Der Dienst startet bei Bedarf; **Dienst starten** und **Dienst stoppen** stehen ebenfalls zur Verfügung.
@@ -198,7 +204,7 @@ Die erste Einrichtung benötigt Internetzugriff auf die jeweiligen Downloadserve
 
 **Unterstützte Sprachen:** OCR erkennt gedrucktes Englisch und vereinfachtes Chinesisch. Die optional heruntergeladenen Übersetzungsmodelle unterstützen **Englisch ↔ vereinfachtes Chinesisch**. Die **20 Oberflächensprachen** der App bedeuten nicht, dass OCR oder Offline-Übersetzung 20 Sprachen unterstützen. Fehlende Modelle lösen niemals einen Wechsel zur Cloud-Übersetzung aus. [Offline-Einrichtung und Fehlerbehebung](docs/OFFLINE_TRANSLATION.md).
 
-### 6. Nach Updates suchen · 1.2.2
+### 6. Nach Updates suchen
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="Updatedialog mit einer simulierten neueren Veröffentlichung und verdecktem Installationspfad"></p>
 
@@ -219,10 +225,10 @@ Das geordnete Paket enthält drei Dateien im Hauptverzeichnis: `KeeStashDock.exe
 | Eingegebenen Text speichern | **Enter** |
 | Zeilenumbruch einfügen | **Alt+Enter** oder **Shift+Enter** |
 | Screenshot | **Alt+W**; unabhängig konfigurierbar |
-| Ausgewählten Screenshot-Bereich speichern | **Enter** in der Aufnahmeleiste von 1.2.2 |
+| Ausgewählten Screenshot-Bereich speichern | **Enter** in der Aufnahmeleiste von 1.2.3 |
 | Screenshot abbrechen | **Esc** oder Rechtsklick |
-| Räumliches Panel betrachten | **Rechte Maustaste** gedrückt halten und ziehen; in 1.2.2 konfigurierbar |
-| Über die Auswahlblase kopieren/übersetzen | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** in 1.2.2, nur solange die Blase sichtbar ist und die Tastenkürzel verfügbar sind |
+| Räumliches Panel betrachten | **Rechte Maustaste** gedrückt halten und ziehen; in 1.2.3 konfigurierbar |
+| Über die Auswahlblase kopieren/übersetzen | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** in 1.2.3, nur solange die Blase sichtbar ist und die Tastenkürzel verfügbar sind |
 
 <a id="data-and-upgrades"></a>
 ## Daten, Sicherung und Upgrades
@@ -245,7 +251,7 @@ Unter **Einstellungen > Sicherung & Daten** können Sie eine Sicherung exportier
 3. Behalten Sie die ursprüngliche Installation und die Sicherung. Starten Sie die neue Version und prüfen Sie Ihre Einträge, bevor Sie alte Kopien entfernen. Bewahren Sie für eine Rückkehr zur alten Version eine Sicherung vor dem Upgrade auf; ältere Datenbankschemata sind nicht austauschbar.
 4. War **Mit Windows starten** aktiviert und wurde die Anwendung in einen neuen Ordner verschoben, schalten Sie die Option in den Einstellungen der neuen App aus und wieder ein. Dadurch wird der neue Programmpfad registriert; andernfalls kann Windows bei der nächsten Anmeldung die alte Kopie starten.
 
-Auch frühere 1.2.2-Kandidaten müssen manuell ersetzt werden, da sie dieselbe numerische Version wie die endgültige Fassung verwenden. Behalten Sie Daten und Sicherung und folgen Sie demselben Migrationsablauf.
+Ab **1.2.2** können Sie nach dieser Veröffentlichung **Nach Updates suchen** verwenden oder die manuellen Schritte oben befolgen. **1.2.3-Kandidaten (r1–r4)** müssen manuell ersetzt werden, da sie dieselbe numerische Version wie die endgültige Fassung haben. Bewahren Sie den gesamten aktiven Datenordner und die Sicherungen auf; beenden Sie den alten Prozess, bevor Sie die neue Kopie starten.
 
 Fügen Sie einem Issue keine persönlichen `Data`-Dateien, Zugangsdaten, privaten Sicherungen oder Protokolle bei. Siehe [Support und bereinigte Fehlerberichte](SUPPORT.md), [Wiederherstellung nach Upgrades](docs/UPDATING.md) und die [Sicherheitsrichtlinie](SECURITY.md).
 

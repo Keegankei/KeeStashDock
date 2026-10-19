@@ -28,23 +28,27 @@
   <img alt="Apache-2.0 许可证" src="docs/assets/badges/license.svg">
 </p>
 
-**源码版本 1.2.3** · [发布说明](docs/releases/1.2.3-notes.md) · [验收记录](docs/releases/1.2.3.md)
+**版本 1.2.3** · [发布说明](docs/releases/1.2.3-notes.md) · [验收记录](docs/releases/1.2.3.md)
 
-当前已发布的稳定包为 **1.2.2**。下述 1.2.3 功能适用于更新后的源码及候选构建，正式发布后才会提供对应下载。截图和 GIF 仍标注为 **1.2.2**，未展示新增控件。
+<!-- release-publication-pending:start -->
+> **正在发布：**下方 v1.2.3 压缩包和校验文件链接将在正式发布后可用。在此之前，请使用[最新已发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)。
+<!-- release-publication-pending:end -->
+
+截图和 GIF 展示的是 **1.2.2**，未展示 1.2.3 新增的设置和结果控件。
 
 [快速开始](#get-started) · [功能介绍](#features) · [快捷操作](#shortcuts) · [数据与升级](#data-and-upgrades) · [开发](#development) · [许可证](#license)
 
 <a id="get-started"></a>
 ## 快速开始
 
-**[最新发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [SHA-256 校验文件](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[最新发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [SHA-256 校验文件](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. 在发布页的 **Assets** 中下载应用 ZIP；GitHub 的 **Source code** 压缩包面向开发者。
 2. 将完整软件包解压到可写文件夹，运行 `KeeStashDock.exe`。请保留所有附带文件夹。
 3. 按 **Alt+Q** 显示快速面板。输入文本片段后按 **Enter** 保存；点击卡片即可复制。
 4. 从面板或系统托盘打开**设置**，选择语言、主题和可选组件。
 
-Windows x64 软件包已包含 .NET，无需另外安装。主要支持 Windows 11，并尽力兼容 Windows 10 22H2。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过应用内组件安装流程安装。已验证的平台范围见 [1.2.2 验收记录](docs/releases/1.2.2.md)。
+Windows x64 软件包已包含 .NET，无需另外安装。主要支持 Windows 11，并尽力兼容 Windows 10 22H2。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过应用内组件安装流程安装。已验证的平台范围见 [1.2.3 验收记录](docs/releases/1.2.3.md)。
 
 <details>
 <summary>校验下载的 ZIP</summary>
@@ -52,7 +56,7 @@ Windows x64 软件包已包含 .NET，无需另外安装。主要支持 Windows 
 在下载文件夹中运行以下命令，将结果与附带的 `.sha256` 文件比较：
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 校验和用于检查文件完整性，不是发布者签名。当前软件包未签名。
@@ -104,7 +108,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 | 剪贴板历史 | 可选自动收集复制的**文字**；忽略空文本和超大文本，不重复添加相同内容。默认关闭。 |
 | 直接粘贴 | 在能够安全确认目标窗口时，可选将复制的文本条目粘贴到先前应用。默认关闭。 |
 
-### 2. 标准与空间面板 · 1.2.2
+### 2. 标准与空间面板
 
 打开**设置 > 外观 > 面板模式**进行选择。两种模式使用相同的控件、字体、配色和卡片布局。
 
@@ -124,7 +128,9 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 - **固定透视：**保持稳定的倾斜视角，附近卡片仍响应指针。
 - **拖动检视：**在卡片正文或面板背景上按住**鼠标右键**拖动，松开后保留角度。不拖动的右键单击仍打开卡片菜单。设置中也可选择中键或自定义鼠标键与修饰键组合。
 - **紧凑栏：**将面板收起为六个操作：最小化、展开/收起、锁定、截图、工作台和设置。展开时恢复之前的面板大小。
-- **桌面边缘隐藏：**1.2.2 默认开启；将面板拖到屏幕任意一侧边缘，再移开鼠标。边缘会保留一个小把手，悬停或点击即可恢复。锁定面板可使其保持显示。
+- **桌面边缘隐藏：**1.2.3 默认开启；将面板拖到屏幕任意一侧边缘，再移开鼠标。边缘会保留一个小把手，悬停或点击即可恢复。锁定面板可使其保持显示。
+
+两种模式均可拖动展开面板的边缘或四角调整大小，重新启动会恢复保存的尺寸；六按钮收纳栏保持固定大小。1.2.3 同时修复恢复面板位置时的初始化异常，并使空间模式的缩放区域与可见面板边缘对齐。
 
 支持浅色、深色和跟随系统主题，可设置自定义背景、透明度和磨砂效果。系统高对比度及减少动画的偏好会启用静态回退显示。[深色预览](docs/images/floating-panel-dark.png) · [固定视角预览](docs/images/floating-panel-fixed.png) · [性能测量与限制](docs/performance/1.2.2-floating.md)。
 
@@ -143,7 +149,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 按 **Alt+W** 或点击截图按钮，拖动选择区域。保存的截图会成为当前所选分组中的图片条目。打开条目可预览、复制、另存为 PNG，或**识别文字**。保留原图的同时，可以编辑和搜索识别结果。
 
-**1.2.2：**选区完成后，工具栏提供三项独立操作：
+选区完成后，工具栏提供三项独立操作：
 
 | 操作 | 结果 |
 | --- | --- |
@@ -163,7 +169,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 在**设置 > 截取与翻译**中启用划词气泡，然后在其他应用中选择文字。**复制**会将所选文字保存到面板当前分组；**翻译**显示译文，不添加条目。
 
-**1.2.2：**选择**复制和翻译**，即可同时显示两个按钮。复制后，在气泡关闭前仍可翻译同一段选中文字。翻译失败时会保留原文。
+选择**复制和翻译**，即可同时显示两个按钮。复制后，在气泡关闭前仍可翻译同一段选中文字。翻译失败时会保留原文。
 
 **1.2.3：**可在设置中独立选择翻译目标语言。新安装和升级默认仍为**跟随界面语言**；划词翻译、截图翻译和翻译测试共用此设置。结果窗口显示实际目标语言，并允许使用保留的原文临时重新翻译；该选择仅作用于当前结果，不改变全局设置。可用语言取决于服务商或已安装的离线模型；不支持的语言方向会明确报错，不会自动换服务或上传离线文本。
 
@@ -189,7 +195,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 *图中为 1.2.2 全新安装的组件设置：OCR 和离线翻译尚未安装。使用这些应用内按钮即可安装，无需终端命令。*
 
 1. 打开**设置 > 本地组件**。
-2. 首次使用 OCR 前，在**文字识别（中文 / 英文）**下选择**安装 / 修复**。1.2.2 不预装 OCR 或本地翻译引擎及模型；主动安装时才下载并验证所需文件，同时检查本机运行库。
+2. 首次使用 OCR 前，在**文字识别（中文 / 英文）**下选择**安装 / 修复**。1.2.3 不预装 OCR 或本地翻译引擎及模型；主动安装时才下载并验证所需文件，同时检查本机运行库。
 3. 本地翻译请在**离线翻译（中文 / 英文）**下选择**安装 / 修复**。首次下载期间保持设置窗口打开，并预留约 **1 GB 磁盘空间**和 **2 GB 可用内存**。
 4. 如出现 Microsoft 安装程序，按提示操作。如提示**需要重启**，重启 Windows 后重试。取消应用组件安装不会撤销已开始的 Windows 运行库安装。
 5. 将翻译引擎设为**本地离线（Argos / LibreTranslate）**，保留 `http://127.0.0.1:5000`，然后使用**测试翻译**。服务会在需要时启动，也可手动选择**启动服务**和**停止服务**。
@@ -198,7 +204,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 **语言支持：**OCR 支持打印体英语和简体中文。可选下载的翻译模型支持**英语 ↔ 简体中文**。应用的 **20 种界面语言**不代表 OCR 或离线翻译支持 20 种语言。缺少模型时不会自动切换到云翻译。[离线安装与故障排查](docs/OFFLINE_TRANSLATION.md)。
 
-### 6. 检查更新 · 1.2.2
+### 6. 检查更新
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="更新窗口展示模拟的新版本，安装路径已遮蔽"></p>
 
@@ -219,10 +225,10 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 | 保存输入的文字 | **Enter** |
 | 换行 | **Alt+Enter** 或 **Shift+Enter** |
 | 截图 | **Alt+W**，可单独配置 |
-| 保存截图选区 | 在 1.2.2 截图工具栏中按 **Enter** |
+| 保存截图选区 | 在 1.2.3 截图工具栏中按 **Enter** |
 | 取消截图 | **Esc** 或右键 |
-| 检视空间面板 | 按住**鼠标右键**拖动，1.2.2 中可自定义 |
-| 划词气泡复制/翻译 | 1.2.2 中使用 **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T**，仅在气泡可见且快捷键可用时生效 |
+| 检视空间面板 | 按住**鼠标右键**拖动，1.2.3 中可自定义 |
+| 划词气泡复制/翻译 | 1.2.3 中使用 **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T**，仅在气泡可见且快捷键可用时生效 |
 
 <a id="data-and-upgrades"></a>
 ## 数据、备份与升级
@@ -245,7 +251,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 3. 保留原安装和备份，启动新版本并确认条目完整后再清理旧副本。保留升级前的备份以便回退；不同版本的数据库结构不能随意互换。
 4. 如果原来开启了**开机启动**，且此次迁移到新目录，请在新版设置中先关闭再开启该选项，以登记新的程序路径；否则下次登录 Windows 时可能启动旧版。
 
-较早的 1.2.2 候选版与正式版使用相同数字版本号，也需要手动替换。请保留数据和备份，并按相同流程迁移。
+**1.2.2** 可在本版本发布后使用**检查更新**，或按上述流程手动升级。**1.2.3 候选版（r1–r4）**与正式版使用相同数字版本号，需要手动替换。请保留完整的活动数据文件夹和备份，完全退出旧程序后再启动新副本。
 
 请勿在问题报告中附上个人 `Data`、凭据、私密备份或日志。参阅[支持与脱敏报告](SUPPORT.md)、[升级恢复](docs/UPDATING.md)和[安全政策](SECURITY.md)。
 

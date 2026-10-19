@@ -105,7 +105,7 @@ replace the native OCR/runtime review.
 
 ## Acceptance records
 
-Keep versioned results in [docs/releases](releases/1.2.2.md). Each record identifies
+Keep versioned results in [docs/releases](releases/1.2.3.md). Each record identifies
 the release tag, build/test results, package checks, maintainer feedback, and
 remaining platform limitations. Do not convert broad user feedback into a claim
 that every hardware or provider combination was tested.
@@ -122,7 +122,7 @@ that every hardware or provider combination was tested.
 ## 4. Publish
 
 1. Push the reviewed release commit and wait for its required CI checks. Follow the repository's branch policy; use a pull request when required.
-2. Create a signed or annotated Git tag matching the version, for example `v1.2.2`.
+2. Create a signed or annotated Git tag matching the version, for example `v1.2.3`.
 3. Create a GitHub Release from the tag.
 4. Attach the archive and checksum.
 5. Use `docs/releases/<version>-notes.md` as the release description and confirm it matches the final changelog and acceptance record.

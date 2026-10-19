@@ -28,23 +28,27 @@
   <img alt="Licence Apache-2.0" src="docs/assets/badges/license.svg">
 </p>
 
-**Version du code source 1.2.3** · [Notes de version](docs/releases/1.2.3-notes.md) · [Rapport de validation](docs/releases/1.2.3.md)
+**Version 1.2.3** · [Notes de version](docs/releases/1.2.3-notes.md) · [Rapport de validation](docs/releases/1.2.3.md)
 
-Le dernier paquet stable publié est **1.2.2**. Les fonctions 1.2.3 ci-dessous concernent le code mis à jour et les versions candidates jusqu’à leur publication. Les captures et GIF restent identifiés comme **1.2.2** et ne montrent pas les nouveaux contrôles.
+<!-- release-publication-pending:start -->
+> **Publication en cours :** les liens ci-dessous vers le ZIP et la somme de contrôle de v1.2.3 seront disponibles après publication. En attendant, utilisez la [dernière version publiée](https://github.com/Keegankei/KeeStashDock/releases/latest).
+<!-- release-publication-pending:end -->
+
+Les captures et GIF montrent **1.2.2**, sans les nouveaux réglages et contrôles de résultats de 1.2.3.
 
 [Premiers pas](#get-started) · [Fonctionnalités](#features) · [Raccourcis](#shortcuts) · [Données et mises à niveau](#data-and-upgrades) · [Développement](#development) · [Licence](#license)
 
 <a id="get-started"></a>
 ## Premiers pas
 
-**[Dernière version publiée](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP Windows x64 — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [Somme de contrôle SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[Dernière version publiée](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[ZIP Windows x64 — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [Somme de contrôle SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. Téléchargez le ZIP de l’application dans la section **Assets**, plutôt que l’archive **Source code** de GitHub destinée au développement.
 2. Extrayez l’intégralité du paquet dans un dossier accessible en écriture, puis lancez `KeeStashDock.exe`. Conservez tous les dossiers fournis avec l’application.
 3. Appuyez sur **Alt+Q** pour afficher le panneau rapide. Saisissez un extrait et appuyez sur **Enter** pour l’enregistrer ; cliquez sur sa carte pour le copier.
 4. Ouvrez les **Paramètres** depuis le panneau ou la zone de notification pour choisir la langue, le thème et les composants facultatifs.
 
-Le paquet Windows x64 inclut .NET ; aucune installation séparée de .NET n’est nécessaire. Windows 11 est la plateforme principale ; la compatibilité avec Windows 10 22H2 est assurée dans la mesure du possible. L’OCR et la traduction hors ligne peuvent nécessiter le runtime Visual C++ de Microsoft, que l’installateur de composants intégré peut installer. Le [rapport de validation de la version 1.2.2](docs/releases/1.2.2.md) précise les vérifications effectuées.
+Le paquet Windows x64 inclut .NET ; aucune installation séparée de .NET n’est nécessaire. Windows 11 est la plateforme principale ; la compatibilité avec Windows 10 22H2 est assurée dans la mesure du possible. L’OCR et la traduction hors ligne peuvent nécessiter le runtime Visual C++ de Microsoft, que l’installateur de composants intégré peut installer. Le [rapport de validation de la version 1.2.3](docs/releases/1.2.3.md) précise les vérifications effectuées.
 
 <details>
 <summary>Vérifier le ZIP téléchargé</summary>
@@ -52,7 +56,7 @@ Le paquet Windows x64 inclut .NET ; aucune installation séparée de .NET n’es
 Exécutez cette commande dans le dossier de téléchargement et comparez le résultat au fichier `.sha256` fourni :
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une signature de l’éditeur. Le paquet actuel n’est pas signé.
@@ -104,7 +108,7 @@ Utilisez le panneau rapide pour les captures ponctuelles et l’**espace de trav
 | Historique du presse-papiers | Collectez automatiquement le **texte** copié si vous le souhaitez ; les textes vides ou trop volumineux sont ignorés et les doublons ne sont pas ajoutés. Désactivé par défaut. |
 | Collage direct | Collez une entrée de texte copiée dans l’application précédente, si vous activez cette option et si sa fenêtre cible peut être confirmée de manière sûre. Désactivé par défaut. |
 
-### 2. Panneaux Standard et Spatial · 1.2.2
+### 2. Panneaux Standard et Spatial
 
 Accédez à **Paramètres > Apparence > Mode du panneau**. Les deux modes conservent les mêmes contrôles, la même typographie, les mêmes couleurs et la même disposition des cartes.
 
@@ -124,7 +128,9 @@ Accédez à **Paramètres > Apparence > Mode du panneau**. Les deux modes conser
 - **Perspective fixe :** conservez une vue inclinée stable pendant que les cartes proches réagissent au pointeur.
 - **Glisser pour inspecter :** maintenez le **bouton droit de la souris** sur le corps d’une carte ou l’arrière-plan du panneau et faites glisser. Relâchez pour conserver l’angle. Un clic droit sans glissement ouvre toujours le menu de la carte. Les paramètres permettent aussi de choisir le bouton du milieu ou une combinaison personnalisée de bouton et de touches de modification.
 - **Barre compacte :** réduisez le panneau à six actions : minimiser, déplier/replier, verrouiller, capture d’écran, espace de travail et Paramètres. Le déplier rétablit ses dimensions précédentes.
-- **Masquer au bord du bureau :** activé par défaut dans 1.2.2 ; faites glisser le panneau vers l’un des quatre bords de l’écran, puis éloignez le pointeur. Une petite poignée reste visible ; survolez-la ou cliquez dessus pour rétablir le panneau. Le verrouillage maintient le panneau visible.
+- **Masquer au bord du bureau :** activé par défaut dans 1.2.3 ; faites glisser le panneau vers l’un des quatre bords de l’écran, puis éloignez le pointeur. Une petite poignée reste visible ; survolez-la ou cliquez dessus pour rétablir le panneau. Le verrouillage maintient le panneau visible.
+
+Dans les deux modes, faites glisser les bords ou les coins du panneau déployé pour le redimensionner ; sa taille est restaurée au redémarrage. La barre compacte à six boutons garde une taille fixe. La version 1.2.3 corrige aussi une exception à l’initialisation lors de la restauration de la position et aligne les zones de redimensionnement du mode Spatial sur les bords visibles du panneau.
 
 Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png) · [Performances mesurées et limites](docs/performance/1.2.2-floating.md).
 
@@ -143,7 +149,7 @@ Les paramètres proposent aussi des palettes de texte pour le panneau, une coule
 
 Appuyez sur **Alt+W** ou sur un bouton de capture, puis faites glisser pour sélectionner une zone. Les captures enregistrées deviennent des entrées contenant une image dans le groupe sélectionné. Ouvrez-en une pour l’afficher, la copier, l’enregistrer au format PNG ou choisir **Reconnaître le texte**. Vous pouvez modifier le texte reconnu et y effectuer des recherches tout en conservant l’image d’origine.
 
-**1.2.2 :** une barre d’outils apparaît après la sélection et propose trois actions distinctes :
+Une barre d’outils apparaît après la sélection et propose trois actions distinctes :
 
 | Action | Résultat |
 | --- | --- |
@@ -163,7 +169,7 @@ Faites à nouveau glisser pour redéfinir la zone ; **Esc** ou un clic droit ann
 
 Activez la bulle de sélection dans **Paramètres > Capture et traduction**, puis sélectionnez du texte dans une autre application. **Copier** enregistre la sélection dans le groupe courant du panneau ; **Traduire** affiche une traduction sans ajouter d’entrée.
 
-**1.2.2 :** choisissez **Copier et traduire** pour garder les deux boutons visibles. Après la copie, vous pouvez encore traduire la même sélection avant la fermeture de la bulle. Les échecs de traduction préservent le texte source.
+Choisissez **Copier et traduire** pour garder les deux boutons visibles. Après la copie, vous pouvez encore traduire la même sélection avant la fermeture de la bulle. Les échecs de traduction préservent le texte source.
 
 **1.2.3 :** choisissez une langue cible indépendante de l’interface dans les paramètres. **Suivre la langue de l’interface** reste la valeur par défaut après installation ou mise à niveau. Traduction de sélection, de capture et test utilisent ce même réglage. La fenêtre de résultat indique la cible effective et permet de retraduire temporairement le texte source conservé sans modifier les paramètres globaux. Les langues dépendent du fournisseur ou des modèles installés. Une paire non prise en charge provoque une erreur sans changement de fournisseur ni envoi du texte hors ligne.
 
@@ -189,7 +195,7 @@ La traduction dans le cloud envoie uniquement le texte demandé au fournisseur s
 *Les paramètres des composants montrent l’état d’une nouvelle installation de 1.2.2 : l’OCR et la traduction hors ligne ne sont pas installés. Ces boutons intégrés permettent de les installer, sans commande de terminal.*
 
 1. Ouvrez **Paramètres > Composants locaux**.
-2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.2 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
+2. Avant la première utilisation de l’OCR, choisissez **Installer / réparer** sous **Reconnaissance de texte (chinois / anglais)**. Le paquet 1.2.3 ne préinstalle ni moteur ni modèle d’OCR ou de traduction locale. L’installation lancée explicitement télécharge et vérifie les fichiers nécessaires, ainsi que le runtime natif.
 3. Pour la traduction locale, choisissez **Installer / réparer** sous **Traduction hors ligne (chinois / anglais)**. Gardez les paramètres ouverts pendant le téléchargement initial ; prévoyez environ **1 Go d’espace disque libre** et **2 Go de mémoire disponible**.
 4. Suivez l’installateur Microsoft s’il apparaît. Si l’installation indique **Redémarrage requis**, redémarrez Windows et réessayez. Annuler l’installation dans l’application n’annule pas une installation de runtime Windows déjà lancée.
 5. Sélectionnez **Local hors ligne (Argos / LibreTranslate)** comme moteur de traduction. Conservez `http://127.0.0.1:5000`, puis utilisez **Tester la traduction**. Le service démarre à la demande ; les commandes **Démarrer le service** et **Arrêter le service** sont également disponibles.
@@ -198,7 +204,7 @@ L’installation initiale nécessite un accès Internet aux serveurs de téléch
 
 **Langues prises en charge :** l’OCR reconnaît l’anglais imprimé et le chinois simplifié imprimé. Les modèles de traduction téléchargés en option prennent en charge **anglais ↔ chinois simplifié**. Les **20 langues d’interface** de l’application ne signifient pas que l’OCR ou la traduction hors ligne prend en charge 20 langues. L’absence de modèles ne provoque jamais un passage à la traduction dans le cloud. [Installation hors ligne et dépannage](docs/OFFLINE_TRANSLATION.md).
 
-### 6. Rechercher des mises à jour · 1.2.2
+### 6. Rechercher des mises à jour
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="Fenêtre de mise à jour affichant une nouvelle version simulée et un chemin d’installation masqué"></p>
 
@@ -219,10 +225,10 @@ Le paquet réorganisé contient trois fichiers à la racine : `KeeStashDock.exe`
 | Enregistrer le texte saisi | **Enter** |
 | Insérer un saut de ligne | **Alt+Enter** ou **Shift+Enter** |
 | Capture d’écran | **Alt+W** ; configurable séparément |
-| Enregistrer la zone de capture sélectionnée | **Enter** dans la barre d’outils de capture de la version 1.2.2 |
+| Enregistrer la zone de capture sélectionnée | **Enter** dans la barre d’outils de capture de la version 1.2.3 |
 | Annuler la capture | **Esc** ou clic droit |
-| Inspecter le panneau Spatial | Maintenir le **bouton droit de la souris** et faire glisser ; configurable dans la version 1.2.2 |
-| Copier/traduire depuis la bulle de sélection | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** dans la version 1.2.2, uniquement lorsque la bulle est visible et que les raccourcis sont disponibles |
+| Inspecter le panneau Spatial | Maintenir le **bouton droit de la souris** et faire glisser ; configurable dans la version 1.2.3 |
+| Copier/traduire depuis la bulle de sélection | **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T** dans la version 1.2.3, uniquement lorsque la bulle est visible et que les raccourcis sont disponibles |
 
 <a id="data-and-upgrades"></a>
 ## Données, sauvegarde et mises à niveau
@@ -245,7 +251,7 @@ Utilisez **Paramètres > Sauvegarde et données** pour exporter ou importer une 
 3. Conservez l’installation d’origine et la sauvegarde. Lancez la nouvelle version et vérifiez vos entrées avant de supprimer les anciennes copies. Gardez une sauvegarde antérieure à la mise à niveau pour revenir en arrière ; les anciens schémas de base de données ne sont pas interchangeables.
 4. Si **Démarrer avec Windows** était activé et que vous avez changé de dossier, désactivez puis réactivez cette option dans les paramètres de la nouvelle application. Le nouveau chemin sera enregistré ; sinon, Windows peut lancer l’ancienne copie à la prochaine connexion.
 
-Les anciennes versions candidates 1.2.2 doivent aussi être remplacées manuellement, car elles partagent le numéro de la version finale. Conservez les données et la sauvegarde, puis suivez la même procédure.
+Depuis **1.2.2**, utilisez **Rechercher les mises à jour** après cette publication, ou suivez les étapes manuelles ci-dessus. Les **versions candidates 1.2.3 (r1–r4)** doivent être remplacées manuellement, car elles partagent le numéro de la version finale. Conservez le dossier de données actif complet et les sauvegardes ; quittez l’ancien processus avant de lancer la nouvelle copie.
 
 Ne joignez pas de dossier `Data` personnel, d’identifiants, de sauvegardes privées ou de journaux à un ticket. Consultez [l’assistance et les rapports expurgés](SUPPORT.md), la [récupération après mise à niveau](docs/UPDATING.md) et la [politique de sécurité](SECURITY.md).
 

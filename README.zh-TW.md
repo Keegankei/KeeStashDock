@@ -28,23 +28,27 @@
   <img alt="Apache-2.0 授權條款" src="docs/assets/badges/license.svg">
 </p>
 
-**原始碼版本 1.2.3** · [版本說明](docs/releases/1.2.3-notes.md) · [驗收記錄](docs/releases/1.2.3.md)
+**版本 1.2.3** · [版本說明](docs/releases/1.2.3-notes.md) · [驗收記錄](docs/releases/1.2.3.md)
 
-目前已發佈的穩定套件為 **1.2.2**。下述 1.2.3 功能適用於更新後的原始碼與候選組建，正式發佈後才會提供對應下載。截圖與 GIF 仍標示為 **1.2.2**，未展示新增控制項。
+<!-- release-publication-pending:start -->
+> **正在發佈：**下方 v1.2.3 壓縮檔與校驗檔連結將於正式發佈後可用。在此之前，請使用[最新已發佈版本](https://github.com/Keegankei/KeeStashDock/releases/latest)。
+<!-- release-publication-pending:end -->
+
+截圖與 GIF 展示的是 **1.2.2**，未展示 1.2.3 新增的設定與結果控制項。
 
 [快速開始](#get-started) · [功能介紹](#features) · [快捷操作](#shortcuts) · [資料與升級](#data-and-upgrades) · [開發](#development) · [授權條款](#license)
 
 <a id="get-started"></a>
 ## 快速開始
 
-**[最新發布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.2](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip)** · [SHA-256 校驗檔](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.2/KeeStashDock-1.2.2-win-x64.zip.sha256)
+**[最新發布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)** · **[Windows x64 ZIP — 1.2.3](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip)** · [SHA-256 校驗檔](https://github.com/Keegankei/KeeStashDock/releases/download/v1.2.3/KeeStashDock-1.2.3-win-x64.zip.sha256)
 
 1. 在發布頁的 **Assets** 中下載應用程式 ZIP；GitHub 的 **Source code** 壓縮檔供開發者使用。
 2. 將完整套件解壓縮至可寫入的資料夾，執行 `KeeStashDock.exe`。請保留所有隨附資料夾。
 3. 按 **Alt+Q** 顯示快速面板。輸入文字片段後按 **Enter** 儲存；點選卡片即可複製。
 4. 從面板或系統匣開啟**設定**，選擇語言、佈景主題與選用元件。
 
-Windows x64 套件已包含 .NET，無需另外安裝。主要支援 Windows 11，並盡力相容 Windows 10 22H2。OCR 與離線翻譯可能需要 Microsoft Visual C++ 執行階段，可透過應用程式內的元件安裝流程安裝。已驗證的平台範圍見 [1.2.2 驗收紀錄](docs/releases/1.2.2.md)。
+Windows x64 套件已包含 .NET，無需另外安裝。主要支援 Windows 11，並盡力相容 Windows 10 22H2。OCR 與離線翻譯可能需要 Microsoft Visual C++ 執行階段，可透過應用程式內的元件安裝流程安裝。已驗證的平台範圍見 [1.2.3 驗收紀錄](docs/releases/1.2.3.md)。
 
 <details>
 <summary>校驗下載的 ZIP</summary>
@@ -52,7 +56,7 @@ Windows x64 套件已包含 .NET，無需另外安裝。主要支援 Windows 11�
 在下載資料夾中執行以下命令，將結果與隨附的 `.sha256` 檔案比較：
 
 ```powershell
-Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 ```
 
 校驗和用於檢查檔案完整性，並非發行者簽章。目前套件未簽章。
@@ -104,7 +108,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 | 剪貼簿歷程 | 可選擇自動收集複製的**文字**；忽略空白與過大的文字，不重複新增相同內容。預設關閉。 |
 | 直接貼上 | 能夠安全確認目標視窗時，可選擇將複製的文字項目貼到先前的應用程式。預設關閉。 |
 
-### 2. 標準與空間面板 · 1.2.2
+### 2. 標準與空間面板
 
 開啟**設定 > 外觀 > 面板模式**進行選擇。兩種模式使用相同的控制項、字型、配色與卡片版面配置。
 
@@ -124,7 +128,9 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 - **固定透視：**保持穩定的傾斜視角，附近卡片仍回應指標。
 - **拖曳檢視：**在卡片內文或面板背景上按住**滑鼠右鍵**拖曳，放開後保留角度。未拖曳的右鍵點選仍開啟卡片選單。設定中也可選擇中鍵或自訂滑鼠按鍵與修飾鍵組合。
 - **精簡列：**將面板收合為六個操作：最小化、展開/收合、鎖定、螢幕擷取、工作台與設定。展開時恢復先前的面板大小。
-- **桌面邊緣隱藏：**1.2.2 預設開啟；將面板拖至螢幕任一側邊緣，再移開滑鼠。邊緣會保留一個小把手，停留其上或點選即可恢復。鎖定面板可使其保持顯示。
+- **桌面邊緣隱藏：**1.2.3 預設開啟；將面板拖至螢幕任一側邊緣，再移開滑鼠。邊緣會保留一個小把手，停留其上或點選即可恢復。鎖定面板可使其保持顯示。
+
+兩種模式皆可拖曳展開面板的邊緣或四角調整大小，重新啟動會還原儲存的尺寸；六按鈕收納列維持固定大小。1.2.3 同時修正還原面板位置時的初始化例外，並使空間模式的縮放區域與可見面板邊緣對齊。
 
 支援淺色、深色與跟隨系統佈景主題，可設定自訂背景、透明度與磨砂效果。系統高對比與減少動畫的偏好會啟用靜態替代顯示。[深色預覽](docs/images/floating-panel-dark.png) · [固定視角預覽](docs/images/floating-panel-fixed.png) · [效能測量與限制](docs/performance/1.2.2-floating.md)。
 
@@ -143,7 +149,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 按 **Alt+W** 或點選螢幕擷取按鈕，拖曳選取區域。儲存的擷取畫面會成為目前所選群組中的圖片項目。開啟項目可預覽、複製、另存為 PNG，或**辨識文字**。保留原圖的同時，可以編輯與搜尋辨識結果。
 
-**1.2.2：**完成選取範圍後，工具列提供三項獨立操作：
+完成選取範圍後，工具列提供三項獨立操作：
 
 | 操作 | 結果 |
 | --- | --- |
@@ -163,7 +169,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 在**設定 > 擷取與翻譯**中啟用選取文字泡泡，接著在其他應用程式選取文字。**複製**會將所選文字儲存到面板目前的群組；**翻譯**顯示譯文，不新增項目。
 
-**1.2.2：**選擇**複製和翻譯**，即可同時顯示兩個按鈕。複製後，在泡泡關閉前仍可翻譯同一段選取文字。翻譯失敗時會保留原文。
+選擇**複製和翻譯**，即可同時顯示兩個按鈕。複製後，在泡泡關閉前仍可翻譯同一段選取文字。翻譯失敗時會保留原文。
 
 **1.2.3：**可在設定中獨立選擇翻譯目標語言。新安裝及升級預設仍為**跟隨介面語言**；選取文字翻譯、截圖翻譯與翻譯測試共用此設定。結果視窗顯示實際目標語言，並允許使用保留的原文暫時重新翻譯；此選擇僅作用於目前結果，不改變全域設定。可用語言取決於服務商或已安裝的離線模型；不支援的語言方向會明確回報錯誤，不會自動切換服務或上傳離線文字。
 
@@ -189,7 +195,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 *圖中為 1.2.2 全新安裝的元件設定：OCR 和離線翻譯尚未安裝。使用這些應用程式內按鈕即可安裝，無需終端機命令。*
 
 1. 開啟**設定 > 本機元件**。
-2. 首次使用 OCR 前，在**文字辨識（中文 / 英文）**下選擇**安裝 / 修復**。1.2.2 不預先安裝 OCR 或本機翻譯引擎及模型；主動安裝時才下載並驗證所需檔案，同時檢查本機執行階段。
+2. 首次使用 OCR 前，在**文字辨識（中文 / 英文）**下選擇**安裝 / 修復**。1.2.3 不預先安裝 OCR 或本機翻譯引擎及模型；主動安裝時才下載並驗證所需檔案，同時檢查本機執行階段。
 3. 本機翻譯請在**離線翻譯（中文 / 英文）**下選擇**安裝 / 修復**。首次下載期間保持設定視窗開啟，並預留約 **1 GB 磁碟空間**與 **2 GB 可用記憶體**。
 4. 如出現 Microsoft 安裝程式，請依提示操作。如提示**需要重新啟動**，重新啟動 Windows 後再試。取消應用程式元件安裝不會復原已開始的 Windows 執行階段安裝。
 5. 將翻譯引擎設為**本機離線（Argos / LibreTranslate）**，保留 `http://127.0.0.1:5000`，然後使用**測試翻譯**。服務會在需要時啟動，也可手動選擇**啟動服務**與**停止服務**。
@@ -198,7 +204,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 
 **語言支援：**OCR 支援印刷體英語與簡體中文。選用下載的翻譯模型支援**英語 ↔ 簡體中文**。應用程式的 **20 種介面語言**不代表 OCR 或離線翻譯支援 20 種語言。缺少模型時不會自動切換至雲端翻譯。[離線安裝與疑難排解](docs/OFFLINE_TRANSLATION.md)。
 
-### 6. 檢查更新 · 1.2.2
+### 6. 檢查更新
 
 <p align="center"><img src="docs/images/update-check.png" width="720" alt="更新視窗展示模擬的新版本，安裝路徑已遮蔽"></p>
 
@@ -219,10 +225,10 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 | 儲存輸入的文字 | **Enter** |
 | 換行 | **Alt+Enter** 或 **Shift+Enter** |
 | 螢幕擷取 | **Alt+W**，可獨立設定 |
-| 儲存擷取範圍 | 在 1.2.2 擷取工具列中按 **Enter** |
+| 儲存擷取範圍 | 在 1.2.3 擷取工具列中按 **Enter** |
 | 取消螢幕擷取 | **Esc** 或右鍵 |
-| 檢視空間面板 | 按住**滑鼠右鍵**拖曳，1.2.2 中可自訂 |
-| 選取文字泡泡複製/翻譯 | 1.2.2 中使用 **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T**，僅在泡泡可見且快速鍵可用時生效 |
+| 檢視空間面板 | 按住**滑鼠右鍵**拖曳，1.2.3 中可自訂 |
+| 選取文字泡泡複製/翻譯 | 1.2.3 中使用 **Ctrl+Alt+Shift+C** / **Ctrl+Alt+Shift+T**，僅在泡泡可見且快速鍵可用時生效 |
 
 <a id="data-and-upgrades"></a>
 ## 資料、備份與升級
@@ -245,7 +251,7 @@ Get-FileHash .\KeeStashDock-1.2.2-win-x64.zip -Algorithm SHA256
 3. 保留原安裝與備份，啟動新版本並確認項目完整後再清理舊副本。保留升級前的備份以便還原；不同版本的資料庫結構不能任意互換。
 4. 如果原本開啟了**開機啟動**，且此次移至新目錄，請在新版設定中先關閉再開啟此選項，以登記新的程式路徑；否則下次登入 Windows 時可能啟動舊版。
 
-較早的 1.2.2 候選版與正式版使用相同數字版本號，也需要手動替換。請保留資料與備份，並依相同流程遷移。
+**1.2.2** 可在本版本發佈後使用**檢查更新**，或依上述流程手動升級。**1.2.3 候選版（r1–r4）**與正式版使用相同數字版本號，需要手動替換。請保留完整的使用中資料夾與備份，完全結束舊程式後再啟動新副本。
 
 請勿在問題回報中附上個人 `Data`、憑證、私人備份或記錄。參閱[支援與去識別化報告](SUPPORT.md)、[升級復原](docs/UPDATING.md)及[安全性政策](SECURITY.md)。
 
