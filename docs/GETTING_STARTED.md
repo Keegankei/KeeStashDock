@@ -123,8 +123,9 @@ Keep the old backup separately. Never overwrite a live database.
 If **Start with Windows** was enabled and you moved the app to a new folder,
 turn that setting off and on again in the new application to register its new
 executable path. Otherwise the next Windows sign-in may launch the old copy.
-Update any desktop or taskbar shortcuts too. Earlier 1.2.2 candidates share the
-final version number and also require manual replacement.
+Update any desktop or taskbar shortcuts too. Earlier 1.2.3 candidates share the
+final 1.2.3 version number and require manual replacement; Check for updates
+does not treat the final package as a newer version.
 
 From 1.2.2 onward, use **Check for updates** in the tray menu or **Settings > About**. The app checks official GitHub Releases only on request. Download and verify first, then confirm **Restart and upgrade**. Same-path upgrades preserve user data and installed components, keep a rollback copy, and check successful startup. See `Docs/Updating.md` for recovery and first-upgrade instructions.
 

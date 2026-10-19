@@ -7,7 +7,7 @@ Thank you for improving KeeStashDock. This guide keeps changes reviewable, repro
 1. Search existing issues and pull requests for related work.
 2. Open an issue before a large feature, schema change, public API change, or user-visible behavioral redesign.
 3. Keep pull requests focused. Unrelated cleanup should be submitted separately.
-4. Do not include personal clipboard data, databases, logs, API keys, publish profiles, or machine-specific IDE files.
+4. Do not include personal clipboard data, databases, logs, API keys, machine-specific publish profiles or credentials, or user-specific IDE files. The shared `FolderProfile.pubxml` is part of the reproducible build.
 
 ## Development setup
 
@@ -73,13 +73,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/Clean.ps1 -WhatIf
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Clean.ps1
 ```
 
-The default removes `src`/`tests` build intermediates and `TestResults`.
-Use `-IncludeIdeState` for Visual Studio cache and `-IncludeBuildOutputs` for
-old `artifacts`/`publish` outputs. The script skips `Data` directories and outputs
-containing databases (including WAL/journal companions), settings, drafts, logs,
-credentials, or a running program. It checks that deletion targets stay inside
-this checkout and refuses symbolic links or junctions.
-It does not remove downloaded OCR models or the optional offline runtime.
+The default removes project `bin`/`obj` directories under `src`/`tests` and the
+root `TestResults` directory. Use `-IncludeIdeState` for the root Visual Studio
+cache and `-IncludeBuildOutputs` only for the documented `artifacts/publish`
+smoke-check output. Preview either option with `-WhatIf` before running it.
+
+The script never selects the root `publish` directory, its releases or candidates,
+other custom artifact directories, or local planning documents. It preserves
+outputs containing `Data`, databases (including WAL/journal companions), settings,
+drafts, logs, credentials, retained release/candidate artifacts, installed OCR
+engines or models, offline runtimes or models, or a running program. It checks
+that deletion targets stay inside this checkout and refuses symbolic links or
+junctions, including linked ancestors and descendants.
+
+Review obsolete candidate packages individually before removing them manually;
+their presence under an ignored directory is not evidence that they are safe to
+delete. Keep formal release archives, checksum files, private plans, user data,
+and installed optional components.
 
 ## Architecture rules
 
@@ -138,7 +148,7 @@ Any new user-visible key must first be added to `en-US.json`, then to every lang
 - The change has a clear user or maintenance purpose.
 - Release build and tests pass locally.
 - New behavior has test coverage where practical.
-- No secrets, personal data, binaries, or `*.user` files are included.
+- No secrets, personal data, generated compiled binaries, publish outputs, or `*.user` files are included. Approved static assets such as icons and documentation images remain part of the repository.
 - Documentation and `CHANGELOG.md` are updated when needed.
 - All locale files retain matching keys and placeholders.
 - Screenshots or a short recording are included for meaningful UI changes.

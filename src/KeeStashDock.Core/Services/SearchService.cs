@@ -7,12 +7,12 @@ namespace KeeStashDock.Core.Services;
 /// Search router (designed trade-off, documented in the schema migration):
 ///
 /// * Space-delimited languages -> SQLite FTS5 MATCH with prefix queries
-///   ("term*"), ranked by bm25, fast at 10k+ rows.
+///   ("term*"), ranked by bm25.
 /// * Queries containing CJK characters -> LIKE substring fallback, because
 ///   the built-in unicode61 tokenizer cannot segment Chinese/Japanese text.
-///   LIKE over ~10k rows of short snippets is still well inside the 100 ms
-///   budget; if the corpus outgrows it, a segmenting tokenizer extension can
-///   be introduced by a future schema migration without touching callers.
+///   Latency depends on the query and collection; measure representative data
+///   before setting performance expectations. A segmenting tokenizer can be
+///   introduced by a future schema migration without touching callers.
 /// </summary>
 public sealed class SearchService
 {

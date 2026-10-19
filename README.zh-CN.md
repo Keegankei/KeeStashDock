@@ -128,7 +128,7 @@ Get-FileHash .\KeeStashDock-1.2.3-win-x64.zip -Algorithm SHA256
 
 两种模式均可拖动展开面板的边缘或四角调整大小，重新启动会恢复保存的尺寸；六按钮收纳栏保持固定大小。1.2.3 同时修复恢复面板位置时的初始化异常，并使空间模式的缩放区域与可见面板边缘对齐。
 
-支持浅色、深色和跟随系统主题，可设置自定义背景、透明度和磨砂效果。系统高对比度及减少动画的偏好会启用静态回退显示。[深色预览](docs/images/floating-panel-dark.png) · [固定视角预览](docs/images/floating-panel-fixed.png) · [性能测量与限制](docs/performance/1.2.2-floating.md)。
+支持浅色、深色和跟随系统主题，可设置自定义背景、透明度和磨砂效果。系统高对比度及减少动画的偏好会启用静态回退显示。[深色预览](docs/images/floating-panel-dark.png) · [固定视角预览](docs/images/floating-panel-fixed.png)。
 
 设置还提供面板文字配色方案、自定义文字颜色和自动对比度，以及独立的划词气泡样式、发光、阴影和透明度控制。
 

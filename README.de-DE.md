@@ -128,7 +128,7 @@ Wählen Sie **Einstellungen > Darstellung > Panelmodus**. Beide Modi behalten di
 
 Ziehen Sie in beiden Modi an den Kanten oder Ecken des ausgeklappten Panels, um seine Größe zu ändern; sie wird beim Neustart wiederhergestellt. Die kompakte Leiste mit sechs Schaltflächen hat eine feste Größe. Version 1.2.3 behebt außerdem einen Initialisierungsfehler beim Wiederherstellen der gespeicherten Position und richtet die Größenänderungsbereiche im räumlichen Modus an den sichtbaren Panelkanten aus.
 
-Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png) · [Gemessene Leistung und Grenzen](docs/performance/1.2.2-floating.md).
+Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png).
 
 Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene Textfarbe und automatischen Kontrast sowie unabhängige Optionen für Stil, Leuchten, Schatten und Deckkraft der Auswahlblase.
 

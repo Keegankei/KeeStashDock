@@ -83,8 +83,8 @@ public sealed class AppSettings
     public double? PanelUserHeight { get; set; }
 
     // ---- Custom background ----------------------------------------------
-    /// <summary>Absolute path of a user-chosen background image for the panel
-    /// and workbench. Null/missing file = plain themed background.</summary>
+    /// <summary>Absolute path of a user-chosen background image for the quick
+    /// panel. Null/missing file = plain themed background.</summary>
     public string? BackgroundImagePath { get; set; }
 
     /// <summary>Opacity (0.2-1.0) of the theme-colored scrim laid OVER the
@@ -136,14 +136,14 @@ public sealed class AppSettings
     /// the selection as plain text into the panel's current group.</summary>
     public bool SelectionPopupEnabled { get; set; } = true;
 
-    /// <summary>What the selection bubble DOES when clicked - exactly one:
-    /// "Capture" copies the selection into KeeStashDock; "Translate" shows
-    /// it translated into the app's UI language on a glass card.</summary>
+    /// <summary>Selection-bubble actions: "Capture" copies the selection into
+    /// KeeStashDock; "Translate" uses the configured translation target;
+    /// "Both" offers independent capture and translation buttons.</summary>
     public string SelectionAction { get; set; } = "Capture";
 
     /// <summary>Visual dress of the selection bubble / toasts / translation
     /// card: "FollowTheme" derives glass from the text-color scheme;
-    /// "Default" is the classic solid accent pill.</summary>
+    /// "Default" uses fixed soft monochrome surfaces and text.</summary>
     public string SelectionBubbleStyle { get; set; } = DefaultSelectionBubbleStyle;
 
     /// <summary>New installs default to Google. Existing choices

@@ -24,7 +24,7 @@ Copy-only bubble. Native window title bars are omitted.
 | `backup-settings.png` | Backup scheduling every 24 hours and the redacted backup folder |
 | `backup-status.png` | Backup status, snapshot list, manual actions and export/import controls in the isolated sample |
 | `about-settings.png` | Version 1.2.3, update entry point and redacted app-data location |
-| `settings-dark.png` | Optional dark appearance of General settings |
+| [settings-dark.png](settings-dark.png) | Optional dark appearance of General settings |
 | `screenshot-entry.png` | Saved image entry with an original sample note and editable, prefilled example OCR text |
 | `component-setup.png` | Optional OCR and offline translation components in their fresh-install, not-installed state |
 | `component-folders.png` | Scrolled component page showing the offline translation folder and folder actions; paths redacted |

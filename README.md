@@ -128,7 +128,7 @@ Select **Settings > Appearance > Panel mode**. Both modes keep the same controls
 
 Resize an expanded panel by dragging its edges or corners in either mode; its size is restored on restart. The compact six-button bar stays fixed in size. Version 1.2.3 also fixes an initialization exception when restoring a saved panel position and aligns Spatial resize hit areas with the visible panel edges.
 
-Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png) · [Measured performance and limits](docs/performance/1.2.2-floating.md).
+Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png).
 
 Settings also offers panel text palettes, a custom text color, and automatic contrast, plus independent selection-bubble style, glow, shadow, and opacity controls.
 
