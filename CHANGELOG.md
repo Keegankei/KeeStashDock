@@ -28,6 +28,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 ### Fixed
 
 - Prevent an unhandled null-reference error when first opening the quick panel after restarting with a saved screen position. Native window hooks and direct-paste registration now use the window handle even before the visual tree is attached; shadow initialization uses the same safe lookup.
+- Align Spatial resize targets with the visible projected edges and corners, including inspected angles and right-to-left layouts. Keep the outer window frame resizable and scale grab areas with monitor DPI; compact and edge-hidden states remain fixed-size.
 
 See the [release notes](docs/releases/1.2.3-notes.md) and
 [acceptance record](docs/releases/1.2.3.md). Publication is pending; the stable

@@ -59,6 +59,7 @@ internal static class QuickPanelWindowScenarios
             Assert.IsTrue(IsWindowVisible(handle), "The panel must be visible to Windows even without a taskbar button.");
             Assert.IsFalse(panel.ShowInTaskbar);
             Assert.IsFalse(panel.ShowActivated);
+            VerifyResizeTargets(panel, settings, handle);
             VerifyDepthModes(panel, settings, handle, openedImages);
             VerifyPerspectiveMotion(panel, settings, handle, value => pointer = value);
             CaptureDocumentationPreviews(panel, settings, snippets, value => pointer = value);
@@ -137,6 +138,7 @@ internal static class QuickPanelWindowScenarios
             Assert.AreEqual(Math.Clamp(saved.Current.PanelDevicePosY!.Value, work.Top,
                 Math.Max(work.Top, work.Bottom - (restored.Bottom - restored.Top))), restored.Top,
                 "The first summon must restore the saved device Y coordinate within the work area.");
+            VerifyResizeTargets(panel, settings, handle);
 
             // A native move-completed message must still persist the new position;
             // merely suppressing a missing visual source would lose this hook.
@@ -152,14 +154,153 @@ internal static class QuickPanelWindowScenarios
             Assert.AreNotEqual(saved.Current.PanelDevicePosX, reloaded.Current.PanelDevicePosX);
             Assert.AreNotEqual(saved.Current.PanelDevicePosY, reloaded.Current.PanelDevicePosY);
 
+            // Exercise the native size/exit notifications on this fixture HWND,
+            // without entering a modal drag loop or synthesizing desktop input.
+            Assert.IsTrue(GetWindowRect(handle, out NativeRect beforeResize));
+            SendMessage(handle, 0x0231, nint.Zero, nint.Zero); // WM_ENTERSIZEMOVE
+            Assert.IsTrue(SetWindowPos(handle, nint.Zero, 0, 0,
+                beforeResize.Right - beforeResize.Left + 32,
+                beforeResize.Bottom - beforeResize.Top + 24, 0x0016)); // NOMOVE | NOZORDER | NOACTIVATE
+            PumpUntil(() => panel.ActualWidth > reloaded.Current.PanelUserWidth!.Value &&
+                panel.ActualHeight > reloaded.Current.PanelUserHeight!.Value,
+                "Native resize notifications must update the WPF panel dimensions.");
+            SendMessage(handle, 0x0232, nint.Zero, nint.Zero);
+            reloaded.Load();
+            Assert.AreEqual(panel.ActualWidth, reloaded.Current.PanelUserWidth!.Value, 0.01);
+            Assert.AreEqual(panel.ActualHeight, reloaded.Current.PanelUserHeight!.Value, 0.01);
+
             panel.HidePanel();
             PumpUntil(() => !panel.IsVisible);
             panel.ShowPanel();
             PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
             Assert.AreEqual(handle, new WindowInteropHelper(panel).Handle,
                 "A restored panel must remain usable after hiding and summoning again.");
+            Assert.AreEqual(reloaded.Current.PanelUserWidth!.Value, panel.ActualWidth, 0.01);
+            Assert.AreEqual(reloaded.Current.PanelUserHeight!.Value, panel.ActualHeight, 0.01);
+
+            panel.Close();
+            panel = new QuickPanelWindow(snippets, new SearchService(repository), reloaded,
+                new CategoryRepository(database), () => { }, () => { },
+                perspectivePointer: () => new Point(-1000, -1000));
+            panel.ShowPanel();
+            PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
+            Assert.AreEqual(reloaded.Current.PanelUserWidth!.Value, panel.ActualWidth, 0.01,
+                "The user-chosen width must survive constructing a new panel from saved settings.");
+            Assert.AreEqual(reloaded.Current.PanelUserHeight!.Value, panel.ActualHeight, 0.01,
+                "The user-chosen height must survive constructing a new panel from saved settings.");
+            VerifyResizeTargets(panel, reloaded, new WindowInteropHelper(panel).Handle);
         }
         finally { panel.Close(); }
+    }
+
+    private static void VerifyResizeTargets(QuickPanelWindow panel, SettingsStore settings, nint handle)
+    {
+        bool previousMode = settings.Current.FloatingPanelEnabled;
+        bool previousFollow = settings.Current.FloatingPanelFollowPointer;
+        FlowDirection previousDirection = panel.FlowDirection;
+        var surface = (PerspectiveSurface)panel.FindName("SpatialSurface");
+        try
+        {
+            settings.Current.FloatingPanelFollowPointer = true;
+            foreach (bool spatial in new[] { false, true })
+            {
+                settings.Current.FloatingPanelEnabled = spatial;
+                settings.Save();
+                panel.UpdateLayout();
+                Assert.IsTrue(GetWindowRect(handle, out NativeRect bounds));
+                double width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
+                foreach ((Point point, int hit) in ResizePoints(width, height))
+                    Assert.AreEqual(new nint(hit), HitTest(handle, new Point(bounds.Left + point.X, bounds.Top + point.Y)),
+                        $"{(spatial ? "Spatial" : "Standard")} native envelope must expose resize handle {hit}.");
+
+                VerifyProjectedResizeTargets(panel, surface, handle, spatial ? "Spatial" : "Standard");
+                if (spatial && panel.FloatingDepthEnabled)
+                {
+                    foreach (Vector drag in new[] { new Vector(100, -80), new Vector(-160, 140) })
+                    {
+                        Point origin = new(180, 200);
+                        Assert.IsTrue(panel.BeginInspection(origin));
+                        panel.MoveInspection(origin + drag);
+                        panel.UpdatePerspectivePointer();
+                        panel.EndInspection();
+                        VerifyProjectedResizeTargets(panel, surface, handle, "Spatial after inspection");
+                    }
+                    panel.FlowDirection = FlowDirection.RightToLeft;
+                    panel.UpdateLayout();
+                    VerifyProjectedResizeTargets(panel, surface, handle, "Right-to-left Spatial");
+                    panel.FlowDirection = previousDirection;
+                    panel.UpdateLayout();
+                }
+            }
+
+            var shrink = (Button)panel.FindName("ShrinkExpandBtn");
+            shrink.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            panel.UpdateLayout();
+            Assert.AreEqual(ResizeMode.NoResize, panel.ResizeMode);
+            Assert.IsTrue(GetWindowRect(handle, out NativeRect compact));
+            foreach ((Point point, _) in ResizePoints(compact.Right - compact.Left, compact.Bottom - compact.Top))
+            {
+                nint hit = HitTest(handle, new Point(compact.Left + point.X, compact.Top + point.Y));
+                Assert.IsFalse(hit.ToInt64() is >= 10 and <= 17, "The six-button compact bar must not resize.");
+            }
+            shrink.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            panel.UpdateLayout();
+            Assert.AreEqual(ResizeMode.CanResize, panel.ResizeMode);
+        }
+        finally
+        {
+            panel.FlowDirection = previousDirection;
+            settings.Current.FloatingPanelEnabled = previousMode;
+            settings.Current.FloatingPanelFollowPointer = previousFollow;
+            settings.Save();
+            panel.UpdateLayout();
+        }
+    }
+
+    private static void VerifyProjectedResizeTargets(QuickPanelWindow panel, PerspectiveSurface surface, nint handle, string mode)
+    {
+        double width = surface.ContentSize.Width, height = surface.ContentSize.Height;
+        Point left = surface.PointToScreen(surface.ProjectPoint(new Point(0, height / 2)));
+        Point right = surface.PointToScreen(surface.ProjectPoint(new Point(width, height / 2)));
+        bool mirrored = left.X > right.X;
+        foreach ((Point point, int contentHit) in ResizePoints(width, height))
+        {
+            int physicalHit = mirrored ? contentHit switch
+            {
+                10 => 11, 11 => 10, 13 => 14, 14 => 13, 16 => 17, 17 => 16, _ => contentHit
+            } : contentHit;
+            Assert.AreEqual(new nint(physicalHit), HitTest(handle, surface.PointToScreen(surface.ProjectPoint(point))),
+                $"{mode} visible panel edge must expose physical resize handle {physicalHit}; " +
+                "the target must follow the projected surface rather than only the invisible window envelope.");
+        }
+        nint centerHit = HitTest(handle, surface.PointToScreen(surface.ProjectPoint(new Point(width / 2, height / 2))));
+        Assert.IsFalse(centerHit.ToInt64() is >= 10 and <= 17,
+            "Ordinary content must remain a client hit, not a resize handle.");
+        var button = (Button)panel.FindName("ShrinkExpandBtn");
+        Point buttonCenter = button.TransformToAncestor(surface.ContentRoot)
+            .Transform(new Point(button.ActualWidth / 2, button.ActualHeight / 2));
+        nint buttonHit = HitTest(handle, surface.PointToScreen(surface.ProjectPoint(buttonCenter)));
+        Assert.IsFalse(buttonHit.ToInt64() is >= 10 and <= 17,
+            "The top-bar buttons must remain clickable instead of becoming resize handles.");
+    }
+
+    private static IEnumerable<(Point Point, int Hit)> ResizePoints(double width, double height)
+    {
+        yield return (new Point(2, height / 2), 10);
+        yield return (new Point(width - 2, height / 2), 11);
+        yield return (new Point(width / 2, 2), 12);
+        yield return (new Point(4, 4), 13);
+        yield return (new Point(width - 4, 4), 14);
+        yield return (new Point(width / 2, height - 2), 15);
+        yield return (new Point(4, height - 4), 16);
+        yield return (new Point(width - 4, height - 4), 17);
+    }
+
+    private static nint HitTest(nint handle, Point screenPoint)
+    {
+        int x = (int)Math.Round(screenPoint.X), y = (int)Math.Round(screenPoint.Y);
+        nint packed = new(unchecked((int)((uint)(ushort)x | ((uint)(ushort)y << 16))));
+        return SendMessage(handle, 0x0084, nint.Zero, packed); // WM_NCHITTEST
     }
 
     private static void VerifyShadowHandleBeforeShow()
@@ -562,6 +703,9 @@ internal static class QuickPanelWindowScenarios
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetWindowRect(nint window, out NativeRect rectangle);
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern nint GetWindowLongPtr(nint window, int index);
     [DllImport("user32.dll")]
