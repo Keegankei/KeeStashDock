@@ -26,6 +26,10 @@ coverage/
 .codex/
 /docs/plans/
 /docs/performance/
+/theme/custom/
+/theme/.staging/
+/theme/.recovery/
+/theme/cache/
 
 # Local environment and secrets
 .env

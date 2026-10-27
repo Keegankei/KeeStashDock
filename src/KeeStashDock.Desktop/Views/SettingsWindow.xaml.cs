@@ -85,6 +85,8 @@ public partial class SettingsWindow : Window
             CancelTranslationTest();
             _componentCancellation?.Cancel();
             _folderCancellation?.Cancel();
+            _themeCancellation?.Cancel();
+            CancelThemeCatalog();
             Hide();
         };
         IsVisibleChanged += (_, _) => { if (!IsVisible) CancelTranslationTest(); };
@@ -94,13 +96,24 @@ public partial class SettingsWindow : Window
         LocalizationService.Instance.ApplyFlowDirection(this);
 
         PopulateFromSettings();
+        ConfigureSurfaceOpacity();
+        PopulateThemes();
+        _settings.Changed += UpdateThemeStatus;
+        ThemeManager.Changed += UpdateThemeStatus;
+        LocalizationService.Instance.LanguageChanged += OnThemeLanguageChanged;
+        Closed += (_, _) =>
+        {
+            _themeWindowClosed = true; CancelThemeCatalog();
+            _settings.Changed -= UpdateThemeStatus; ThemeManager.Changed -= UpdateThemeStatus;
+            LocalizationService.Instance.LanguageChanged -= OnThemeLanguageChanged;
+        };
         ConfigurePresentation();
         _loading = false;
     }
 
     public event Action? CheckUpdatesRequested;
 
-    public void ShowAndActivate() { Show(); Activate(); }
+    public void ShowAndActivate() { PopulateThemes(); Show(); Activate(); }
 
     public void ShowComponents()
     {
@@ -114,7 +127,7 @@ public partial class SettingsWindow : Window
 
     private void PopulateFromSettings()
     {
-        var cfg = _settings.Current;
+        var cfg = ThemeManager.CreatePanelAppearanceSettings(_settings.Current);
 
         // Language list: discovered from disk, shown by native name.
         var langs = LocalizationService.Instance.DiscoverLanguages();
@@ -130,6 +143,7 @@ public partial class SettingsWindow : Window
             System.Globalization.CultureInfo.InvariantCulture);
         ThemeCombo.SelectedIndex = cfg.Theme switch
         { "Light" => 1, "Dark" => 2, _ => 0 };
+        PopulateFontSize();
         PanelModeCombo.SelectedIndex = cfg.FloatingPanelEnabled ? 1 : 0;
         FloatingMotionCombo.SelectedIndex = cfg.FloatingPanelFollowPointer ? 0 : 1;
         FloatingMotionCombo.IsEnabled = cfg.FloatingPanelEnabled;
@@ -139,7 +153,9 @@ public partial class SettingsWindow : Window
         SelectInspectionOption(InspectionModifiersCombo, cfg.FloatingInspectionModifiers, "Alt");
         RefreshInspectionGestureControls();
 
-        BgPathText.Text = cfg.BackgroundImagePath ?? "—";
+        BgPathText.Text = ThemeManager.GetPanelBackground(_settings.Current) is not null
+            ? ThemeManager.ActiveScheme?.Manifest.Name + " / " + System.IO.Path.GetFileName(cfg.BackgroundImagePath)
+            : cfg.BackgroundImagePath ?? "—";
         BgOpacitySlider.Value = Math.Clamp(cfg.BackgroundOverlayOpacity, 0.2, 1.0) * 100;
         BgOpacityValue.Text = $"{(int)BgOpacitySlider.Value}%";
         FrostCheck.IsChecked = cfg.FrostedGlassEnabled;
@@ -147,6 +163,8 @@ public partial class SettingsWindow : Window
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
         CardOpacitySlider.Value = Math.Clamp(cfg.CardOpacity, 0.1, 1.0) * 100;
         CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
+        SettingsSurfaceOpacitySlider.Value = Math.Clamp(cfg.SettingsSurfaceOpacity, .1, 1) * 100;
+        SettingsSurfaceOpacityValue.Text = $"{(int)SettingsSurfaceOpacitySlider.Value}%";
         // Retired Light/Dark values from older settings alias to the
         // presets they were folded into (same mapping the panel applies).
         string mode = cfg.PanelTextColorMode switch
@@ -173,6 +191,7 @@ public partial class SettingsWindow : Window
         RefreshTranslationTargets();
         BubbleGlowCheck.IsChecked = cfg.BubbleTextGlow;
         BubbleShadowCheck.IsChecked = cfg.BubbleShadow;
+        BubbleFrostCheck.IsChecked = cfg.BubbleFrostedGlassEnabled;
         BubbleOpacitySlider.Value = Math.Round(
             Math.Clamp(cfg.BubbleOpacity, 0.5, 1.0) * 100);
         BubbleOpacityValue.Text = $"{BubbleOpacitySlider.Value:0}%";
@@ -251,6 +270,8 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         _settings.Current.BubbleTextGlow = BubbleGlowCheck.IsChecked == true;
         _settings.Current.BubbleShadow = BubbleShadowCheck.IsChecked == true;
+        _settings.Current.BubbleFrostedGlassEnabled = BubbleFrostCheck.IsChecked == true;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
     }
 
@@ -264,6 +285,7 @@ public partial class SettingsWindow : Window
             BubbleOpacityValue.Text = $"{e.NewValue:0}%";
         if (_loading || _settings is null) return;
         _settings.Current.BubbleOpacity = e.NewValue / 100.0;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
     }
 
@@ -427,6 +449,7 @@ public partial class SettingsWindow : Window
         _settings.Current.SelectionBubbleStyle =
             (BubbleStyleCombo.SelectedItem as ComboBoxItem)?.Tag as string
             ?? AppSettings.DefaultSelectionBubbleStyle;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
     }
 
@@ -537,6 +560,7 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         _settings.Current.PanelTextColorMode =
             (TextColorCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "Auto";
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();   // panel hot-applies via SettingsStore.Changed
         RefreshCustomColorUi();
     }
@@ -553,6 +577,7 @@ public partial class SettingsWindow : Window
         {
             System.Windows.Media.ColorConverter.ConvertFromString(text);
             _settings.Current.PanelTextCustomColor = text;
+            _settings.Current.ThemeAppearanceCustomized = true;
             _settings.Save();
         }
         catch
@@ -580,6 +605,7 @@ public partial class SettingsWindow : Window
         if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
         string hex = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
         _settings.Current.PanelTextCustomColor = hex;
+        _settings.Current.ThemeAppearanceCustomized = true;
         CustomColorBox.Text = hex;
         _settings.Save();
         RefreshCustomColorUi();
@@ -687,6 +713,8 @@ public partial class SettingsWindow : Window
         };
         if (dlg.ShowDialog(this) != true) return;
         _settings.Current.BackgroundImagePath = dlg.FileName;
+        _settings.Current.ThemeUseCustomBackground = true;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
         BgPathText.Text = dlg.FileName;
         RefreshConditionalOptions();
@@ -695,6 +723,8 @@ public partial class SettingsWindow : Window
     private void OnClearBgClick(object sender, RoutedEventArgs e)
     {
         _settings.Current.BackgroundImagePath = null;
+        _settings.Current.ThemeUseCustomBackground = true;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
         BgPathText.Text = "—";
         RefreshConditionalOptions();
@@ -705,6 +735,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         _settings.Current.BackgroundOverlayOpacity = e.NewValue / 100.0;
+        _settings.Current.ThemeAppearanceCustomized = true;
         _settings.Save();
         BgOpacityValue.Text = $"{(int)e.NewValue}%";
     }
@@ -718,6 +749,7 @@ public partial class SettingsWindow : Window
         cfg.FrostedGlassEnabled = FrostCheck.IsChecked == true;
         cfg.FrostedGlassRadius = FrostSlider.Value;
         cfg.CardOpacity = CardOpacitySlider.Value / 100.0;
+        cfg.ThemeAppearanceCustomized = true;
         _settings.Save();
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
         CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";

@@ -1,8 +1,6 @@
 # Application artwork
 
-The application icon was created with the built-in AI image generation tool,
-through design iterations directed by the project maintainer. The maintainer
-approved this version on **2026-10-12** for KeeStashDock 1.2.1.
+The application icon is AI-generated artwork used by KeeStashDock since 1.2.1.
 
 | Asset | Purpose |
 | --- | --- |
@@ -20,29 +18,13 @@ The exporter resizes the approved artwork into 16, 20, 24, 32, 40, 48, 64, 96,
 and the source image's transparency; it does not remove or redraw any part of
 the image.
 
-## Design record
+## Artwork and license
 
-The whole ribbon represents a continuous sheet of note paper. Three flowing
-lobes suggest a Mobius strip, with a large, central vintage quill connecting the
-abstract form to writing and saved notes. There is no separate note badge or
-lettering. The palette places magenta above, yellow/lime on the left, and
-cyan/blue on the right. After approving the design, the maintainer requested a
-transparent background in place of the draft's deep indigo backdrop.
+The icon depicts a flowing ribbon of note paper and a central quill, using
+magenta, yellow-green and cyan-blue colors on a transparent background.
 
-The final generation direction was to preserve the three-lobed silhouette from
-the preceding AI-generated draft, remove all text and small surface details,
-join the ribbon into a continuous blank paper band, and enlarge the ivory
-feather with its warm gold nib. Background removal uses the same built-in image
-generation tool. Restrained highlights and a smooth paper finish
-keep the main shapes clear at icon sizes. The geometry is an artistic
-interpretation, not a claim of mathematically verified Mobius topology.
-
-The maintainer cited M. C. Escher's *Mobius Strip I* for spatial inspiration,
-*Manifold Garden* for the arrangement of colors and flowing forms, and Apple
-product design for restrained material finish. These references describe design
-inspiration only. Reference screenshots and source artworks are not distributed
-as project assets. No affiliation or endorsement is implied, and the project
-license does not grant rights to those names, trademarks, or source artworks.
-
-This record documents the generation process and the maintainer's approval; it
-does not assert exclusive rights or provide a legal clearance guarantee.
+These project assets may be redistributed with KeeStashDock under the
+repository's [Apache-2.0 license](../../LICENSE), to the extent of rights held
+by the project. AI generation does not establish exclusivity or guarantee
+copyright eligibility in every jurisdiction. No affiliation or endorsement
+by an artist, studio or brand is claimed.

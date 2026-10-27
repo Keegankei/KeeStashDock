@@ -30,7 +30,37 @@ Organized packages bundle the .NET runtime into the same root `KeeStashDock.exe`
 - An obsolete file is removed only when the previous manifest identifies it as an unchanged application file.
 - The upgrade keeps the installation path and does not alter existing shortcuts or startup registration.
 
-Version 1.2.3 retains database schema v4. Database rollback is not part of application-file rollback. Older programs limited to schemas v1-v3 cannot open a v4 database.
+Version 1.3.0 upgrades the library to database schema v5. Database rollback is not part of application-file rollback. Version 1.2.3 and earlier cannot open a v5 database.
+
+## Upgrading to 1.3.0
+
+Once the stable release is published, use **Check for updates** from 1.2.2 or
+1.2.3, or download the full `KeeStashDock-1.3.0-win-x64.zip` and its matching
+`KeeStashDock-1.3.0-win-x64.zip.sha256` from the official release page. A source-code
+archive is not the runnable application. The checksum must match the exact ZIP;
+it does not replace publisher signing.
+
+Keep the entire active data folder, optional components and custom themes. Before changing an existing database, startup creates a verified SQLite snapshot in the database folder's `Backups/pre_upgrade_v*_to_v5_*.db`. It includes committed WAL content and is separate from scheduled-backup retention and the optional backup destination. If this safety snapshot cannot be created or verified, migration stops. Free space and write access are required. New empty libraries do not need a pre-upgrade snapshot.
+
+Schema v5 records explicit text templates and a library identity for conflict checking. Ordinary text containing braces remains ordinary text. Group packages containing templates use format 3 and need 1.3.0 or newer; older text/image packages remain importable. Keep the pre-upgrade snapshot before testing an older application. Restore a **separate copy** with an older compatible binary; do not overwrite the current library or copy a live SQLite file. Changes made after the snapshot will not be in that older copy.
+
+If startup fails after migration and application files are rolled back, the update helper checks whether the old application supports the current database. An incompatible old program is not automatically relaunched. The migrated library and recovery files remain intact; follow `RECOVERY.txt` and keep both the library and pre-upgrade snapshot. Update recovery never silently replaces the library with older data.
+
+Complete themes live in the application folder: shipped assets under `theme/builtin/`, imported themes under `theme/custom/`. Updates may replace owned built-in themes; they preserve custom themes and theme staging/recovery data. Export themes separately before moving machines: database backups and group packages do not include them. A theme export contains appearance settings and its selected images, not snippets, credentials, shortcuts or machine paths. Including a personal background requires confirmation.
+
+The default remains the system palette with no background image. Applying a theme is explicit and canceling a preview restores the previous appearance. Existing language, fonts, shortcuts, capture settings, window layout and optional-component locations are retained.
+
+### Replacing a 1.3.0 candidate
+
+Earlier **1.3.0-r1–r5** packages already report numeric version 1.3.0, so the
+updater does not offer the final 1.3.0 package as newer. Stop the local translation
+service if used, exit the app and its tray process, then follow the manual
+procedure below with a fresh destination folder. Preserve the entire active
+data folder, export custom themes separately, and retain any externally selected
+component folders. Keep the previous installation until the replacement is
+accepted. If its database is already schema v5, this replacement does not
+downgrade or reset it. Re-register **Start with Windows** if the executable path
+changes.
 
 ## Upgrading to 1.2.3
 

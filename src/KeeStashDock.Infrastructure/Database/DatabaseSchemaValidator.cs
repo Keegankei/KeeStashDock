@@ -91,6 +91,23 @@ public sealed class DatabaseSchemaValidator
             }
 
             if (schemaVersion >= 4) ValidateImages(connection);
+            if (schemaVersion >= 5)
+            {
+                ValidateColumns(connection, "snippets", ["is_template"]);
+                ValidateColumns(connection, "database_metadata", ["singleton", "identity"]);
+                ValidateNamedObjects(connection, "index", ["idx_snippets_query"]);
+                ValidateNamedObjects(connection, "trigger", ["trg_template_insert", "trg_template_update"]);
+                using var templates = connection.CreateCommand();
+                templates.CommandText = "SELECT COUNT(*) FROM snippets WHERE typeof(is_template) != 'integer' OR is_template NOT IN (0,1) OR (is_template=1 AND type != 0)";
+                if (Convert.ToInt64(templates.ExecuteScalar()) != 0)
+                    throw new DatabaseValidationException("The database contains invalid template metadata.");
+                templates.CommandText = "SELECT identity FROM database_metadata WHERE singleton=1";
+                if (templates.ExecuteScalar() is not string identity || identity.Length != 32 || !identity.All(Uri.IsHexDigit))
+                    throw new DatabaseValidationException("The database identity is missing or invalid.");
+                templates.CommandText = "SELECT COUNT(*) FROM database_metadata";
+                if (Convert.ToInt64(templates.ExecuteScalar()) != 1)
+                    throw new DatabaseValidationException("The database contains ambiguous identity metadata.");
+            }
 
             if (requireCurrentUserVersion &&
                 (userVersion != MigrationRunner.LatestSupportedVersion ||

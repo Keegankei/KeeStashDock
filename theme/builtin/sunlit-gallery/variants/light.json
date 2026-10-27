@@ -1,0 +1,71 @@
+{
+  "colors": {
+    "B.WindowBg": "#F0F2E9",
+    "B.PanelBg": "#F6F7EF",
+    "B.CardBg": "#FAFBF4",
+    "B.CardHover": "#E3E8DA",
+    "B.Border": "#AEB8A2",
+    "B.TextPrimary": "#28332A",
+    "B.TextMuted": "#5A665A",
+    "B.Accent": "#526A46",
+    "B.AccentSoft": "#DEE7D5",
+    "B.OnAccent": "#FFFFFF",
+    "B.CardTextPrimary": "#28332A",
+    "B.CardTextMuted": "#5A665A",
+    "B.InputText": "#28332A",
+    "B.InputTextMuted": "#5A665A",
+    "B.InputBg": "#FCFDF8",
+    "B.Danger": "#AD3D35",
+    "B.Success": "#386B4C",
+    "B.Warning": "#7B5C12",
+    "B.Focus": "#526A46",
+    "B.Disabled": "#707D68",
+    "B.Link": "#4C6747",
+    "B.ScrollThumb": "#859679",
+    "B.SearchHighlight": "#E6D9A7",
+    "B.BubbleBg": "#F5F7EE",
+    "B.BubbleText": "#2A3328",
+    "B.BubbleAccent": "#526A46",
+    "B.BubbleAccentSoft": "#E3E9D8",
+    "B.BubbleBorder": "#BAC4AA",
+    "B.BubbleMuted": "#5D6858",
+    "B.BubbleHighlight": "#E2D5AC"
+  },
+  "backgrounds": {
+    "quickPanel": {
+      "path": "assets/light-portrait.png",
+      "opacity": 1,
+      "overlayOpacity": 0.38,
+      "blurRadius": 0,
+      "focalX": 0.5,
+      "focalY": 0.5
+    },
+    "workspace": {
+      "path": "assets/light-landscape.png",
+      "opacity": 1,
+      "overlayOpacity": 0.64,
+      "blurRadius": 0,
+      "focalX": 0.5,
+      "focalY": 0.5
+    },
+    "smallWindow": {
+      "path": "assets/light-landscape.png",
+      "opacity": 1,
+      "overlayOpacity": 0.88,
+      "blurRadius": 0,
+      "focalX": 0.5,
+      "focalY": 0.5
+    }
+  },
+  "cardOpacity": 0.94,
+  "settingsSurfaceOpacity": 1,
+  "settingsFrostedGlassEnabled": false,
+  "settingsFrostedGlassRadius": 8,
+  "bubbleFrostedGlassEnabled": false,
+  "bubbleOpacity": 0.98,
+  "bubbleShadow": true,
+  "bubbleStyle": "FollowTheme",
+  "bubbleTextGlow": false,
+  "panelTextColorMode": "Auto",
+  "panelTextCustomColor": "#28332A"
+}

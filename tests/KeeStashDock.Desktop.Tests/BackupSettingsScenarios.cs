@@ -56,6 +56,7 @@ internal static class BackupSettingsScenarios
             Assert.AreEqual("17", ((ComboBoxItem)keep.SelectedItem).Tag);
             Assert.AreEqual(0, writes, "Opening backup settings must not replace custom preferences.");
             Assert.AreEqual(1, list.Items.Count);
+            SettingsThemeScenarios.VerifyBackupList(list);
             Assert.IsTrue(now.IsEnabled);
             Assert.IsFalse(restore.IsEnabled);
             Assert.IsTrue(status.Text.Contains(backup.BackupsDirectory, StringComparison.Ordinal));

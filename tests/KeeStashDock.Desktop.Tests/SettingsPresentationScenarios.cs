@@ -14,6 +14,7 @@ internal static class SettingsPresentationScenarios
     internal static void Verify(SettingsWindow window, SettingsStore settings, string settingsFile)
     {
         VerifyNavigation(window, settings);
+        FontSizeSettingsScenarios.Verify(window, settings, settingsFile);
         VerifyResultOptions(window, settingsFile);
         VerifySelectionDependencies(window, settings);
         VerifyHotkeyDependencies(window, settings);

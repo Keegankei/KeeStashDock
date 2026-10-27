@@ -23,6 +23,12 @@ function Assert-Rejected([scriptblock]$Operation) {
 }
 
 try {
+    . (Join-Path $PSScriptRoot 'UpdateManifest.Common.ps1')
+    foreach ($themePath in @('theme/custom/user/manifest.json', 'THEME/CUSTOM/user/asset.png',
+        'theme/.staging/pending/manifest.json', 'theme/.recovery/backup/manifest.json', 'theme/cache/image.png')) {
+        Assert-Rejected { Assert-UpdateRelativePath $themePath }
+    }
+    Assert-UpdateRelativePath 'theme/builtin/wisteria-atelier/manifest.json'
     [IO.Directory]::CreateDirectory($testRoot) | Out-Null
     Copy-Item -LiteralPath $AssemblyPath -Destination (Join-Path $testRoot 'KeeStashDock.dll')
     [IO.File]::WriteAllText((Join-Path $testRoot 'KeeStashDock.exe'), 'Disposable fixture, not executable.')

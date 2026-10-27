@@ -59,7 +59,7 @@ public sealed partial class SnippetItemViewModel : ObservableObject
         => Model.Content.Length <= 160 ? Model.Content : Model.Content[..160] + "…";
 
     /// <summary>Localized type badge, resolved live via the localization indexer.</summary>
-    public string TypeBadge => LocalizationService.Instance[$"Type.{Model.Type}"];
+    public string TypeBadge => LocalizationService.Instance[Model.IsTemplate ? "Search.Type.Template" : $"Type.{Model.Type}"];
 
     public bool IsPinned
     {

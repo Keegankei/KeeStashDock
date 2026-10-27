@@ -30,6 +30,7 @@ public sealed class StickyNoteWindow : Window
     private readonly SettingsStore? _settings;
     private readonly ScaleTransform _entranceScale = new(1, 1);
     private bool _floating, _closed;
+    private readonly double _initialCardOpacity;
 
     /// <param name="item">The card being torn out (title / content / badge /
     /// time render exactly as the panel shows them).</param>
@@ -38,10 +39,11 @@ public sealed class StickyNoteWindow : Window
     /// panel tears out an equally translucent note.</param>
     public StickyNoteWindow(ViewModels.SnippetItemViewModel item,
                             double cardOpacity = 1.0, bool floating = false,
-                            SettingsStore? settings = null)
+                            SettingsStore? settings = null, Func<Task>? copyAsync = null)
     {
         _floating = floating;
         _settings = settings;
+        _initialCardOpacity = cardOpacity;
         Localization.LocalizationService.Instance.ApplyFlowDirection(this);
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
@@ -98,10 +100,10 @@ public sealed class StickyNoteWindow : Window
         var body = new TextBlock
         {
             Text = item.Model.Content,
-            FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 4, 0, 4),
         };
+        TypographyManager.SetFontSize(body, 12);
         body.SetResourceReference(TextBlock.ForegroundProperty, "B.CardTextMuted");
         var bodyScroll = new ScrollViewer
         {
@@ -111,7 +113,8 @@ public sealed class StickyNoteWindow : Window
         };
 
         // ---- Row 2: footer - type badge + relative time, as on the card --
-        var badgeText = new TextBlock { Text = item.TypeBadge, FontSize = 10 };
+        var badgeText = new TextBlock { Text = item.TypeBadge };
+        TypographyManager.SetFontSize(badgeText, 10);
         badgeText.SetResourceReference(TextBlock.ForegroundProperty, "B.Accent");
         var badge = new Border
         {
@@ -122,10 +125,10 @@ public sealed class StickyNoteWindow : Window
         var time = new TextBlock
         {
             Text = item.RelativeTime,
-            FontSize = 10,
             Margin = new Thickness(6, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
         };
+        TypographyManager.SetFontSize(time, 10);
         time.SetResourceReference(TextBlock.ForegroundProperty, "B.CardTextMuted");
         var footer = new StackPanel { Orientation = Orientation.Horizontal };
         footer.Children.Add(badge);
@@ -157,6 +160,7 @@ public sealed class StickyNoteWindow : Window
         _shadow = new PanelShadowWindow(this, radius: 10);
         SystemParameters.StaticPropertyChanged += OnSystemSettingsChanged;
         if (_settings is not null) _settings.Changed += OnSettingsChanged;
+        ThemeManager.Changed += ApplyAppearance;
         Closed += (_, _) =>
         {
             _closed = true;
@@ -164,6 +168,7 @@ public sealed class StickyNoteWindow : Window
             _shadow.Dispose();
             SystemParameters.StaticPropertyChanged -= OnSystemSettingsChanged;
             if (_settings is not null) _settings.Changed -= OnSettingsChanged;
+            ThemeManager.Changed -= ApplyAppearance;
         };
         ApplyAppearance();
 
@@ -172,9 +177,10 @@ public sealed class StickyNoteWindow : Window
         // and copies - the card's primary gesture, preserved on the note.
         // DragMove() blocks until release, so comparing the window position
         // before/after cleanly separates the two.
-        string content = item.Model.Content;
-        MouseLeftButtonDown += (_, e) =>
+        bool copying = false;
+        MouseLeftButtonDown += async (_, e) =>
         {
+            if (copying) return;
             if (e.OriginalSource is DependencyObject d &&
                 FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(d) is not null)
                 return;
@@ -183,8 +189,24 @@ public sealed class StickyNoteWindow : Window
             try { DragMove(); } catch (InvalidOperationException) { return; }
             if (Math.Abs(Left - x) < 2 && Math.Abs(Top - y) < 2)
             {
-                try { ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(content, copy: true)); } catch { }
-                MiniToast.Show(loc["QuickPanel.Copied"]);
+                copying = true;
+                try
+                {
+                    if (copyAsync is not null)
+                    {
+                        await copyAsync();
+                        if (item.Model.IsDeleted && !_closed) Close();
+                    }
+                    else
+                    {
+                        string? content = await TemplateUseCoordinator.PrepareAsync(item.Model);
+                        if (content is null) return;
+                        bool copied = await ViewModels.QuickPanelViewModel.TryWriteClipboardAsync(() =>
+                            ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(content, copy: true)));
+                        MiniToast.Show(loc[copied ? "QuickPanel.Copied" : "Screenshot.CopyFailed"]);
+                    }
+                }
+                finally { copying = false; }
             }
         };
         KeyDown += (_, e) => { if (e.Key == Key.Escape) Close(); };
@@ -243,6 +265,9 @@ public sealed class StickyNoteWindow : Window
     private void ApplyAppearance()
     {
         if (_closed) return;
+        Color color = ((SolidColorBrush)Application.Current.FindResource("B.CardBg")).Color;
+        double opacity = SystemParameters.HighContrast ? 1 : _settings is null ? _initialCardOpacity : ThemeManager.CreatePanelAppearanceSettings(_settings.Current).CardOpacity;
+        Resources["B.CardBg"] = new SolidColorBrush(Color.FromArgb((byte)(Math.Clamp(opacity, 0.1, 1) * 255), color.R, color.G, color.B));
         if (_settings is not null) _floating = _settings.Current.FloatingPanelEnabled;
         if (!_floating || !FloatingCardMotion.AnimationsAllowed) ResetEntrance();
         _shadow.UpdateAppearance(!SystemParameters.HighContrast, _floating, emphasized: true);

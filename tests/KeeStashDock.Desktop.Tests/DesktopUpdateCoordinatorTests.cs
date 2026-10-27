@@ -10,13 +10,75 @@ namespace KeeStashDock.Desktop.Tests;
 [TestClass]
 public sealed class DesktopUpdateCoordinatorTests
 {
+    [TestMethod]
+    public void ApplicationRollbackDoesNotRestartAnOlderProgramAgainstMigratedData()
+    {
+        Assert.IsTrue(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("1.2.3", 4));
+        Assert.IsFalse(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("1.2.3", 5));
+        Assert.IsFalse(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("1.2.99", 5));
+        Assert.IsTrue(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("1.3.0", 5));
+        Assert.IsFalse(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("1.3.0", 6));
+        Assert.IsFalse(DesktopUpdateCoordinator.PreviousVersionSupportsSchema("unknown", 4));
+    }
     private string _root = null!;
+
+    [TestMethod]
+    public void RollbackChecksActualMigratedDatabaseWithoutChangingIt()
+    {
+        string path = Path.Combine(_root, "library.db");
+        var db = new KeeStashDock.Infrastructure.Database.Db(path);
+        using var log = new KeeStashDock.Infrastructure.Logging.FileLogger(Path.Combine(_root, "Logs"));
+        new KeeStashDock.Infrastructure.Database.MigrationRunner(db, log).Run();
+        Assert.ThrowsExactly<InvalidDataException>(() => DesktopUpdateCoordinator.VerifyRollbackDatabase(path, "1.2.3"));
+        DesktopUpdateCoordinator.VerifyRollbackDatabase(path, "1.3.0");
+        using (var connection = db.Open())
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "PRAGMA user_version = 0";
+            command.ExecuteNonQuery();
+        }
+        Assert.ThrowsExactly<InvalidDataException>(() => DesktopUpdateCoordinator.VerifyRollbackDatabase(path, "1.2.3"),
+            "A stale header must not conceal the newer application schema.");
+        using (var connection = db.Open())
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT version FROM schema_version";
+            Assert.AreEqual(5L, command.ExecuteScalar(), "Rollback never downgrades library metadata.");
+            command.CommandText = "PRAGMA user_version";
+            Assert.AreEqual(0L, command.ExecuteScalar(), "The guard is read-only, including the stale header.");
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+    }
 
     [TestInitialize]
     public void Initialize()
     {
         _root = Path.Combine(Path.GetTempPath(), "KeeStashDock.Tests", "UpdateCoordinator", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_root);
+    }
+
+    [TestMethod]
+    public void LegacyRollbackChecksFallbackEvenWhenStalePortableDatabaseExists()
+    {
+        string installation = Path.Combine(_root, "installed");
+        string appData = Path.Combine(_root, "AppData");
+        string portable = Path.Combine(installation, "Data", "keestashdock.db");
+        string fallback = Path.Combine(appData, "KeeStashDock", "keestashdock.db");
+        foreach ((string file, int schema) in new[] { (portable, 4), (fallback, 5) })
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                { DataSource = file, Pooling = false }.ToString());
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = $"PRAGMA user_version={schema}; CREATE TABLE schema_version(version INTEGER); INSERT INTO schema_version VALUES({schema});";
+            command.ExecuteNonQuery();
+        }
+        Assert.ThrowsExactly<InvalidDataException>(() => DesktopUpdateCoordinator.VerifyRollbackDatabases(
+            installation, null, "1.2.3", appData));
+        DesktopUpdateCoordinator.VerifyRollbackDatabases(installation, portable, "1.2.3", appData);
+        Assert.ThrowsExactly<InvalidDataException>(() => DesktopUpdateCoordinator.VerifyRollbackDatabases(
+            installation, fallback, "1.2.3", appData));
     }
 
     [TestCleanup]

@@ -2,14 +2,18 @@
 
 These unmodified license and notice files accompany the managed application and
 the self-contained Windows runtime. They were collected from the pinned NuGet
-packages or the exact upstream tag on 2026-10-12. The .NET runtime notices were refreshed from the resolved 10.0.13 package on 2026-10-14.
+packages or the exact upstream tag on 2026-10-12. The .NET and Windows Desktop
+runtime license files were checked against the resolved 10.0.14 packages on
+2026-10-26 for the 1.3.0 release preparation. The runtime notice text remains
+unchanged from the previous review after line-ending normalization.
 
 | File | Source / covered components |
 | --- | --- |
 | CommunityToolkit-LICENSE.md | `CommunityToolkit.Mvvm` 8.4.2 package, `License.md`; .NET Foundation and Contributors |
 | CommunityToolkit-NOTICES.txt | Same package, `ThirdPartyNotices.txt` |
-| NET-LICENSE.txt | `Microsoft.NETCore.App.Runtime.win-x64` 10.0.13 package, `LICENSE.TXT`; MIT, .NET Foundation and Contributors. The same license applies to Microsoft.Data.Sqlite, dependency injection/logging abstractions, and Windows Desktop runtime. |
+| NET-LICENSE.txt | `Microsoft.NETCore.App.Runtime.win-x64` 10.0.14 package, `LICENSE.TXT`; MIT, .NET Foundation and Contributors. The same license applies to Microsoft.Data.Sqlite and dependency injection/logging abstractions. |
 | NET-NOTICES.txt | Same runtime package, `THIRD-PARTY-NOTICES.TXT`; also provided with Microsoft.Extensions packages |
+| WindowsDesktop-LICENSE.txt | `Microsoft.WindowsDesktop.App.Runtime.win-x64` 10.0.14 package, `LICENSE`; MIT, .NET Foundation and Contributors |
 | SQLitePCLRaw-LICENSE.txt | [SQLitePCL.raw v2.1.12](https://raw.githubusercontent.com/ericsink/SQLitePCL.raw/v2.1.12/LICENSE.TXT), Apache-2.0 |
 
 SQLitePCLRaw `core`, `provider.e_sqlite3`, `bundle_e_sqlite3`, and

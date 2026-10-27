@@ -57,6 +57,7 @@ public partial class SettingsWindow
             if (SystemParameters.HighContrast) Resources[color.Key] = color.Brush;
             else Resources.Remove(color.Key);
         }
+        RefreshSurfaceOpacity();
     }
 
     internal void SelectSettingsPage(string page)
@@ -86,8 +87,10 @@ public partial class SettingsWindow
     internal void RefreshConditionalOptions()
     {
         if (_settings is null || BackgroundOptions is null) return;
-        BackgroundOptions.Visibility = string.IsNullOrWhiteSpace(_settings.Current.BackgroundImagePath)
+        BackgroundOptions.Visibility = string.IsNullOrWhiteSpace(ThemeManager.CreatePanelAppearanceSettings(_settings.Current).BackgroundImagePath)
             ? Visibility.Collapsed : Visibility.Visible;
+        RestoreBackgroundButton.Visibility = !_settings.Current.ThemeUseCustomBackground && !string.IsNullOrWhiteSpace(_settings.Current.BackgroundImagePath)
+            ? Visibility.Visible : Visibility.Collapsed;
         FrostRadiusRow.Visibility = FrostCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         BackupScheduleOptions.Visibility = AutoBackupCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }

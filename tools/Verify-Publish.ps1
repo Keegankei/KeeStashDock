@@ -32,6 +32,10 @@ while ($pending.Count -gt 0) {
         throw ('A fresh release must not contain an installed OCR engine or model: ' + $entry.Name)
     }
     if ($entry.PSIsContainer) {
+        if ($entry.FullName -ne $publishDirectory) {
+            $relativeDirectory = $entry.FullName.Substring($publishDirectory.TrimEnd('\', '/').Length + 1).Replace('\', '/')
+            Assert-UpdateRelativePath $relativeDirectory
+        }
         foreach ($child in Get-ChildItem -LiteralPath $entry.FullName -Force) { $pending.Push($child) }
     }
 }
@@ -72,6 +76,14 @@ if (Test-Path -LiteralPath (Join-Path $publishDirectory 'Licenses/LICENSE') -Pat
     $required += @('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'Screenshots.md', 'Updating.md')
 }
 $repositoryDirectory = Split-Path -Parent $PSScriptRoot
+if ((Test-Path -LiteralPath (Join-Path $publishDirectory 'KeeStashDock.exe') -PathType Leaf) -and
+    [Version](Get-UpdatePackageVersion $publishDirectory) -ge [Version]'1.3.0') {
+    $builtInRoot = Join-Path $repositoryDirectory 'theme/builtin'
+    foreach ($themeFile in Get-ChildItem -LiteralPath $builtInRoot -Recurse -File) {
+        $relativeThemeFile = $themeFile.FullName.Substring($builtInRoot.Length + 1).Replace('\', '/')
+        $required += 'theme/builtin/' + $relativeThemeFile
+    }
+}
 foreach ($locale in Get-ChildItem -LiteralPath (Join-Path $repositoryDirectory 'src/KeeStashDock.Desktop/Locales') -Filter '*.json' -File) {
     $required += 'Locales/' + $locale.Name
 }
@@ -96,7 +108,7 @@ if (-not $flat) {
         'PresentationCore.dll', 'PresentationFramework.dll', 'WindowsBase.dll', 'wpfgfx_cor3.dll')) {
         if (-not ($embedded | Where-Object Path -CEQ $runtime)) { throw "Missing bundled runtime file: $runtime" }
     }
-    if ($embedded | Where-Object { $_.Path -match '^(?:x64|x86|Locales|OcrModels|OfflineTranslation|NativeRuntime|Docs|Licenses)/' -or
+    if ($embedded | Where-Object { $_.Path -match '^(?:x64|x86|Locales|OcrModels|OfflineTranslation|NativeRuntime|Docs|Licenses|theme)/' -or
             (-not $AllowInstalledComponents -and $_.Path -match '(?i)(?:^|/)(?:tesseract[^/]*|leptonica[^/]*|[^/]+\.traineddata)$') }) {
         throw 'Editable assets and the separate OCR engine must remain outside the application bundle.'
     }

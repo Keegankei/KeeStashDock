@@ -60,6 +60,8 @@ internal static class QuickPanelWindowScenarios
             Assert.IsFalse(panel.ShowInTaskbar);
             Assert.IsFalse(panel.ShowActivated);
             VerifyResizeTargets(panel, settings, handle);
+            VerifyFontSizes(panel, settings);
+            VerifySearchControls(panel, settings);
             VerifyDepthModes(panel, settings, handle, openedImages);
             VerifyPerspectiveMotion(panel, settings, handle, value => pointer = value);
             CaptureDocumentationPreviews(panel, settings, snippets, value => pointer = value);
@@ -99,6 +101,116 @@ internal static class QuickPanelWindowScenarios
             // This fixture never edits quick input. Non-recursive deletion fails
             // safely if anything unexpected appeared in its empty draft directory.
             Directory.Delete(draftRoot, recursive: false);
+        }
+    }
+
+    private static void VerifySearchControls(QuickPanelWindow panel, SettingsStore settings)
+    {
+        var model = (ViewModels.QuickPanelViewModel)panel.DataContext;
+        var root = (Border)panel.FindName("RootBorder");
+        int originalPercent = TypographyManager.Percent;
+        bool originalMode = settings.Current.FloatingPanelEnabled;
+        bool originalFollow = settings.Current.FloatingPanelFollowPointer;
+        double originalWidth = panel.Width;
+        double originalHeight = panel.Height;
+        try
+        {
+            panel.Width = 280;
+            panel.Height = 460;
+            foreach (bool spatial in new[] { false, true })
+            {
+                settings.Current.FloatingPanelEnabled = spatial;
+                settings.Current.FloatingPanelFollowPointer = false;
+                settings.Save();
+                foreach (int percent in new[] { 90, 150 })
+                {
+                    TypographyManager.Apply(percent);
+                    ((Button)panel.FindName("OpenSearchButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    PumpUntil(() => model.SearchCompletion.IsCompleted && !model.IsSearching);
+                    panel.UpdateLayout();
+                    Assert.IsTrue(model.IsSearchMode);
+                    Assert.AreEqual(Visibility.Collapsed, ((Grid)panel.FindName("InputRow")).Visibility);
+                    foreach (string name in new[] { "PanelSearchBox", "PanelSearchScope", "PanelSearchKind", "PanelSearchTag" })
+                    {
+                        var element = (FrameworkElement)panel.FindName(name);
+                        Rect bounds = element.TransformToAncestor(root).TransformBounds(new Rect(element.RenderSize));
+                        Assert.IsTrue(element.IsVisible && bounds.Width > 0 && bounds.Left >= -1 && bounds.Right <= root.ActualWidth + 1,
+                            $"{name} must fit the minimum-width {(spatial ? "Spatial" : "Standard")} panel at {percent}%.");
+                    }
+                    ((Button)panel.FindName("SearchReturnButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    Assert.IsFalse(model.IsSearchMode);
+                    Assert.AreEqual(Visibility.Visible, ((Grid)panel.FindName("InputRow")).Visibility);
+                }
+            }
+        }
+        finally
+        {
+            model.EndSearch();
+            TypographyManager.Apply(originalPercent);
+            settings.Current.FloatingPanelEnabled = originalMode;
+            settings.Current.FloatingPanelFollowPointer = originalFollow;
+            settings.Save();
+            panel.Width = originalWidth;
+            panel.Height = originalHeight;
+            panel.UpdateLayout();
+        }
+    }
+
+    private static void VerifyFontSizes(QuickPanelWindow panel, SettingsStore settings)
+    {
+        int originalPercent = TypographyManager.Percent;
+        bool originalMode = settings.Current.FloatingPanelEnabled;
+        bool originalFollow = settings.Current.FloatingPanelFollowPointer;
+        double originalWidth = panel.Width;
+        double originalHeight = panel.Height;
+        try
+        {
+            var title = (TextBlock)panel.FindName("TitleText");
+            var input = (TextBox)panel.FindName("QuickBox");
+            var surface = (PerspectiveSurface)panel.FindName("SpatialSurface");
+            var root = (Border)panel.FindName("RootBorder");
+            foreach (bool spatial in new[] { false, true })
+            {
+                settings.Current.FloatingPanelEnabled = spatial;
+                settings.Current.FloatingPanelFollowPointer = false;
+                settings.Save();
+                panel.Width = 280;
+                panel.Height = 460;
+                foreach (int percent in new[] { 90, 100, 150, 100 })
+                {
+                    TypographyManager.Apply(percent);
+                    panel.UpdateLayout();
+                    PumpUntil(() => Math.Abs(input.FontSize - 12 * percent / 100d) < 0.01);
+                    Assert.AreEqual(13 * percent / 100d, title.FontSize, 0.01,
+                        "The already-open quick panel title must follow the text setting.");
+                    Assert.AreEqual(spatial, settings.Current.FloatingPanelEnabled,
+                        "Changing text size must not replace the saved presentation choice.");
+                    Assert.AreEqual(spatial && FloatingCardMotion.AnimationsAllowed, surface.IsPerspectiveEnabled,
+                        "Changing text size must preserve Spatial projection or the system's static accessibility fallback.");
+                    var metadata = Descendants(root).OfType<TextBlock>().First(block => block.Text == "Text");
+                    Assert.AreEqual(10 * percent / 100d, metadata.FontSize, 0.01);
+                    var icon = Descendants(root).OfType<TextBlock>()
+                        .First(block => block.FontFamily.Source == "Segoe MDL2 Assets");
+                    Assert.AreEqual(12d, icon.FontSize, 0.01, "Toolbar glyphs retain their fixed hit-target sizing.");
+                    foreach (string name in new[] { "ExpireCombo", "GroupCombo" })
+                    {
+                        var combo = (ComboBox)panel.FindName(name);
+                        Rect bounds = combo.TransformToAncestor(root).TransformBounds(new Rect(combo.RenderSize));
+                        Assert.IsTrue(bounds.Left >= 0 && bounds.Right <= root.ActualWidth + 1,
+                            $"{name} must remain inside the minimum-width panel at {percent}%.");
+                    }
+                }
+            }
+        }
+        finally
+        {
+            TypographyManager.Apply(originalPercent);
+            settings.Current.FloatingPanelEnabled = originalMode;
+            settings.Current.FloatingPanelFollowPointer = originalFollow;
+            settings.Save();
+            panel.Width = originalWidth;
+            panel.Height = originalHeight;
+            panel.UpdateLayout();
         }
     }
 

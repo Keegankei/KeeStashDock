@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-KeeStashDock itself is licensed under Apache-2.0. It depends on third-party software that remains subject to its own license terms. The following list covers the direct dependencies and resolved runtime dependency families reviewed for release 1.2.2. Refresh this inventory against the resolved NuGet and self-contained runtime assets before each release.
+KeeStashDock itself is licensed under Apache-2.0. It depends on third-party software that remains subject to its own license terms. The following list covers the direct dependencies and resolved runtime dependency families reviewed on 2026-10-26 for release 1.3.0. Refresh this inventory against the resolved NuGet and self-contained runtime assets before each release.
 
 ## Runtime dependencies
 
@@ -18,7 +18,7 @@ KeeStashDock itself is licensed under Apache-2.0. It depends on third-party soft
 | Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.10 | MIT; .NET Foundation and Contributors |
 | SQLitePCLRaw core / provider.e_sqlite3 / bundle_e_sqlite3 / lib.e_sqlite3 | 2.1.12 | Apache-2.0; Copyright 2014-2024 SourceGear, LLC |
 | Native SQLite, distributed by SQLitePCLRaw | Resolved bundled native build | Public domain; [SQLite copyright](https://www.sqlite.org/copyright.html) |
-| .NET and Windows Desktop runtime in the self-contained win-x64 package | 10.0.13 at release review; SDK-dependent | MIT with upstream third-party notices; .NET Foundation and Contributors |
+| .NET and Windows Desktop runtime in the self-contained win-x64 package | 10.0.14 at release review; SDK-dependent | MIT with upstream third-party notices; .NET Foundation and Contributors |
 
 Complete Community Toolkit, .NET, and SQLitePCLRaw license texts and upstream
 notices are retained in `third_party/dotnet` and copied to `Licenses/dotnet`.

@@ -22,12 +22,12 @@ public static class MiniToast
 
     public static void Show(string message)
     {
-        TextBlock Make() => new()
+        TextBlock Make()
         {
-            Text = message,
-            FontSize = 12.5,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+            var label = new TextBlock { Text = message, VerticalAlignment = VerticalAlignment.Center };
+            TypographyManager.SetFontSize(label, 12.5);
+            return label;
+        }
         var crisp = Make();
         var glow = Make();
 
@@ -37,8 +37,9 @@ public static class MiniToast
             Padding = new Thickness(14, 7, 14, 7),
             Child = GlassBubble.LayerGlow(crisp, glow),
             // Transparent room for the outer drop shadow to render into.
-            Margin = new Thickness(10),
+            Margin = new Thickness(12),
         };
+        BubbleChrome.Decorate(surface, surface.Child!);
 
         Color text;
         if (Settings is null)   // early boot: plain theme colors
@@ -49,13 +50,13 @@ public static class MiniToast
         }
         else
         {
-            text = GlassBubble.Apply(Settings.Current, surface);
+            text = BubbleChrome.Apply(surface, Settings.Current).Text;
         }
         var fg = new SolidColorBrush(text);
         crisp.Foreground = fg;
         glow.Foreground = fg;
         GlassBubble.SetGlowEnabled(glow,
-            Settings?.Current.BubbleTextGlow ?? true);
+            !SystemParameters.HighContrast && (Settings?.Current.BubbleTextGlow ?? false));
 
         var w = new Window
         {

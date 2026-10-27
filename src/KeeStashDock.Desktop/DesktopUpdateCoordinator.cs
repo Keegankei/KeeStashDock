@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Windows;
 using KeeStashDock.Desktop.Localization;
 using KeeStashDock.Infrastructure.Updates;
+using Microsoft.Data.Sqlite;
 
 namespace KeeStashDock.Desktop;
 
@@ -24,7 +25,7 @@ internal static class DesktopUpdateCoordinator
     private const string OperationArgument = "--update-operation";
     internal static string CurrentVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.2.2";
     internal static string UpdatesDirectory => Path.Combine(ComponentInstallService.DefaultLocalDataDirectory, "Updates");
-    private sealed record Attempt(string Token, int ParentId, long ParentTicks, string Language);
+    private sealed record Attempt(string Token, int ParentId, long ParentTicks, string Language, string? DatabaseFile = null);
     internal sealed record Healthy(string Token, int ProcessId, long StartedTicks, string Version);
     internal sealed record UpdateProcessIdentity(int ProcessId, long StartedTicks);
     private static readonly PortableUpdateInstaller Installer = new();
@@ -37,13 +38,13 @@ internal static class DesktopUpdateCoordinator
         return Path.Combine(UpdatesDirectory, "pending-" + key + ".json");
     }
 
-    internal static bool Launch(StagedUpdate staged, string installationDirectory, out string recoveryDirectory)
+    internal static bool Launch(StagedUpdate staged, string installationDirectory, out string recoveryDirectory, string? databaseFile = null)
     {
         recoveryDirectory = Path.Combine(UpdatesDirectory, "transaction-" + Guid.NewGuid().ToString("N"));
         var transaction = Installer.Prepare(installationDirectory, staged.PackageDirectory, recoveryDirectory);
         using var current = Process.GetCurrentProcess();
         var attempt = new Attempt(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), current.Id,
-            current.StartTime.ToUniversalTime().Ticks, LocalizationService.Instance.CurrentLanguage);
+            current.StartTime.ToUniversalTime().Ticks, LocalizationService.Instance.CurrentLanguage, databaseFile);
         WriteJson(Path.Combine(recoveryDirectory, "launch.json"), attempt);
         WriteJson(PendingFile(installationDirectory), recoveryDirectory);
         WriteRecoveryInstructions(transaction);
@@ -104,7 +105,7 @@ internal static class DesktopUpdateCoordinator
                 await WaitForOwnedProcessAsync(directory, "replacement.json");
                 await WaitForOwnedProcessAsync(directory, "operation.json");
                 await RunFileOperationAsync("rollback", tx);
-                ClearPending(tx); StartInstalled(tx, null)?.Dispose();
+                ClearPending(tx); RestartAfterRollback(tx, attempt);
                 return true;
             }
             Process? replacement = null;
@@ -158,8 +159,8 @@ internal static class DesktopUpdateCoordinator
                 else if (failed.State != PortableUpdateState.RolledBack)
                     await RunFileOperationAsync("rollback", failed);
                 ClearPending(tx);
-                StartInstalled(tx, null)?.Dispose();
-                MessageBox.Show(L("Updates.Restored"), L("Updates.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                if (RestartAfterRollback(tx, attempt))
+                    MessageBox.Show(L("Updates.Restored"), L("Updates.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally { replacement?.Dispose(); }
         }
@@ -191,6 +192,72 @@ internal static class DesktopUpdateCoordinator
         WriteJson(Path.Combine(transaction.TransactionDirectory, "operation.json"), Identity(elevated));
         await elevated.WaitForExitAsync(); // Never cancel an in-progress replacement.
         if (elevated.ExitCode != 0) throw new IOException("The elevated update operation failed or was denied.");
+    }
+
+    internal static bool PreviousVersionSupportsSchema(string version, int schema) =>
+        Version.TryParse(version, out Version? parsed) && schema >= 0 &&
+        schema <= (parsed >= new Version(1, 3, 0) ? 5 : 4);
+
+    internal static void VerifyRollbackDatabase(string path, string previousVersion)
+    {
+        if (!File.Exists(path)) return;
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+            { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA user_version";
+        int schema = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='schema_version'";
+        if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) != 0)
+        {
+            command.CommandText = "SELECT COUNT(*) FROM schema_version";
+            if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) != 1)
+                throw new InvalidDataException("The database version record is invalid.");
+            command.CommandText = "SELECT version FROM schema_version";
+            // Legacy databases can have an unset PRAGMA. Never trust a lower
+            // header version over the application's migration version record.
+            schema = Math.Max(schema, Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture));
+        }
+        if (!PreviousVersionSupportsSchema(previousVersion, schema))
+            throw new InvalidDataException("The database requires the newer application.");
+    }
+
+    private static bool RestartAfterRollback(PortableUpdateTransaction transaction, Attempt attempt)
+    {
+        try
+        {
+            // Older parents did not record their data path. Resolve their portable
+            // layout read-only, without creating a new Data folder in the helper.
+            VerifyRollbackDatabases(transaction.InstallationDirectory, attempt.DatabaseFile, transaction.PreviousVersion);
+            StartInstalled(transaction, null)?.Dispose();
+            return true;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or SqliteException)
+        {
+            // File rollback must never silently downgrade or overwrite migrated data.
+            MessageBox.Show(L("Updates.SchemaRecovery") + "\n\n" + transaction.TransactionDirectory,
+                L("Updates.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
+        }
+    }
+
+    internal static void VerifyRollbackDatabases(string installationDirectory, string? recordedDatabase,
+        string previousVersion, string? applicationDataRoot = null)
+    {
+        if (recordedDatabase is not null)
+        {
+            VerifyRollbackDatabase(recordedDatabase, previousVersion);
+            return;
+        }
+        // Old parent versions did not persist the resolved data path. A stale
+        // portable file can coexist with the active AppData fallback, so fail
+        // closed if either existing candidate requires the newer application.
+        string portable = Path.Combine(installationDirectory, "Data", "keestashdock.db");
+        string fallback = Path.Combine(applicationDataRoot ?? Environment.GetFolderPath(
+            Environment.SpecialFolder.ApplicationData), "KeeStashDock", "keestashdock.db");
+        VerifyRollbackDatabase(portable, previousVersion);
+        if (!string.Equals(portable, fallback, StringComparison.OrdinalIgnoreCase))
+            VerifyRollbackDatabase(fallback, previousVersion);
     }
 
     private static bool CanWriteInstallation(PortableUpdateTransaction transaction)
@@ -271,7 +338,7 @@ internal static class DesktopUpdateCoordinator
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return false;
             using var current = Process.GetCurrentProcess();
             var attempt = new Attempt(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), current.Id,
-                current.StartTime.ToUniversalTime().Ticks, LocalizationService.Instance.CurrentLanguage);
+                current.StartTime.ToUniversalTime().Ticks, LocalizationService.Instance.CurrentLanguage, launch.DatabaseFile);
             WriteJson(Path.Combine(directory, "launch.json"), attempt);
             using var helper = Process.Start(CreateHelperStartInfo(Path.Combine(tx.PackageDirectory, "KeeStashDock.exe"), RecoveryArgument, directory))
                 ?? throw new IOException("The recovery helper did not start.");
@@ -444,6 +511,8 @@ internal static class DesktopUpdateCoordinator
             "\n\nKeep this folder and the staged package until recovery succeeds. User Data and AppData are not replaced.\n" +
             "Start the installed application to use its recovery prompt. If its executable cannot start, run:\n\"" +
             Path.Combine(tx.PackageDirectory, "KeeStashDock.exe") + "\" " + RecoveryArgument + " \"" + tx.TransactionDirectory + "\"\n" +
-            "Close all application instances first. Never copy the backup over your Data folder.\n");
+            "Close all application instances first. Never copy the backup over your Data folder.\n" +
+            "Version 1.3.0 uses database schema v5. Application-file rollback does not downgrade a database. " +
+            "If the database has migrated, keep it and reinstall 1.3.0 or later. Only restore a pre-migration snapshot explicitly, after preserving newer data.\n");
     }
 }

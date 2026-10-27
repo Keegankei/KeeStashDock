@@ -89,6 +89,61 @@ public sealed class SettingsStoreTests
     }
 
     [TestMethod]
+    public void FontSize_MissingPreferencePreservesOriginalTypographyAndRoundTrips()
+    {
+        File.WriteAllText(_settingsFile, """{"language":"zh-CN","theme":"Dark"}""");
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual(AppSettings.DefaultFontSizePercent, store.Current.FontSizePercent);
+
+        store.Current.FontSizePercent = 130;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(130, reloaded.Current.FontSizePercent);
+        Assert.AreEqual("zh-CN", reloaded.Current.Language);
+        Assert.AreEqual("Dark", reloaded.Current.Theme);
+    }
+
+    [TestMethod]
+    [DataRow(-1, 90)]
+    [DataRow(0, 90)]
+    [DataRow(90, 90)]
+    [DataRow(125, 125)]
+    [DataRow(150, 150)]
+    [DataRow(int.MaxValue, 150)]
+    public void FontSize_ClampsOnLoadAndSave(int value, int expected)
+    {
+        File.WriteAllText(_settingsFile, $$"""{"fontSizePercent":{{value}},"theme":"Dark"}""");
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual(expected, store.Current.FontSizePercent);
+        store.Current.FontSizePercent = value;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(expected, reloaded.Current.FontSizePercent);
+        Assert.AreEqual("Dark", reloaded.Current.Theme);
+    }
+
+    [TestMethod]
+    [DataRow("null")]
+    [DataRow("\"large\"")]
+    [DataRow("true")]
+    [DataRow("125.5")]
+    [DataRow("999999999999")]
+    [DataRow("{}")]
+    public void FontSize_MalformedPreferenceKeepsUnrelatedPreferences(string value)
+    {
+        File.WriteAllText(_settingsFile, $$"""{"fontSizePercent":{{value}},"theme":"Dark","language":"zh-CN"}""");
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual(AppSettings.DefaultFontSizePercent, store.Current.FontSizePercent);
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.AreEqual("zh-CN", store.Current.Language);
+    }
+
+    [TestMethod]
     [DataRow(null)]
     [DataRow("{}")]
     [DataRow("null")]
@@ -372,6 +427,75 @@ public sealed class SettingsStoreTests
     }
 
     [TestMethod]
+    public void SettingsSurfaceOpacityPreservesExistingAppearanceAndRoundTripsIndependently()
+    {
+        File.WriteAllText(_settingsFile, """{ "cardOpacity": 0.65 }""");
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual(1.0, store.Current.SettingsSurfaceOpacity,
+            "Older settings must retain opaque Settings surfaces.");
+        store.Current.SettingsSurfaceOpacity = .55;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(.55, reloaded.Current.SettingsSurfaceOpacity);
+        Assert.AreEqual(.65, reloaded.Current.CardOpacity);
+    }
+
+    [TestMethod]
+    [DataRow(double.NaN, 1.0)]
+    [DataRow(double.PositiveInfinity, 1.0)]
+    [DataRow(-1.0, 1.0)]
+    [DataRow(0.0, 1.0)]
+    [DataRow(0.05, 0.1)]
+    [DataRow(1.5, 1.0)]
+    public void SettingsSurfaceOpacityNormalizesBeforeSaving(double value, double expected)
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        store.Current.SettingsSurfaceOpacity = value;
+        store.Save();
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(expected, reloaded.Current.SettingsSurfaceOpacity);
+    }
+
+    [TestMethod]
+    public void FrostedGlassSettingsDefaultOffAndPersistIndependently()
+    {
+        File.WriteAllText(_settingsFile, """{ "frostedGlassEnabled": true, "frostedGlassRadius": 4 }""");
+        var store = new SettingsStore(_settingsFile); store.Load();
+        Assert.IsFalse(store.Current.SettingsFrostedGlassEnabled);
+        Assert.IsFalse(store.Current.BubbleFrostedGlassEnabled);
+        Assert.AreEqual(8d, store.Current.SettingsFrostedGlassRadius);
+        store.Current.SettingsFrostedGlassEnabled = true;
+        store.Current.SettingsFrostedGlassRadius = 12;
+        store.Current.BubbleFrostedGlassEnabled = true;
+        store.Save();
+        var loaded = new SettingsStore(_settingsFile); loaded.Load();
+        Assert.IsTrue(loaded.Current.SettingsFrostedGlassEnabled);
+        Assert.IsTrue(loaded.Current.BubbleFrostedGlassEnabled);
+        Assert.AreEqual(12d, loaded.Current.SettingsFrostedGlassRadius);
+        Assert.IsTrue(loaded.Current.FrostedGlassEnabled);
+        Assert.AreEqual(4d, loaded.Current.FrostedGlassRadius);
+    }
+
+    [TestMethod]
+    [DataRow(double.NaN, 8d)]
+    [DataRow(double.PositiveInfinity, 8d)]
+    [DataRow(0d, 8d)]
+    [DataRow(.5d, 1d)]
+    [DataRow(30d, 18d)]
+    public void SettingsFrostRadiusIsNormalizedBeforeSerialization(double value, double expected)
+    {
+        var store = new SettingsStore(_settingsFile); store.Load();
+        store.Current.SettingsFrostedGlassRadius = value;
+        store.Save();
+        var loaded = new SettingsStore(_settingsFile); loaded.Load();
+        Assert.AreEqual(expected, loaded.Current.SettingsFrostedGlassRadius);
+    }
+
+    [TestMethod]
     public void RetiredEdgeGlowFields_DoNotResetExistingSettings()
     {
         File.WriteAllText(_settingsFile, """
@@ -527,6 +651,7 @@ public sealed class SettingsStoreTests
     {
         AssertSafeDataDefaults(settings);
         Assert.AreEqual("en-US", settings.Language);
+        Assert.AreEqual(AppSettings.DefaultFontSizePercent, settings.FontSizePercent);
         Assert.AreEqual(1u, settings.HotkeyModifiers);
         Assert.AreEqual(0x51u, settings.HotkeyVirtualKey);
         Assert.IsTrue(settings.ScreenshotHotkeyEnabled);
@@ -550,6 +675,7 @@ public sealed class SettingsStoreTests
         Assert.AreEqual("Right", settings.FloatingInspectionGesture);
         Assert.AreEqual("Auto", settings.PanelTextColorMode);
         Assert.AreEqual(0.9, settings.CardOpacity);
+        Assert.AreEqual(1.0, settings.SettingsSurfaceOpacity);
         Assert.IsNull(settings.BackgroundImagePath);
         Assert.AreEqual(0.2, settings.BackgroundOverlayOpacity);
         Assert.IsFalse(settings.FrostedGlassEnabled);

@@ -61,8 +61,8 @@ public sealed partial class SnippetRepository
         cmd.CommandText = """
             INSERT INTO snippets
                 (title, content, content_hash, type, source, category_id, is_pinned,
-                 expire_policy, expire_at, created_at, updated_at, sort_weight, use_count)
-            VALUES ($t, $c, $h, $ty, $src, $cat, $pin, $ep, $ea, $ca, $ua, $sw, $uc);
+                 expire_policy, expire_at, created_at, updated_at, sort_weight, use_count, is_template)
+            VALUES ($t, $c, $h, $ty, $src, $cat, $pin, $ep, $ea, $ca, $ua, $sw, $uc, $tpl);
             SELECT last_insert_rowid();
             """;
         Bind(cmd, s);
@@ -89,6 +89,7 @@ public sealed partial class SnippetRepository
         }
         if (!isImage && string.IsNullOrWhiteSpace(snippet.Content))
             throw new ArgumentException("Snippet content must not be empty.", nameof(snippet));
+        if (isImage && snippet.IsTemplate) throw new ArgumentException("Images cannot be templates.", nameof(snippet));
         long? duplicateId = isImage ? null : FindOtherLiveId(conn, tx, hash, snippet.Id);
         if (duplicateId is long existing)
             throw new DuplicateSnippetContentException(existing);
@@ -99,6 +100,8 @@ public sealed partial class SnippetRepository
                 title = $title,
                 content = $content,
                 content_hash = $hash,
+                is_template = $template,
+                type = CASE WHEN $template = 1 THEN 0 ELSE type END,
                 expire_policy = $expire_policy,
                 expire_at = $expire_at,
                 updated_at = $updated_at
@@ -107,6 +110,7 @@ public sealed partial class SnippetRepository
         cmd.Parameters.AddWithValue("$title", (object?)snippet.Title ?? DBNull.Value);
         cmd.Parameters.AddWithValue("$content", snippet.Content);
         cmd.Parameters.AddWithValue("$hash", hash);
+        cmd.Parameters.AddWithValue("$template", snippet.IsTemplate ? 1 : 0);
         cmd.Parameters.AddWithValue("$expire_policy", (int)snippet.ExpirePolicy);
         cmd.Parameters.AddWithValue(
             "$expire_at",
@@ -303,6 +307,7 @@ public sealed partial class SnippetRepository
         cmd.Parameters.AddWithValue("$ua", UtcTimestamp.Format(s.UpdatedAt));
         cmd.Parameters.AddWithValue("$sw", s.SortWeight);
         cmd.Parameters.AddWithValue("$uc", s.UseCount);
+        cmd.Parameters.AddWithValue("$tpl", s.IsTemplate ? 1 : 0);
     }
 
     private static Snippet Map(SqliteDataReader r) => new()
@@ -312,6 +317,7 @@ public sealed partial class SnippetRepository
         Content = r.GetString(r.GetOrdinal("content")),
         ContentHash = r.GetString(r.GetOrdinal("content_hash")),
         Type = (SnippetType)r.GetInt32(r.GetOrdinal("type")),
+        IsTemplate = r.GetInt32(r.GetOrdinal("is_template")) == 1,
         Source = (SnippetSource)r.GetInt32(r.GetOrdinal("source")),
         CategoryId = r.IsDBNull(r.GetOrdinal("category_id")) ? null : r.GetInt64(r.GetOrdinal("category_id")),
         IsPinned = r.GetInt32(r.GetOrdinal("is_pinned")) == 1,

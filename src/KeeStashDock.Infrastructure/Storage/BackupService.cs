@@ -104,6 +104,7 @@ public sealed partial class BackupService
         return Directory.EnumerateFiles(directory, "*.db")
             .Where(path => OwnedSnapshotName().IsMatch(Path.GetFileName(path)) ||
                 Path.GetFileName(path).StartsWith("pre_import_", StringComparison.Ordinal) ||
+                Path.GetFileName(path).StartsWith("pre_upgrade_", StringComparison.Ordinal) ||
                 Path.GetFileName(path).StartsWith("pre_update_", StringComparison.Ordinal))
             .Select(path => new FileInfo(path)).Where(file => file.Exists)
             .Select(file => new BackupSnapshot(file.FullName,

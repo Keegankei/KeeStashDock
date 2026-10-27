@@ -131,7 +131,10 @@ public partial class App : Application
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
 
         // ---- 6. Theme ----------------------------------------------------
+        ThemeManager.Initialize(settings);
         ThemeManager.Apply(settings.Current.Theme);
+        TypographyManager.Apply(settings.Current.FontSizePercent);
+        settings.Changed += () => TypographyManager.Apply(settings.Current.FontSizePercent);
 
         // ---- 7. Shell: tray and global hotkey ----------------------------
         _tray = new TrayIconManager();

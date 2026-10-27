@@ -19,6 +19,23 @@ public sealed class SearchService
     private readonly SnippetRepository _repo;
     public SearchService(SnippetRepository repo) => _repo = repo;
 
+    public string DatabaseIdentity => _repo.DatabaseIdentity;
+
+    public Task<SnippetPage> QueryAsync(SnippetQuery query, CancellationToken cancellationToken = default)
+        => Task.Run(() => Query(query, cancellationToken), cancellationToken);
+
+    public SnippetPage Query(SnippetQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool fts = !ContainsCjk(query.Text ?? string.Empty);
+        try { return _repo.QueryPage(query, fts, cancellationToken); }
+        catch (Microsoft.Data.Sqlite.SqliteException exception) when (fts && exception.SqliteErrorCode == 1)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return _repo.QueryPage(query, useFts: false, cancellationToken);
+        }
+    }
+
     public List<Snippet> Search(string query, int limit = 200, bool trashOnly = false)
     {
         query = query.Trim();

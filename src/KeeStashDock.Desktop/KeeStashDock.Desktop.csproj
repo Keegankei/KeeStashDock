@@ -37,6 +37,8 @@
   <ItemGroup>
     <!-- Editable language packs are copied beside the executable for live reload. -->
     <None Include="Locales\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\theme\builtin\**\*" Link="theme\builtin\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <ItemGroup>
@@ -88,7 +90,7 @@
           Condition="'$(PublishSingleFile)' == 'true'">
     <ItemGroup>
       <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
-          Condition="'%(ResolvedFileToPublish.RelativePath)' == 'StartHere.md' Or $([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '^(x64|Locales|NativeRuntime|OcrModels|OfflineTranslation|Licenses|Docs)[\\/]'))">
+          Condition="'%(ResolvedFileToPublish.RelativePath)' == 'StartHere.md' Or $([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '^(x64|Locales|NativeRuntime|OcrModels|OfflineTranslation|Licenses|Docs|theme)[\\/]'))">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"

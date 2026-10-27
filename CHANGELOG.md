@@ -6,6 +6,36 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+## [1.3.0] - Pending release
+
+### Added
+
+- Quick-panel search with a separate input, Ctrl+F, cancellable debouncing, group/tag/type filters and 50-item pages. Existing capture drafts remain intact when entering or leaving search.
+- Workbench multi-selection and transactional group, tag, pin, Trash and restore actions. Selection is separate from the editor; stale selections fail without partial changes. A move to Trash can be undone during the current session while its items remain unchanged.
+- Explicit text templates with named variables, a single date/time snapshot, literal-brace escaping and a preview before copying. Variable values are plain text and are never evaluated recursively. Ordinary snippets keep their existing behavior.
+- Complete importable/exportable light and dark themes under the application `theme` directory. Four optional presets appear in order: Sunlit Gallery, Twilight Study, Wisteria Atelier and Wisteria Reverie. Each has portrait/landscape day and night artwork, complete light/dark palettes, preview/cancel and separate personal-background export consent. System appearance switches both palette and artwork with Windows.
+- Global text-size adjustment from 90% to 150% in Settings > Appearance, with immediate preview, persistent preferences and a reset to 100%. Text in the quick panel, workbench, Settings, notes and result windows scales while icon glyphs keep their existing size.
+- Independent Settings surface opacity from 10% to 100% for theme artwork. Cards, navigation and input backgrounds adjust immediately while text, icons and dropdown menus stay opaque. Complete theme import/export preserves the setting; existing themes default to 100%.
+- Optional frosted backgrounds for Settings and selection/result bubbles. Settings blurs only its theme image with adjustable strength; bubbles request native compositor blur and use an opaque fallback when unavailable. Text and controls remain sharp, and complete themes retain the preferences.
+
+### Changed
+
+- Made translation results more compact, with inline copy actions and a tighter language/group/save layout while retaining independent source and result actions.
+- Restyled theme preview/apply to match Settings, with grouped appearance controls, rounded artwork, readable sample controls and a fixed action footer. Narrow windows stack the cards while keeping Apply and Cancel visible.
+- Redesigned selection and translation bubbles with segmented icon actions, crisp layered surfaces, distinct result/source areas, an explicit result-copy action and grouped language/save controls. Wisteria Atelier adds coordinated pearl/lavender and deep-violet bubble palettes; older theme packages use compatible fallback colors.
+- Upgraded the library to schema v5 after a verified pre-migration SQLite backup. Templates have a separate duplicate identity and use group format v3; v1/v2 group imports remain supported. Older applications cannot open v5 libraries.
+- Update ownership includes only built-in themes and preserves custom themes. Recovery keeps migrated data and checks database compatibility before restarting a restored older application.
+- Redesigned the workbench to match Settings, with a navigation rail, clear card selection, item counts, a grouped editor, empty-state guidance and visible unsaved changes. Short windows keep editor actions accessible while the item details scroll; all twenty interface languages include the new labels.
+
+### Fixed
+
+- Keep Default bubble controls readable on a dark application theme, suppress selection/confirmation text glow in high contrast, and reposition translation cards after an interface-language change.
+- Applied theme-aware surfaces and selection states to the backup snapshot list so dark mode no longer shows light text on a white system background. Component progress indicators now follow the active palette as well.
+
+Release preparation is in progress; a publication date will be recorded when
+the stable release is published. See the
+[release notes](docs/releases/1.3.0-notes.md) and [validation record](docs/releases/1.3.0.md).
+
 ## [1.2.3] - 2026-10-19
 
 ### Added
@@ -167,6 +197,7 @@ First packaged release of the current feature set. Includes the fixes and valida
 - User-specific Visual Studio publish metadata from the source tree.
 
 [Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...HEAD
+[1.3.0]: docs/releases/1.3.0-notes.md
 [1.2.3]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

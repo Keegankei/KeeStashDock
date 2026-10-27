@@ -143,6 +143,11 @@ public sealed class DatabaseImportTests
         string source = Path.Combine(_root, "legacy-groups.db");
         CreateDatabase(source, "legacy content");
         Execute(source, """
+            DROP TRIGGER trg_template_insert;
+            DROP TRIGGER trg_template_update;
+            DROP INDEX idx_snippets_query;
+            DROP TABLE database_metadata;
+            ALTER TABLE snippets DROP COLUMN is_template;
             DROP TRIGGER trg_category_name_insert;
             DROP TRIGGER trg_category_name_update;
             DROP INDEX idx_categories_name_key;

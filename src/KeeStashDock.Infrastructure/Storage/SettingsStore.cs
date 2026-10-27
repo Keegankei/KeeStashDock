@@ -57,6 +57,25 @@ public sealed class SettingsStore
                     normalized["autoBackupIntervalMinutes"] = AppSettings.DefaultAutoBackupIntervalMinutes;
                     json = normalized.ToJsonString();
                 }
+                if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                    document.RootElement.TryGetProperty("fontSizePercent", out JsonElement fontSize) &&
+                    (fontSize.ValueKind != JsonValueKind.Number || !fontSize.TryGetInt32(out _)))
+                {
+                    // A malformed new preference must not discard unrelated saved settings.
+                    var normalized = System.Text.Json.Nodes.JsonNode.Parse(json)!;
+                    normalized["fontSizePercent"] = AppSettings.DefaultFontSizePercent;
+                    json = normalized.ToJsonString();
+                }
+                if (document.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    var normalized = System.Text.Json.Nodes.JsonNode.Parse(json)!;
+                    if (document.RootElement.TryGetProperty("themePresetId", out JsonElement preset) && preset.ValueKind != JsonValueKind.String)
+                        normalized["themePresetId"] = "";
+                    foreach (string name in new[] { "themeUseCustomBackground", "themeAppearanceCustomized" })
+                        if (document.RootElement.TryGetProperty(name, out JsonElement flag) && flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                            normalized[name] = name == "themeUseCustomBackground";
+                    json = normalized.ToJsonString();
+                }
                 Current = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts) ?? new AppSettings();
                 if (document.RootElement.ValueKind == JsonValueKind.Object &&
                     !document.RootElement.TryGetProperty("autoBackupIntervalMinutes", out _))
@@ -101,6 +120,13 @@ public sealed class SettingsStore
 
     public void ValidateAndNormalize()
     {
+        if (Current.ThemePresetId is null || Current.ThemePresetId.Length > 100 ||
+            (Current.ThemePresetId.Length > 0 && !System.Text.RegularExpressions.Regex.IsMatch(Current.ThemePresetId,
+                @"^(builtin|custom):[a-z0-9][a-z0-9-]{0,63}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant)))
+            Current.ThemePresetId = "";
+        Current.FontSizePercent = Math.Clamp(Current.FontSizePercent,
+            AppSettings.MinFontSizePercent, AppSettings.MaxFontSizePercent);
+
         if (Current.ScreenshotHotkeyModifiers == 0 ||
             (Current.ScreenshotHotkeyModifiers & ~0x0fu) != 0 ||
             Current.ScreenshotHotkeyVirtualKey is 0 or > 0xfe or 0x10 or 0x11 or 0x12 or 0x5b or 0x5c or >= 0xa0 and <= 0xa5)
@@ -138,6 +164,8 @@ public sealed class SettingsStore
         Current.FrostedGlassRadius = NormalizePositiveDouble(
             Current.FrostedGlassRadius, 4, 1, 18);
         Current.CardOpacity = NormalizePositiveDouble(Current.CardOpacity, 0.9, 0.1, 1.0);
+        Current.SettingsSurfaceOpacity = NormalizePositiveDouble(Current.SettingsSurfaceOpacity, 1.0, 0.1, 1.0);
+        Current.SettingsFrostedGlassRadius = NormalizePositiveDouble(Current.SettingsFrostedGlassRadius, 8, 1, 18);
         Current.BubbleOpacity = NormalizePositiveDouble(Current.BubbleOpacity, 1.0, 0.5, 1.0);
 
         Current.PanelPosX = NormalizeOptionalFinite(Current.PanelPosX);

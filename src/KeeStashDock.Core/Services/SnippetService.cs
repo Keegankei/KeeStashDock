@@ -16,7 +16,7 @@ namespace KeeStashDock.Core.Services;
 ///   * burn-after-read semantics on copy-out.
 /// Raises <see cref="Changed"/> so every open view refreshes consistently.
 /// </summary>
-public sealed class SnippetService
+public sealed partial class SnippetService
 {
     private readonly SnippetRepository _repo;
     private readonly FileLogger _log;
@@ -39,11 +39,11 @@ public sealed class SnippetService
     public long Add(string content, SnippetSource source,
                     ExpirePolicy expire = ExpirePolicy.Never,
                     string? title = null, long? categoryId = null,
-                    SnippetType? explicitType = null, bool placeInCategoryOnDuplicate = false)
+                    SnippetType? explicitType = null, bool placeInCategoryOnDuplicate = false, bool isTemplate = false)
     {
         if (explicitType == SnippetType.Image) throw new ArgumentException("Use AddImage for image entries.", nameof(explicitType));
         content = NormalizeContent(content);
-        string hash = Sha256(content);
+        string hash = TextIdentity(content, isTemplate);
 
         var now = DateTime.UtcNow;
         var snippet = new Snippet
@@ -51,7 +51,8 @@ public sealed class SnippetService
             Title = string.IsNullOrWhiteSpace(title) ? null : title!.Trim(),
             Content = content,
             ContentHash = hash,
-            Type = explicitType ?? TypeDetector.Detect(content),
+            Type = isTemplate ? SnippetType.PlainText : explicitType ?? TypeDetector.Detect(content),
+            IsTemplate = isTemplate,
             Source = source,
             CategoryId = categoryId,
             ExpirePolicy = expire,
@@ -105,8 +106,9 @@ public sealed class SnippetService
             {
                 Title = string.IsNullOrWhiteSpace(item.Title) ? null : item.Title.Trim(),
                 Content = content,
-                ContentHash = image ? PngImageValidator.ImageHash(item.ImagePng!) : Sha256(content),
-                Type = image ? SnippetType.Image : detectTypes ? TypeDetector.Detect(content) : item.Type,
+                ContentHash = image ? PngImageValidator.ImageHash(item.ImagePng!) : TextIdentity(content, item.IsTemplate),
+                Type = image ? SnippetType.Image : item.IsTemplate ? SnippetType.PlainText : detectTypes ? TypeDetector.Detect(content) : item.Type,
+                IsTemplate = item.IsTemplate,
                 Source = SnippetSource.Import,
                 ExpirePolicy = ExpirePolicy.Never,
                 CreatedAt = now,
@@ -131,13 +133,15 @@ public sealed class SnippetService
         Snippet stored = _repo.FindById(s.Id)
             ?? throw new InvalidOperationException($"Snippet #{s.Id} no longer exists.");
         string content = stored.IsImage ? (s.Content ?? string.Empty).TrimEnd('\r', '\n') : NormalizeContent(s.Content);
-        string hash = stored.IsImage ? stored.ContentHash : Sha256(content);
+        if (stored.IsImage && s.IsTemplate) throw new ArgumentException("Images cannot be templates.", nameof(s));
+        string hash = stored.IsImage ? stored.ContentHash : TextIdentity(content, s.IsTemplate);
         var pending = new Snippet
         {
             Id = s.Id,
             Title = s.Title,
             Content = content,
             ContentHash = hash,
+            IsTemplate = s.IsTemplate,
             ExpirePolicy = s.ExpirePolicy,
             ExpireAt = s.ExpireAt,
         };
@@ -146,6 +150,7 @@ public sealed class SnippetService
         s.Content = content;
         s.ContentHash = hash;
         s.UpdatedAt = updatedAt;
+        if (s.IsTemplate) s.Type = SnippetType.PlainText;
         Changed?.Invoke();
     }
 
@@ -217,6 +222,9 @@ public sealed class SnippetService
 
     private static string Sha256(string content)
         => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
+
+    private static string TextIdentity(string content, bool template)
+        => (template ? "template:" : string.Empty) + Sha256(content);
 
     private static string NormalizeContent(string content)
     {

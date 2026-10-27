@@ -51,8 +51,14 @@ The storage layer contains:
 - Portable-path resolution and `%AppData%` fallback
 - Asynchronous rolling file logging
 - Online SQLite backups, rolling automatic backups, and guarded import replacement
+- Snapshot-consistent filtered pagination, batch conflict checking and transactional use recording
+- Bounded complete-theme ZIP validation, versioned custom-theme installation and export
 
 No WPF dependency belongs in this project.
+
+Schema v5 adds explicit template identity and a persistent library ID. Migration first creates a verified online SQLite snapshot, including committed WAL pages. Search combines scope, tag and kind filters before stable pagination. Batch actions validate the database identity and every selected row inside one write transaction. A prepared copy also carries a versioned use token, so a long template dialog cannot update an unrelated item after library replacement.
+
+Theme models and file validation are separate from WPF rendering. `ThemePackageStore` accepts only declared theme files and images under bounded paths and sizes; it never loads application settings or executable content. `ThemeManager` selects the light/dark palette and caches frozen images. `ThemeWindowSurface` adds artwork behind ordinary windows without changing note or screenshot pixels. Only `theme/builtin` is update-owned; imported themes remain under `theme/custom`.
 
 ### `KeeStashDock.Core`
 

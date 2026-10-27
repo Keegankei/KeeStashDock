@@ -293,6 +293,11 @@ public sealed class DataPersistenceTests
     private static void DowngradeToVersionOne(string databaseFile)
     {
         Execute(databaseFile, """
+            DROP TRIGGER trg_template_insert;
+            DROP TRIGGER trg_template_update;
+            DROP INDEX idx_snippets_query;
+            DROP TABLE database_metadata;
+            ALTER TABLE snippets DROP COLUMN is_template;
             DROP TRIGGER trg_category_name_insert;
             DROP TRIGGER trg_category_name_update;
             DROP INDEX idx_categories_name_key;
