@@ -11,7 +11,7 @@ namespace KeeStashDock.Desktop;
 
 internal sealed record BubblePalette(Color Text, Color Muted, Color Accent, Color OnAccent,
     Color Surface, Color Input, Color Border, Color Hover, Color Pressed, Color Highlight,
-    bool HighContrast, bool Glow, bool Shadow, double Opacity);
+    bool HighContrast, double Opacity);
 
 /// <summary>Lightweight shared geometry and local control colors for transient surfaces.</summary>
 internal static class BubbleChrome
@@ -43,9 +43,6 @@ internal static class BubbleChrome
     internal static BubblePalette Apply(Border surface, AppSettings settings)
     {
         BubblePalette palette = GlassBubble.Resolve(settings);
-        AppSettings effective = settings.SelectionBubbleStyle == "FollowTheme"
-            ? ThemeManager.CreatePanelAppearanceSettings(settings) : settings;
-        palette = BubbleBackdrop.Apply(Window.GetWindow(surface), surface, palette, effective.BubbleFrostedGlassEnabled);
         GlassBubble.Apply(palette, surface);
         if (Frames.TryGetValue(surface, out Frame? frame))
         {

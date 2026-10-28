@@ -64,6 +64,7 @@ internal static class QuickPanelWindowScenarios
             VerifySearchControls(panel, settings);
             VerifyDepthModes(panel, settings, handle, openedImages);
             VerifyPerspectiveMotion(panel, settings, handle, value => pointer = value);
+            VerifyTornCardRestoresBackground(panel, settings);
             CaptureDocumentationPreviews(panel, settings, snippets, value => pointer = value);
             panel.ShowPanel();
             PumpUntil(() => panel.IsVisible && panel.Opacity >= 0.99);
@@ -101,6 +102,53 @@ internal static class QuickPanelWindowScenarios
             // This fixture never edits quick input. Non-recursive deletion fails
             // safely if anything unexpected appeared in its empty draft directory.
             Directory.Delete(draftRoot, recursive: false);
+        }
+    }
+
+    private static void VerifyTornCardRestoresBackground(QuickPanelWindow panel, SettingsStore settings)
+    {
+        var list = (ListBox)panel.FindName("CardList");
+        bool originalMode = settings.Current.FloatingPanelEnabled;
+        try
+        {
+            foreach (bool spatial in new[] { false, true })
+            {
+                settings.Current.FloatingPanelEnabled = spatial;
+                settings.Save();
+                panel.UpdateLayout();
+                var source = (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(0);
+                var item = (ViewModels.SnippetItemViewModel)source.DataContext;
+                var slot = (Border)source.Template.FindName("wrap", source);
+                int count = list.Items.Count;
+                Brush? wallpaper = ((Border)panel.FindName("BgImage")).Background;
+
+                source.IsSelected = true; // The ListBox's normal press behavior.
+                Assert.AreEqual(list.FindResource("B.AccentSoft"), slot.Background);
+                var note = panel.CreateTornOutNote(source, item);
+                try
+                {
+                    panel.UpdateLayout();
+                    Assert.IsFalse(source.IsSelected);
+                    Assert.IsNull(list.SelectedItem);
+                    Assert.AreEqual((byte)0, ((SolidColorBrush)slot.Background).Color.A,
+                        "Dragging out a note must remove the source slot's opaque selection tint.");
+                    Assert.AreEqual(count, list.Items.Count, "A desktop note must not remove its saved source.");
+                    Assert.AreSame(item, list.Items[0]);
+                    Assert.AreSame(wallpaper, ((Border)panel.FindName("BgImage")).Background);
+                }
+                finally { note.Close(); }
+
+                source.IsSelected = true;
+                Assert.AreSame(item, list.SelectedItem,
+                    "Selection must remain available for subsequent keyboard navigation.");
+                source.IsSelected = false;
+            }
+        }
+        finally
+        {
+            list.UnselectAll();
+            settings.Current.FloatingPanelEnabled = originalMode;
+            settings.Save();
         }
     }
 

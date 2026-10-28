@@ -98,7 +98,6 @@ public sealed class ThemePackageStoreTests
             oldDefinition.Remove("settingsSurfaceOpacity");
             oldDefinition.Remove("settingsFrostedGlassEnabled");
             oldDefinition.Remove("settingsFrostedGlassRadius");
-            oldDefinition.Remove("bubbleFrostedGlassEnabled");
             File.WriteAllText(path, oldDefinition.ToJsonString());
         }
         ThemeScheme oldScheme = store.Read(directory);
@@ -107,14 +106,12 @@ public sealed class ThemePackageStoreTests
         foreach (ThemeVariant variant in new[] { oldScheme.Light, oldScheme.Dark })
         {
             Assert.IsFalse(variant.SettingsFrostedGlassEnabled);
-            Assert.IsFalse(variant.BubbleFrostedGlassEnabled);
             Assert.AreEqual(8d, variant.SettingsFrostedGlassRadius);
         }
         oldScheme.Light.SettingsSurfaceOpacity = .6;
         oldScheme.Dark.SettingsSurfaceOpacity = .75;
         oldScheme.Light.SettingsFrostedGlassEnabled = true;
         oldScheme.Light.SettingsFrostedGlassRadius = 6;
-        oldScheme.Dark.BubbleFrostedGlassEnabled = true;
         Write(Path.Combine(directory, "variants", "light.json"), oldScheme.Light);
         Write(Path.Combine(directory, "variants", "dark.json"), oldScheme.Dark);
         string zip = Path.Combine(_root, "settings-opacity.zip");
@@ -124,9 +121,71 @@ public sealed class ThemePackageStoreTests
         Assert.AreEqual(.75, stage.Scheme.Dark.SettingsSurfaceOpacity);
         Assert.IsTrue(stage.Scheme.Light.SettingsFrostedGlassEnabled);
         Assert.AreEqual(6d, stage.Scheme.Light.SettingsFrostedGlassRadius);
-        Assert.IsFalse(stage.Scheme.Light.BubbleFrostedGlassEnabled);
         Assert.IsFalse(stage.Scheme.Dark.SettingsFrostedGlassEnabled);
-        Assert.IsTrue(stage.Scheme.Dark.BubbleFrostedGlassEnabled);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void RetiredBubbleEffectsImportWithoutChangingSupportedAppearanceAndAreOmittedOnExport(bool customized)
+    {
+        string definition = CreateDefinition("legacy-bubble-effects");
+        foreach (string name in new[] { "light", "dark" })
+        {
+            string path = Path.Combine(definition, "variants", name + ".json");
+            var variant = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+            variant["bubbleFrostedGlassEnabled"] = true;
+            variant["bubbleTextGlow"] = true;
+            variant["bubbleShadow"] = true;
+            variant["bubbleOpacity"] = .72;
+            variant["settingsSurfaceOpacity"] = .63;
+            variant["settingsFrostedGlassEnabled"] = true;
+            variant["settingsFrostedGlassRadius"] = 11;
+            File.WriteAllText(path, variant.ToJsonString());
+        }
+        ThemePackageStore store = Store("target");
+        using var legacy = store.StageImport(Archive(definition, "legacy.zip"));
+        ThemeScheme installed = store.Install(legacy, false);
+        foreach (ThemeVariant variant in new[] { installed.Light, installed.Dark })
+        {
+            Assert.AreEqual(.72, variant.BubbleOpacity);
+            Assert.AreEqual(.63, variant.SettingsSurfaceOpacity);
+            Assert.IsTrue(variant.SettingsFrostedGlassEnabled);
+            Assert.AreEqual(11d, variant.SettingsFrostedGlassRadius);
+        }
+        string output = Path.Combine(_root, "supported-appearance.zip");
+        ThemeExportOverrides? appearance = customized
+            ? new(.9, .72, "Auto", "#FFFFFF", null, .5, 0, false,
+                SettingsSurfaceOpacity: .63, SettingsFrostedGlassEnabled: true, SettingsFrostedGlassRadius: 11)
+            : null;
+        store.Export(installed, output, appearance);
+        using var archive = ZipFile.OpenRead(output);
+        foreach (string name in new[] { "light", "dark" })
+        {
+            using Stream stream = archive.GetEntry("variants/" + name + ".json")!.Open();
+            using JsonDocument json = JsonDocument.Parse(stream);
+            foreach (string retired in new[] { "bubbleFrostedGlassEnabled", "bubbleTextGlow", "bubbleShadow" })
+                Assert.IsFalse(json.RootElement.TryGetProperty(retired, out _), "Exports must discard " + retired + ".");
+            Assert.AreEqual(.72, json.RootElement.GetProperty("bubbleOpacity").GetDouble());
+            Assert.AreEqual(.63, json.RootElement.GetProperty("settingsSurfaceOpacity").GetDouble());
+            Assert.IsTrue(json.RootElement.GetProperty("settingsFrostedGlassEnabled").GetBoolean());
+            Assert.AreEqual(11d, json.RootElement.GetProperty("settingsFrostedGlassRadius").GetDouble());
+        }
+        using var roundTrip = Store("round-trip").StageImport(output);
+        Assert.AreEqual(installed.Light.Colors["B.WindowBg"], roundTrip.Scheme.Light.Colors["B.WindowBg"]);
+        Assert.AreEqual(installed.Dark.Colors["B.WindowBg"], roundTrip.Scheme.Dark.Colors["B.WindowBg"]);
+    }
+
+    [TestMethod]
+    public void RetiredBubbleCompatibilityDoesNotPermitUnknownThemeProperties()
+    {
+        string definition = CreateDefinition("unknown-bubble-effect");
+        string path = Path.Combine(definition, "variants", "light.json");
+        var variant = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+        variant["bubbleShadow"] = true;
+        variant["unsupportedEffect"] = true;
+        File.WriteAllText(path, variant.ToJsonString());
+        Assert.ThrowsExactly<JsonException>(() => Store("target").Read(definition));
     }
 
     [TestMethod]
@@ -140,7 +199,7 @@ public sealed class ThemePackageStoreTests
         ThemeScheme scheme = store.Read(directory);
         string output = Path.Combine(_root, "bad-opacity.zip");
         Assert.ThrowsExactly<InvalidDataException>(() => store.Export(scheme, output,
-            new ThemeExportOverrides(.9, 1, true, "Auto", "#FFFFFF", null, .5, 0, false,
+            new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", null, .5, 0, false,
                 SettingsSurfaceOpacity: value)));
         Assert.IsFalse(File.Exists(output));
         scheme.Light.SettingsSurfaceOpacity = value;
@@ -159,7 +218,7 @@ public sealed class ThemePackageStoreTests
         ThemeScheme scheme = store.Read(directory);
         string output = Path.Combine(_root, "bad-frost.zip");
         Assert.ThrowsExactly<InvalidDataException>(() => store.Export(scheme, output,
-            new ThemeExportOverrides(.9, 1, true, "Auto", "#FFFFFF", null, .5, 0, false,
+            new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", null, .5, 0, false,
                 SettingsFrostedGlassRadius: value)));
         Assert.IsFalse(File.Exists(output));
         scheme.Light.SettingsFrostedGlassRadius = value;
@@ -274,7 +333,7 @@ public sealed class ThemePackageStoreTests
         ThemePackageStore store = Store("source"); ThemeScheme scheme = store.Read(CreateDefinition("definition"));
         string image = Path.Combine(_root, "private-owner-wallpaper.png"); File.WriteAllBytes(image, Pixel);
         string output = Path.Combine(_root, "custom.zip"); File.WriteAllText(output, "preserve me");
-        var options = new ThemeExportOverrides(.9, 1, true, "Auto", "#FFFFFF", image, .7, 0, false);
+        var options = new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", image, .7, 0, false);
         Assert.ThrowsExactly<InvalidOperationException>(() => store.Export(scheme, output, options));
         Assert.AreEqual("preserve me", File.ReadAllText(output));
         store.Export(scheme, output, options with { AllowBackgroundRedistribution = true });
@@ -328,21 +387,19 @@ public sealed class ThemePackageStoreTests
     {
         ThemePackageStore store = Store("source"); ThemeScheme scheme = store.Read(CreateDefinition("definition"));
         string output = Path.Combine(_root, "appearance.zip");
-        var appearance = new ThemeExportOverrides(.8, .85, false, "Ivory", "#FFFFFF", null, .45, 2, false,
-            "Graphite", true, OverrideQuickPanelBackground: true, SettingsSurfaceOpacity: .65,
-            SettingsFrostedGlassEnabled: true, SettingsFrostedGlassRadius: 9, BubbleFrostedGlassEnabled: true);
+        var appearance = new ThemeExportOverrides(.8, .85, "Ivory", "#FFFFFF", null, .45, 2, false,
+            "Graphite", OverrideQuickPanelBackground: true, SettingsSurfaceOpacity: .65,
+            SettingsFrostedGlassEnabled: true, SettingsFrostedGlassRadius: 9);
         store.Export(scheme, output, appearance);
         using var stage = Store("target").StageImport(output);
         foreach (ThemeVariant variant in new[] { stage.Scheme.Light, stage.Scheme.Dark })
         {
             Assert.AreEqual("Graphite", variant.BubbleStyle);
-            Assert.IsTrue(variant.BubbleTextGlow);
             Assert.IsFalse(variant.Backgrounds.ContainsKey("quickPanel"));
             Assert.AreEqual(.8, variant.CardOpacity);
             Assert.AreEqual(.65, variant.SettingsSurfaceOpacity);
             Assert.IsTrue(variant.SettingsFrostedGlassEnabled);
             Assert.AreEqual(9d, variant.SettingsFrostedGlassRadius);
-            Assert.IsTrue(variant.BubbleFrostedGlassEnabled);
         }
         Assert.AreNotEqual(stage.Scheme.Light.Colors["B.WindowBg"], stage.Scheme.Dark.Colors["B.WindowBg"]);
     }
@@ -359,7 +416,7 @@ public sealed class ThemePackageStoreTests
         ThemeScheme scheme = store.Read(definition);
         string output = Path.Combine(_root, "bad.zip");
         Assert.ThrowsExactly<InvalidDataException>(() => store.Export(scheme, output,
-            new ThemeExportOverrides(.9, 1, true, "Auto", "#FFFFFF", null, double.NaN, 0, false)));
+            new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", null, double.NaN, 0, false)));
         Assert.IsFalse(File.Exists(output));
     }
 
@@ -381,7 +438,7 @@ public sealed class ThemePackageStoreTests
             Assert.IsTrue(File.Exists(Path.Combine(original.Directory, "assets", "user-background.png")));
         string customImage = Path.Combine(_root, "replacement.png"); File.WriteAllBytes(customImage, Pixel);
         string second = Path.Combine(_root, "replacement.zip");
-        store.Export(scheme, second, new ThemeExportOverrides(.9, 1, true, "Auto", "#FFFFFF", customImage, .5, 0, true));
+        store.Export(scheme, second, new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", customImage, .5, 0, true));
         using var exported = Store("next-target").StageImport(second);
         string quick = exported.Scheme.Light.Backgrounds["quickPanel"].Path;
         string workspace = exported.Scheme.Light.Backgrounds["workspace"].Path;

@@ -27,7 +27,7 @@ public sealed partial class TranslationResultWindow : Window
     private readonly Action<string> _notifySaved;
     private readonly DispatcherTimer _hideTimer;
     private readonly Border _surface;
-    private readonly TextBlock _body, _bodyGlow, _hint, _source;
+    private readonly TextBlock _body, _hint, _source;
     private readonly StackPanel _sourcePanel;
     private readonly ScrollViewer _sourceScroll, _bodyScroll;
     private readonly Button _copySource, _retryButton, _settingsButton, _closeButton;
@@ -74,7 +74,7 @@ public sealed partial class TranslationResultWindow : Window
             return body;
         }
         _body = MakeBody();
-        _bodyGlow = MakeBody();
+        TextOptions.SetTextFormattingMode(_body, TextFormattingMode.Display);
         _source = MakeBody();
         _hint = new TextBlock { Margin = new Thickness(0, 6, 0, 0),
             TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
@@ -138,7 +138,7 @@ public sealed partial class TranslationResultWindow : Window
         _sourcePanel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 8) };
         _sourceScroll = new ScrollViewer { Content = _source, MaxHeight = 130,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
-        _bodyScroll = new ScrollViewer { Content = GlassBubble.LayerGlow(_body, _bodyGlow), MaxHeight = 240,
+        _bodyScroll = new ScrollViewer { Content = _body, MaxHeight = 240,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         // Copy only from the result text area; source, scroll bars, and buttons have independent actions.
         _body.MouseLeftButtonUp += (_, e) =>
@@ -401,7 +401,7 @@ public sealed partial class TranslationResultWindow : Window
         if (!_persistentResult && IsVisible && !IsMouseOver && _copyable) _hideTimer.Start();
     }
 
-    private void SetBody(string text) => _body.Text = _bodyGlow.Text = text;
+    private void SetBody(string text) => _body.Text = text;
 
     private void ClampIntoWorkArea()
     {

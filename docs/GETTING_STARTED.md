@@ -55,9 +55,8 @@ Under **Settings > Appearance**, adjust text size or select a complete theme. Pr
 and inputs from **10% to 100%**, without fading text or icons. With theme artwork,
 enable **Frosted settings background** and adjust its **1–18 px** radius to soften the
 image behind those controls. Settings stays opaque when there is no artwork or
-Windows high contrast is active. Under **Bubbles & notifications**, **Frosted
-bubble background** applies separately to selection and result bubbles. It uses an
-opaque fallback when native blur is unavailable. These effects are off by default.
+Windows high contrast is active. Settings frosting is off by default.
+Under **Bubbles & notifications**, choose the bubble style and opacity.
 
 ## Fresh-install defaults
 
@@ -73,7 +72,7 @@ preferences, including language and shortcuts.
 | Selection bubble / action / translator | On / Copy only / Google |
 | Translation target language | Follow interface language |
 | Result target selector / save controls | On / On |
-| Bubble style / text glow / drop shadow | Default / Off / On |
+| Bubble style | Default |
 | Automatic clipboard collection / direct paste | Off / Off |
 | Auto-hide when dragged to an edge | On |
 | Collapse / expand delay | 2 s / 0.1 s |
@@ -84,7 +83,6 @@ preferences, including language and shortcuts.
 | Background image / overlay opacity | None / 20% |
 | Panel frosted glass | Off; stored radius 4 px |
 | Settings surface opacity / frosted glass | 100% / Off; stored radius 8 px |
-| Bubble frosted glass | Off |
 | Scheduled automatic backup | On, every 24 hours |
 
 ## Optional local components

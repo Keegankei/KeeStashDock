@@ -61,11 +61,8 @@
   "settingsSurfaceOpacity": 1,
   "settingsFrostedGlassEnabled": false,
   "settingsFrostedGlassRadius": 8,
-  "bubbleFrostedGlassEnabled": false,
   "bubbleOpacity": 0.98,
-  "bubbleShadow": true,
   "bubbleStyle": "FollowTheme",
-  "bubbleTextGlow": false,
   "panelTextColorMode": "Auto",
   "panelTextCustomColor": "#28332A"
 }

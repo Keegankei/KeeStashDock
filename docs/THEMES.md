@@ -38,9 +38,8 @@ preserves saved preferences.
 - **Settings surface opacity:** 10–100%, default 100%; text and icons stay sharp.
 - **Frosted settings background:** optional blur of theme artwork, 1–18 px,
   off by default with a stored 8 px radius. It does not blur text or controls.
-- **Frosted bubble background:** separate option under **Bubbles & notifications**,
-  off by default. Windows composition and transparency support are required;
-  unsupported configurations use an opaque readable surface.
+- **Bubble style and opacity:** independent appearance controls for selection and
+  result bubbles.
 
 Without artwork, Settings keeps opaque surfaces. Windows high contrast takes
 priority over decorative theme effects. The quick panel's existing background

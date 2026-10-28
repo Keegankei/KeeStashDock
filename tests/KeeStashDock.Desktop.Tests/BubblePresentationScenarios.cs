@@ -86,23 +86,19 @@ internal static class BubblePresentationScenarios
         Assert.AreEqual(light.Text, dark.Text);
         Assert.IsTrue(Contrast(dark.Surface, dark.Text) >= 7,
             "The fixed default bubble must not inherit white text from a dark main panel.");
-        settings.Current.BubbleShadow = false;
-        settings.Current.BubbleTextGlow = true;
         settings.Current.BubbleOpacity = 1;
         var surface = new Border();
         GlassBubble.Apply(settings.Current, surface);
-        Assert.IsNull(surface.Effect, "The shadow toggle must disable the surface effect.");
+        Assert.IsNull(surface.Effect, "Bubble surfaces must not apply an outer shadow or blur.");
         BubblePalette customized = GlassBubble.Resolve(settings.Current);
-        Assert.AreEqual(!SystemParameters.HighContrast, customized.Glow,
-            "High-contrast mode must suppress the optional text halo.");
         if (surface.Background is GradientBrush gradient)
             Assert.IsTrue(gradient.GradientStops.All(stop => stop.Color.A == 255),
                 "100% opacity must not retain a translucent bottom gradient stop.");
-        settings.Current.BubbleShadow = true;
-        settings.Current.BubbleTextGlow = false;
+        settings.Current.BubbleOpacity = .6;
         GlassBubble.Apply(settings.Current, surface);
-        Assert.AreEqual(!SystemParameters.HighContrast, surface.Effect is not null);
-        Assert.IsFalse(GlassBubble.Resolve(settings.Current).Glow);
+        Assert.IsNull(surface.Effect, "Reducing opacity must not enable a blur or shadow.");
+        Assert.AreEqual(SystemParameters.HighContrast ? 1 : .6, GlassBubble.Resolve(settings.Current).Opacity, .0001);
+        settings.Current.BubbleOpacity = 1;
         VerifyHighContrastChoices(customized);
         ThemeManager.EndPreview();
     }
@@ -323,6 +319,8 @@ internal static class BubblePresentationScenarios
             Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
             Assert.IsTrue(double.IsFinite(frame.ActualHeight) && frame.ActualHeight > 0);
             Assert.IsTrue(content.ActualWidth <= width + .5, "Bubble content must stay within the supplied work-area width.");
+            Assert.IsTrue(LogicalDescendants(content).OfType<UIElement>().All(element => element.Effect is null),
+                "Selection and result bubbles must render crisp text without blur or shadow effects in every theme.");
             foreach (Button button in LogicalDescendants(content).OfType<Button>().Where(button => button.Visibility == Visibility.Visible))
             {
                 if (button.ActualWidth <= 0 || button.ActualHeight <= 0) continue;

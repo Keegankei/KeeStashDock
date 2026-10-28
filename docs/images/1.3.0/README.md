@@ -3,9 +3,10 @@
 These seven PNGs render actual KeeStashDock 1.3.0 WPF controls with the English
 interface, 100% text size, isolated settings and fictional sample content. They
 were selected from the local theme-dialog and r5 layout checks performed on
-2026-10-23 through 2026-10-25, with both translation previews refreshed after
-the responsive-layout fix on 2026-10-27, before publication. They do not capture the user's
-desktop, clipboard, collection or credentials.
+2026-10-23 through 2026-10-25. All four selection/result previews were refreshed
+on 2026-10-28 after removing bubble frosting, text glow and shadows, before
+publication. They do not capture the user's desktop, clipboard, collection or
+credentials.
 
 | File | View and deliberate settings |
 | --- | --- |
@@ -22,11 +23,10 @@ English. No translation or OCR provider was invoked. The Settings preview is
 scrolled intentionally to show opacity and blur controls. The theme preview's
 `v1.0.0` identifies the **theme package**, not the application version.
 
-Fresh installs remain image-free, Copy-only and without frosting. These previews
-are offscreen control renders, not proof of native desktop blur, display/GPU
-performance, physical DPI coverage or clean-machine acceptance. Text and controls
-stay sharp while the Settings artwork layer is blurred. Native title bars and
-native bubble-compositor effects are not captured.
+Fresh installs remain image-free and Copy-only, with Settings frosting off. These
+previews are offscreen control renders, not proof of display/GPU performance,
+physical DPI coverage or clean-machine acceptance. Text and controls stay sharp
+while the Settings artwork layer is blurred. Native title bars are not captured.
 
 ## Reproduction
 

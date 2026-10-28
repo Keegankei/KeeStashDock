@@ -695,11 +695,7 @@
                   <ComboBoxItem Tag="Slate" Content="{loc:Tr Settings.PanelTextColor.Slate}" />
                 </ComboBox>
               </Grid>
-              <CheckBox x:Name="BubbleGlowCheck" Margin="0,3,0,10" Checked="OnBubbleFxChanged" Unchecked="OnBubbleFxChanged" Content="{loc:Tr Settings.BubbleGlow}" />
-              <CheckBox x:Name="BubbleShadowCheck" Margin="0,3,0,10" Checked="OnBubbleFxChanged" Unchecked="OnBubbleFxChanged" Content="{loc:Tr Settings.BubbleShadow}" />
-              <CheckBox x:Name="BubbleFrostCheck" Margin="0,3,0,4" Checked="OnBubbleFxChanged" Unchecked="OnBubbleFxChanged" Content="{loc:Tr Settings.BubbleFrost}" />
-              <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,12" Text="{loc:Tr Settings.BubbleFrostHint}" />
-              <Grid Style="{StaticResource S.Row}" Margin="22,0,12,8">
+              <Grid Style="{StaticResource S.Row}">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="*" />

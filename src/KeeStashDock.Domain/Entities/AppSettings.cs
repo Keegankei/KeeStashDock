@@ -174,20 +174,9 @@ public sealed class AppSettings
     /// <summary>Show explicit group and save actions on completed OCR or translation results.</summary>
     public bool TranslationResultShowSavePanel { get; set; } = true;
 
-    /// <summary>Bubble text glow: the blurred halo twin under the crisp
-    /// text of the whole bubble family. Default OFF: crisp text only.</summary>
-    public bool BubbleTextGlow { get; set; } = false;
-
-    /// <summary>Bubble drop shadow: the soft lift under the glass surface.
-    /// Off = the bubble sits flat on the screen.</summary>
-    public bool BubbleShadow { get; set; } = true;
-
     /// <summary>Bubble surface opacity, 0.5..1.0. At 1.0 the glass goes
     /// fully opaque - the cure when the desktop bleeds through the text.</summary>
     public double BubbleOpacity { get; set; } = 1.0;
-
-    /// <summary>Request the system backdrop blur for translucent bubbles.</summary>
-    public bool BubbleFrostedGlassEnabled { get; set; }
 
     /// <summary>Clipboard history collection master switch (opt-IN: default
     /// off - watching the clipboard is a privacy decision the user makes).</summary>

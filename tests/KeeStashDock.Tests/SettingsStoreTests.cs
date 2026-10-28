@@ -176,8 +176,6 @@ public sealed class SettingsStoreTests
               "selectionAction": "Both",
               "translationEngine": "Bing",
               "selectionBubbleStyle": "FollowTheme",
-              "bubbleTextGlow": true,
-              "bubbleShadow": false,
               "clipboardWatchEnabled": true,
               "directPasteEnabled": true,
               "panelEdgeAutoHideEnabled": false,
@@ -466,18 +464,62 @@ public sealed class SettingsStoreTests
         File.WriteAllText(_settingsFile, """{ "frostedGlassEnabled": true, "frostedGlassRadius": 4 }""");
         var store = new SettingsStore(_settingsFile); store.Load();
         Assert.IsFalse(store.Current.SettingsFrostedGlassEnabled);
-        Assert.IsFalse(store.Current.BubbleFrostedGlassEnabled);
         Assert.AreEqual(8d, store.Current.SettingsFrostedGlassRadius);
         store.Current.SettingsFrostedGlassEnabled = true;
         store.Current.SettingsFrostedGlassRadius = 12;
-        store.Current.BubbleFrostedGlassEnabled = true;
         store.Save();
         var loaded = new SettingsStore(_settingsFile); loaded.Load();
         Assert.IsTrue(loaded.Current.SettingsFrostedGlassEnabled);
-        Assert.IsTrue(loaded.Current.BubbleFrostedGlassEnabled);
         Assert.AreEqual(12d, loaded.Current.SettingsFrostedGlassRadius);
         Assert.IsTrue(loaded.Current.FrostedGlassEnabled);
         Assert.AreEqual(4d, loaded.Current.FrostedGlassRadius);
+    }
+
+    [TestMethod]
+    public void RetiredBubbleEffects_AreIgnoredWithoutResettingSupportedAppearance()
+    {
+        File.WriteAllText(_settingsFile, """
+            {
+              "theme": "Dark",
+              "selectionBubbleStyle": "Lavender",
+              "bubbleTextGlow": true,
+              "bubbleShadow": true,
+              "bubbleFrostedGlassEnabled": true,
+              "bubbleOpacity": 0.75,
+              "cardOpacity": 0.65,
+              "settingsSurfaceOpacity": 0.6,
+              "settingsFrostedGlassEnabled": true,
+              "settingsFrostedGlassRadius": 12,
+              "frostedGlassEnabled": true,
+              "frostedGlassRadius": 5
+            }
+            """);
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.AreEqual("Lavender", store.Current.SelectionBubbleStyle);
+        Assert.AreEqual(.75, store.Current.BubbleOpacity);
+        Assert.AreEqual(.65, store.Current.CardOpacity);
+        Assert.AreEqual(.6, store.Current.SettingsSurfaceOpacity);
+        Assert.IsTrue(store.Current.SettingsFrostedGlassEnabled);
+        Assert.AreEqual(12d, store.Current.SettingsFrostedGlassRadius);
+        Assert.IsTrue(store.Current.FrostedGlassEnabled);
+        Assert.AreEqual(5d, store.Current.FrostedGlassRadius);
+
+        store.Save();
+        using JsonDocument saved = JsonDocument.Parse(File.ReadAllText(_settingsFile));
+        foreach (string retired in new[] { "bubbleTextGlow", "bubbleShadow", "bubbleFrostedGlassEnabled" })
+            Assert.IsFalse(saved.RootElement.TryGetProperty(retired, out _),
+                "Retired effects must not be carried into newly saved settings.");
+        var reloaded = new SettingsStore(_settingsFile);
+        reloaded.Load();
+        Assert.AreEqual(.75, reloaded.Current.BubbleOpacity);
+        Assert.AreEqual(.65, reloaded.Current.CardOpacity);
+        Assert.AreEqual(.6, reloaded.Current.SettingsSurfaceOpacity);
+        Assert.IsTrue(reloaded.Current.SettingsFrostedGlassEnabled);
+        Assert.AreEqual(12d, reloaded.Current.SettingsFrostedGlassRadius);
+        Assert.IsTrue(reloaded.Current.FrostedGlassEnabled);
+        Assert.AreEqual(5d, reloaded.Current.FrostedGlassRadius);
     }
 
     [TestMethod]
@@ -513,12 +555,12 @@ public sealed class SettingsStoreTests
         store.Save();
 
         Assert.AreEqual("Dark", store.Current.Theme);
-        Assert.IsTrue(store.Current.BubbleTextGlow);
         Assert.AreEqual(0.65, store.Current.CardOpacity);
         using JsonDocument saved = JsonDocument.Parse(File.ReadAllText(_settingsFile));
         Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowEnabled", out _));
         Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowStrength", out _));
         Assert.IsFalse(saved.RootElement.TryGetProperty("edgeGlowBrightness", out _));
+        Assert.IsFalse(saved.RootElement.TryGetProperty("bubbleTextGlow", out _));
     }
 
     [TestMethod]
@@ -662,8 +704,6 @@ public sealed class SettingsStoreTests
         Assert.AreEqual("Capture", settings.SelectionAction);
         Assert.AreEqual("Google", settings.TranslationEngine);
         Assert.AreEqual("Default", settings.SelectionBubbleStyle);
-        Assert.IsFalse(settings.BubbleTextGlow);
-        Assert.IsTrue(settings.BubbleShadow);
         Assert.IsFalse(settings.ClipboardWatchEnabled);
         Assert.IsFalse(settings.DirectPasteEnabled);
         Assert.IsTrue(settings.PanelEdgeAutoHideEnabled);

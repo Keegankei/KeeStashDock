@@ -65,9 +65,9 @@ Uma soma de verificação confirma a integridade do arquivo; ela não é uma ass
 
 **Configuração inicial · 1.3.0:** inglês; **Alt+Q** abre o painel e **Alt+W** inicia uma captura. OCR e tradução local não vêm pré-instalados. Atualizações preservam as preferências salvas.
 
-O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo padrão, brilho do texto desativado e sombra ativada. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
+O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo de balão padrão. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
 
-O tamanho do texto e a opacidade das superfícies de Configurações começam em **100 %**. O vidro fosco de Configurações e dos balões fica **desativado**. Os temas incluídos são opcionais e não são aplicados automaticamente.
+O tamanho do texto e a opacidade das superfícies de Configurações começam em **100 %**. O vidro fosco de Configurações fica **desativado**. Os temas incluídos são opcionais e não são aplicados automaticamente.
 
 <details>
 <summary>Configurações de uma nova instalação · 1.2.3 · interface em inglês</summary>
@@ -90,7 +90,7 @@ O tamanho do texto e a opacidade das superfícies de Configurações começam em
 | Tamanho global do texto | Em **Configurações > Aparência > Tamanho do texto**, escolha entre **90% e 150%** para o painel rápido, a área de trabalho, as configurações e outros textos do aplicativo. **100%** restaura o tamanho original. |
 | Área de trabalho renovada | A navegação, a lista de itens e o editor seguem o visual das configurações. No modo escuro, listas e linhas de backup usam fundos harmonizados e texto legível. |
 | Balões compactos | Ações de cópia ao lado do original e do resultado, com um layout mais compacto para idioma de destino, grupo e salvamento. O estilo padrão e Wisteria Atelier usam os mesmos controles com paletas coordenadas. |
-| Opacidade e vidro fosco | Ajuste separadamente as superfícies de Configurações entre **10 % e 100 %**. O desfoque opcional de Configurações suaviza a imagem de fundo em **1–18 px**; o dos balões usa a composição do Windows, com fundo opaco quando indisponível. O texto continua nítido. |
+| Opacidade e vidro fosco | Ajuste separadamente as superfícies de Configurações entre **10 % e 100 %**. O desfoque opcional de Configurações suaviza somente a imagem de fundo em **1–18 px**, mantendo o texto nítido. O estilo e a opacidade dos balões podem ser ajustados separadamente. |
 
 Novas instalações continuam usando inglês, tema do sistema, modo Padrão e nenhuma imagem de fundo. A atualização não aplica automaticamente um tema ilustrado nem redefine as preferências salvas.
 
@@ -155,7 +155,7 @@ Nos dois modos, arraste as bordas ou os cantos do painel expandido para alterar 
 
 Há temas claro, escuro e do sistema, com controles de plano de fundo personalizado, opacidade e efeito fosco. As preferências do sistema de alto contraste e redução de animações oferecem alternativas estáticas. [Prévia escura](docs/images/floating-panel-dark.png) · [Prévia da visualização fixa](docs/images/floating-panel-fixed.png).
 
-As configurações também oferecem paletas de texto para o painel, uma cor de texto personalizada e contraste automático, além de controles independentes de estilo, brilho, sombra e opacidade para o balão de seleção.
+As configurações também oferecem paletas de texto para o painel, uma cor de texto personalizada e contraste automático, além de controles independentes de estilo e opacidade para o balão de seleção.
 
 <details>
 <summary>Configurações de aparência iniciais</summary>
@@ -182,7 +182,7 @@ Todos os temas são opcionais. Novas instalações mantêm o tema do sistema sem
 
 Use **Importar tema** para carregar um ZIP de tema ou **Exportar aparência atual** para compartilhar as variantes clara e escura, as imagens e as configurações de aparência. A inclusão de fundos pessoais precisa ser escolhida explicitamente. Os temas não contêm entradas, chaves de API, atalhos nem instalações de componentes. Os arquivos ficam em `theme/`, ao lado do executável; atualizações preservam os temas importados em `theme/custom/`.
 
-A **opacidade das superfícies de Configurações** ajusta cartões, navegação e campos sem esmaecer o texto. O **fundo fosco de Configurações** desfoca apenas a imagem do tema; o **fundo fosco dos balões** é uma opção separada em **Balões e notificações**. Os dois efeitos começam desativados. Conforme o caso, Configurações sem imagem, alto contraste ou composição de balões indisponível usam superfícies opacas legíveis.
+A **opacidade das superfícies de Configurações** ajusta cartões, navegação e campos sem esmaecer o texto. O **fundo fosco de Configurações** desfoca apenas a imagem do tema e começa desativado. Configurações sem imagem ou com alto contraste usam superfícies opacas legíveis.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Configurações de aparência da versão 1.3.0 com tema Wisteria escuro opcional, superfícies a 60 por cento e desfoque do fundo de 8px"></p>
 
@@ -236,7 +236,7 @@ Escolha nas configurações um idioma de tradução independente da interface. *
   </tr>
 </table>
 
-*1.3.0 · Texto de exemplo preenchido em controles reais de resultado; nenhum OCR ou serviço de tradução foi executado. O idioma de destino e as ações de salvamento aparecem nas duas visualizações e podem ser ocultados separadamente em Configurações. O desfoque nativo dos balões não é capturado nestas prévias fora da tela.*
+*1.3.0 · Texto de exemplo preenchido em controles reais de resultado; nenhum OCR ou serviço de tradução foi executado. O idioma de destino e as ações de salvamento aparecem nas duas visualizações e podem ser ocultados separadamente em Configurações.*
 
 | Provedor | Configuração e disponibilidade |
 | --- | --- |

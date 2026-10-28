@@ -65,9 +65,9 @@ A checksum checks file integrity; it is not a publisher signature. The current p
 
 **Fresh-install defaults · 1.3.0:** English; **Alt+Q** opens the panel and **Alt+W** starts a screenshot. OCR and offline translation are not preinstalled. Existing saved preferences are preserved on upgrade.
 
-The selection bubble is enabled in **Copy only** mode with **Google** selected for translation, Default styling, text glow off and drop shadow on. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
+The selection bubble is enabled in **Copy only** mode with **Google** selected for translation and Default styling. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
 
-Text size starts at **100%**. Settings surface opacity is **100%**; Settings and bubble frosting are **off**. Wisteria Atelier is included for optional use and is not applied automatically.
+Text size starts at **100%**. Settings surface opacity is **100%** and Settings frosting is **off**. The bundled themes are optional and are not applied automatically.
 
 <details>
 <summary>Fresh-install settings · 1.2.3 English preview</summary>
@@ -90,7 +90,7 @@ Text size starts at **100%**. Settings surface opacity is **100%**; Settings and
 | Global text size | Adjust **Settings > Appearance > Text size** from **90% to 150%** for the quick panel, workbench, Settings and other app text. **100%** restores the original size. |
 | Workbench appearance | Refreshed navigation, item list and editor surfaces follow the Settings design. Dark-mode list surfaces and backup rows use matching backgrounds and readable text. |
 | Compact bubbles | Inline source/result copy actions and a tighter target-language/group/save layout. Default styling and Wisteria Atelier use the same controls with coordinated palettes. |
-| Opacity and frosting | Adjust Settings surfaces independently from **10% to 100%**. Optional Settings frosting softens background artwork at **1–18 px**; optional bubble frosting uses Windows composition with an opaque fallback. Text stays sharp. |
+| Opacity and frosting | Adjust Settings surfaces independently from **10% to 100%**. Optional Settings frosting softens background artwork at **1–18 px** while text stays sharp. Bubble style and opacity are independently adjustable. |
 
 Fresh installs still use English, the system theme, Standard mode and no background image. An upgrade does not automatically apply an illustrated theme or reset saved preferences.
 
@@ -155,7 +155,7 @@ Resize an expanded panel by dragging its edges or corners in either mode; its si
 
 Light, dark, and system themes are available, with custom backgrounds, opacity, and frosting controls. System high-contrast and reduced-animation preferences provide static fallbacks. [Dark preview](docs/images/floating-panel-dark.png) · [Fixed-view preview](docs/images/floating-panel-fixed.png).
 
-Settings also offers panel text palettes, a custom text color, and automatic contrast, plus independent selection-bubble style, glow, shadow, and opacity controls.
+Settings also offers panel text palettes, a custom text color, and automatic contrast, plus independent selection-bubble style and opacity controls.
 
 <details>
 <summary>Default appearance settings</summary>
@@ -181,7 +181,7 @@ Each preset includes portrait and landscape artwork plus complete light/dark col
 
 Use **Import theme** to load a theme ZIP or **Export current appearance** to share both light/dark variants, images and appearance settings. Personal background images require explicit inclusion. Themes do not contain entries, API keys, hotkeys or component installations. Theme files live in `theme/` beside the executable; updates preserve imported themes in `theme/custom/`.
 
-**Settings surface opacity** adjusts cards, navigation and inputs without fading text. **Frosted settings background** blurs theme artwork only; **Frosted bubble background** is a separate option under **Bubbles & notifications**. Both effects start off. No-artwork Settings views, high contrast, or unavailable bubble composition use readable opaque surfaces as applicable.
+**Settings surface opacity** adjusts cards, navigation and inputs without fading text. **Frosted settings background** blurs theme artwork only and starts off. Settings uses readable opaque surfaces when no artwork is selected or high contrast is active.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="1.3.0 Appearance settings with optional Wisteria dark theme, 60 percent Settings surface opacity and 8px artwork frosting"></p>
 
@@ -235,7 +235,7 @@ Choose a translation target independently of the interface language in Settings.
   </tr>
 </table>
 
-*1.3.0 · Prefilled example text in actual result controls; no OCR or translation service was run. The target and save controls are enabled in both views and can be hidden independently in Settings. Native bubble frosting is not captured in these offscreen previews.*
+*1.3.0 · Prefilled example text in actual result controls; no OCR or translation service was run. The target and save controls are enabled in both views and can be hidden independently in Settings.*
 
 | Provider | Setup and availability |
 | --- | --- |

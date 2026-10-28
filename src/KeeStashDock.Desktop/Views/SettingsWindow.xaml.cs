@@ -189,9 +189,6 @@ public partial class SettingsWindow : Window
         TranslateEngineCombo.SelectedItem = TranslateEngineCombo.Items
             .OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == cfg.TranslationEngine);
         RefreshTranslationTargets();
-        BubbleGlowCheck.IsChecked = cfg.BubbleTextGlow;
-        BubbleShadowCheck.IsChecked = cfg.BubbleShadow;
-        BubbleFrostCheck.IsChecked = cfg.BubbleFrostedGlassEnabled;
         BubbleOpacitySlider.Value = Math.Round(
             Math.Clamp(cfg.BubbleOpacity, 0.5, 1.0) * 100);
         BubbleOpacityValue.Text = $"{BubbleOpacitySlider.Value:0}%";
@@ -261,18 +258,6 @@ public partial class SettingsWindow : Window
             ?? "Capture";
         _settings.Save();
         RefreshSelectionActionUi();   // engine row follows the action
-    }
-
-    /// <summary>Bubble effect toggles (glow / shadow). The bubbles restyle
-    /// live via SettingsStore.Changed - no restart, next bubble wears it.</summary>
-    private void OnBubbleFxChanged(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        _settings.Current.BubbleTextGlow = BubbleGlowCheck.IsChecked == true;
-        _settings.Current.BubbleShadow = BubbleShadowCheck.IsChecked == true;
-        _settings.Current.BubbleFrostedGlassEnabled = BubbleFrostCheck.IsChecked == true;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
     }
 
     private void OnBubbleOpacityChanged(object sender,

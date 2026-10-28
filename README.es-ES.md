@@ -65,9 +65,9 @@ Una suma de comprobación verifica la integridad del archivo; no es una firma de
 
 **Valores iniciales · 1.3.0:** inglés; **Alt+Q** abre el panel y **Alt+W** inicia una captura. El OCR y la traducción local no vienen preinstalados. Las actualizaciones conservan las preferencias guardadas.
 
-La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo predeterminado, brillo del texto desactivado y sombra activada. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Estándar**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
+La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo de burbuja predeterminado. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Estándar**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
 
-El tamaño del texto y la opacidad de las superficies de Configuración empiezan en **100 %**. El vidrio esmerilado de Configuración y de las burbujas está **desactivado**. Los temas incluidos son opcionales y no se aplican automáticamente.
+El tamaño del texto y la opacidad de las superficies de Configuración empiezan en **100 %**. El vidrio esmerilado de Configuración está **desactivado**. Los temas incluidos son opcionales y no se aplican automáticamente.
 
 <details>
 <summary>Ajustes de una instalación nueva · 1.2.3 · interfaz en inglés</summary>
@@ -90,7 +90,7 @@ El tamaño del texto y la opacidad de las superficies de Configuración empiezan
 | Tamaño global del texto | En **Ajustes > Apariencia > Tamaño del texto**, elige entre **90 % y 150 %** para el panel rápido, el área de trabajo, los ajustes y otros textos de la aplicación. **100 %** restaura el tamaño original. |
 | Área de trabajo renovada | La navegación, la lista de elementos y el editor siguen el diseño de los ajustes. Las listas y las filas de copias de seguridad usan fondos coordinados y texto legible en modo oscuro. |
 | Burbujas compactas | Acciones de copia junto al original y al resultado, con una distribución más compacta del idioma de destino, el grupo y el guardado. El estilo predeterminado y Wisteria Atelier comparten controles con paletas coordinadas. |
-| Opacidad y vidrio esmerilado | Ajusta de forma independiente las superficies de Configuración entre **10 % y 100 %**. El desenfoque opcional de Configuración suaviza el fondo entre **1–18 px**; el de las burbujas usa la composición de Windows y recurre a un fondo opaco si no está disponible. El texto permanece nítido. |
+| Opacidad y vidrio esmerilado | Ajusta de forma independiente las superficies de Configuración entre **10 % y 100 %**. El desenfoque opcional de Configuración suaviza solo el fondo entre **1–18 px**; el texto permanece nítido. El estilo y la opacidad de las burbujas se ajustan por separado. |
 
 Las instalaciones nuevas mantienen el inglés, el tema del sistema, el modo Estándar y ningún fondo de imagen. La actualización no aplica automáticamente un tema ilustrado ni restablece las preferencias guardadas.
 
@@ -155,7 +155,7 @@ En ambos modos, arrastra los bordes o las esquinas del panel expandido para camb
 
 Hay temas claro, oscuro y del sistema, con ajustes de fondo personalizado, opacidad y efecto esmerilado. Las preferencias del sistema de alto contraste y reducción de animaciones ofrecen alternativas estáticas. [Vista previa oscura](docs/images/floating-panel-dark.png) · [Vista previa fija](docs/images/floating-panel-fixed.png).
 
-La configuración también ofrece paletas de texto para el panel, un color de texto personalizado y contraste automático, además de controles independientes de estilo, resplandor, sombra y opacidad para la burbuja de selección.
+La configuración también ofrece paletas de texto para el panel, un color de texto personalizado y contraste automático, además de controles independientes de estilo y opacidad para la burbuja de selección.
 
 <details>
 <summary>Ajustes de apariencia predeterminados</summary>
@@ -182,7 +182,7 @@ Todos los temas son opcionales. Las instalaciones nuevas mantienen el tema del s
 
 Usa **Importar tema** para cargar un ZIP de tema o **Exportar apariencia actual** para compartir las variantes clara y oscura, las imágenes y los ajustes. La inclusión de fondos personales debe elegirse explícitamente. Los temas no contienen entradas, claves API, atajos ni instalaciones de componentes. Los archivos están en `theme/`, junto al ejecutable; las actualizaciones conservan los temas importados en `theme/custom/`.
 
-La **opacidad de las superficies de Configuración** modifica tarjetas, navegación y campos sin atenuar el texto. El **fondo esmerilado de Configuración** desenfoca solo la imagen del tema; el **fondo esmerilado de las burbujas** es una opción independiente en **Burbujas y notificaciones**. Ambos efectos empiezan desactivados. Según corresponda, Configuración sin imagen, el contraste alto o la falta de composición de burbujas usan superficies opacas legibles.
+La **opacidad de las superficies de Configuración** modifica tarjetas, navegación y campos sin atenuar el texto. El **fondo esmerilado de Configuración** desenfoca solo la imagen del tema y empieza desactivado. Configuración sin imagen o con contraste alto usa superficies opacas legibles.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Configuración de apariencia 1.3.0 con tema Wisteria oscuro opcional, superficies al 60 por ciento y desenfoque del fondo de 8px"></p>
 
@@ -236,7 +236,7 @@ Selecciona en Configuración un idioma de traducción independiente de la interf
   </tr>
 </table>
 
-*1.3.0 · Texto de ejemplo predefinido en controles de resultado reales; no se ejecutó OCR ni ningún servicio de traducción. El idioma de destino y las acciones de guardado aparecen en ambas vistas y se pueden ocultar por separado en Configuración. El desenfoque nativo de las burbujas no se captura en estas vistas fuera de pantalla.*
+*1.3.0 · Texto de ejemplo predefinido en controles de resultado reales; no se ejecutó OCR ni ningún servicio de traducción. El idioma de destino y las acciones de guardado aparecen en ambas vistas y se pueden ocultar por separado en Configuración.*
 
 | Proveedor | Configuración y disponibilidad |
 | --- | --- |

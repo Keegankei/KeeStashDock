@@ -59,7 +59,6 @@
   },
   "cardOpacity": 0.94,
   "bubbleOpacity": 0.98,
-  "bubbleShadow": true,
   "panelTextColorMode": "Auto",
   "panelTextCustomColor": "#292333"
 }

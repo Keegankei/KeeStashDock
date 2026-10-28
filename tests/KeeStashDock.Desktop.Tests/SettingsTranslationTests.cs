@@ -290,7 +290,6 @@ public sealed class SettingsTranslationTests
             WorkbenchPresentationScenarios.Verify(root);
             ThemePresentationScenarios.Verify(root, settings);
             SettingsOpacityScenarios.Verify(window, settings, settingsFile);
-            BubbleBackdropScenarios.Verify(window, settings);
             BubblePresentationScenarios.Verify(root, settings);
             ThemePreviewWindowScenarios.Verify(root, settings);
             SearchAndBatchScenarios.Verify(root);

@@ -161,7 +161,7 @@ public sealed partial class TranslationResultWindow
         }
         var foreground = Brush(palette.Text);
         var muted = Brush(palette.Muted);
-        _body.Foreground = _bodyGlow.Foreground = _heading.Foreground = foreground;
+        _body.Foreground = _heading.Foreground = foreground;
         _source.Foreground = _hint.Foreground = _targetLabel.Foreground = _groupLabel.Foreground = muted;
         _saveStatus.Foreground = foreground;
         _hint.Opacity = 1;
@@ -176,7 +176,6 @@ public sealed partial class TranslationResultWindow
         BubbleChrome.ApplyButton(_closeButton, palette, compact: true);
         BubbleChrome.ApplyButton(_copyResult, palette, compact: true);
         BubbleChrome.ApplyButton(_copySource, palette, compact: true);
-        GlassBubble.SetGlowEnabled(_bodyGlow, palette.Glow);
     }
 
     private void RefreshCopyAction() => _copyResult.Visibility =

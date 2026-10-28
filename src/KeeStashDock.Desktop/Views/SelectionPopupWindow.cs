@@ -240,7 +240,7 @@ public sealed class SelectionPopupWindow : Window
     private sealed class BubbleAction
     {
         internal Button Button { get; }
-        private readonly TextBlock _icon, _label, _labelGlow;
+        private readonly TextBlock _icon, _label;
         private readonly Border _iconChip;
 
         internal BubbleAction(string glyph)
@@ -256,13 +256,13 @@ public sealed class SelectionPopupWindow : Window
                 TypographyManager.SetFontSize(label, 13);
                 return label;
             }
-            _label = Label(); _labelGlow = Label();
+            _label = Label();
+            TextOptions.SetTextFormattingMode(_label, TextFormattingMode.Display);
             var row = new Grid();
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.Children.Add(_iconChip);
-            var text = GlassBubble.LayerGlow(_label, _labelGlow);
-            Grid.SetColumn(text, 1); row.Children.Add(text);
+            Grid.SetColumn(_label, 1); row.Children.Add(_label);
             Button = new Button
             {
                 Content = row, Padding = new Thickness(9, 6, 12, 6),
@@ -272,11 +272,11 @@ public sealed class SelectionPopupWindow : Window
 
         internal void SetLabel(string text)
         {
-            _label.Text = _labelGlow.Text = text;
+            _label.Text = text;
             AutomationProperties.SetName(Button, text);
         }
 
-        internal void SetTextWidth(double width) => _label.MaxWidth = _labelGlow.MaxWidth = width;
+        internal void SetTextWidth(double width) => _label.MaxWidth = width;
 
         internal void ApplyStyle(BubblePalette palette)
         {
@@ -285,8 +285,7 @@ public sealed class SelectionPopupWindow : Window
             Button.BorderThickness = new Thickness(0);
             _iconChip.Background = BubbleChrome.Brush(palette.Hover);
             _icon.Foreground = BubbleChrome.Brush(palette.HighContrast ? palette.OnAccent : palette.Accent);
-            _label.Foreground = _labelGlow.Foreground = BubbleChrome.Brush(palette.Text);
-            GlassBubble.SetGlowEnabled(_labelGlow, palette.Glow);
+            _label.Foreground = BubbleChrome.Brush(palette.Text);
         }
     }
     [System.Runtime.InteropServices.DllImport("user32.dll")]

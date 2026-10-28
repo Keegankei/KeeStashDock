@@ -1165,8 +1165,8 @@ public partial class QuickPanelWindow : Window
         _vm.ShowToast("QuickPanel.OpenFailed");
     }
 
-    /// <summary>Drag-out: dragging a card starts an OLE text drag so the user
-    /// can drop snippet content straight into any target application.</summary>
+    /// <summary>Dragging a text card creates a desktop note and hands over
+    /// the active pointer gesture without copying or removing the source item.</summary>
     private void OnCardMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed)
@@ -1199,13 +1199,21 @@ public partial class QuickPanelWindow : Window
         var ct = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (ct is not null) dipTL = ct.TransformFromDevice.Transform(deviceTL);
 
-        ResetCardMotion(_pressContainer);
-        var noteItem = _pressItem;
-        var note = new StickyNoteWindow(noteItem, _settings.Current.CardOpacity,
-            _settings.Current.FloatingPanelEnabled, _settings, copyAsync: () => _vm.CopyNoteAsync(noteItem));
-        _pressItem = null;
-        _pressContainer = null;
+        var note = CreateTornOutNote(_pressContainer, _pressItem);
         Mouse.Capture(null);   // the ListBoxItem must let go before DragMove
         note.ShowTornOutAt(dipTL.X, dipTL.Y);
+    }
+
+    internal StickyNoteWindow CreateTornOutNote(ListBoxItem source, SnippetItemViewModel noteItem)
+    {
+        ResetCardMotion(source);
+        // ListBox selects on press, but the note receives the drag's release.
+        // Clear only that source selection so its full-slot accent background
+        // cannot remain behind the translucent card after the pointer leaves.
+        source.IsSelected = false;
+        _pressItem = null;
+        _pressContainer = null;
+        return new StickyNoteWindow(noteItem, _settings.Current.CardOpacity,
+            _settings.Current.FloatingPanelEnabled, _settings, copyAsync: () => _vm.CopyNoteAsync(noteItem));
     }
 }

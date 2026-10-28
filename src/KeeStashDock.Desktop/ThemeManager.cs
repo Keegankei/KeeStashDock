@@ -133,8 +133,8 @@ public static class ThemeManager
             AppSettings accessible = saved.Copy();
             accessible.BackgroundImagePath = null; accessible.CardOpacity = 1; accessible.SettingsSurfaceOpacity = 1;
             accessible.PanelTextColorMode = "Auto"; accessible.FrostedGlassEnabled = false;
-            accessible.BubbleOpacity = 1; accessible.BubbleShadow = false; accessible.BubbleTextGlow = false;
-            accessible.BubbleFrostedGlassEnabled = false; accessible.SettingsFrostedGlassEnabled = false;
+            accessible.BubbleOpacity = 1;
+            accessible.SettingsFrostedGlassEnabled = false;
             return accessible;
         }
         if (ActiveVariant is not ThemeVariant variant)
@@ -143,7 +143,6 @@ public static class ThemeManager
             {
                 AppSettings preview = saved.Copy(); preview.BackgroundImagePath = null; preview.CardOpacity = .9; preview.SettingsSurfaceOpacity = 1;
                 preview.SettingsFrostedGlassEnabled = false; preview.SettingsFrostedGlassRadius = 8;
-                preview.BubbleFrostedGlassEnabled = false;
                 preview.PanelTextColorMode = "Auto"; preview.PanelTextCustomColor = "#FFFFFF";
                 return preview;
             }
@@ -170,8 +169,7 @@ public static class ThemeManager
             effective.SettingsFrostedGlassRadius = variant.SettingsFrostedGlassRadius;
             if (saved.SelectionBubbleStyle == "FollowTheme")
             {
-                effective.BubbleOpacity = variant.BubbleOpacity; effective.BubbleShadow = variant.BubbleShadow;
-                effective.BubbleFrostedGlassEnabled = variant.BubbleFrostedGlassEnabled;
+                effective.BubbleOpacity = variant.BubbleOpacity;
             }
             effective.PanelTextColorMode = variant.PanelTextColorMode;
             effective.PanelTextCustomColor = variant.PanelTextCustomColor;

@@ -62,14 +62,14 @@ result without changing the default target in Settings; retry always uses the
 retained source text. Unsupported local model directions remain an error and
 never trigger cloud fallback.
 
-<p align="center"><img src="images/translation-result-tools.png" width="420" alt="The English 1.2.3 result window with a target language selector, group selector and save actions"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Keegankei/KeeStashDock/e4a6d71a4d35c0ee5df5cf1ea3a7a0639f59aaef/docs/images/translation-result-tools.png" width="420" alt="The English 1.2.3 result window with a target language selector, group selector and save actions"></p>
 
 This preview uses prefilled example text in the actual 1.2.3 result window;
 no OCR or translation service was run to produce it. In **Settings > Capture &
 translation**, independently show or hide the target-language selector and
 save-to-group controls. Both are on by default. Hiding them keeps the result
-and copy actions available. See the [compact result preview](images/translation-result-compact.png)
-and [image sources](images/README.md) for the optional layout and reproduction details.
+and copy actions available. See the [compact result preview](https://github.com/Keegankei/KeeStashDock/blob/e4a6d71a4d35c0ee5df5cf1ea3a7a0639f59aaef/docs/images/translation-result-compact.png)
+and [image sources](https://github.com/Keegankei/KeeStashDock/blob/e4a6d71a4d35c0ee5df5cf1ea3a7a0639f59aaef/docs/images/README.md) for the optional layout and reproduction details.
 
 ## Storage, backups, and upgrading
 
@@ -78,14 +78,15 @@ Database backups and full package exports therefore include both images and OCR
 text. Moving an entry to Trash retains its image; restoring returns the image and
 text together. Permanent deletion or trash purging removes the associated image.
 
-The database migrates to schema version 4. Existing text entries are retained,
-and older supported database packages can still be imported through Settings.
-Keep a pre-upgrade backup if you may need to return to an older app version:
-older binaries cannot open a schema v4 database.
+Version 1.3.0 migrates the database to schema version 5 after creating and
+verifying a pre-upgrade SQLite snapshot. Existing entries are retained, and older
+supported database packages can still be imported through Settings. Keep the
+complete data folder and pre-upgrade snapshot: version 1.2.3 and earlier cannot
+open a schema v5 database.
 
-Group exports use package version 2 to carry images and recognized text. This
-version still reads old version 1 text packages; older app versions cannot import
-new version 2 packages. A group package is limited to 128 MiB, including at most
+Group exports use package version 3 to preserve text templates as well as images
+and recognized text. Version 1.3.0 still imports formats 1 and 2; importing format
+3 requires version 1.3.0 or newer. A group package is limited to 128 MiB, including at most
 80 MiB of original/thumbnail assets before JSON encoding. Use a full database
 backup for large collections.
 

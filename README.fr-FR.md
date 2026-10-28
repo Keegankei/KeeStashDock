@@ -65,9 +65,9 @@ Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une 
 
 **Réglages initiaux · 1.3.0 :** anglais ; **Alt+Q** ouvre le panneau et **Alt+W** lance une capture. L’OCR et la traduction locale ne sont pas préinstallés. Les mises à niveau conservent les préférences enregistrées.
 
-La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut, texte lumineux désactivé, ombre activée. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
+La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
 
-La taille du texte et l’opacité des surfaces des paramètres commencent à **100 %**. Les effets de verre dépoli des paramètres et des bulles sont **désactivés**. Les thèmes fournis restent facultatifs et ne sont pas appliqués automatiquement.
+La taille du texte et l’opacité des surfaces des paramètres commencent à **100 %**. L’effet de verre dépoli des paramètres est **désactivé**. Les thèmes fournis restent facultatifs et ne sont pas appliqués automatiquement.
 
 <details>
 <summary>Réglages d’une nouvelle installation · 1.2.3 · interface anglaise</summary>
@@ -90,7 +90,7 @@ La taille du texte et l’opacité des surfaces des paramètres commencent à **
 | Taille globale du texte | Dans **Paramètres > Apparence > Taille du texte**, choisissez **90 % à 150 %** pour le panneau rapide, l’espace de travail, les paramètres et les autres textes de l’application. **100 %** rétablit la taille d’origine. |
 | Espace de travail repensé | La navigation, la liste d’éléments et l’éditeur reprennent le style des paramètres. En mode sombre, les listes et lignes de sauvegarde utilisent des fonds harmonisés et du texte lisible. |
 | Bulles compactes | Actions de copie directement à côté de la source et du résultat, avec une disposition plus resserrée pour la langue cible, le groupe et l’enregistrement. Le style par défaut et Wisteria Atelier utilisent les mêmes commandes avec des palettes harmonisées. |
-| Opacité et verre dépoli | Réglez séparément les surfaces des paramètres de **10 % à 100 %**. Le flou facultatif des paramètres adoucit l’illustration de fond sur **1–18 px** ; celui des bulles utilise la composition Windows avec un repli opaque. Le texte reste net. |
+| Opacité et verre dépoli | Réglez séparément les surfaces des paramètres de **10 % à 100 %**. Le flou facultatif des paramètres adoucit uniquement l’illustration de fond sur **1–18 px**, sans flouter le texte. Le style et l’opacité des bulles se règlent séparément. |
 
 Une nouvelle installation conserve l’anglais, le thème du système, le mode Standard et aucun fond d’écran. Une mise à niveau n’applique pas automatiquement de thème illustré et ne réinitialise pas les préférences enregistrées.
 
@@ -155,7 +155,7 @@ Dans les deux modes, faites glisser les bords ou les coins du panneau déployé 
 
 Les thèmes clair, sombre et système sont disponibles, avec des réglages d’arrière-plan personnalisé, d’opacité et d’effet dépoli. Les préférences système de contraste élevé et de réduction des animations permettent un affichage statique de secours. [Aperçu sombre](docs/images/floating-panel-dark.png) · [Aperçu de la vue fixe](docs/images/floating-panel-fixed.png).
 
-Les paramètres proposent aussi des palettes de texte pour le panneau, une couleur de texte personnalisée et un contraste automatique, ainsi que des réglages indépendants de style, de lueur, d’ombre et d’opacité pour la bulle de sélection.
+Les paramètres proposent aussi des palettes de texte pour le panneau, une couleur de texte personnalisée et un contraste automatique, ainsi que des réglages indépendants de style et d’opacité pour la bulle de sélection.
 
 <details>
 <summary>Réglages d’apparence par défaut</summary>
@@ -182,7 +182,7 @@ Tous les thèmes sont facultatifs. Une nouvelle installation conserve le thème 
 
 **Importer un thème** charge un ZIP de thème. **Exporter l’apparence actuelle** partage les deux variantes claire/sombre, leurs images et les réglages d’apparence. L’inclusion d’une image de fond personnelle doit être explicitement choisie. Les thèmes ne contiennent ni entrées, ni clés API, ni raccourcis, ni installations de composants. Leurs fichiers résident dans `theme/` à côté de l’exécutable ; les mises à jour préservent les thèmes importés dans `theme/custom/`.
 
-L’**opacité des surfaces des paramètres** agit sur les cartes, la navigation et les champs sans estomper le texte. Le **fond dépoli des paramètres** floute seulement l’illustration du thème ; le **fond dépoli des bulles** est une option distincte sous **Bulles et notifications**. Les deux effets sont initialement désactivés. Selon le cas, l’absence d’image dans les paramètres, le contraste élevé ou l’indisponibilité de la composition des bulles entraînent l’utilisation de surfaces opaques lisibles.
+L’**opacité des surfaces des paramètres** agit sur les cartes, la navigation et les champs sans estomper le texte. Le **fond dépoli des paramètres** floute seulement l’illustration du thème et est initialement désactivé. Sans image de fond ou en contraste élevé, les paramètres utilisent des surfaces opaques lisibles.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Paramètres d’apparence 1.3.0 avec thème Wisteria sombre facultatif, opacité des surfaces à 60 pour cent et flou du fond de 8px"></p>
 
@@ -236,7 +236,7 @@ Choisissez une langue cible indépendante de l’interface dans les paramètres.
   </tr>
 </table>
 
-*1.3.0 · Texte d’exemple prérempli dans les véritables contrôles de résultat ; aucun OCR ni service de traduction n’a été exécuté. La langue cible et les commandes d’enregistrement sont visibles dans les deux vues et peuvent être masquées séparément dans les paramètres. Le flou natif des bulles n’est pas capturé dans ces rendus hors écran.*
+*1.3.0 · Texte d’exemple prérempli dans les véritables contrôles de résultat ; aucun OCR ni service de traduction n’a été exécuté. La langue cible et les commandes d’enregistrement sont visibles dans les deux vues et peuvent être masquées séparément dans les paramètres.*
 
 | Fournisseur | Configuration et disponibilité |
 | --- | --- |

@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using KeeStashDock.Domain.Entities;
@@ -456,6 +457,16 @@ public sealed class ThemePackageStore
             else if (element.ValueKind == JsonValueKind.Array) foreach (JsonElement item in element.EnumerateArray()) RejectDuplicateKeys(item);
         }
         RejectDuplicateKeys(document.RootElement);
+        if (typeof(T) == typeof(ThemeVariant) && document.RootElement.ValueKind == JsonValueKind.Object)
+        {
+            // These retired settings are inert when reading older packages. Keep
+            // strict validation for every other property and omit them on export.
+            JsonObject variant = JsonNode.Parse(text)!.AsObject();
+            variant.Remove("bubbleFrostedGlassEnabled");
+            variant.Remove("bubbleTextGlow");
+            variant.Remove("bubbleShadow");
+            return variant.Deserialize<T>(Json) ?? throw new InvalidDataException("Empty theme JSON.");
+        }
         return JsonSerializer.Deserialize<T>(text, Json) ?? throw new InvalidDataException("Empty theme JSON.");
     }
 
@@ -539,11 +550,8 @@ public sealed class ThemePackageStore
         variant.SettingsSurfaceOpacity = settings.SettingsSurfaceOpacity;
         variant.SettingsFrostedGlassEnabled = settings.SettingsFrostedGlassEnabled;
         variant.SettingsFrostedGlassRadius = settings.SettingsFrostedGlassRadius;
-        variant.BubbleFrostedGlassEnabled = settings.BubbleFrostedGlassEnabled;
         variant.BubbleOpacity = settings.BubbleOpacity;
-        variant.BubbleShadow = settings.BubbleShadow;
         variant.BubbleStyle = settings.BubbleStyle;
-        variant.BubbleTextGlow = settings.BubbleTextGlow;
         variant.PanelTextColorMode = settings.PanelTextColorMode;
         variant.PanelTextCustomColor = settings.PanelTextCustomColor;
         if (background is not null) variant.Backgrounds["quickPanel"] = new ThemeBackground
@@ -568,9 +576,9 @@ public sealed class ThemePackageStore
 }
 
 /// <summary>Only deliberately chosen appearance values can enter a portable export.</summary>
-public sealed record ThemeExportOverrides(double CardOpacity, double BubbleOpacity, bool BubbleShadow,
+public sealed record ThemeExportOverrides(double CardOpacity, double BubbleOpacity,
     string PanelTextColorMode, string PanelTextCustomColor, string? BackgroundPath,
     double OverlayOpacity, double BlurRadius, bool AllowBackgroundRedistribution,
-    string BubbleStyle = "FollowTheme", bool BubbleTextGlow = false, bool OverrideQuickPanelBackground = false,
+    string BubbleStyle = "FollowTheme", bool OverrideQuickPanelBackground = false,
     double SettingsSurfaceOpacity = 1.0, bool SettingsFrostedGlassEnabled = false,
-    double SettingsFrostedGlassRadius = 8, bool BubbleFrostedGlassEnabled = false);
+    double SettingsFrostedGlassRadius = 8);

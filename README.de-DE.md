@@ -65,9 +65,9 @@ Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. 
 
 **Voreinstellungen bei Neuinstallation · 1.3.0:** Englisch; **Alt+Q** öffnet das Panel, **Alt+W** startet einen Screenshot. OCR und lokale Übersetzung sind nicht vorinstalliert. Updates behalten gespeicherte Einstellungen bei.
 
-Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard, Textleuchten aus, Schatten an. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
+Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
 
-Die Textgröße beginnt bei **100 %**, die Deckkraft der Einstellungsoberflächen bei **100 %**. Milchglaseffekte für Einstellungen und Blasen sind **ausgeschaltet**. Die mitgelieferten Designs sind optional und werden nicht automatisch angewendet.
+Die Textgröße beginnt bei **100 %**, die Deckkraft der Einstellungsoberflächen bei **100 %**. Der Milchglaseffekt für Einstellungen ist **ausgeschaltet**. Die mitgelieferten Designs sind optional und werden nicht automatisch angewendet.
 
 <details>
 <summary>Einstellungen einer Neuinstallation · 1.2.3 · englische Oberfläche</summary>
@@ -90,7 +90,7 @@ Die Textgröße beginnt bei **100 %**, die Deckkraft der Einstellungsoberfläche
 | Globale Textgröße | Wählen Sie unter **Einstellungen > Erscheinungsbild > Textgröße** einen Wert von **90 % bis 150 %** für Schnellpanel, Arbeitsbereich, Einstellungen und weitere App-Texte. **100 %** stellt die ursprüngliche Größe wieder her. |
 | Neuer Arbeitsbereich | Navigation, Eintragsliste und Editor sind auf das Design der Einstellungen abgestimmt. Listen und Sicherungszeilen erhalten im dunklen Modus passende Hintergründe und gut lesbaren Text. |
 | Kompakte Blasen | Kopieraktionen direkt neben Original und Ergebnis sowie ein kompakteres Layout für Zielsprache, Gruppe und Speichern. Standardstil und Wisteria Atelier verwenden dieselben Bedienelemente mit abgestimmten Farben. |
-| Deckkraft und Milchglas | Die Einstellungsoberflächen lassen sich unabhängig auf **10 % bis 100 %** einstellen. Optionaler Milchglaseffekt zeichnet das Hintergrundbild der Einstellungen mit **1–18 px** weich. Blasen nutzen die Windows-Komposition mit einer undurchsichtigen Ersatzdarstellung. Text bleibt scharf. |
+| Deckkraft und Milchglas | Die Einstellungsoberflächen lassen sich unabhängig auf **10 % bis 100 %** einstellen. Der optionale Milchglaseffekt zeichnet das Hintergrundbild der Einstellungen mit **1–18 px** weich; Text bleibt scharf. Stil und Deckkraft der Auswahlblase sind separat einstellbar. |
 
 Neuinstallationen starten weiterhin auf Englisch, mit dem Systemdesign, im Standardmodus und ohne Hintergrundbild. Ein Upgrade aktiviert kein illustriertes Design automatisch und setzt gespeicherte Einstellungen nicht zurück.
 
@@ -155,7 +155,7 @@ Ziehen Sie in beiden Modi an den Kanten oder Ecken des ausgeklappten Panels, um 
 
 Helles, dunkles und systemabhängiges Design stehen zur Verfügung, ergänzt um eigene Hintergründe, Deckkraft und Unschärfe. Die Systemeinstellungen für hohen Kontrast und reduzierte Animationen aktivieren statische Ersatzdarstellungen. [Dunkle Vorschau](docs/images/floating-panel-dark.png) · [Vorschau mit fester Perspektive](docs/images/floating-panel-fixed.png).
 
-Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene Textfarbe und automatischen Kontrast sowie unabhängige Optionen für Stil, Leuchten, Schatten und Deckkraft der Auswahlblase.
+Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene Textfarbe und automatischen Kontrast sowie unabhängige Optionen für Stil und Deckkraft der Auswahlblase.
 
 <details>
 <summary>Voreinstellungen für die Darstellung</summary>
@@ -182,7 +182,7 @@ Alle Designs sind optional. Neuinstallationen verwenden weiterhin das Systemdesi
 
 Mit **Design importieren** laden Sie ein Design-ZIP. **Aktuelles Erscheinungsbild exportieren** teilt beide hellen/dunklen Varianten einschließlich Bildern und Darstellungseinstellungen. Persönliche Hintergrundbilder müssen ausdrücklich eingeschlossen werden. Designs enthalten keine Einträge, API-Schlüssel, Tastenkürzel oder Komponenteninstallationen. Die Dateien liegen in `theme/` neben der Anwendung; Updates erhalten importierte Designs unter `theme/custom/`.
 
-Die **Deckkraft der Einstellungsoberflächen** verändert Karten, Navigation und Eingabefelder, ohne Text zu verblassen. **Milchglas-Hintergrund der Einstellungen** zeichnet nur das Designbild weich; **Milchglas-Hintergrund der Blasen** ist eine separate Option unter **Blasen & Benachrichtigungen**. Beide Effekte sind zunächst ausgeschaltet. Ohne Einstellungsbild, bei hohem Kontrast oder fehlender Blasenkomposition werden entsprechend lesbare, undurchsichtige Oberflächen verwendet.
+Die **Deckkraft der Einstellungsoberflächen** verändert Karten, Navigation und Eingabefelder, ohne Text zu verblassen. **Milchglas-Hintergrund der Einstellungen** zeichnet nur das Designbild weich und ist zunächst ausgeschaltet. Ohne Einstellungsbild oder bei hohem Kontrast werden lesbare, undurchsichtige Oberflächen verwendet.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Darstellungseinstellungen von 1.3.0 mit optionalem dunklem Wisteria-Design, 60 Prozent Oberflächendeckkraft und 8px Hintergrundunschärfe"></p>
 
@@ -236,7 +236,7 @@ Wählen Sie die Zielsprache in den Einstellungen unabhängig von der Oberfläche
   </tr>
 </table>
 
-*1.3.0 · Vorab eingetragene Beispieltexte in echten Ergebnis-Steuerelementen; OCR und Übersetzungsdienste wurden nicht ausgeführt. Zielsprache und Speicheraktionen sind in beiden Ansichten sichtbar und lassen sich in den Einstellungen unabhängig ausblenden. Nativer Milchglaseffekt der Blasen wird in diesen Offscreen-Vorschauen nicht erfasst.*
+*1.3.0 · Vorab eingetragene Beispieltexte in echten Ergebnis-Steuerelementen; OCR und Übersetzungsdienste wurden nicht ausgeführt. Zielsprache und Speicheraktionen sind in beiden Ansichten sichtbar und lassen sich in den Einstellungen unabhängig ausblenden.*
 
 | Anbieter | Einrichtung und Verfügbarkeit |
 | --- | --- |

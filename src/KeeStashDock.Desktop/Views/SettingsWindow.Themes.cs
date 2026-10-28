@@ -156,11 +156,10 @@ public partial class SettingsWindow
             Title = LocalizationService.Instance["Theme.Export"] };
         if (file.ShowDialog(this) != true) return;
         ThemeExportOverrides? appearance = active is null || cfg.ThemeAppearanceCustomized || !string.IsNullOrEmpty(background)
-            ? new(cfg.CardOpacity, cfg.BubbleOpacity, cfg.BubbleShadow, cfg.PanelTextColorMode, cfg.PanelTextCustomColor,
+            ? new(cfg.CardOpacity, cfg.BubbleOpacity, cfg.PanelTextColorMode, cfg.PanelTextCustomColor,
                 background, cfg.BackgroundOverlayOpacity, cfg.FrostedGlassEnabled ? cfg.FrostedGlassRadius : 0, true,
-                cfg.SelectionBubbleStyle, cfg.BubbleTextGlow, cfg.ThemeUseCustomBackground, cfg.SettingsSurfaceOpacity,
-                SettingsFrostedGlassEnabled: cfg.SettingsFrostedGlassEnabled, SettingsFrostedGlassRadius: cfg.SettingsFrostedGlassRadius,
-                BubbleFrostedGlassEnabled: cfg.BubbleFrostedGlassEnabled) : null;
+                cfg.SelectionBubbleStyle, cfg.ThemeUseCustomBackground, cfg.SettingsSurfaceOpacity,
+                SettingsFrostedGlassEnabled: cfg.SettingsFrostedGlassEnabled, SettingsFrostedGlassRadius: cfg.SettingsFrostedGlassRadius) : null;
         _themeOperation = true; ThemePackageButtons.IsEnabled = false;
         try
         {

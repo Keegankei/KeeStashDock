@@ -16,7 +16,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 - Complete importable/exportable light and dark themes under the application `theme` directory. Four optional presets appear in order: Sunlit Gallery, Twilight Study, Wisteria Atelier and Wisteria Reverie. Each has portrait/landscape day and night artwork, complete light/dark palettes, preview/cancel and separate personal-background export consent. System appearance switches both palette and artwork with Windows.
 - Global text-size adjustment from 90% to 150% in Settings > Appearance, with immediate preview, persistent preferences and a reset to 100%. Text in the quick panel, workbench, Settings, notes and result windows scales while icon glyphs keep their existing size.
 - Independent Settings surface opacity from 10% to 100% for theme artwork. Cards, navigation and input backgrounds adjust immediately while text, icons and dropdown menus stay opaque. Complete theme import/export preserves the setting; existing themes default to 100%.
-- Optional frosted backgrounds for Settings and selection/result bubbles. Settings blurs only its theme image with adjustable strength; bubbles request native compositor blur and use an opaque fallback when unavailable. Text and controls remain sharp, and complete themes retain the preferences.
+- Optional frosted backgrounds for Settings. Only the theme image is blurred, with adjustable strength; text and controls remain sharp. Complete themes retain the preference.
 
 ### Changed
 
@@ -29,8 +29,13 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ### Fixed
 
-- Keep Default bubble controls readable on a dark application theme, suppress selection/confirmation text glow in high contrast, and reposition translation cards after an interface-language change.
+- Keep Default bubble controls readable on a dark application theme and reposition translation cards after an interface-language change.
+- Clear the source card selection after dragging out a desktop note, preventing a stale accent rectangle behind translucent cards.
 - Applied theme-aware surfaces and selection states to the backup snapshot list so dark mode no longer shows light text on a white system background. Component progress indicators now follow the active palette as well.
+
+### Removed
+
+- Bubble frosted backgrounds, text glow and drop shadows, including their settings. Existing settings and theme files containing these fields remain loadable; the effects are not applied. Settings artwork blur and panel/sticky-note shadows remain available.
 
 Release preparation is in progress; a publication date will be recorded when
 the stable release is published. See the

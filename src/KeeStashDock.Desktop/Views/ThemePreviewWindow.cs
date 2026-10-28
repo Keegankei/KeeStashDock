@@ -130,9 +130,7 @@ public sealed partial class ThemePreviewWindow : Window
         if (_bubble.IsChecked == true)
         {
             cfg.SelectionBubbleStyle = variant?.BubbleStyle ?? "Default";
-            cfg.BubbleOpacity = variant?.BubbleOpacity ?? 1; cfg.BubbleShadow = variant?.BubbleShadow ?? true;
-            cfg.BubbleTextGlow = variant?.BubbleTextGlow ?? false;
-            cfg.BubbleFrostedGlassEnabled = variant?.BubbleFrostedGlassEnabled ?? false;
+            cfg.BubbleOpacity = variant?.BubbleOpacity ?? 1;
         }
         try { _settings.Save(); ThemeManager.EndPreview(); DialogResult = true; }
         catch (Exception ex) when (ThemePackageStore.IsPackageFailure(ex))
@@ -146,22 +144,20 @@ public sealed partial class ThemePreviewWindow : Window
 
 internal sealed record ThemeAppearanceSnapshot(string Id, string Mode, bool CustomBackground, bool Customized,
     double CardOpacity, string TextMode, string TextColor, double Overlay, bool Frost, double Blur,
-    string BubbleStyle, double BubbleOpacity, bool BubbleShadow, bool BubbleTextGlow, double SettingsSurfaceOpacity,
-    bool SettingsFrostedGlassEnabled, double SettingsFrostedGlassRadius, bool BubbleFrostedGlassEnabled)
+    string BubbleStyle, double BubbleOpacity, double SettingsSurfaceOpacity,
+    bool SettingsFrostedGlassEnabled, double SettingsFrostedGlassRadius)
 {
     internal static ThemeAppearanceSnapshot Capture(AppSettings cfg) => new(cfg.ThemePresetId, cfg.Theme, cfg.ThemeUseCustomBackground,
         cfg.ThemeAppearanceCustomized, cfg.CardOpacity, cfg.PanelTextColorMode, cfg.PanelTextCustomColor, cfg.BackgroundOverlayOpacity,
-        cfg.FrostedGlassEnabled, cfg.FrostedGlassRadius, cfg.SelectionBubbleStyle, cfg.BubbleOpacity, cfg.BubbleShadow, cfg.BubbleTextGlow,
-        cfg.SettingsSurfaceOpacity, cfg.SettingsFrostedGlassEnabled, cfg.SettingsFrostedGlassRadius, cfg.BubbleFrostedGlassEnabled);
+        cfg.FrostedGlassEnabled, cfg.FrostedGlassRadius, cfg.SelectionBubbleStyle, cfg.BubbleOpacity,
+        cfg.SettingsSurfaceOpacity, cfg.SettingsFrostedGlassEnabled, cfg.SettingsFrostedGlassRadius);
     internal void Restore(AppSettings cfg)
     {
         cfg.ThemePresetId = Id; cfg.Theme = Mode; cfg.ThemeUseCustomBackground = CustomBackground; cfg.ThemeAppearanceCustomized = Customized;
         cfg.CardOpacity = CardOpacity; cfg.PanelTextColorMode = TextMode; cfg.PanelTextCustomColor = TextColor;
         cfg.SettingsSurfaceOpacity = SettingsSurfaceOpacity;
         cfg.SettingsFrostedGlassEnabled = SettingsFrostedGlassEnabled; cfg.SettingsFrostedGlassRadius = SettingsFrostedGlassRadius;
-        cfg.BubbleFrostedGlassEnabled = BubbleFrostedGlassEnabled;
         cfg.BackgroundOverlayOpacity = Overlay; cfg.FrostedGlassEnabled = Frost; cfg.FrostedGlassRadius = Blur;
-        cfg.SelectionBubbleStyle = BubbleStyle; cfg.BubbleOpacity = BubbleOpacity; cfg.BubbleShadow = BubbleShadow;
-        cfg.BubbleTextGlow = BubbleTextGlow;
+        cfg.SelectionBubbleStyle = BubbleStyle; cfg.BubbleOpacity = BubbleOpacity;
     }
 }

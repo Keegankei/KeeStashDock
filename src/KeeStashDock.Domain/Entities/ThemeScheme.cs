@@ -21,11 +21,8 @@ public sealed class ThemeVariant
     public double SettingsSurfaceOpacity { get; set; } = 1;
     public bool SettingsFrostedGlassEnabled { get; set; }
     public double SettingsFrostedGlassRadius { get; set; } = 8;
-    public bool BubbleFrostedGlassEnabled { get; set; }
     public double BubbleOpacity { get; set; } = 1;
-    public bool BubbleShadow { get; set; } = true;
     public string BubbleStyle { get; set; } = "FollowTheme";
-    public bool BubbleTextGlow { get; set; }
     public string PanelTextColorMode { get; set; } = "Auto";
     public string PanelTextCustomColor { get; set; } = "#FFFFFF";
 }
