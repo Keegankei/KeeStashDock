@@ -30,4 +30,18 @@
   <SolidColorBrush x:Key="B.InputTextMuted" Color="#C0C7D4"/>
   <SolidColorBrush x:Key="B.InputBg"     Color="#1E222A"/>
   <SolidColorBrush x:Key="B.Danger"      Color="#F08A86"/>
+  <SolidColorBrush x:Key="B.Success" Color="#8FD6B0"/>
+  <SolidColorBrush x:Key="B.Warning" Color="#E5C975"/>
+  <SolidColorBrush x:Key="B.Focus" Color="#8FB6EA"/>
+  <SolidColorBrush x:Key="B.Disabled" Color="#C0C7D4"/>
+  <SolidColorBrush x:Key="B.Link" Color="#8FB6EA"/>
+  <SolidColorBrush x:Key="B.ScrollThumb" Color="#4A5263"/>
+  <SolidColorBrush x:Key="B.SearchHighlight" Color="#3D8FB6EA"/>
+  <SolidColorBrush x:Key="B.BubbleBg" Color="#2B303A"/>
+  <SolidColorBrush x:Key="B.BubbleText" Color="#F4F6FA"/>
+  <SolidColorBrush x:Key="B.BubbleAccent" Color="#8FB6EA"/>
+  <SolidColorBrush x:Key="B.BubbleAccentSoft" Color="#35445B"/>
+  <SolidColorBrush x:Key="B.BubbleBorder" Color="#596475"/>
+  <SolidColorBrush x:Key="B.BubbleMuted" Color="#C0C7D4"/>
+  <SolidColorBrush x:Key="B.BubbleHighlight" Color="#B9CDE8"/>
 </ResourceDictionary>

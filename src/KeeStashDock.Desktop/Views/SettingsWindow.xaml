@@ -6,7 +6,7 @@
       <Setter Property="BorderBrush" Value="{DynamicResource B.Border}" />
       <Setter Property="Padding" Value="14,9" />
       <Setter Property="MinHeight" Value="36" />
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontSize" Value="{DynamicResource T.Font12}" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <Setter.Value>
@@ -39,7 +39,7 @@
     <Style x:Key="S.ComponentButton" TargetType="Button" BasedOn="{StaticResource S.Button}" />
     <Style TargetType="CheckBox">
       <Setter Property="Foreground" Value="{DynamicResource B.TextPrimary}" />
-      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontSize" Value="{DynamicResource T.Font13}" />
       <Setter Property="Padding" Value="0,9" />
       <Setter Property="Margin" Value="0,3,0,8" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -87,7 +87,7 @@
       </Setter>
     </Style>
     <Style x:Key="S.Section" TargetType="Border">
-      <Setter Property="Background" Value="{DynamicResource B.CardBg}" />
+      <Setter Property="Background" Value="{DynamicResource B.SettingsSurfaceBg}" />
       <Setter Property="BorderBrush" Value="{DynamicResource B.Border}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="16" />
@@ -96,15 +96,15 @@
     </Style>
     <Style x:Key="S.SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontSize" Value="{DynamicResource T.Font15}" />
       <Setter Property="Margin" Value="0,0,0,16" />
       <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
     <Style x:Key="S.Caption" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontSize" Value="{DynamicResource T.Font12}" />
       <Setter Property="Foreground" Value="{DynamicResource B.TextMuted}" />
       <Setter Property="TextWrapping" Value="Wrap" />
-      <Setter Property="LineHeight" Value="19" />
+      <Setter Property="LineHeight" Value="{DynamicResource T.Line19}" />
     </Style>
     <Style x:Key="S.RowLabel" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
       <Setter Property="VerticalAlignment" Value="Center" />
@@ -222,7 +222,7 @@
       <ColumnDefinition Width="208" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
-    <Border Background="{DynamicResource B.CardBg}" BorderBrush="{DynamicResource B.Border}" BorderThickness="0,0,1,0">
+    <Border x:Name="SettingsNavigationSurface" Background="{DynamicResource B.SettingsSurfaceBg}" BorderBrush="{DynamicResource B.Border}" BorderThickness="0,0,1,0">
       <Grid Margin="14,30,14,20">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -230,7 +230,7 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel Margin="14,0,6,28">
-          <TextBlock Text="KeeStashDock" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock x:Name="SettingsBrandText" Text="KeeStashDock" FontSize="{DynamicResource T.Font20}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="KeeStashDock" />
           <TextBlock Text="{loc:Tr Settings.Title}" Style="{StaticResource S.Caption}" Margin="0,6,0,0" />
         </StackPanel>
         <ListBox x:Name="SettingsNavigation" Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource S.NavigationItem}" SelectionChanged="OnSettingsNavigationChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -296,7 +296,7 @@
           </ListBoxItem>
         </ListBox>
         <StackPanel Grid.Row="2" Margin="14,16,6,0">
-          <TextBlock x:Name="SettingsVersionText" FontWeight="SemiBold" FontSize="12" />
+          <TextBlock x:Name="SettingsVersionText" FontWeight="SemiBold" FontSize="{DynamicResource T.Font12}" />
           <TextBlock Text="{loc:Tr Settings.SavedAutomatically}" Style="{StaticResource S.Caption}" Margin="0,6,0,0" />
         </StackPanel>
       </Grid>
@@ -308,7 +308,7 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
       <StackPanel Margin="0,0,10,24">
-        <TextBlock x:Name="SettingsPageTitle" FontSize="29" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock x:Name="SettingsPageTitle" FontSize="{DynamicResource T.Font29}" FontWeight="SemiBold" TextWrapping="Wrap" />
         <TextBlock x:Name="SettingsPageDescription" Style="{StaticResource S.Caption}" Margin="0,9,0,0" />
       </StackPanel>
       <TextBlock x:Name="FolderStatus" Grid.Row="2" TextWrapping="Wrap" Foreground="{DynamicResource B.Accent}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite" />
@@ -327,17 +327,17 @@
           <Border Style="{StaticResource S.Section}" x:Name="HotkeysSection">
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.Hotkey}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <TextBlock Text="{loc:Tr Settings.Hotkey.Hint}" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,6" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:Tr Settings.Hotkey.Hint}" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,6" TextWrapping="Wrap" />
               <TextBox x:Name="HotkeyBox" Style="{StaticResource S.Input}" IsReadOnly="True" IsReadOnlyCaretVisible="False" PreviewKeyDown="OnHotkeyRecord" />
-              <TextBlock x:Name="HotkeyStatus" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" />
+              <TextBlock x:Name="HotkeyStatus" FontSize="{DynamicResource T.Font12}" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" />
               <CheckBox x:Name="ScreenshotHotkeyCheck" Margin="0,3,0,10" Checked="OnScreenshotHotkeyEnabledChanged" Unchecked="OnScreenshotHotkeyEnabledChanged">
                 <TextBlock Text="{loc:Tr Screenshot.HotkeyEnabled}" TextWrapping="Wrap" />
               </CheckBox>
               <StackPanel x:Name="ScreenshotHotkeyEditor">
-                <TextBlock Text="{loc:Tr Screenshot.HotkeyHint}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,6" />
+                <TextBlock Text="{loc:Tr Screenshot.HotkeyHint}" FontSize="{DynamicResource T.Font12}" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,6" />
                 <TextBox x:Name="ScreenshotHotkeyBox" Style="{StaticResource S.Input}" IsReadOnly="True" IsReadOnlyCaretVisible="False" PreviewKeyDown="OnScreenshotHotkeyRecord" />
               </StackPanel>
-              <TextBlock x:Name="ScreenshotHotkeyStatus" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" />
+              <TextBlock x:Name="ScreenshotHotkeyStatus" FontSize="{DynamicResource T.Font12}" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" />
             </StackPanel>
           </Border>
           <Border Style="{StaticResource S.Section}">
@@ -351,7 +351,7 @@
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.PanelBehavior}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
               <CheckBox x:Name="PanelEdgeAutoHideCheck" Margin="0,3,0,10" Content="{loc:Tr Settings.Panel.EdgeAutoHide}" Checked="OnPanelEdgeAutoHideChanged" Unchecked="OnPanelEdgeAutoHideChanged" />
-              <TextBlock Text="{loc:Tr Settings.Panel.EdgeAutoHideHint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
+              <TextBlock Text="{loc:Tr Settings.Panel.EdgeAutoHideHint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
               <Grid Style="{StaticResource S.Row}">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
@@ -423,10 +423,10 @@
               <StackPanel Margin="0,0,0,12">
                 <TextBlock Text="{loc:Tr Settings.TranslationTarget}" TextWrapping="Wrap" Margin="0,0,0,6" />
                 <ComboBox x:Name="TranslationTargetCombo" HorizontalAlignment="Stretch" SelectionChanged="OnTranslationTargetChanged" />
-                <TextBlock x:Name="TranslationTargetStatus" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource B.TextMuted}" />
-                <TextBlock Text="{loc:Tr Settings.TranslationTargetHint}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource B.TextMuted}" />
+                <TextBlock x:Name="TranslationTargetStatus" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" />
+                <TextBlock Text="{loc:Tr Settings.TranslationTargetHint}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" />
               </StackPanel>
-              <TextBlock x:Name="TranslateEngineHint" Margin="0,0,0,10" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Text="{loc:Tr Settings.TranslateEngine.Hint}" />
+              <TextBlock x:Name="TranslateEngineHint" Margin="0,0,0,10" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Text="{loc:Tr Settings.TranslateEngine.Hint}" />
               <Grid x:Name="TranslationAppIdRow" Style="{StaticResource S.Row}">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
@@ -444,14 +444,14 @@
                 <TextBox Grid.Column="1" x:Name="ApiKeyBox" Style="{StaticResource S.Input}" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextChanged="OnApiKeyChanged" />
               </Grid>
               <StackPanel x:Name="AliyunSettingsPanel" Margin="0,0,0,10">
-                <TextBlock Text="{loc:Tr Settings.AliyunHint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
+                <TextBlock Text="{loc:Tr Settings.AliyunHint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
                 <TextBlock Text="{loc:Tr Settings.AliyunAccessKeyId}" TextWrapping="Wrap" Margin="0,0,0,4" />
                 <TextBox x:Name="AliyunAccessKeyIdBox" Style="{StaticResource S.Input}" TextChanged="OnAliyunCredentialsChanged" Margin="0,0,0,10" />
                 <TextBlock Text="{loc:Tr Settings.AliyunAccessKeySecret}" TextWrapping="Wrap" Margin="0,0,0,4" />
                 <PasswordBox x:Name="AliyunAccessKeySecretBox" Style="{StaticResource S.TranslationPassword}" PasswordChanged="OnAliyunSecretChanged" />
               </StackPanel>
               <StackPanel x:Name="OfflineSettingsPanel" Margin="0,0,0,10">
-                <TextBlock Text="{loc:Tr Settings.OfflineHint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
+                <TextBlock Text="{loc:Tr Settings.OfflineHint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
                 <TextBlock Text="{loc:Tr Settings.OfflineEndpoint}" TextWrapping="Wrap" Margin="0,0,0,4" />
                 <TextBox x:Name="OfflineEndpointBox" Style="{StaticResource S.Input}" TextChanged="OnOfflineEndpointChanged" Margin="0,0,0,8" />
               </StackPanel>
@@ -459,7 +459,7 @@
                 <Button x:Name="TranslationTestButton" Style="{StaticResource S.Button}" Background="{DynamicResource B.AccentSoft}" Click="OnTranslationTestClick" HorizontalAlignment="Left">
                   <TextBlock Text="{loc:Tr Settings.TranslationTest}" TextWrapping="Wrap" />
                 </Button>
-                <TextBlock x:Name="TranslationTestStatus" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource B.TextMuted}" />
+                <TextBlock x:Name="TranslationTestStatus" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" />
               </StackPanel>
             </StackPanel>
           </Border>
@@ -467,6 +467,41 @@
       </ScrollViewer>
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed" Padding="0,0,8,16" x:Name="AppearancePage">
         <StackPanel>
+          <Border Style="{StaticResource S.Section}" x:Name="FontSizeSection">
+            <StackPanel>
+              <TextBlock Text="{loc:Tr Settings.FontSize}" Style="{StaticResource S.SectionTitle}" />
+              <TextBlock Text="{loc:Tr Settings.FontSize.Hint}" Style="{StaticResource S.Caption}" Margin="0,0,0,14" />
+              <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="FontSizeSlider" Minimum="90" Maximum="150" TickFrequency="10" SmallChange="10" LargeChange="10"
+                        IsSnapToTickEnabled="True" ValueChanged="OnFontSizeChanged" VerticalAlignment="Center"
+                        AutomationProperties.Name="{loc:Tr Settings.FontSize}" />
+                <TextBlock x:Name="FontSizeValue" Grid.Column="1" Style="{StaticResource S.RowValue}" FontWeight="SemiBold" />
+              </Grid>
+              <Border Background="{DynamicResource B.InputBg}" BorderBrush="{DynamicResource B.Border}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12">
+                <TextBlock x:Name="FontSizePreview" Text="{loc:Tr Settings.FontSize.Preview}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" />
+              </Border>
+              <Button x:Name="FontSizeResetButton" Style="{StaticResource S.Button}" Content="{loc:Tr Settings.FontSize.Reset}" HorizontalAlignment="Left" Click="OnResetFontSizeClick" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource S.Section}" x:Name="ThemePresetSection">
+            <StackPanel>
+              <TextBlock Text="{loc:Tr Theme.Title}" Style="{StaticResource S.SectionTitle}"/>
+              <TextBlock Text="{loc:Tr Theme.Hint}" Style="{StaticResource S.Caption}" Margin="0,0,0,12"/>
+              <ComboBox x:Name="ThemePresetCombo" DisplayMemberPath="Name" Margin="0,0,0,12" AutomationProperties.Name="{loc:Tr Theme.Title}"/>
+              <WrapPanel x:Name="ThemePackageButtons" Margin="0,0,-8,-6">
+                <Button Content="{loc:Tr Theme.Preview}" Style="{StaticResource S.Button}" Margin="0,0,8,6" Click="OnPreviewThemeClick"/>
+                <Button Content="{loc:Tr Theme.Import}" Style="{StaticResource S.Button}" Margin="0,0,8,6" Click="OnImportThemeClick"/>
+                <Button Content="{loc:Tr Theme.Export}" Style="{StaticResource S.Button}" Margin="0,0,8,6" Click="OnExportThemeClick"/>
+                <Button Content="{loc:Tr Theme.OpenFolder}" Style="{StaticResource S.Button}" Margin="0,0,8,6" Click="OnOpenThemesClick"/>
+                <Button Content="{loc:Tr Theme.Reset}" Style="{StaticResource S.Button}" Margin="0,0,8,6" Click="OnResetThemeClick"/>
+              </WrapPanel>
+              <TextBlock x:Name="ThemePresetStatus" Style="{StaticResource S.Caption}" Margin="0,12,0,0"/>
+            </StackPanel>
+          </Border>
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.Theme}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
@@ -531,6 +566,22 @@
                   <TextBlock x:Name="CardOpacityValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
                 </Grid>
               </Grid>
+              <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.SettingsSurfaceOpacity}" />
+                <Grid Grid.Column="1">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="SettingsSurfaceOpacitySlider" Minimum="10" Maximum="100" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="5" ValueChanged="OnSettingsSurfaceOpacityChanged" MinWidth="70" AutomationProperties.Name="{loc:Tr Settings.SettingsSurfaceOpacity}" />
+                  <TextBlock x:Name="SettingsSurfaceOpacityValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
+                </Grid>
+              </Grid>
+              <TextBlock Style="{StaticResource S.Caption}" Margin="0,8,0,0" Text="{loc:Tr Settings.SettingsSurfaceOpacityHint}" />
             </StackPanel>
           </Border>
           <Border Style="{StaticResource S.Section}">
@@ -547,7 +598,7 @@
                   <ComboBoxItem Tag="Floating" Content="{loc:Tr Settings.PanelMode.Floating}" />
                 </ComboBox>
               </Grid>
-              <TextBlock Text="{loc:Tr Settings.PanelMode.Hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
+              <TextBlock Text="{loc:Tr Settings.PanelMode.Hint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
               <Grid Style="{StaticResource S.Row}" x:Name="FloatingMotionRow">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
@@ -559,7 +610,7 @@
                   <ComboBoxItem Tag="Fixed" Content="{loc:Tr Settings.FloatingMotion.Fixed}" />
                 </ComboBox>
               </Grid>
-              <TextBlock Text="{loc:Tr Settings.FloatingMotion.Hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" x:Name="FloatingMotionHint" />
+              <TextBlock Text="{loc:Tr Settings.FloatingMotion.Hint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" x:Name="FloatingMotionHint" />
               <StackPanel x:Name="InspectionGesturePanel">
                 <Grid Style="{StaticResource S.Row}">
                   <Grid.ColumnDefinitions>
@@ -599,7 +650,7 @@
                     </ComboBox>
                   </StackPanel>
                 </Grid>
-                <TextBlock Text="{loc:Tr Settings.InspectionGesture.Hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
+                <TextBlock Text="{loc:Tr Settings.InspectionGesture.Hint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,10" />
               </StackPanel>
             </StackPanel>
           </Border>
@@ -627,9 +678,7 @@
                   <ComboBoxItem Tag="Slate" Content="{loc:Tr Settings.PanelTextColor.Slate}" />
                 </ComboBox>
               </Grid>
-              <CheckBox x:Name="BubbleGlowCheck" Margin="0,3,0,10" Checked="OnBubbleFxChanged" Unchecked="OnBubbleFxChanged" Content="{loc:Tr Settings.BubbleGlow}" />
-              <CheckBox x:Name="BubbleShadowCheck" Margin="0,3,0,10" Checked="OnBubbleFxChanged" Unchecked="OnBubbleFxChanged" Content="{loc:Tr Settings.BubbleShadow}" />
-              <Grid Style="{StaticResource S.Row}" Margin="22,0,12,8">
+              <Grid Style="{StaticResource S.Row}">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="*" />
@@ -649,11 +698,26 @@
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.Bg}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <StackPanel Orientation="Horizontal">
+              <Grid Style="{StaticResource S.Row}">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.Bg.Target}" />
+                <ComboBox x:Name="BackgroundTargetCombo" Grid.Column="1" SelectedIndex="0" SelectionChanged="OnBackgroundTargetChanged" AutomationProperties.Name="{loc:Tr Settings.Bg.Target}">
+                  <ComboBoxItem Tag="quickPanel" Content="{loc:Tr Settings.Bg.Target.Panel}" />
+                  <ComboBoxItem Tag="settings" Content="{loc:Tr Settings.Bg.Target.Settings}" />
+                </ComboBox>
+              </Grid>
+              <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,12" Text="{loc:Tr Settings.Bg.Target.Hint}" />
+              <WrapPanel>
                 <Button Style="{StaticResource S.Button}" Click="OnPickBgClick" Content="{loc:Tr Settings.Bg.Select}" />
                 <Button Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnClearBgClick" Content="{loc:Tr Settings.Bg.Clear}" />
-              </StackPanel>
-              <TextBlock x:Name="BgPathText" FontSize="12" Margin="0,6,0,12" Foreground="{DynamicResource B.TextMuted}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" />
+                <Button x:Name="RestoreBackgroundButton" Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnRestoreBackgroundClick" Content="{loc:Tr Theme.RestoreBackground}" />
+                <Button x:Name="UseThemeBackgroundButton" Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnUseThemeBackgroundClick" Content="{loc:Tr Settings.Bg.UseTheme}" />
+              </WrapPanel>
+              <TextBlock x:Name="BgPathText" FontSize="{DynamicResource T.Font12}" Margin="0,6,0,12" Foreground="{DynamicResource B.TextMuted}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" />
+              <TextBlock x:Name="BackgroundStatusText" Style="{StaticResource S.Caption}" Margin="0,0,0,12" Visibility="Collapsed" />
               <StackPanel x:Name="BackgroundOptions">
                 <Grid Style="{StaticResource S.Row}">
                   <Grid.ColumnDefinitions>
@@ -670,15 +734,36 @@
                     <TextBlock x:Name="BgOpacityValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
                   </Grid>
                 </Grid>
-                <CheckBox x:Name="FrostCheck" VerticalAlignment="Center" Margin="0,3,0,10" Checked="OnEffectsChanged" Unchecked="OnEffectsChanged" Content="{loc:Tr Settings.Frost}" />
-                <Grid x:Name="FrostRadiusRow">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <Slider x:Name="FrostSlider" Minimum="1" Maximum="18" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnEffectsChanged" MinWidth="70" />
-                  <TextBlock x:Name="FrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
-                </Grid>
+                <StackPanel x:Name="QuickPanelFrostOptions">
+                  <CheckBox x:Name="FrostCheck" VerticalAlignment="Center" Margin="0,3,0,10" Checked="OnEffectsChanged" Unchecked="OnEffectsChanged" Content="{loc:Tr Settings.Frost}" />
+                  <Grid x:Name="FrostRadiusRow">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Slider x:Name="FrostSlider" Minimum="1" Maximum="18" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnEffectsChanged" MinWidth="70" />
+                    <TextBlock x:Name="FrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
+                  </Grid>
+                </StackPanel>
+                <StackPanel x:Name="SettingsBackgroundOptions" Visibility="Collapsed">
+                  <CheckBox x:Name="SettingsFrostCheck" Margin="0,12,0,0" Content="{loc:Tr Settings.SettingsFrost}" Checked="OnSettingsFrostChanged" Unchecked="OnSettingsFrostChanged" />
+                  <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,8" Text="{loc:Tr Settings.SettingsFrostHint}" />
+                  <Grid x:Name="SettingsFrostRadiusRow" Margin="0,4,0,0" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.SettingsFrostRadius}" />
+                    <Grid Grid.Column="1">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Slider x:Name="SettingsFrostSlider" Minimum="1" Maximum="18" Value="8" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnSettingsFrostChanged" MinWidth="70" AutomationProperties.Name="{loc:Tr Settings.SettingsFrostRadius}" />
+                      <TextBlock x:Name="SettingsFrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
+                    </Grid>
+                  </Grid>
+                </StackPanel>
               </StackPanel>
             </StackPanel>
           </Border>
@@ -689,13 +774,13 @@
           <Border Style="{StaticResource S.Section}" x:Name="ComponentsSection">
             <StackPanel>
               <TextBlock Text="{loc:Tr Components.Title}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <TextBlock Text="{loc:Tr Components.Hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,12" />
+              <TextBlock Text="{loc:Tr Components.Hint}" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" Margin="0,0,0,12" />
             </StackPanel>
           </Border>
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Components.Ocr}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <TextBlock x:Name="OcrComponentStatus" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6" />
+              <TextBlock x:Name="OcrComponentStatus" FontSize="{DynamicResource T.Font12}" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6" />
               <Button x:Name="OcrSetupButton" Style="{StaticResource S.ComponentButton}" HorizontalAlignment="Left" Background="{DynamicResource B.AccentSoft}" Click="OnOcrSetupClick">
                 <TextBlock Text="{loc:Tr Components.Install}" TextWrapping="Wrap" />
               </Button>
@@ -714,7 +799,7 @@
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Components.Offline}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <TextBlock x:Name="OfflineComponentStatus" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6" />
+              <TextBlock x:Name="OfflineComponentStatus" FontSize="{DynamicResource T.Font12}" TextWrapping="Wrap" Foreground="{DynamicResource B.TextMuted}" Margin="0,4,0,6" />
               <WrapPanel>
                 <Button x:Name="OfflineSetupButton" Style="{StaticResource S.ComponentButton}" Margin="0,0,8,6" Background="{DynamicResource B.AccentSoft}" Click="OnOfflineSetupClick">
                   <TextBlock Text="{loc:Tr Components.Install}" TextWrapping="Wrap" />
@@ -739,8 +824,8 @@
             </StackPanel>
           </Border>
           <StackPanel x:Name="ComponentOperationPanel">
-            <ProgressBar x:Name="ComponentProgress" IsIndeterminate="True" Height="4" Margin="0,8,0,6" Visibility="Collapsed" />
-            <TextBlock x:Name="ComponentOperationStatus" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource B.TextMuted}" />
+            <ProgressBar x:Name="ComponentProgress" IsIndeterminate="True" Height="4" Margin="0,8,0,6" Visibility="Collapsed" Background="{DynamicResource B.InputBg}" Foreground="{DynamicResource B.Accent}" BorderBrush="{DynamicResource B.Border}" />
+            <TextBlock x:Name="ComponentOperationStatus" TextWrapping="Wrap" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" />
             <TextBox x:Name="ComponentDiagnostic" Style="{StaticResource S.Input}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="110" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0" Visibility="Collapsed" />
             <Button x:Name="ComponentCancelButton" Style="{StaticResource S.ComponentButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Visibility="Collapsed" Click="OnCancelComponentClick" Content="{loc:Tr Common.Cancel}" />
           </StackPanel>
@@ -809,7 +894,7 @@
                 <Button Style="{StaticResource S.Button}" Margin="0,0,8,8" Click="OnOpenBackupFolderClick" Content="{loc:Tr Settings.Backup.OpenFolder}" />
                 <Button Style="{StaticResource S.Button}" Margin="0,0,0,8" Click="OnRefreshBackupsClick" Content="{loc:Tr Settings.Backup.Refresh}" />
               </WrapPanel>
-              <ListBox x:Name="BackupSnapshotList" MaxHeight="150" MinHeight="44" DisplayMemberPath="DisplayName" SelectionChanged="OnBackupSelectionChanged" AutomationProperties.Name="{loc:Tr Settings.Backup.Snapshots}" />
+              <ListBox x:Name="BackupSnapshotList" Style="{StaticResource S.List}" MaxHeight="150" MinHeight="44" DisplayMemberPath="DisplayName" SelectionChanged="OnBackupSelectionChanged" AutomationProperties.Name="{loc:Tr Settings.Backup.Snapshots}" />
               <Button x:Name="RestoreBackupButton" Style="{StaticResource S.Button}" HorizontalAlignment="Left" Margin="0,8,0,12" IsEnabled="False" Click="OnRestoreBackupClick" Content="{loc:Tr Settings.Backup.RestoreSelected}" />
             </StackPanel>
           </Border>
@@ -830,7 +915,7 @@
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.About}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
-              <TextBlock x:Name="AboutText" FontSize="12" Foreground="{DynamicResource B.TextMuted}" TextWrapping="Wrap" />
+              <TextBlock x:Name="AboutText" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}" TextWrapping="Wrap" />
               <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="OnCheckUpdatesClick" Content="{loc:Tr Updates.Check}" />
               <Button Style="{StaticResource S.Button}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="OnHelpClick" Content="{loc:Tr Settings.Help}" />
             </StackPanel>

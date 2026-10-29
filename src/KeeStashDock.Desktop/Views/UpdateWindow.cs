@@ -50,7 +50,9 @@ internal sealed class UpdateWindow : Window
         SetResourceReference(ForegroundProperty, "B.TextPrimary");
         var body = new DockPanel { Margin = new(22) };
         var heading = new StackPanel();
-        var version = new TextBlock { FontSize = 17, FontWeight = FontWeights.SemiBold };
+        var version = new TextBlock { FontWeight = FontWeights.SemiBold };
+        TypographyManager.SetFontSize(version, 17);
+        TypographyManager.SetFontSize(_notes, 12);
         var target = new TextBlock { Name = "UpdateTarget", TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) };
         RegisterName(target.Name, target);
         heading.Children.Add(version); heading.Children.Add(target); heading.Children.Add(_status); heading.Children.Add(_progress);

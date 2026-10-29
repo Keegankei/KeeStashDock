@@ -54,9 +54,11 @@ public sealed class Db
     public string DatabaseFile { get; }
 
     /// <summary>Opens a pooled connection with all pragmas applied.</summary>
-    public SqliteConnection Open()
+    public SqliteConnection Open() => Open(CancellationToken.None);
+
+    public SqliteConnection Open(CancellationToken cancellationToken)
     {
-        IDisposable operation = _maintenance.EnterOperation();
+        IDisposable operation = _maintenance.EnterOperation(cancellationToken);
         return OpenCore(operation);
     }
 

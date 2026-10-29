@@ -25,6 +25,9 @@ function Assert-UpdateRelativePath([string]$Path) {
         'keestashdock.db', 'keestashdock.db-wal', 'keestashdock.db-shm',
         'snippets.db', 'snippets.db-wal', 'snippets.db-shm', '.git', '.codex', '.agents', '.aws', '.ssh', '.env')
     if ($segments[0] -in $protected) { throw 'An update manifest cannot own user data or repository metadata.' }
+    if ($segments[0] -ieq 'theme' -and $segments.Length -gt 1 -and $segments[1] -ine 'builtin') {
+        throw 'An update manifest may only maintain built-in themes, never custom themes or staging data.'
+    }
     foreach ($segment in $segments) {
         if (-not $segment -or $segment -in @('.', '..') -or $segment.EndsWith('.') -or $segment.EndsWith(' ')) {
             throw 'An update manifest path contains an ambiguous or traversing segment.'
@@ -81,6 +84,9 @@ function Get-UpdatePackageFiles([string]$Directory) {
         if ($relative -ieq 'update-manifest.json') {
             if ($relative -cne 'update-manifest.json') { throw 'The update manifest filename must use its canonical lowercase spelling.' }
             continue
+        }
+        if ($relative -iin @('theme', 'theme/builtin')) {
+            throw 'Theme roots are directories and cannot be owned as update files.'
         }
         if ($entry.Length -gt 512MB) { throw ('An update package file exceeds 512 MiB: ' + $relative) }
         $total += $entry.Length

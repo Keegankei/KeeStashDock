@@ -38,6 +38,8 @@ public sealed class PortableUpdateInstallerTests
         Write(_install, "Data/settings.json", "user settings");
         Write(_install, "Data/snippets.db", "synthetic database");
         Write(_install, "my-notes.txt", "custom notes");
+        Write(_install, "theme/custom/personal/manifest.json", "personal theme");
+        Write(_install, "theme/custom/personal/assets/wallpaper.png", "personal wallpaper bytes");
         Write(_install, "OfflineTranslation/runtime/python/pythonw.exe", "installed runtime");
         Write(_install, "OcrModels/eng.traineddata", "user installed model");
     }
@@ -340,6 +342,8 @@ public sealed class PortableUpdateInstallerTests
     private void AssertOldApplication() => Assert.AreEqual("old application", Read(_install, "KeeStashDock.exe"));
     private void AssertPreserved()
     {
+        Assert.AreEqual("personal theme", Read(_install, "theme/custom/personal/manifest.json"));
+        Assert.AreEqual("personal wallpaper bytes", Read(_install, "theme/custom/personal/assets/wallpaper.png"));
         Assert.AreEqual("user settings", Read(_install, "Data/settings.json"));
         Assert.AreEqual("synthetic database", Read(_install, "Data/snippets.db"));
         Assert.AreEqual("custom notes", Read(_install, "my-notes.txt"));

@@ -7,7 +7,8 @@ public sealed record WorkbenchEditSnapshot(
     string? Title,
     string Content,
     ExpirePolicy ExpirePolicy,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags,
+    bool IsTemplate = false);
 
 public enum WorkbenchUnsavedChoice
 {
@@ -41,6 +42,7 @@ public sealed class WorkbenchEditorSession
     private string _originalContent = string.Empty;
     private ExpirePolicy _originalExpirePolicy;
     private string[] _originalTags = [];
+    private bool _originalIsTemplate;
     private WorkbenchEditSnapshot? _latestExternalSnapshot;
 
     public long? ItemId { get; private set; }
@@ -48,12 +50,14 @@ public sealed class WorkbenchEditorSession
     public string EditContent { get; set; } = string.Empty;
     public ExpirePolicy EditExpirePolicy { get; set; }
     public string EditTags { get; set; } = string.Empty;
+    public bool EditIsTemplate { get; set; }
     public WorkbenchExternalConflict ExternalConflict { get; private set; }
 
     public bool IsDirty => ItemId is not null &&
         (NormalizeTitle(EditTitle) != _originalTitle ||
          EditContent != _originalContent ||
          EditExpirePolicy != _originalExpirePolicy ||
+         EditIsTemplate != _originalIsTemplate ||
          !NormalizeTags(EditTags).SequenceEqual(_originalTags));
 
     public void Load(WorkbenchEditSnapshot snapshot)
@@ -65,11 +69,13 @@ public sealed class WorkbenchEditorSession
         _originalContent = snapshot.Content ?? string.Empty;
         _originalExpirePolicy = snapshot.ExpirePolicy;
         _originalTags = tags;
+        _originalIsTemplate = snapshot.IsTemplate;
         _latestExternalSnapshot = null;
         EditTitle = _originalTitle ?? string.Empty;
         EditContent = _originalContent;
         EditExpirePolicy = _originalExpirePolicy;
         EditTags = string.Join(", ", tags);
+        EditIsTemplate = _originalIsTemplate;
         ExternalConflict = WorkbenchExternalConflict.None;
     }
 
@@ -80,11 +86,13 @@ public sealed class WorkbenchEditorSession
         _originalContent = string.Empty;
         _originalExpirePolicy = ExpirePolicy.Never;
         _originalTags = [];
+        _originalIsTemplate = false;
         _latestExternalSnapshot = null;
         EditTitle = string.Empty;
         EditContent = string.Empty;
         EditExpirePolicy = ExpirePolicy.Never;
         EditTags = string.Empty;
+        EditIsTemplate = false;
         ExternalConflict = WorkbenchExternalConflict.None;
     }
 
@@ -129,7 +137,7 @@ public sealed class WorkbenchEditorSession
             NormalizeTitle(EditTitle),
             EditContent.TrimEnd('\r', '\n'),
             EditExpirePolicy,
-            NormalizeTags(EditTags));
+            NormalizeTags(EditTags), EditIsTemplate);
     }
 
     public async Task<WorkbenchLeaveResult> SaveAsync(
@@ -225,12 +233,14 @@ public sealed class WorkbenchEditorSession
         EditContent = _originalContent;
         EditExpirePolicy = _originalExpirePolicy;
         EditTags = string.Join(", ", _originalTags);
+        EditIsTemplate = _originalIsTemplate;
     }
 
     private bool MatchesOriginal(WorkbenchEditSnapshot snapshot)
         => NormalizeTitle(snapshot.Title) == _originalTitle &&
            (snapshot.Content ?? string.Empty) == _originalContent &&
            snapshot.ExpirePolicy == _originalExpirePolicy &&
+           snapshot.IsTemplate == _originalIsTemplate &&
            NormalizeTags(snapshot.Tags).SequenceEqual(_originalTags);
 
     private static string? NormalizeTitle(string? title)

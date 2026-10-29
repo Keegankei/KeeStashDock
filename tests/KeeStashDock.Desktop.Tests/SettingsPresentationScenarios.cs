@@ -14,6 +14,7 @@ internal static class SettingsPresentationScenarios
     internal static void Verify(SettingsWindow window, SettingsStore settings, string settingsFile)
     {
         VerifyNavigation(window, settings);
+        FontSizeSettingsScenarios.Verify(window, settings, settingsFile);
         VerifyResultOptions(window, settingsFile);
         VerifySelectionDependencies(window, settings);
         VerifyHotkeyDependencies(window, settings);
@@ -83,7 +84,7 @@ internal static class SettingsPresentationScenarios
         Assert.IsFalse(Named<ComboBox>(window, "SelectionActionCombo").IsEnabled);
         Assert.AreEqual("Both", settings.Current.SelectionAction);
         foreach (string name in new[] { "TranslateEngineCombo", "TranslationTargetCombo", "TranslationTestButton",
-            "BubbleStyleCombo", "BubbleGlowCheck", "BubbleShadowCheck", "BubbleOpacitySlider" })
+            "BubbleStyleCombo", "BubbleOpacitySlider" })
             Assert.IsTrue(Named<UIElement>(window, name).IsEnabled,
                 "Screenshot translation and shared result appearance must remain available without selection monitoring.");
         enabled.IsChecked = true;

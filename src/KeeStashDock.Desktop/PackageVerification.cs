@@ -48,6 +48,11 @@ internal static class PackageVerification
             if (locales.Length < 20) throw new InvalidDataException("Missing packaged locales.");
             report["LocaleCount"] = locales.Length;
 
+            string[] themeIds = VerifyBuiltInThemes(Path.Combine(AppContext.BaseDirectory, "theme"));
+            report["CompleteThemeValidated"] = true;
+            report["BuiltInThemeIds"] = themeIds;
+            report["BuiltInThemeCount"] = themeIds.Length;
+
             var surface = new PerspectiveSurface
             {
                 IsPerspectiveEnabled = true, Yaw = 8, Pitch = -5,
@@ -113,5 +118,25 @@ internal static class PackageVerification
             new JsonSerializerOptions { WriteIndented = true })); }
         catch { return 2; }
         return exitCode;
+    }
+
+    internal static string[] VerifyBuiltInThemes(string themeRoot)
+    {
+        var themes = new KeeStashDock.Infrastructure.Storage.ThemePackageStore(themeRoot, ThemeManager.ValidateImage);
+        string[] directories = Directory.GetDirectories(Path.Combine(themes.Root, "builtin"));
+        string[] ids = directories.Select(Path.GetFileName).OfType<string>().Order(StringComparer.Ordinal).ToArray();
+        if (new[] { "sunlit-gallery", "twilight-study", "wisteria-atelier", "wisteria-reverie" }.Any(id => !ids.Contains(id, StringComparer.Ordinal)))
+            throw new InvalidDataException("A required built-in theme is missing.");
+        foreach (string directory in directories)
+        {
+            // Discover intentionally ignores invalid user themes. Release validation
+            // must instead reject every broken bundled theme, including future additions.
+            var scheme = themes.Read(directory);
+            if (scheme.Manifest.Id != Path.GetFileName(directory) ||
+                new[] { scheme.Light, scheme.Dark }.Any(variant =>
+                    !new[] { "quickPanel", "workspace", "smallWindow" }.All(variant.Backgrounds.ContainsKey)))
+                throw new InvalidDataException("A built-in theme has incomplete light/dark backgrounds.");
+        }
+        return ids;
     }
 }

@@ -56,7 +56,7 @@ public sealed class ImageSnippetTests
         Assert.AreEqual(PngImageValidator.ImageHash(png), item.ContentHash);
         CollectionAssert.AreEqual(png, _service.GetImage(id));
         CollectionAssert.AreEqual(thumbnail, _service.GetImageThumbnail(id));
-        Assert.AreEqual(4, new DatabaseSchemaValidator().Validate(_db.DatabaseFile, true).SchemaVersion);
+        Assert.AreEqual(MigrationRunner.LatestSupportedVersion, new DatabaseSchemaValidator().Validate(_db.DatabaseFile, true).SchemaVersion);
     }
 
     [TestMethod]
@@ -143,13 +143,20 @@ public sealed class ImageSnippetTests
     public void MigrationFromV3PreservesTextAndMakesImagesAvailable()
     {
         long textId = _service.Add("legacy searchable text", SnippetSource.Manual);
-        Execute("DROP TABLE snippet_images; UPDATE schema_version SET version=3; PRAGMA user_version=3;");
+        Execute("""
+            DROP TRIGGER trg_template_insert;
+            DROP TRIGGER trg_template_update;
+            DROP INDEX idx_snippets_query;
+            DROP TABLE database_metadata;
+            ALTER TABLE snippets DROP COLUMN is_template;
+            DROP TABLE snippet_images; UPDATE schema_version SET version=3; PRAGMA user_version=3;
+            """);
         new MigrationRunner(_db, _log).Run();
         Assert.AreEqual(textId, _service.AllLive().Single().Id);
         Assert.AreEqual("legacy searchable text", _service.GetById(textId)!.Content);
         byte[] png = Png();
         _service.AddImage(png, png);
-        Assert.AreEqual(4, new DatabaseSchemaValidator().Validate(_db.DatabaseFile, true).SchemaVersion);
+        Assert.AreEqual(MigrationRunner.LatestSupportedVersion, new DatabaseSchemaValidator().Validate(_db.DatabaseFile, true).SchemaVersion);
     }
 
     [TestMethod]
@@ -298,7 +305,7 @@ public sealed class ImageSnippetTests
     }
     private sealed class SuccessfulRestarter : IApplicationRestarter { public bool TryRestart() => true; }
 
-    private static byte[] Png(int width = 1, int height = 1, byte color = 17, bool truncatePixels = false)
+    internal static byte[] Png(int width = 1, int height = 1, byte color = 17, bool truncatePixels = false)
     {
         using var output = new MemoryStream();
         output.Write([137, 80, 78, 71, 13, 10, 26, 10]);

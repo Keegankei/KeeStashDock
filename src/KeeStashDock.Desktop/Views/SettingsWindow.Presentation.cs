@@ -57,6 +57,7 @@ public partial class SettingsWindow
             if (SystemParameters.HighContrast) Resources[color.Key] = color.Brush;
             else Resources.Remove(color.Key);
         }
+        RefreshSurfaceOpacity();
     }
 
     internal void SelectSettingsPage(string page)
@@ -86,9 +87,7 @@ public partial class SettingsWindow
     internal void RefreshConditionalOptions()
     {
         if (_settings is null || BackgroundOptions is null) return;
-        BackgroundOptions.Visibility = string.IsNullOrWhiteSpace(_settings.Current.BackgroundImagePath)
-            ? Visibility.Collapsed : Visibility.Visible;
-        FrostRadiusRow.Visibility = FrostCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        RefreshBackgroundControls();
         BackupScheduleOptions.Visibility = AutoBackupCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 

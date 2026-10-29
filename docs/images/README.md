@@ -1,5 +1,15 @@
 # Documentation screenshots and GIFs
 
+## 1.3.0 interface previews
+
+The [1.3.0 gallery](1.3.0/README.md) contains seven selected English previews of
+the actual workbench, Settings, theme dialog and bubble controls. They use
+isolated fictional data and show optional Wisteria styling where indicated.
+New theme artwork and day/night variants are linked from the
+[theme guide](../THEMES.md); those images are backgrounds, not UI screenshots.
+
+## Retained 1.2.3 workflow previews
+
 These previews use the actual **KeeStashDock 1.2.3 WPF views**, rendered on
 Windows with an isolated sample database and English interface on **2026-10-19**.
 The gallery contains **21 PNGs and two GIFs**. Application source matches the
@@ -129,7 +139,5 @@ establish physical mixed-DPI coverage or animation performance on every GPU.
 See the [release acceptance record](../releases/1.2.3.md) for verified application
 coverage and remaining limits.
 
-Spatial mode retains the application's rounded surfaces, palette, fonts, and
-spacing. Its perspective design follows the maintainer's references for a
-spatial game interface. No game artwork, logo, screenshot, or proprietary font
-is bundled or traced.
+Spatial mode retains the application's rounded surfaces, palette, fonts and
+spacing while adding perspective, layered surfaces and drag inspection.

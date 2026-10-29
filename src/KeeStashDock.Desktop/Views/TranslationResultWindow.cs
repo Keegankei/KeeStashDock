@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -17,7 +15,7 @@ namespace KeeStashDock.Desktop.Views;
 /// Shared non-activating translation/OCR card. Source text remains available when
 /// translation fails; clipboard writes happen only in response to an explicit click.
 /// </summary>
-public sealed class TranslationResultWindow : Window
+public sealed partial class TranslationResultWindow : Window
 {
     private const int WS_EX_NOACTIVATE = 0x08000000, WS_EX_TOOLWINDOW = 0x00000080, GWL_EXSTYLE = -20;
     [System.Runtime.InteropServices.DllImport("user32.dll")]
@@ -29,7 +27,7 @@ public sealed class TranslationResultWindow : Window
     private readonly Action<string> _notifySaved;
     private readonly DispatcherTimer _hideTimer;
     private readonly Border _surface;
-    private readonly TextBlock _body, _bodyGlow, _hint, _source;
+    private readonly TextBlock _body, _hint, _source;
     private readonly StackPanel _sourcePanel;
     private readonly ScrollViewer _sourceScroll, _bodyScroll;
     private readonly Button _copySource, _retryButton, _settingsButton, _closeButton;
@@ -46,8 +44,6 @@ public sealed class TranslationResultWindow : Window
     private Action<string>? _translateTarget;
     private bool _updatingTools;
     private readonly List<Task> _pendingSaves = [];
-    private static readonly string[] ContrastResourceKeys =
-        ["B.TextPrimary", "B.InputText", "B.InputBg", "B.Border", "B.CardBg", "B.AccentSoft", "B.Accent", "B.OnAccent"];
     public Task SaveCompletion => Task.WhenAll(_pendingSaves.ToArray());
     internal long? SelectedGroupId => (_groupCombo.SelectedItem as GroupChoice)?.Id;
     internal bool HasResultContext => _save is not null;
@@ -65,20 +61,28 @@ public sealed class TranslationResultWindow : Window
         ShowActivated = false;
         Topmost = true;
         SizeToContent = SizeToContent.WidthAndHeight;
-        MaxWidth = 420;
+        MaxWidth = 440;
+        UseLayoutRounding = true;
+        SnapsToDevicePixels = true;
         _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(12) };
         _hideTimer.Tick += (_, _) => HideCard();
 
-        TextBlock MakeBody() => new() { FontSize = 12.5, TextWrapping = TextWrapping.Wrap };
+        TextBlock MakeBody()
+        {
+            var body = new TextBlock { TextWrapping = TextWrapping.Wrap };
+            TypographyManager.SetFontSize(body, 13);
+            return body;
+        }
         _body = MakeBody();
-        _bodyGlow = MakeBody();
+        TextOptions.SetTextFormattingMode(_body, TextFormattingMode.Display);
         _source = MakeBody();
-        _hint = new TextBlock { FontSize = 10.5, Margin = new Thickness(0, 6, 0, 0), Opacity = 0.75,
-            TextWrapping = TextWrapping.Wrap };
+        _hint = new TextBlock { Margin = new Thickness(0, 6, 0, 0),
+            TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        TypographyManager.SetFontSize(_hint, 10.5);
 
         Button MakeButton(Action action)
         {
-            var button = new Button { Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 6, 6, 0),
+            var button = new Button { Padding = new Thickness(9, 5, 9, 5), Margin = new Thickness(0, 6, 6, 0),
                 MinHeight = 30, MaxWidth = 240 };
             button.SetResourceReference(StyleProperty, "S.Button");
             button.SetResourceReference(BackgroundProperty, "B.CardBg");
@@ -98,65 +102,55 @@ public sealed class TranslationResultWindow : Window
             open?.Invoke();
         });
         _closeButton = MakeButton(HideCard);
+        _copyResult = MakeButton(CopyResultAndDismiss);
 
-        _targetLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 3) };
-        _targetCombo = new ComboBox { Name = "ResultTargetCombo", MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _targetLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4) };
+        _targetCombo = new ComboBox { Name = "ResultTargetCombo", HorizontalAlignment = HorizontalAlignment.Stretch };
         _targetCombo.SelectionChanged += (_, _) =>
         {
             if (!_updatingTools && _targetCombo.SelectedItem is ComboBoxItem { Tag: string target })
                 _translateTarget?.Invoke(target);
         };
-        _groupLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 3) };
-        _groupCombo = new ComboBox { Name = "ResultGroupCombo", MinWidth = 160, DisplayMemberPath = nameof(GroupChoice.Name) };
+        _groupLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4) };
+        _groupCombo = new ComboBox { Name = "ResultGroupCombo", DisplayMemberPath = nameof(GroupChoice.Name) };
         _saveSource = MakeButton(async () => await SaveResultAsync(ResultTextKind.Source));
         _saveTranslation = MakeButton(async () => await SaveResultAsync(ResultTextKind.Translation));
         _saveBoth = MakeButton(async () => await SaveResultAsync(ResultTextKind.Both));
-        _saveStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
+        _saveStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed };
         var saves = new WrapPanel();
         saves.Children.Add(_saveSource);
         saves.Children.Add(_saveTranslation);
         saves.Children.Add(_saveBoth);
-        _targetTools = new StackPanel { Name = "ResultTargetTools", Visibility = Visibility.Collapsed };
+        _targetTools = new StackPanel { Name = "ResultTargetTools", Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Bottom };
         _targetTools.Children.Add(_targetLabel);
         _targetTools.Children.Add(_targetCombo);
+        _groupTools = new StackPanel { Name = "ResultGroupTools", Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Bottom };
+        _groupTools.Children.Add(_groupLabel);
+        _groupTools.Children.Add(_groupCombo);
         _saveTools = new StackPanel { Name = "ResultSaveTools", Visibility = Visibility.Collapsed };
-        _saveTools.Children.Add(_groupLabel);
-        _saveTools.Children.Add(_groupCombo);
         _saveTools.Children.Add(saves);
         _saveTools.Children.Add(_saveStatus);
         _resultTools = new StackPanel { Name = "ResultTools", Visibility = Visibility.Collapsed };
-        _resultTools.Children.Add(_targetTools);
+        _toolFields = new ResultToolFieldsGrid(_targetTools, _groupTools) { Name = "ResultToolFields" };
+        _resultTools.Children.Add(_toolFields);
         _resultTools.Children.Add(_saveTools);
 
-        _sourcePanel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 10) };
-        _sourcePanel.Children.Add(_sourceScroll = new ScrollViewer { Content = _source, MaxHeight = 130,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        _sourcePanel.Children.Add(_copySource);
-        _bodyScroll = new ScrollViewer { Content = GlassBubble.LayerGlow(_body, _bodyGlow), MaxHeight = 240,
+        _sourcePanel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 8) };
+        _sourceScroll = new ScrollViewer { Content = _source, MaxHeight = 130,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        _bodyScroll = new ScrollViewer { Content = _body, MaxHeight = 240,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         // Copy only from the result text area; source, scroll bars, and buttons have independent actions.
         _body.MouseLeftButtonUp += (_, e) =>
         {
             e.Handled = true;
-            if (!TryCopyResult(text => Clipboard.SetDataObject(text, copy: true))) return;
-            HideCard();
-            MiniToast.Show(LocalizationService.Instance["QuickPanel.Copied"]);
+            CopyResultAndDismiss();
         };
-        var actions = new WrapPanel();
-        actions.Children.Add(_retryButton);
-        actions.Children.Add(_settingsButton);
-        actions.Children.Add(_closeButton);
-        var stack = new StackPanel();
-        stack.Children.Add(_sourcePanel);
-        stack.Children.Add(_bodyScroll);
-        stack.Children.Add(_hint);
-        stack.Children.Add(_resultTools);
-        stack.Children.Add(actions);
         _surface = new Border
         {
-            CornerRadius = new CornerRadius(14), Padding = new Thickness(14, 10, 14, 9), Child = stack,
-            Margin = new Thickness(10)
+            Name = "ResultSurface", Margin = new Thickness(12)
         };
+        BuildPresentation();
         // Target/group controls and wrapped labels can exceed a short, scaled
         // work area even after the text panes shrink. Keep every action reachable.
         Content = new ScrollViewer { Content = _surface,
@@ -167,6 +161,8 @@ public sealed class TranslationResultWindow : Window
         SetActions(null, null);
         _settings.Changed += ApplySettings;
         ThemeManager.Changed += ApplyStyle;
+        TypographyManager.Changed += ClampIntoWorkArea;
+        TypographyManager.Changed += RefreshToolLayout;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         LocalizationService.Instance.LanguageChanged += ApplyLanguage;
         Closed += (_, _) =>
@@ -174,6 +170,8 @@ public sealed class TranslationResultWindow : Window
             ClearContent();
             _settings.Changed -= ApplySettings;
             ThemeManager.Changed -= ApplyStyle;
+            TypographyManager.Changed -= ClampIntoWorkArea;
+            TypographyManager.Changed -= RefreshToolLayout;
             SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
             LocalizationService.Instance.LanguageChanged -= ApplyLanguage;
         };
@@ -194,37 +192,12 @@ public sealed class TranslationResultWindow : Window
         RefreshToolVisibility();
     });
 
-    private void ApplyLanguage()
-    {
-        var loc = LocalizationService.Instance;
-        loc.ApplyFlowDirection(this);
-        void Label(Button button, string key)
-        {
-            string label = loc[key];
-            var text = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap };
-            text.SetBinding(TextBlock.ForegroundProperty, new Binding(nameof(Foreground)) { Source = button });
-            button.Content = text;
-            AutomationProperties.SetName(button, label);
-        }
-        Label(_copySource, "Screenshot.CopySource");
-        Label(_retryButton, "Screenshot.RetryTranslation");
-        Label(_settingsButton, "Screenshot.OpenComponents");
-        Label(_closeButton, "Screenshot.CloseResult");
-        Label(_saveSource, "Result.SaveSource");
-        Label(_saveTranslation, "Result.SaveTranslation");
-        Label(_saveBoth, "Result.SaveBoth");
-        _targetLabel.Text = loc["Result.TemporaryTarget"];
-        _groupLabel.Text = loc["Result.SaveGroup"];
-        AutomationProperties.SetName(_targetCombo, _targetLabel.Text);
-        AutomationProperties.SetName(_groupCombo, _groupLabel.Text);
-    }
-
     internal bool TryCopyResult(Action<string> copy) => _copyable && TryCopy(_resultText, copy);
     internal bool TryCopySource(Action<string> copy) => _sourceText.Length > 0 && TryCopy(_sourceText, copy);
 
     private bool TryCopy(string text, Action<string> copy)
     {
-        try { ClipboardWriteGuard.Shared.Write(() => copy(text)); return true; }
+        try { ClipboardWriteGuard.Shared.Write(() => copy(text)); _hint.Visibility = Visibility.Collapsed; return true; }
         catch (System.Runtime.InteropServices.COMException)
         {
             _hint.Text = LocalizationService.Instance["Screenshot.CopyFailed"];
@@ -232,36 +205,6 @@ public sealed class TranslationResultWindow : Window
             StartHideTimer();
             return false;
         }
-    }
-
-    private void ApplyStyle()
-    {
-        Color text = GlassBubble.Apply(_settings.Current, _surface);
-        bool highContrast = SystemParameters.HighContrast;
-        if (highContrast)
-        {
-            _surface.Background = SystemColors.WindowBrush;
-            _surface.BorderBrush = SystemColors.WindowFrameBrush;
-            _surface.Effect = null;
-            text = SystemColors.WindowTextColor;
-            Resources["B.TextPrimary"] = SystemColors.ControlTextBrush;
-            Resources["B.InputText"] = SystemColors.WindowTextBrush;
-            Resources["B.InputBg"] = SystemColors.WindowBrush;
-            Resources["B.Border"] = SystemColors.WindowFrameBrush;
-            Resources["B.CardBg"] = SystemColors.ControlBrush;
-            Resources["B.AccentSoft"] = SystemColors.ControlLightBrush;
-            Resources["B.Accent"] = SystemColors.HighlightBrush;
-            Resources["B.OnAccent"] = SystemColors.HighlightTextBrush;
-        }
-        else
-        {
-            foreach (string key in ContrastResourceKeys) Resources.Remove(key);
-        }
-        var fg = new SolidColorBrush(text);
-        _body.Foreground = _bodyGlow.Foreground = _hint.Foreground = _source.Foreground = fg;
-        _targetLabel.Foreground = _groupLabel.Foreground = _saveStatus.Foreground = fg;
-        _hint.Opacity = highContrast ? 1 : 0.75;
-        GlassBubble.SetGlowEnabled(_bodyGlow, !highContrast && _settings.Current.BubbleTextGlow);
     }
 
     private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
@@ -282,6 +225,9 @@ public sealed class TranslationResultWindow : Window
     {
         ClearContent();
         _inProgress = true;
+        _headingKey = key == "Screenshot.Recognizing" ? "Screenshot.ActionExtract" : "Translate.Button";
+        RefreshHeading();
+        RefreshCopyAction();
         SetBody(LocalizationService.Instance[key]);
         (_anchorX, _anchorY) = (deviceX, deviceY);
         PopupPlacement.ShowNear(this, deviceX, deviceY, preferAbove: false);
@@ -301,6 +247,8 @@ public sealed class TranslationResultWindow : Window
     public void ShowRecognizedText(string text)
     {
         _persistentResult = true;
+        _headingKey = "Screenshot.ActionExtract";
+        RefreshHeading();
         ShowResult(text);
         _textResult.SetSource(text);
         _textResult.SetTranslation(_textResult.Revision, string.Empty);
@@ -363,13 +311,17 @@ public sealed class TranslationResultWindow : Window
             if (id <= 0) throw new InvalidOperationException("No saved entry returned.");
             if (!_textResult.CompleteSave(request, success: true)) return false;
             _saveStatus.Text = LocalizationService.Instance["Result.Saved"];
+            _saveStatus.Visibility = Visibility.Visible;
             _notifySaved(_saveStatus.Text);
             return true;
         }
         catch (Exception)
         {
             if (_textResult.CompleteSave(request, success: false))
+            {
                 _saveStatus.Text = LocalizationService.Instance["Result.SaveFailed"];
+                _saveStatus.Visibility = Visibility.Visible;
+            }
             return false;
         }
         finally { RefreshSaveButtons(); ClampIntoWorkArea(); }
@@ -382,8 +334,6 @@ public sealed class TranslationResultWindow : Window
         _saveBoth.IsEnabled = !_textResult.Saving && _textResult.Content(ResultTextKind.Both) is not null;
         _targetCombo.IsEnabled = !_textResult.Saving && _textResult.Source.Length > 0;
         _groupCombo.IsEnabled = !_textResult.Saving;
-        foreach (Button button in new[] { _saveSource, _saveTranslation, _saveBoth })
-            button.Opacity = button.IsEnabled ? 1 : 0.45;
         RefreshToolVisibility();
     }
 
@@ -396,9 +346,12 @@ public sealed class TranslationResultWindow : Window
             ? Visibility.Visible : Visibility.Collapsed;
         bool changed = _targetTools.Visibility != target || _saveTools.Visibility != save;
         _targetTools.Visibility = target;
+        _groupTools.Visibility = save;
         _saveTools.Visibility = save;
         _resultTools.Visibility = target == Visibility.Visible || save == Visibility.Visible
             ? Visibility.Visible : Visibility.Collapsed;
+        RefreshToolLayout();
+        _toolsCard.Visibility = _resultTools.Visibility;
         if (changed) ClampIntoWorkArea();
     }
 
@@ -408,6 +361,7 @@ public sealed class TranslationResultWindow : Window
         _openSettings = openSettings;
         _retryButton.Visibility = retry is null ? Visibility.Collapsed : Visibility.Visible;
         _settingsButton.Visibility = openSettings is null ? Visibility.Collapsed : Visibility.Visible;
+        _recoveryActions.Visibility = retry is null && openSettings is null ? Visibility.Collapsed : Visibility.Visible;
         ClampIntoWorkArea();
     }
 
@@ -417,10 +371,10 @@ public sealed class TranslationResultWindow : Window
         _resultText = translated;
         _textResult.SetTranslation(_textResult.Revision, translated);
         _copyable = true;
+        RefreshCopyAction();
         SetBody(translated);
         _body.Cursor = System.Windows.Input.Cursors.Hand;
-        _hint.Text = LocalizationService.Instance["Translate.CopyHint"];
-        _hint.Visibility = Visibility.Visible;
+        _hint.Visibility = Visibility.Collapsed;
         ClampIntoWorkArea();
         StartHideTimer();
         RefreshSaveButtons();
@@ -432,6 +386,7 @@ public sealed class TranslationResultWindow : Window
         _resultText = string.Empty;
         _textResult.SetTranslation(_textResult.Revision, string.Empty);
         _copyable = false;
+        RefreshCopyAction();
         SetBody(LocalizationService.Instance[messageKey]);
         _body.Cursor = System.Windows.Input.Cursors.Arrow;
         _hint.Visibility = Visibility.Collapsed;
@@ -446,7 +401,7 @@ public sealed class TranslationResultWindow : Window
         if (!_persistentResult && IsVisible && !IsMouseOver && _copyable) _hideTimer.Start();
     }
 
-    private void SetBody(string text) => _body.Text = _bodyGlow.Text = text;
+    private void SetBody(string text) => _body.Text = text;
 
     private void ClampIntoWorkArea()
     {
@@ -455,7 +410,7 @@ public sealed class TranslationResultWindow : Window
             if (!IsVisible) return;
             var work = System.Windows.Forms.Screen.FromPoint(new(_anchorX, _anchorY)).WorkingArea;
             var dpi = VisualTreeHelper.GetDpi(this);
-            MaxWidth = Math.Max(120, Math.Min(420, work.Width / dpi.DpiScaleX));
+            MaxWidth = Math.Max(120, Math.Min(440, work.Width / dpi.DpiScaleX));
             MaxHeight = Math.Max(1, work.Height / dpi.DpiScaleY);
             double contentRoom = Math.Max(80, work.Height / dpi.DpiScaleY - 350);
             _sourceScroll.MaxHeight = Math.Min(130, contentRoom * 0.35);
@@ -472,10 +427,15 @@ public sealed class TranslationResultWindow : Window
         _save = null;
         _translateTarget = null;
         _resultTools.Visibility = Visibility.Collapsed;
-        _targetTools.Visibility = _saveTools.Visibility = Visibility.Collapsed;
+        _toolsCard.Visibility = Visibility.Collapsed;
+        _targetTools.Visibility = _groupTools.Visibility = _saveTools.Visibility = Visibility.Collapsed;
         _saveStatus.Text = string.Empty;
+        _saveStatus.Visibility = Visibility.Collapsed;
         _hideTimer.Stop();
         _copyable = _persistentResult = false;
+        _headingKey = "Translate.Button";
+        RefreshHeading();
+        RefreshCopyAction();
         _resultText = _sourceText = _source.Text = string.Empty;
         _sourcePanel.Visibility = _hint.Visibility = Visibility.Collapsed;
         _hint.Text = string.Empty;

@@ -6,6 +6,43 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-29
+
+### Added
+
+- Separate background customization for the quick panel and Settings, with per-area image selection, clearing, overlay opacity and blur. Restore the theme background for either area; theme export preserves both independently and confirms personal-image sharing.
+- Quick-panel search with a separate input, Ctrl+F, cancellable debouncing, group/tag/type filters and 50-item pages. Existing capture drafts remain intact when entering or leaving search.
+- Workbench multi-selection and transactional group, tag, pin, Trash and restore actions. Selection is separate from the editor; stale selections fail without partial changes. A move to Trash can be undone during the current session while its items remain unchanged.
+- Explicit text templates with named variables, a single date/time snapshot, literal-brace escaping and a preview before copying. Variable values are plain text and are never evaluated recursively. Ordinary snippets keep their existing behavior.
+- Complete importable/exportable light and dark themes under the application `theme` directory. Four optional presets appear in order: Sunlit Gallery, Twilight Study, Wisteria Atelier and Wisteria Reverie. Each has portrait/landscape day and night artwork, complete light/dark palettes, preview/cancel and separate personal-background export consent. System appearance switches both palette and artwork with Windows.
+- Global text-size adjustment from 90% to 150% in Settings > Appearance, with immediate preview, persistent preferences and a reset to 100%. Text in the quick panel, workbench, Settings, notes and result windows scales while icon glyphs keep their existing size.
+- Independent Settings surface opacity from 10% to 100% for theme artwork. Cards, navigation and input backgrounds adjust immediately while text, icons and dropdown menus stay opaque. Complete theme import/export preserves the setting; existing themes default to 100%.
+- Optional frosted backgrounds for Settings. Only the Settings background image is blurred, with adjustable strength; text and controls remain sharp. Complete themes retain the preference.
+
+### Changed
+
+- Renamed the panel modes to Classic / Spatial, with updated localized names and unchanged settings and behavior.
+- Made translation results more compact, with inline copy actions and a tighter language/group/save layout while retaining independent source and result actions.
+- Restyled theme preview/apply to match Settings, with grouped appearance controls, rounded artwork, readable sample controls and a fixed action footer. Narrow windows stack the cards while keeping Apply and Cancel visible.
+- Redesigned selection and translation bubbles with segmented icon actions, crisp layered surfaces, distinct result/source areas, an explicit result-copy action and grouped language/save controls. Wisteria Atelier adds coordinated pearl/lavender and deep-violet bubble palettes; older theme packages use compatible fallback colors.
+- Upgraded the library to schema v5 after a verified pre-migration SQLite backup. Templates have a separate duplicate identity and use group format v3; v1/v2 group imports remain supported. Older applications cannot open v5 libraries.
+- Update ownership includes only built-in themes and preserves custom themes. Recovery keeps migrated data and checks database compatibility before restarting a restored older application.
+- Redesigned the workbench to match Settings, with a navigation rail, clear card selection, item counts, a grouped editor, empty-state guidance and visible unsaved changes. Short windows keep editor actions accessible while the item details scroll; all twenty interface languages include the new labels.
+
+### Fixed
+
+- Keep Default bubble controls readable on a dark application theme and reposition translation cards after an interface-language change.
+- Clear the source card selection after dragging out a desktop note, preventing a stale accent rectangle behind translucent cards.
+- Applied theme-aware surfaces and selection states to the backup snapshot list so dark mode no longer shows light text on a white system background. Component progress indicators now follow the active palette as well.
+
+### Removed
+
+- Bubble frosted backgrounds, text glow and drop shadows, including their settings. Existing settings and theme files containing these fields remain loadable; the effects are not applied. Settings artwork blur and panel/sticky-note shadows remain available.
+
+See the [release notes](docs/releases/1.3.0-notes.md) and
+[validation record](docs/releases/1.3.0.md) for upgrade guidance, verification
+results and platform coverage.
+
 ## [1.2.3] - 2026-10-19
 
 ### Added
@@ -166,7 +203,8 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
 
-[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1

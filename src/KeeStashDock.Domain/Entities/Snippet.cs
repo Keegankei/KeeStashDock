@@ -28,6 +28,8 @@ public sealed class Snippet
 
     public SnippetType Type { get; set; } = SnippetType.PlainText;
     public bool IsImage => Type == SnippetType.Image;
+    /// <summary>Explicit plain-text template; ordinary brace-containing content never expands implicitly.</summary>
+    public bool IsTemplate { get; set; }
     public SnippetSource Source { get; set; } = SnippetSource.Manual;
 
     /// <summary>FK to Category. Null =&gt; "Uncategorized" virtual group.</summary>

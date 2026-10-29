@@ -14,13 +14,16 @@ namespace KeeStashDock.Desktop.ViewModels;
 /// cards, copy-out / pin / trash commands. Data reloads whenever the
 /// SnippetService announces a change, keeping panel and workbench in sync.
 /// </summary>
-public sealed partial class QuickPanelViewModel : ObservableObject
+public sealed partial class QuickPanelViewModel : ObservableObject, IDisposable
 {
     private readonly SnippetService _snippets;
     private readonly SearchService _search;
     private readonly CategoryRepository _categories;
     private List<Category> _cats = new();
     private CancellationTokenSource? _toastCancellation;
+    private readonly Action _onSnippetsChanged;
+    private readonly Action _onCategoriesChanged;
+    private bool _disposed;
 
     public ObservableCollection<SnippetItemViewModel> Items { get; } = new();
 
@@ -50,13 +53,14 @@ public sealed partial class QuickPanelViewModel : ObservableObject
         _snippets = snippets;
         _search = search;
         _categories = categories;
-        _snippets.Changed += () =>
-            Application.Current.Dispatcher.BeginInvoke(Reload);
+        _onSnippetsChanged = () => Application.Current.Dispatcher.BeginInvoke(Reload);
+        _snippets.Changed += _onSnippetsChanged;
         // Group hot-update: rename/add/delete/import of groups
         // reflects in the combo IMMEDIATELY, even while the panel is open.
-        _categories.Changed += () =>
+        _onCategoriesChanged = () =>
             Application.Current.Dispatcher.BeginInvoke(() =>
             { ReloadCategories(); Reload(); });
+        _categories.Changed += _onCategoriesChanged;
 
         // Crash recovery: restore an orphaned draft into the input box.
         string? orphan = DraftGuard.RecoverOrphan();
@@ -64,7 +68,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     }
 
     partial void OnQuickInputChanged(string value) => DraftChanged?.Invoke(value);
-    partial void OnFilterChanged(string value) => Reload();
+    partial void OnFilterChanged(string value) => ScheduleSearch();
     partial void OnGroupIndexChanged(int value) => Reload();
 
     /// <summary>Rebuilds the group combo (called on every panel summon so
@@ -72,6 +76,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     /// The selection survives by category ID when possible.</summary>
     public void ReloadCategories()
     {
+        if (_disposed) return;
         long? keep = SelectedCategoryId;
         _cats = _categories.GetAll();
         GroupNames.Clear();
@@ -79,16 +84,14 @@ public sealed partial class QuickPanelViewModel : ObservableObject
         foreach (var c in _cats) GroupNames.Add(c.Name);
         int idx = keep is null ? 0 : _cats.FindIndex(c => c.Id == keep) + 1;
         GroupIndex = Math.Max(0, idx);
+        ReloadSearchGroups();
     }
 
     public void Reload()
     {
-        // Search overrides the group filter (search is global by design);
-        // otherwise the list is either "recent across everything" or the
-        // selected group's contents.
-        var data = !string.IsNullOrWhiteSpace(Filter)
-            ? _search.Search(Filter, 100)
-            : SelectedCategoryId is long cat
+        if (_disposed) return;
+        if (IsSearchMode) { ScheduleSearch(immediate: true); return; }
+        var data = SelectedCategoryId is long cat
                 ? _snippets.ByCategory(cat)
                 : _snippets.Recent(100);
         Items.Clear();
@@ -99,7 +102,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     [RelayCommand]
     private void QuickAdd()
     {
-        if (string.IsNullOrWhiteSpace(QuickInput)) return;
+        if (IsSearchMode || string.IsNullOrWhiteSpace(QuickInput)) return;
         long id = _snippets.Add(QuickInput, SnippetSource.Manual,
                                 expire: (ExpirePolicy)Math.Clamp(ExpireIndex, 0, 3),
                                 categoryId: SelectedCategoryId);
@@ -113,10 +116,18 @@ public sealed partial class QuickPanelViewModel : ObservableObject
     /// honor burn-after-read, flash a confirmation toast.</summary>
     [RelayCommand]
     private async Task Copy(SnippetItemViewModel? item)
+        => await CopyCoreAsync(item, directPaste: true);
+
+    public Task CopyNoteAsync(SnippetItemViewModel item) => CopyCoreAsync(item, directPaste: false);
+
+    private async Task CopyCoreAsync(SnippetItemViewModel? item, bool directPaste)
     {
         if (item is null) return;
+        BatchSelection? use;
         try
         {
+            use = await Task.Run(() => _snippets.CaptureUse(item.Model));
+            if (use is null) { ShowToast("Screenshot.CopyFailed"); return; }
             Action writeClipboard;
             if (item.IsImage)
             {
@@ -124,20 +135,43 @@ public sealed partial class QuickPanelViewModel : ObservableObject
                 { ShowToast("Screenshot.ImageUnavailable"); return; }
                 writeClipboard = () => ImagePresentation.Copy(png);
             }
-            else writeClipboard = () => ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(item.Model.Content, copy: true));
+            else
+            {
+                string? text = await TemplateUseCoordinator.PrepareAsync(item.Model);
+                if (text is null) return;
+                writeClipboard = () => ClipboardWriteGuard.Shared.Write(() => Clipboard.SetDataObject(text, copy: true));
+            }
             if (!await TryWriteClipboardAsync(writeClipboard))
             { ShowToast("Screenshot.CopyFailed"); return; }
         }
-        catch (Exception ex) when (ex is System.IO.IOException or InvalidOperationException or
-            ArgumentException or NotSupportedException)
-        { ShowToast("Screenshot.CopyFailed"); return; }
-        _snippets.RegisterUse(item.Model);
-        DirectPasteResult pasteResult = item.IsImage ? DirectPasteResult.Disabled
+        catch (Exception error)
+        {
+            App.Log?.Warn($"Item copy failed: {error.GetType().Name}");
+            ShowToast("Screenshot.CopyFailed"); return;
+        }
+        await Task.Run(() => _snippets.TryRegisterUse(item.Model, use));
+        DirectPasteResult pasteResult = item.IsImage || !directPaste ? DirectPasteResult.Disabled
             : await DirectPaste.TryPasteToTargetAsync();
         string toastKey = pasteResult is DirectPasteResult.Success or DirectPasteResult.Disabled
             ? "QuickPanel.Copied"
             : "QuickPanel.DirectPasteFailed";
         ShowToast(toastKey);
+    }
+
+    public async Task<string?> PrepareQrTextAsync(SnippetItemViewModel item)
+    {
+        try
+        {
+            if (await Task.Run(() => _snippets.CaptureUse(item.Model)) is null)
+            { ShowToast("Screenshot.CopyFailed"); return null; }
+            return await TemplateUseCoordinator.PrepareAsync(item.Model,
+                Localization.LocalizationService.Instance["Template.GenerateQr"]);
+        }
+        catch (Exception error)
+        {
+            App.Log?.Warn($"QR preparation failed: {error.GetType().Name}");
+            ShowToast("Screenshot.CopyFailed"); return null;
+        }
     }
 
     /// <summary>A busy clipboard gets one delayed retry; a second lock is a normal copy failure.</summary>
@@ -172,6 +206,7 @@ public sealed partial class QuickPanelViewModel : ObservableObject
 
     public void ShowToast(string? key = null)
     {
+        if (_disposed) return;
         _toastCancellation?.Cancel();
         _toastCancellation?.Dispose();
         var cancellation = new CancellationTokenSource();
@@ -198,5 +233,17 @@ public sealed partial class QuickPanelViewModel : ObservableObject
                 _toastCancellation = null;
             cancellation.Dispose();
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _snippets.Changed -= _onSnippetsChanged;
+        _categories.Changed -= _onCategoriesChanged;
+        _searchEpoch++;
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        _toastCancellation?.Cancel();
     }
 }

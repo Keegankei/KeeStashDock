@@ -47,7 +47,7 @@ public sealed class WorkbenchViewModelTests
     [TestMethod]
     [DataRow("matching", "matching live", "matching deleted")]
     [DataRow("\u6587\u5B57", "\u6587\u5B57 live", "\u6587\u5B57 deleted")]
-    public void TrashSearchOnlyReturnsDeletedEntries(string query, string liveText, string deletedText)
+    public async Task TrashSearchOnlyReturnsDeletedEntries(string query, string liveText, string deletedText)
     {
         long live = _snippets.Add(liveText, SnippetSource.Manual);
         long deleted = _snippets.Add(deletedText, SnippetSource.Manual);
@@ -55,6 +55,7 @@ public sealed class WorkbenchViewModelTests
         var vm = CreateViewModel();
         vm.SelectedNav = vm.Nav.Single(item => item.Id == -3);
         vm.SearchText = query;
+        await vm.QueryCompletion;
 
         CollectionAssert.AreEqual(new[] { deleted }, vm.Items.Select(item => item.Id).ToArray());
         Assert.AreEqual(deleted, vm.SelectedItem?.Id);
@@ -87,6 +88,7 @@ public sealed class WorkbenchViewModelTests
         Assert.IsTrue(await vm.RequestSelectionChangeAsync(vm.Items.Single(item => item.Id == hidden)));
         vm.EditContent = "draft alpha";
         vm.SearchText = "beta";
+        await vm.QueryCompletion;
 
         CollectionAssert.AreEqual(new[] { match }, vm.Items.Select(item => item.Id).ToArray());
         Assert.IsTrue(vm.IsDirty);
@@ -105,6 +107,7 @@ public sealed class WorkbenchViewModelTests
         var vm = CreateViewModel();
         Assert.IsTrue(await vm.RequestSelectionChangeAsync(vm.Items.Single(item => item.Id == hidden)));
         vm.SearchText = "beta";
+        await vm.QueryCompletion;
         Assert.AreEqual(match, vm.SelectedItem?.Id);
         Assert.AreEqual("visible beta", vm.EditContent);
         Assert.IsFalse(vm.HasExternalConflict);

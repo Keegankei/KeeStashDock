@@ -49,6 +49,16 @@ try {
         -not $report.ProjectedTextRendered) {
         throw 'The packaged host report is missing a required runtime check.'
     }
+    if ([Version]$report.Version -ge [Version]'1.3.0') {
+        if (-not $report.CompleteThemeValidated -or $report.BuiltInThemeCount -lt 4 -or
+            $report.BuiltInThemeCount -ne @($report.BuiltInThemeIds).Count -or
+            $report.BuiltInThemeIds -notcontains 'sunlit-gallery' -or
+            $report.BuiltInThemeIds -notcontains 'twilight-study' -or
+            $report.BuiltInThemeIds -notcontains 'wisteria-atelier' -or
+            $report.BuiltInThemeIds -notcontains 'wisteria-reverie') {
+            throw 'The complete bundled light/dark theme validation is missing.'
+        }
+    }
     if ($AllowInstalledComponents) {
         if ($report.OcrMode -ne 'Installed' -or -not $report.SyntheticOcrRecognized) {
             throw 'The installed OCR recognition check is missing.'

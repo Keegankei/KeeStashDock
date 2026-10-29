@@ -319,6 +319,17 @@ public partial class QuickPanelWindow
         ApplyBackground();
     }
 
+    private void OnPanelTypographyChanged()
+    {
+        if (_depthClosed || Dispatcher.HasShutdownStarted) return;
+        // The projected controls are live, so their text invalidates WPF's
+        // visual cache naturally. Refresh geometry-dependent tint samples once.
+        CancelInspection();
+        SpatialSurface.InvalidateMeasure();
+        _cardProximityDirty = true;
+        ScheduleLocalTints(rebuild: true);
+    }
+
     private bool TryGetNativeBounds(out PixelRect bounds)
         => GetWindowRect(new WindowInteropHelper(this).Handle, out bounds);
 

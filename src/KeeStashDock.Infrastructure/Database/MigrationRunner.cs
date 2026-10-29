@@ -20,7 +20,8 @@ namespace KeeStashDock.Infrastructure.Database;
 /// </summary>
 public sealed class MigrationRunner
 {
-    public const int LatestSupportedVersion = 4;
+    public const int LatestSupportedVersion = 5;
+    public string? SafetyBackupPath { get; private set; }
 
     private readonly Db _db;
     private readonly FileLogger _log;
@@ -110,12 +111,25 @@ public sealed class MigrationRunner
                 CHECK(width * height <= 40000000)
             );
             """),
+        (5, /* -------- V5: explicit templates and stable database identity -------- */ """
+            ALTER TABLE snippets ADD COLUMN is_template INTEGER NOT NULL DEFAULT 0 CHECK(is_template IN (0,1));
+            CREATE TABLE database_metadata (singleton INTEGER PRIMARY KEY CHECK(singleton = 1), identity TEXT NOT NULL);
+            INSERT INTO database_metadata(singleton, identity) VALUES (1, lower(hex(randomblob(16))));
+            CREATE INDEX idx_snippets_query ON snippets(deleted_at, category_id, is_pinned DESC, sort_weight DESC, updated_at DESC, id DESC);
+            CREATE TRIGGER trg_template_insert BEFORE INSERT ON snippets WHEN new.is_template = 1 AND new.type != 0 BEGIN
+                SELECT RAISE(ABORT, 'Templates must be plain text.');
+            END;
+            CREATE TRIGGER trg_template_update BEFORE UPDATE OF is_template, type ON snippets WHEN new.is_template = 1 AND new.type != 0 BEGIN
+                SELECT RAISE(ABORT, 'Templates must be plain text.');
+            END;
+            """),
         // Future migrations are appended here, never edited.
     };
 
     public void Run()
     {
         EnsureVersionIsSupportedBeforeWrite();
+        CreateSafetyBackupBeforeMigration();
         using var conn = _db.Open();
 
         int userVersion = GetUserVersion(conn);
@@ -177,6 +191,47 @@ public sealed class MigrationRunner
             using var command = conn.CreateCommand();
             command.CommandText = $"PRAGMA user_version = {current}";
             command.ExecuteNonQuery();
+        }
+    }
+
+    private void CreateSafetyBackupBeforeMigration()
+    {
+        if (!File.Exists(_db.DatabaseFile) || new FileInfo(_db.DatabaseFile).Length == 0) return;
+        using var source = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = _db.DatabaseFile, Mode = SqliteOpenMode.ReadOnly, Pooling = false,
+        }.ToString());
+        source.Open();
+        using var exists = source.CreateCommand();
+        exists.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='schema_version'";
+        if (Convert.ToInt32(exists.ExecuteScalar()) == 0) return;
+        int version = GetVersion(source);
+        if (version <= 0 || version >= LatestSupportedVersion) return;
+
+        // SQLite's online backup includes committed WAL pages. A plain File.Copy
+        // here could silently omit the user's most recent entries.
+        string directory = Path.Combine(Path.GetDirectoryName(_db.DatabaseFile)!, "Backups");
+        Directory.CreateDirectory(directory);
+        string destination = Path.Combine(directory, $"pre_upgrade_v{version}_to_v{LatestSupportedVersion}_{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.db");
+        string temporary = destination + ".tmp";
+        try
+        {
+            using (var target = new SqliteConnection(new SqliteConnectionStringBuilder
+            {
+                DataSource = temporary, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false,
+            }.ToString()))
+            {
+                target.Open();
+                source.BackupDatabase(target);
+            }
+            new DatabaseSchemaValidator().Validate(temporary, requireCurrentUserVersion: false);
+            File.Move(temporary, destination);
+            SafetyBackupPath = destination;
+            _log.Info($"Verified pre-upgrade database snapshot created for schema {version}.");
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
         }
     }
 

@@ -50,6 +50,9 @@ public sealed record UpdatePackageManifest(int Format, string Version, IReadOnly
         {
             if (file is null) throw new InvalidDataException("The manifest contains an empty file record.");
             string path = UpdatePathPolicy.ValidateRelativePath(file.Path);
+            if (path.Equals("theme", StringComparison.OrdinalIgnoreCase) ||
+                path.Equals("theme/builtin", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Theme roots are directories and cannot be owned as update files.");
             if (path.Equals(FileName, StringComparison.OrdinalIgnoreCase) || !paths.Add(path))
                 throw new InvalidDataException("The manifest contains a duplicate or self-referential path.");
             if (file.Length < 0 || file.Length > MaximumFileBytes ||
@@ -119,6 +122,9 @@ public static class UpdatePathPolicy
         string[] segments = path.Split('/');
         if (ProtectedRoots.Contains(segments[0]))
             throw new InvalidDataException("An update package must not own user data or repository metadata.");
+        if (segments[0].Equals("theme", StringComparison.OrdinalIgnoreCase) &&
+            segments.Length > 1 && !segments[1].Equals("builtin", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("An update package may only maintain built-in themes, never custom themes or staging data.");
         foreach (string segment in segments)
         {
             if (segment.Length == 0 || segment is "." or ".." || segment.EndsWith('.') || segment.EndsWith(' '))

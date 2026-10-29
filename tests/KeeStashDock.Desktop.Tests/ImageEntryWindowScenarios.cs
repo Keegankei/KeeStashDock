@@ -170,7 +170,6 @@ internal static class ImageEntryWindowScenarios
         Directory.CreateDirectory(directory);
         var settings = new SettingsStore(Path.Combine(isolatedRoot, "action-previews.json"));
         Assert.AreEqual("Capture", settings.Current.SelectionAction);
-        Assert.IsFalse(settings.Current.BubbleTextGlow);
         var optionalSettings = new SettingsStore(Path.Combine(isolatedRoot, "optional-action-previews.json"));
         optionalSettings.Current.SelectionAction = "Both";
         string previousLanguage = LocalizationService.Instance.CurrentLanguage;

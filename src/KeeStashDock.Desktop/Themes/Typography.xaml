@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <!-- Baseline resources preserve the original sizes before settings are loaded. -->
+  <sys:Double x:Key="T.Font9">9</sys:Double>
+  <sys:Double x:Key="T.Font10">10</sys:Double>
+  <sys:Double x:Key="T.Font10_5">10.5</sys:Double>
+  <sys:Double x:Key="T.Font11">11</sys:Double>
+  <sys:Double x:Key="T.Font12">12</sys:Double>
+  <sys:Double x:Key="T.Font12_5">12.5</sys:Double>
+  <sys:Double x:Key="T.Font13">13</sys:Double>
+  <sys:Double x:Key="T.Font13_5">13.5</sys:Double>
+  <sys:Double x:Key="T.Font14">14</sys:Double>
+  <sys:Double x:Key="T.Font15">15</sys:Double>
+  <sys:Double x:Key="T.Font16">16</sys:Double>
+  <sys:Double x:Key="T.Font17">17</sys:Double>
+  <sys:Double x:Key="T.Font18">18</sys:Double>
+  <sys:Double x:Key="T.Font19">19</sys:Double>
+  <sys:Double x:Key="T.Font20">20</sys:Double>
+  <sys:Double x:Key="T.Font21">21</sys:Double>
+  <sys:Double x:Key="T.Font22">22</sys:Double>
+  <sys:Double x:Key="T.Font23">23</sys:Double>
+  <sys:Double x:Key="T.Font24">24</sys:Double>
+  <sys:Double x:Key="T.Font25">25</sys:Double>
+  <sys:Double x:Key="T.Font26">26</sys:Double>
+  <sys:Double x:Key="T.Font27">27</sys:Double>
+  <sys:Double x:Key="T.Font28">28</sys:Double>
+  <sys:Double x:Key="T.Font29">29</sys:Double>
+  <sys:Double x:Key="T.Font30">30</sys:Double>
+  <sys:Double x:Key="T.Font31">31</sys:Double>
+  <sys:Double x:Key="T.Font32">32</sys:Double>
+  <sys:Double x:Key="T.Font33">33</sys:Double>
+  <sys:Double x:Key="T.Font34">34</sys:Double>
+  <sys:Double x:Key="T.Font35">35</sys:Double>
+  <sys:Double x:Key="T.Font36">36</sys:Double>
+  <sys:Double x:Key="T.Line18">18</sys:Double>
+  <sys:Double x:Key="T.Line19">19</sys:Double>
+  <sys:Double x:Key="T.Length34">34</sys:Double>
+  <sys:Double x:Key="T.Length52">52</sys:Double>
+  <sys:Double x:Key="T.Length54">54</sys:Double>
+  <sys:Double x:Key="T.EditorMinHeight">400</sys:Double>
+</ResourceDictionary>

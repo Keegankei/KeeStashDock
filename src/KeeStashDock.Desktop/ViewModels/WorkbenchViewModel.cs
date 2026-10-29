@@ -27,6 +27,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     private SnippetItemViewModel? _selectedItem;
     private Snippet? _editingModel;
     private bool _hasSaveError;
+    private long _editorSaveVersion;
     private string _saveErrorKey = "Workbench.Editor.SaveFailed";
 
     /// <summary>Sidebar entries. Virtual ids: -1 All, -2 Pinned, -3 Trash, -4 Uncategorized.</summary>
@@ -39,7 +40,13 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     public SnippetItemViewModel? SelectedItem
     {
         get => _selectedItem;
-        private set => SetProperty(ref _selectedItem, value);
+        private set
+        {
+            if (ReferenceEquals(value, _selectedItem)) return;
+            if (_selectedItem is not null) _selectedItem.IsEditing = false;
+            SetProperty(ref _selectedItem, value);
+            if (_selectedItem is not null) _selectedItem.IsEditing = true;
+        }
     }
 
     public string EditTitle
@@ -53,6 +60,20 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         get => _editor.EditContent;
         set => SetEditorValue(_editor.EditContent, value, v => _editor.EditContent = v);
     }
+
+    public bool EditIsTemplate
+    {
+        get => _editor.EditIsTemplate;
+        set
+        {
+            if (_editingModel?.IsImage == true || _editor.EditIsTemplate == value) return;
+            _editor.EditIsTemplate = value;
+            OnPropertyChanged();
+            NotifyEditorStateChanged();
+        }
+    }
+
+    public bool CanUseTemplate => _editingModel is { IsImage: false };
 
     /// <summary>Editor expiry policy; index maps 1:1 to <see cref="ExpirePolicy"/>.</summary>
     public int EditExpireIndex
@@ -128,33 +149,36 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     partial void OnSelectedNavChanged(NavEntry? value)
     {
         OnPropertyChanged(nameof(IsTrashView));
+        ClearBatchSelection();
         ReloadItems();
     }
 
-    partial void OnSearchTextChanged(string value) => ReloadItems();
+    partial void OnSearchTextChanged(string value) => ScheduleQuery();
 
     public void ReloadItems()
+    {
+        _queryCancellation?.Cancel();
+        _workbenchQueryEpoch++;
+        IsSearching = false;
+        ApplyQueryPage(_search.Query(CurrentQuery()));
+    }
+
+    private void ApplyQueryPage(SnippetPage page)
     {
         IsRefreshingItems = true;
         try
         {
-            List<Snippet> data;
-            if (!string.IsNullOrWhiteSpace(SearchText))
-                data = _search.Search(SearchText, trashOnly: IsTrashView);
-            else
-                data = SelectedNav?.Id switch
-                {
-                    -2 => _snippets.AllLive().Where(s => s.IsPinned).ToList(),
-                    -3 => _snippets.Trash(),
-                    -4 => _snippets.ByCategory(null),
-                    > 0 => _snippets.ByCategory(SelectedNav.Id),
-                    _ => _snippets.AllLive(),
-                };
+            ClearBatchSelection();
+            _queryDatabaseIdentity = page.DatabaseIdentity;
+            HasMoreResults = page.HasMore;
+            TotalResults = page.TotalCount;
+            var data = page.Items;
 
             long? editingId = _editor.ItemId;
             Items.Clear();
             foreach (Snippet snippet in data)
                 Items.Add(new SnippetItemViewModel(snippet, _snippets.GetImageThumbnail));
+            OnPropertyChanged(nameof(ResultCountLabel));
 
             if (editingId is long id)
             {
@@ -234,11 +258,61 @@ public sealed partial class WorkbenchViewModel : ObservableObject
     // ------------------------------------------------------------ commands
 
     [RelayCommand]
-    private void NewSnippet()
+    private async Task NewSnippet()
     {
+        if (await RequestLeaveAsync() != WorkbenchLeaveResult.Proceed) return;
         long? cat = SelectedNav?.Id > 0 ? SelectedNav.Id : null;
-        _snippets.Add(LocalizationService.Instance["Workbench.NewSnippetBody"],
+        long id = _snippets.Add(LocalizationService.Instance["Workbench.NewSnippetBody"],
                       SnippetSource.Manual, categoryId: cat);
+        ShowCreatedItem(id);
+    }
+
+    [RelayCommand]
+    private async Task NewTemplate()
+    {
+        if (await RequestLeaveAsync() != WorkbenchLeaveResult.Proceed) return;
+        long? cat = SelectedNav?.Id > 0 ? SelectedNav.Id : null;
+        long id = _snippets.Add(LocalizationService.Instance["Template.Sample"], SnippetSource.Manual,
+            categoryId: cat, isTemplate: true);
+        ShowCreatedItem(id);
+    }
+
+    private void ShowCreatedItem(long id)
+    {
+        SearchText = string.Empty;
+        FilterTag = string.Empty;
+        FilterKindIndex = 0;
+        if (SelectedNav?.Id is -2 or -3) SelectedNav = Nav.FirstOrDefault(item => item.Id == -1);
+        ReloadItems();
+        SnippetItemViewModel? created = Items.FirstOrDefault(item => item.Id == id);
+        if (created is null && _snippets.GetById(id) is { } current)
+            created = new SnippetItemViewModel(current, _snippets.GetImageThumbnail);
+        if (created is not null) CommitSelection(created);
+    }
+
+    [RelayCommand]
+    private async Task UseTemplate()
+    {
+        try
+        {
+            if (await RequestLeaveAsync() != WorkbenchLeaveResult.Proceed || _editingModel is null) return;
+            Snippet current = _editingModel;
+            if (current.IsDeleted || current.IsImage) return;
+            BatchSelection? use = await Task.Run(() => _snippets.CaptureUse(current));
+            if (use is null) { MiniToast.Show(LocalizationService.Instance["Screenshot.CopyFailed"]); return; }
+            string? text = await TemplateUseCoordinator.PrepareAsync(current);
+            if (text is null) return;
+            if (!await QuickPanelViewModel.TryWriteClipboardAsync(() => ClipboardWriteGuard.Shared.Write(
+                () => Clipboard.SetDataObject(text, copy: true))))
+            { MiniToast.Show(LocalizationService.Instance["Screenshot.CopyFailed"]); return; }
+            await Task.Run(() => _snippets.TryRegisterUse(current, use));
+            MiniToast.Show(LocalizationService.Instance["QuickPanel.Copied"]);
+        }
+        catch (Exception error)
+        {
+            App.Log?.Warn($"Template copy failed: {error.GetType().Name}");
+            MiniToast.Show(LocalizationService.Instance["Screenshot.CopyFailed"]);
+        }
     }
 
     [RelayCommand]
@@ -380,7 +454,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         model.Title,
         model.Content,
         model.ExpirePolicy,
-        _tags.GetForSnippet(model.Id));
+        _tags.GetForSnippet(model.Id), model.IsTemplate);
 
     private Task PersistSnapshotAsync(
         WorkbenchEditSnapshot snapshot,
@@ -393,6 +467,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         Snippet pending = CloneSnippet(_editingModel);
         pending.Title = snapshot.Title;
         pending.Content = snapshot.Content;
+        pending.IsTemplate = snapshot.IsTemplate;
         if (snapshot.ExpirePolicy != pending.ExpirePolicy)
         {
             pending.ExpirePolicy = snapshot.ExpirePolicy;
@@ -421,6 +496,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
             OnPropertyChanged(nameof(SaveErrorMessage));
         }
         _editingModel = pending;
+        _editorSaveVersion++;
         return Task.CompletedTask;
     }
 
@@ -430,6 +506,7 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         Title = source.Title,
         Content = source.Content,
         ContentHash = source.ContentHash,
+        IsTemplate = source.IsTemplate,
         Type = source.Type,
         Source = source.Source,
         CategoryId = source.CategoryId,
@@ -470,6 +547,8 @@ public sealed partial class WorkbenchViewModel : ObservableObject
         OnPropertyChanged(nameof(EditContent));
         OnPropertyChanged(nameof(EditExpireIndex));
         OnPropertyChanged(nameof(EditTags));
+        OnPropertyChanged(nameof(EditIsTemplate));
+        OnPropertyChanged(nameof(CanUseTemplate));
         NotifyEditorStateChanged();
     }
 

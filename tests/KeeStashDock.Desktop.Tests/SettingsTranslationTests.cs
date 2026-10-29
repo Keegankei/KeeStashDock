@@ -287,6 +287,14 @@ public sealed class SettingsTranslationTests
             FloatingPerformanceScenarios.RecordIfRequested(root);
             EdgeDockScenarios.Verify(root);
             SettingsPresentationScenarios.Verify(window, settings, settingsFile);
+            WorkbenchPresentationScenarios.Verify(root);
+            ThemePresentationScenarios.Verify(root, settings);
+            SettingsOpacityScenarios.Verify(window, settings, settingsFile);
+            SettingsBackgroundScenarios.Verify(window, settings, settingsFile, root);
+            BubblePresentationScenarios.Verify(root, settings);
+            ThemePreviewWindowScenarios.Verify(root, settings);
+            SearchAndBatchScenarios.Verify(root);
+            TemplateFillWindowScenarios.Verify();
             DocumentationPreviewScenarios.RenderIfRequested(root);
         }
         finally

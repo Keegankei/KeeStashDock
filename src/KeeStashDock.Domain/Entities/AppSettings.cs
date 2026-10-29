@@ -23,10 +23,16 @@ public sealed class AppSettings
     public const string DefaultTranslationEngine = "Google";
     public const string DefaultSelectionBubbleStyle = "Default";
     public const string DefaultOfflineTranslationEndpoint = "http://127.0.0.1:5000";
+    public const int DefaultFontSizePercent = 100;
+    public const int MinFontSizePercent = 90;
+    public const int MaxFontSizePercent = 150;
 
     // ---- General -------------------------------------------------------
     /// <summary>BCP-47 language tag of the active UI language. "en-US" is the product default.</summary>
     public string Language { get; set; } = "en-US";
+
+    /// <summary>Global interface text size relative to the original typography; icons remain unchanged.</summary>
+    public int FontSizePercent { get; set; } = DefaultFontSizePercent;
 
     /// <summary>Launch KeeStashDock when Windows starts (HKCU Run key).</summary>
     public bool AutoStart { get; set; } = false;
@@ -87,6 +93,14 @@ public sealed class AppSettings
     /// panel. Null/missing file = plain themed background.</summary>
     public string? BackgroundImagePath { get; set; }
 
+    /// <summary>Independent user-chosen Settings artwork. A custom null path explicitly hides artwork.</summary>
+    public string? SettingsBackgroundImagePath { get; set; }
+    public double SettingsBackgroundOverlayOpacity { get; set; } = DefaultBackgroundOverlayOpacity;
+    /// <summary>Separately tracks a Settings scrim edit so old appearance overrides keep the theme's scrim.</summary>
+    public bool SettingsBackgroundOverlayCustomized { get; set; }
+    /// <summary>Independent Settings surface and blur edits; legacy global appearance overrides remain supported.</summary>
+    public bool SettingsAppearanceCustomized { get; set; }
+
     /// <summary>Opacity (0.2-1.0) of the theme-colored scrim laid OVER the
     /// background image. Lower = more image shows through ("see-through"),
     /// higher = closer to the plain theme. Default 0.20 lets the wallpaper
@@ -104,6 +118,14 @@ public sealed class AppSettings
     /// combos) so they float translucently over a background image.
     /// Default 0.9 - just enough see-through to feel layered.</summary>
     public double CardOpacity { get; set; } = 0.9;
+
+    /// <summary>Opacity 0.1-1.0 of Settings surfaces, independent of quick-panel
+    /// controls. Text remains opaque. Missing values preserve the opaque layout.</summary>
+    public double SettingsSurfaceOpacity { get; set; } = 1.0;
+
+    /// <summary>Blur only the Settings theme artwork, never text or controls.</summary>
+    public bool SettingsFrostedGlassEnabled { get; set; }
+    public double SettingsFrostedGlassRadius { get; set; } = 8;
 
     /// <summary>RETIRED (tear-out is now the drag gesture, no timing knob).
     /// Kept so existing settings.json files still deserialize cleanly.</summary>
@@ -160,14 +182,6 @@ public sealed class AppSettings
     /// <summary>Show explicit group and save actions on completed OCR or translation results.</summary>
     public bool TranslationResultShowSavePanel { get; set; } = true;
 
-    /// <summary>Bubble text glow: the blurred halo twin under the crisp
-    /// text of the whole bubble family. Default OFF: crisp text only.</summary>
-    public bool BubbleTextGlow { get; set; } = false;
-
-    /// <summary>Bubble drop shadow: the soft lift under the glass surface.
-    /// Off = the bubble sits flat on the screen.</summary>
-    public bool BubbleShadow { get; set; } = true;
-
     /// <summary>Bubble surface opacity, 0.5..1.0. At 1.0 the glass goes
     /// fully opaque - the cure when the desktop bleeds through the text.</summary>
     public double BubbleOpacity { get; set; } = 1.0;
@@ -218,6 +232,20 @@ public sealed class AppSettings
     // ---- Appearance ----------------------------------------------------
     /// <summary>Application theme: "Light", "Dark", or "System".</summary>
     public string Theme { get; set; } = "System";
+
+    /// <summary>Empty retains the original appearance; otherwise builtin:id or custom:id.</summary>
+    public string ThemePresetId { get; set; } = "";
+
+    /// <summary>Preserves a user wallpaper independently of a preset. Applying a full preset disables this override without deleting its path.</summary>
+    public bool ThemeUseCustomBackground { get; set; } = true;
+
+    /// <summary>Missing values preserve the theme's workspace artwork in Settings.</summary>
+    public bool ThemeUseCustomSettingsBackground { get; set; }
+
+    /// <summary>Manual appearance edits override a selected preset while preserving its complete light/dark colors.</summary>
+    public bool ThemeAppearanceCustomized { get; set; }
+
+    public AppSettings Copy() => (AppSettings)MemberwiseClone();
 
     /// <summary>Opt-in floating panel depth and interaction animations.
     /// Missing settings preserve the classic appearance.</summary>

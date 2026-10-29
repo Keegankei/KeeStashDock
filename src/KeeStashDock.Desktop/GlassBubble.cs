@@ -1,67 +1,89 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using KeeStashDock.Domain.Entities;
 
 namespace KeeStashDock.Desktop;
 
 /// <summary>
-/// The ONE place that knows what a KeeStashDock "glass bubble" looks like.
-/// Shared by the selection bubble, the translation result card, and the
-/// MiniToast confirmations, so they always read as the same family:
-///   - text color follows the panel text-color setting (preset/custom
-///     palette applies directly; Auto falls back to the theme foreground);
-///   - the surface is DERIVED from the text color: same hue, value pushed
-///     to the opposite end ("comfort zone"), so any palette lands at
-///     readable contrast - light text gets deep tinted glass, dark text a
-///     pale one;
-///   - the glow is a blurred TWIN stacked UNDER crisp pixel-snapped text,
-///     never an effect ON the text (that rasterizes and blurs it).
+/// Shared palette for selection actions, translation cards and confirmations.
+/// Default uses fixed light surfaces; FollowTheme uses the active theme's
+/// bubble colors. Text stays crisp on every surface.
 /// </summary>
 public static class GlassBubble
 {
-    /// <summary>One-call dress: styles the surface per the configured
-    /// bubble style and returns the matching text color.
-    ///   "Default"     - a plain, soft monochrome: warm off-WHITE glass
-    ///                   with soft near-black text (white surface, black
-    ///                   ink). Deliberately understated and FIXED - it
-    ///                   never chases the theme or palette, so the bubble
-    ///                   stays quietly legible on any background;
-    ///   "FollowTheme" - glass derived from the text-color scheme.</summary>
+    /// <summary>Styles the shared shell; the fixed default stays light even on a dark desktop.</summary>
     public static Color Apply(AppSettings cfg, Border surface)
+        => Apply(Resolve(cfg), surface);
+
+    internal static Color Apply(BubblePalette palette, Border surface)
     {
-        // Named palette pinned DIRECTLY on the bubble family, independent of
-        // the panel's text-color setting - "the bubble is always ivory glass
-        // no matter what the panel wears".
-        if (TextPalettes.Presets.TryGetValue(cfg.SelectionBubbleStyle,
-                                             out var pinned))
+        surface.BorderThickness = new Thickness(1);
+        surface.BorderBrush = new SolidColorBrush(palette.Border);
+        if (palette.HighContrast)
         {
-            StyleSurface(surface, pinned.P, cfg.BubbleOpacity);
-            if (!cfg.BubbleShadow) surface.Effect = null;
-            return pinned.P;
+            surface.Background = SystemColors.WindowBrush;
+            surface.Effect = null;
+            return palette.Text;
         }
-        if (cfg.SelectionBubbleStyle == "Default")
-        {
-            // Soft black-and-white = WHITE surface, BLACK ink - with both
-            // pulled back from the pure ends (warm off-white, not #FFF;
-            // soft charcoal, not #000) so the combo reads calm, not stark.
-            (byte aTop, byte aBot) = SurfaceAlphas(cfg.BubbleOpacity);
-            surface.Background = new LinearGradientBrush(
-                Color.FromArgb(aTop, 0xFB, 0xFA, 0xF8),
-                Color.FromArgb(aBot, 0xEF, 0xEE, 0xEB), 90.0);
-            surface.BorderBrush = new SolidColorBrush(
-                Color.FromArgb(0x30, 0x00, 0x00, 0x00));
-            surface.BorderThickness = new Thickness(1);
-            surface.Effect = cfg.BubbleShadow ? MakeShadow(0.24) : null;
-            return Color.FromRgb(0x2C, 0x2C, 0x2F);
-        }
-        Color text = ResolveTextColor(cfg);
-        StyleSurface(surface, text, cfg.BubbleOpacity);
-        if (!cfg.BubbleShadow) surface.Effect = null;
-        return text;
+        (byte top, byte bottom) = SurfaceAlphas(palette.Opacity);
+        Color upper = Mix(palette.Surface, palette.Highlight, .12);
+        Color lower = Mix(palette.Surface, palette.Accent, .025);
+        var background = new LinearGradientBrush(
+            Color.FromArgb(top, upper.R, upper.G, upper.B),
+            Color.FromArgb(bottom, lower.R, lower.G, lower.B), 105);
+        background.Freeze();
+        surface.Background = background;
+        surface.Effect = null;
+        return palette.Text;
     }
 
+    internal static BubblePalette Resolve(AppSettings saved)
+    {
+        if (SystemParameters.HighContrast)
+            return new(SystemColors.WindowTextColor, SystemColors.WindowTextColor, SystemColors.HighlightColor,
+                SystemColors.HighlightTextColor, SystemColors.WindowColor, SystemColors.WindowColor,
+                SystemColors.WindowTextColor, SystemColors.HighlightColor, SystemColors.HighlightColor,
+                SystemColors.WindowColor, true, 1);
+
+        AppSettings cfg = saved.SelectionBubbleStyle == "FollowTheme" ? ThemeManager.CreatePanelAppearanceSettings(saved) : saved;
+        double opacity = double.IsFinite(cfg.BubbleOpacity) ? Math.Clamp(cfg.BubbleOpacity, .5, 1) : 1;
+        Color Read(string key, Color fallback) => Application.Current?.TryFindResource(key) is SolidColorBrush brush ? brush.Color : fallback;
+        if (cfg.SelectionBubbleStyle == "Default")
+            return new(Color.FromRgb(36, 41, 54), Color.FromRgb(96, 105, 120), Color.FromRgb(66, 86, 126), Colors.White,
+                Color.FromRgb(250, 250, 248), Colors.White, Color.FromRgb(216, 220, 228),
+                Color.FromRgb(232, 237, 246), Color.FromRgb(214, 223, 239), Colors.White,
+                false, opacity);
+
+        if (cfg.SelectionBubbleStyle == "FollowTheme" && ThemeManager.ActiveVariant is not null)
+        {
+            Color text = Read("B.BubbleText", Read("B.TextPrimary", Colors.Black));
+            Color background = Read("B.BubbleBg", Read("B.CardBg", Colors.White));
+            Color accent = Read("B.BubbleAccent", Read("B.Accent", text));
+            Color hover = Read("B.BubbleAccentSoft", Mix(background, accent, .16));
+            return new(text, Read("B.BubbleMuted", Mix(text, background, .3)), accent,
+                Read("B.OnAccent", Luminance(accent) > .6 ? Colors.Black : Colors.White),
+                background, Mix(background, Luminance(text) > .5 ? Colors.Black : Colors.White, .15),
+                Read("B.BubbleBorder", Read("B.Border", Mix(text, background, .65))), hover, Mix(hover, accent, .13),
+                Read("B.BubbleHighlight", Colors.White), false, opacity);
+        }
+
+        Color ink = TextPalettes.Presets.TryGetValue(cfg.SelectionBubbleStyle, out var pinned) ? pinned.P : ResolveTextColor(cfg);
+        RgbToHsv(ink, out double h, out double s, out _);
+        bool dark = Luminance(ink) >= .5;
+        Color surface = HsvToRgb(h, Math.Min(s, .55) * .45, dark ? .19 : .975);
+        Color accentInk = dark ? Mix(ink, Colors.White, .2) : Mix(ink, Colors.Black, .1);
+        Color wash = Mix(surface, accentInk, .12);
+        return new(ink, Mix(ink, surface, .26), accentInk, surface, surface,
+            Mix(surface, dark ? Colors.Black : Colors.White, .18), Mix(surface, ink, .22), wash,
+            Mix(surface, accentInk, .22), dark ? Mix(surface, ink, .25) : Colors.White,
+            false, opacity);
+    }
+
+    internal static Color Mix(Color first, Color second, double amount) => Color.FromRgb(
+        (byte)Math.Round(first.R + (second.R - first.R) * amount),
+        (byte)Math.Round(first.G + (second.G - first.G) * amount),
+        (byte)Math.Round(first.B + (second.B - first.B) * amount));
     /// <summary>Maps the user opacity (0.5..1.0) to the glass gradient's two
     /// alpha stops. At 1.0 both stops are FULLY opaque - the guaranteed fix
     /// when the desktop bleeds through the bubble text.</summary>
@@ -74,20 +96,6 @@ public static class GlassBubble
         return (top, bot);
     }
 
-    /// <summary>Applies the configured glow toggle to a glow twin created
-    /// by <see cref="LayerGlow"/>. Hidden (not Collapsed) keeps the layout
-    /// byte-identical either way, so toggling never shifts the bubble.</summary>
-    public static void SetGlowEnabled(UIElement glowTwin, bool on) =>
-        glowTwin.Visibility = on ? Visibility.Visible : Visibility.Hidden;
-
-    private static DropShadowEffect MakeShadow(double opacity) => new()
-    {
-        ShadowDepth = 2,
-        BlurRadius = 12,
-        Opacity = opacity,
-        Color = Colors.Black,
-    };
-
     /// <summary>Text color per the current settings; theme foreground when
     /// the scheme is Auto (a bubble has no wallpaper to sample).</summary>
     public static Color ResolveTextColor(AppSettings cfg)
@@ -98,8 +106,8 @@ public static class GlassBubble
     }
 
     /// <summary>Dresses a Border as bubble glass matched to a text color:
-    /// tinted translucent vertical gradient, hairline border, soft lift
-    /// shadow. The caller keeps ownership of radius/padding/margin.</summary>
+    /// tinted translucent vertical gradient and hairline border.
+    /// The caller keeps ownership of radius/padding/margin.</summary>
     public static void StyleSurface(Border surface, Color text,
                                     double opacity = 0.88)
     {
@@ -116,29 +124,7 @@ public static class GlassBubble
             ? Color.FromArgb(0x5E, 0xFF, 0xFF, 0xFF)
             : Color.FromArgb(0x38, 0x00, 0x00, 0x00));
         surface.BorderThickness = new Thickness(1);
-        surface.Effect = new DropShadowEffect
-        {
-            ShadowDepth = 2,
-            BlurRadius = 12,
-            Opacity = 0.35,
-            Color = Colors.Black,
-        };
-    }
-
-    /// <summary>Stacks a blurred glow twin UNDER a crisp copy. The crisp
-    /// element gets Display (pixel-snapped) text formatting; the twin gets
-    /// all the blur and never hit-tests.</summary>
-    public static Grid LayerGlow(FrameworkElement crisp, FrameworkElement glowTwin,
-                                 double radius = 6, double opacity = 0.65)
-    {
-        TextOptions.SetTextFormattingMode(crisp, TextFormattingMode.Display);
-        glowTwin.Effect = new BlurEffect { Radius = radius };
-        glowTwin.Opacity = opacity;
-        glowTwin.IsHitTestVisible = false;
-        var g = new Grid();
-        g.Children.Add(glowTwin);   // glow underneath
-        g.Children.Add(crisp);      // crisp copy on top
-        return g;
+        surface.Effect = null;
     }
 
     public static double Luminance(Color c) =>

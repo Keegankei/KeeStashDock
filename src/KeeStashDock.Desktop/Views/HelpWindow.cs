@@ -40,9 +40,9 @@ public sealed class HelpWindow : Window
         _document = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12.5,
-            LineHeight = 19,
         };
+        TypographyManager.SetFontSize(_document, 12.5);
+        _document.SetResourceReference(TextBlock.LineHeightProperty, "T.Line19");
         _document.SetResourceReference(TextBlock.ForegroundProperty, "B.TextPrimary");
 
         Content = new ScrollViewer
@@ -68,8 +68,9 @@ public sealed class HelpWindow : Window
         {
             if (line.StartsWith("## ", StringComparison.Ordinal))
             {
-                _document.Inlines.Add(new Run(line[3..])
-                { FontWeight = FontWeights.SemiBold, FontSize = 13.5 });
+                var heading = new Run(line[3..]) { FontWeight = FontWeights.SemiBold };
+                heading.SetResourceReference(TextElement.FontSizeProperty, "T.Font13_5");
+                _document.Inlines.Add(heading);
             }
             else
             {

@@ -102,20 +102,21 @@
                   Click="OnSettingsClick" ToolTip="{loc:Tr QuickPanel.Btn.Settings}"/>
         </StackPanel>
         <TextBlock x:Name="TitleText" Text="KeeStashDock" FontWeight="SemiBold"
-                   FontSize="13" VerticalAlignment="Center"/>
+                   FontSize="{DynamicResource T.Font13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
       </DockPanel>
 
       <!-- ============ Expanded: quick input (multi-line) ================
            Enter = stash, Shift+Enter = newline; box grows with content. -->
       <Grid x:Name="InputRow" Grid.Row="1" Margin="12,2,12,4">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBox x:Name="QuickBox" Style="{StaticResource S.Input}"
-                 MinHeight="34" MaxHeight="110"
+                 MinHeight="{DynamicResource T.Length34}" MaxHeight="110"
                  AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalScrollBarVisibility="Auto"
                  Text="{Binding QuickInput, UpdateSourceTrigger=PropertyChanged}"
-                 PreviewKeyDown="OnQuickBoxKeyDown"/>
+                 ToolTip="{loc:Tr QuickPanel.Input.Placeholder}" PreviewKeyDown="OnQuickBoxKeyDown"/>
         <TextBlock x:Name="PlaceholderText" Text="{loc:Tr QuickPanel.Input.Placeholder}"
-                   Margin="12,8,0,0"
+                   Margin="12,8,12,0" TextTrimming="CharacterEllipsis"
                    Foreground="{DynamicResource B.InputTextMuted}" IsHitTestVisible="False">
           <TextBlock.Style>
             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -128,15 +129,57 @@
             </Style>
           </TextBlock.Style>
         </TextBlock>
+        <Button x:Name="OpenSearchButton" Grid.Column="1" Style="{StaticResource S.IconButton}" Margin="6,0,0,0"
+                Click="OnOpenSearchClick" ToolTip="{loc:Tr Search.Open}" AutomationProperties.Name="{loc:Tr Search.Open}" Content="&#xE721;"/>
       </Grid>
 
+      <Grid x:Name="SearchInputRow" Grid.Row="1" Margin="12,2,12,4" Visibility="Collapsed">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBox x:Name="PanelSearchBox" Style="{StaticResource S.Input}" MinHeight="{DynamicResource T.Length34}"
+                 Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" MaxLength="1000"
+                 ToolTip="{loc:Tr Search.Query}" AutomationProperties.Name="{loc:Tr Search.Query}"/>
+        <Button x:Name="SearchReturnButton" Grid.Column="1" Style="{StaticResource S.IconButton}" Margin="6,0,0,0" Content="&#xE711;"
+                Click="OnCloseSearchClick" ToolTip="{loc:Tr Search.Return}" AutomationProperties.Name="{loc:Tr Search.Return}"/>
+      </Grid>
+      <StackPanel x:Name="SearchFilterRow" Grid.Row="2" Margin="12,0,12,4" Visibility="Collapsed">
+        <Grid Margin="0,0,0,4">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <ComboBox x:Name="PanelSearchScope" ItemsSource="{Binding SearchGroups}" DisplayMemberPath="Name"
+                    SelectedIndex="{Binding SearchGroupIndex}" FontSize="{DynamicResource T.Font11}"
+                    AutomationProperties.Name="{loc:Tr Search.Scope}" ToolTip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}"/>
+          <ComboBox x:Name="PanelSearchKind" Grid.Column="1" Margin="6,0,0,0" SelectedIndex="{Binding SearchKindIndex}"
+                    FontSize="{DynamicResource T.Font11}" AutomationProperties.Name="{loc:Tr Search.Type}">
+            <ComboBoxItem Content="{loc:Tr Search.Type.All}"/><ComboBoxItem Content="{loc:Tr Search.Type.Text}"/>
+            <ComboBoxItem Content="{loc:Tr Search.Type.Image}"/><ComboBoxItem Content="{loc:Tr Search.Type.Template}"/>
+          </ComboBox>
+        </Grid>
+        <Grid>
+        <TextBox x:Name="PanelSearchTag" Style="{StaticResource S.Input}" Padding="8,4" MaxLength="200"
+                 Text="{Binding SearchTag, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:Tr Search.Tag}"
+                 AutomationProperties.Name="{loc:Tr Search.Tag}"/>
+        <TextBlock Text="{loc:Tr Search.Tag}" Margin="9,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                   Foreground="{DynamicResource B.InputTextMuted}" IsHitTestVisible="False">
+          <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=PanelSearchTag}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+          </Style></TextBlock.Style>
+        </TextBlock>
+        </Grid>
+      </StackPanel>
+
       <!-- ============ Expanded: expiry policy for the next stash ======== -->
-      <StackPanel x:Name="ExpireRow" Grid.Row="2" Orientation="Horizontal"
-                  Margin="12,0,12,4">
-        <TextBlock x:Name="ExpireLabel" Text="{loc:Tr Expire.Label}" FontSize="11"
+      <Grid x:Name="ExpireRow" Grid.Row="2" Margin="12,0,12,4">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="ExpireLabel" Text="{loc:Tr Expire.Label}" FontSize="{DynamicResource T.Font11}"
                    Foreground="{DynamicResource B.TextMuted}"
-                   VerticalAlignment="Center" Margin="0,0,6,0"/>
-        <ComboBox x:Name="ExpireCombo" FontSize="11" MinWidth="96"
+                   VerticalAlignment="Center" Margin="0,0,6,0" MaxWidth="80" TextTrimming="CharacterEllipsis"
+                   ToolTip="{loc:Tr Expire.Label}"/>
+        <ComboBox x:Name="ExpireCombo" Grid.Column="1" FontSize="{DynamicResource T.Font11}"
+                  ToolTip="{Binding SelectedItem.Content, RelativeSource={RelativeSource Self}}"
                   SelectedIndex="{Binding ExpireIndex}">
           <ComboBoxItem Content="{loc:Tr Expire.Never}"/>
           <ComboBoxItem Content="{loc:Tr Expire.OneDay}"/>
@@ -144,13 +187,15 @@
           <ComboBoxItem Content="{loc:Tr Expire.Burn}"/>
         </ComboBox>
         <!-- Group filter: what the list shows AND where new stashes land -->
-        <ComboBox FontSize="11" MinWidth="90" Margin="8,0,0,0"
+        <ComboBox x:Name="GroupCombo" Grid.Column="2" FontSize="{DynamicResource T.Font11}" Margin="8,0,0,0"
+                  ToolTip="{Binding SelectedItem, RelativeSource={RelativeSource Self}}"
                   ItemsSource="{Binding GroupNames}"
                   SelectedIndex="{Binding GroupIndex}"/>
-      </StackPanel>
+      </Grid>
 
       <!-- ============ Expanded: recent cards ============================ -->
       <Grid x:Name="ListArea" Grid.Row="3">
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <ListBox x:Name="CardList" ItemsSource="{Binding Items}"
                  Background="Transparent" BorderThickness="0"
                  HorizontalContentAlignment="Stretch"
@@ -216,8 +261,8 @@
                          Visibility="{Binding IsImage, Converter={StaticResource BoolToVis}}"/>
                   <TextBlock Tag="TintM"
                              Text="{Binding Preview}" Margin="0,4,0,4"
-                             Foreground="{DynamicResource B.CardTextMuted}" FontSize="12"
-                             TextWrapping="Wrap" MaxHeight="52"/>
+                             Foreground="{DynamicResource B.CardTextMuted}" FontSize="{DynamicResource T.Font12}"
+                             TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="{DynamicResource T.Length52}"/>
                   </StackPanel>
                   <DockPanel Grid.Row="2">
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
@@ -263,11 +308,11 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                       <Border Style="{StaticResource S.Badge}" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding TypeBadge}" FontSize="10"
+                        <TextBlock Text="{Binding TypeBadge}" FontSize="{DynamicResource T.Font10}"
                                    Foreground="{DynamicResource B.Accent}"/>
                       </Border>
                       <TextBlock Tag="TintM"
-                                 Text="{Binding RelativeTime}" FontSize="10" Margin="6,0,0,0"
+                                 Text="{Binding RelativeTime}" FontSize="{DynamicResource T.Font10}" Margin="6,0,0,0"
                                  Foreground="{DynamicResource B.CardTextMuted}"
                                  VerticalAlignment="Center"/>
                     </StackPanel>
@@ -282,14 +327,23 @@
           </ListBox.ItemTemplate>
         </ListBox>
 
+        <DockPanel Grid.Row="1" Margin="12,2,12,6" Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVis}}">
+          <Button DockPanel.Dock="Right" Style="{StaticResource S.Button}" Content="{loc:Tr Search.LoadMore}"
+                  Command="{Binding LoadMoreSearchCommand}" Visibility="{Binding HasMoreSearchResults, Converter={StaticResource BoolToVis}}"/>
+          <TextBlock Text="{Binding SearchStatus}" FontSize="{DynamicResource T.Font10}" VerticalAlignment="Center"
+                     Foreground="{DynamicResource B.TextMuted}" TextWrapping="Wrap"/>
+        </DockPanel>
+
         <!-- Empty-state hint -->
-        <TextBlock x:Name="EmptyHint" Text="{loc:Tr QuickPanel.Empty}"
+        <TextBlock x:Name="EmptyHint" TextWrapping="Wrap" Margin="12"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" Foreground="{DynamicResource B.TextMuted}">
           <TextBlock.Style>
             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
               <Setter Property="Visibility" Value="Collapsed"/>
+              <Setter Property="Text" Value="{loc:Tr QuickPanel.Empty}"/>
               <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSearchMode}" Value="True"><Setter Property="Text" Value="{loc:Tr Search.Empty}"/></DataTrigger>
                 <DataTrigger Binding="{Binding Items.Count}" Value="0">
                   <Setter Property="Visibility" Value="Visible"/>
                 </DataTrigger>
@@ -304,7 +358,7 @@
                 Margin="0,0,0,16"
                 Visibility="{Binding Toast, Converter={StaticResource NullToVis}}">
           <TextBlock Text="{Binding Toast}" Foreground="{DynamicResource B.OnAccent}"
-                     FontSize="12"/>
+                     FontSize="{DynamicResource T.Font12}"/>
         </Border>
         </Grid>
       </Grid>

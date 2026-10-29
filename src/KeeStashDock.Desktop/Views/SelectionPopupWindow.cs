@@ -46,16 +46,16 @@ public sealed class SelectionPopupWindow : Window
         SizeToContent = SizeToContent.WidthAndHeight;
         _copy = new BubbleAction("\uE8C8");
         _translate = new BubbleAction("\uE774");
-        _separator = new Border { Width = 1, Margin = new Thickness(0, 7, 0, 7), Opacity = 0.25 };
+        _separator = new Border { Width = 1, Margin = new Thickness(4, 10, 4, 10) };
         var actions = new StackPanel { Orientation = Orientation.Horizontal };
         actions.Children.Add(_copy.Button);
         actions.Children.Add(_separator);
         actions.Children.Add(_translate.Button);
         _surface = new Border
         {
-            CornerRadius = new CornerRadius(14), BorderThickness = new Thickness(1),
-            Child = actions, Margin = new Thickness(10), Padding = new Thickness(2),
+            BorderThickness = new Thickness(1), Margin = new Thickness(12), Padding = new Thickness(5),
         };
+        BubbleChrome.Decorate(_surface, actions);
         Content = _surface;
         _copy.Button.Click += (_, _) => RequestCopy();
         _translate.Button.Click += (_, _) => RequestTranslate();
@@ -74,12 +74,14 @@ public sealed class SelectionPopupWindow : Window
         };
         _settings.Changed += SettingsChanged;
         ThemeManager.Changed += ApplyStyle;
+        TypographyManager.Changed += OnTypographyChanged;
         LocalizationService.Instance.LanguageChanged += RefreshLabels;
         Closed += (_, _) =>
         {
             HideBubble();
             _settings.Changed -= SettingsChanged;
             ThemeManager.Changed -= ApplyStyle;
+            TypographyManager.Changed -= OnTypographyChanged;
             LocalizationService.Instance.LanguageChanged -= RefreshLabels;
         };
         ApplyStyle();
@@ -95,12 +97,18 @@ public sealed class SelectionPopupWindow : Window
         }
     });
 
+    private void OnTypographyChanged()
+    {
+        if (IsVisible) FitToWorkArea();
+    }
+
     private void ApplyStyle()
     {
-        var brush = new SolidColorBrush(GlassBubble.Apply(_settings.Current, _surface));
-        _copy.ApplyStyle(brush, _settings.Current.BubbleTextGlow);
-        _translate.ApplyStyle(brush, _settings.Current.BubbleTextGlow);
-        _separator.Background = brush;
+        BubblePalette palette = BubbleChrome.Apply(_surface, _settings.Current);
+        BubbleChrome.ApplyResources(this, palette);
+        _copy.ApplyStyle(palette);
+        _translate.ApplyStyle(palette);
+        _separator.Background = BubbleChrome.Brush(palette.Border);
     }
 
     private void RefreshLabels()
@@ -124,7 +132,7 @@ public sealed class SelectionPopupWindow : Window
     {
         _copy.Button.IsEnabled = !_busy && !_captured;
         _translate.Button.IsEnabled = !_busy;
-        _copy.Button.Opacity = _captured ? 0.45 : 1;
+        // Disabled feedback belongs to the button template, including busy states.
     }
 
     public void SetBusy(bool busy)
@@ -169,7 +177,7 @@ public sealed class SelectionPopupWindow : Window
         int count = _settings.Current.SelectionAction == "Both" ? 2 : 1;
         // Split remaining text width between the actions after decorative margins,
         // button padding, and glyphs, so long translations wrap on small monitors.
-        double textWidth = Math.Clamp((room - 26) / count - 45, 24, 240);
+        double textWidth = Math.Clamp((room - 36 - (count - 1) * 9) / count - 60, 24, 240);
         _copy.SetTextWidth(textWidth);
         _translate.SetTextWidth(textWidth);
         UpdateLayout();
@@ -232,57 +240,54 @@ public sealed class SelectionPopupWindow : Window
     private sealed class BubbleAction
     {
         internal Button Button { get; }
-        private readonly TextBlock _icon, _label, _iconGlow, _labelGlow;
-        private readonly StackPanel _glow;
+        private readonly TextBlock _icon, _label;
+        private readonly Border _iconChip;
 
         internal BubbleAction(string glyph)
         {
-            TextBlock Icon() => new() { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"),
-                FontSize = 12, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
-            TextBlock Label() => new() { FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center,
-                MaxWidth = 240, TextWrapping = TextWrapping.Wrap };
-            _icon = Icon(); _iconGlow = Icon(); _label = Label(); _labelGlow = Label();
-            static StackPanel Row(TextBlock icon, TextBlock label)
+            _icon = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            _iconChip = new Border { Width = 26, Height = 26, CornerRadius = new CornerRadius(8),
+                Child = _icon, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+            TextBlock Label()
             {
-                var row = new StackPanel { Orientation = Orientation.Horizontal };
-                row.Children.Add(icon); row.Children.Add(label); return row;
+                var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center,
+                    FontWeight = FontWeights.SemiBold, MaxWidth = 240, TextWrapping = TextWrapping.Wrap };
+                TypographyManager.SetFontSize(label, 13);
+                return label;
             }
-            _glow = Row(_iconGlow, _labelGlow);
+            _label = Label();
+            TextOptions.SetTextFormattingMode(_label, TextFormattingMode.Display);
+            var row = new Grid();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(_iconChip);
+            Grid.SetColumn(_label, 1); row.Children.Add(_label);
             Button = new Button
             {
-                Content = GlassBubble.LayerGlow(Row(_icon, _label), _glow),
-                Padding = new Thickness(11, 5, 11, 5), Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0), Focusable = false, IsTabStop = false, Cursor = Cursors.Hand,
+                Content = row, Padding = new Thickness(9, 6, 12, 6),
+                Focusable = false, IsTabStop = false, Cursor = Cursors.Hand,
             };
-            // Keep Button automation and clicks, without the opaque default chrome.
-            var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
-            presenter.SetValue(ContentPresenter.MarginProperty, new TemplateBindingExtension(Control.PaddingProperty));
-            var border = new FrameworkElementFactory(typeof(Border));
-            border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
-            border.SetValue(Border.CornerRadiusProperty, new CornerRadius(11));
-            border.AppendChild(presenter);
-            var template = new ControlTemplate(typeof(Button)) { VisualTree = border };
-            var hover = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
-            hover.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(22, 128, 128, 128))));
-            template.Triggers.Add(hover);
-            Button.Template = template;
         }
 
         internal void SetLabel(string text)
         {
-            _label.Text = _labelGlow.Text = text;
+            _label.Text = text;
             AutomationProperties.SetName(Button, text);
         }
 
-        internal void SetTextWidth(double width) => _label.MaxWidth = _labelGlow.MaxWidth = width;
+        internal void SetTextWidth(double width) => _label.MaxWidth = width;
 
-        internal void ApplyStyle(Brush foreground, bool glow)
+        internal void ApplyStyle(BubblePalette palette)
         {
-            _icon.Foreground = _iconGlow.Foreground = _label.Foreground = _labelGlow.Foreground = foreground;
-            GlassBubble.SetGlowEnabled(_glow, glow);
+            BubbleChrome.ApplyButton(Button, palette);
+            Button.Background = Brushes.Transparent;
+            Button.BorderThickness = new Thickness(0);
+            _iconChip.Background = BubbleChrome.Brush(palette.Hover);
+            _icon.Foreground = BubbleChrome.Brush(palette.HighContrast ? palette.OnAccent : palette.Accent);
+            _label.Foreground = BubbleChrome.Brush(palette.Text);
         }
     }
-
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern int GetWindowLong(nint window, int index);
     [System.Runtime.InteropServices.DllImport("user32.dll")]

@@ -1,0 +1,119 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Workbench chrome stays local; quick-panel transparency and gestures are independent. -->
+  <Style x:Key="S.Workbench.Caption" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+    <Setter Property="FontSize" Value="{DynamicResource T.Font12}"/>
+    <Setter Property="Foreground" Value="{DynamicResource B.TextMuted}"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+    <Setter Property="LineHeight" Value="{DynamicResource T.Line18}"/>
+  </Style>
+  <Style x:Key="S.Workbench.Button" TargetType="Button">
+    <Setter Property="FontFamily" Value="{StaticResource F.UI}"/>
+    <Setter Property="FontSize" Value="{DynamicResource T.Font12}"/>
+    <Setter Property="Foreground" Value="{DynamicResource B.TextPrimary}"/>
+    <Setter Property="Background" Value="{DynamicResource B.InputBg}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource B.Border}"/>
+    <Setter Property="Padding" Value="12,8"/>
+    <Setter Property="MinHeight" Value="36"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Face" CornerRadius="9" Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True">
+              <ContentPresenter.Resources>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                  <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                  <Setter Property="TextWrapping" Value="Wrap"/>
+                </Style>
+              </ContentPresenter.Resources>
+            </ContentPresenter>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Face" Property="Opacity" Value="0.85"/>
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Face" Property="Opacity" Value="0.65"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Face" Property="Opacity" Value="0.45"/>
+              <Setter Property="Cursor" Value="Arrow"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="S.Workbench.PrimaryButton" TargetType="Button" BasedOn="{StaticResource S.Workbench.Button}">
+    <Setter Property="Background" Value="{DynamicResource B.Accent}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+    <Setter Property="Foreground" Value="{DynamicResource B.OnAccent}"/>
+  </Style>
+  <Style x:Key="S.Workbench.NavigationItem" TargetType="ListBoxItem">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Foreground" Value="{DynamicResource B.TextPrimary}"/>
+    <Setter Property="Padding" Value="12,13"/>
+    <Setter Property="Margin" Value="0,2"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <Border x:Name="Face" CornerRadius="10" Background="Transparent" BorderBrush="Transparent"
+                  BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Face" Property="Background" Value="{DynamicResource B.CardHover}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Face" Property="Background" Value="{DynamicResource B.AccentSoft}"/>
+              <Setter Property="Foreground" Value="{DynamicResource B.Accent}"/>
+              <Setter Property="FontWeight" Value="SemiBold"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="S.Workbench.SnippetItem" TargetType="ListBoxItem">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Foreground" Value="{DynamicResource B.TextPrimary}"/>
+    <Setter Property="Margin" Value="0,0,4,10"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <Border x:Name="Face" CornerRadius="13" Background="{DynamicResource B.CardBg}"
+                  BorderBrush="{DynamicResource B.Border}" BorderThickness="1">
+            <Grid>
+              <Border x:Name="SelectionMark" Width="3" Margin="0,14,0,14" CornerRadius="2"
+                      HorizontalAlignment="Left" Background="Transparent"/>
+              <ContentPresenter Margin="15,14"/>
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Face" Property="Background" Value="{DynamicResource B.CardHover}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Face" Property="Background" Value="{DynamicResource B.AccentSoft}"/>
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+              <Setter TargetName="SelectionMark" Property="Background" Value="{DynamicResource B.Accent}"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource B.Accent}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>

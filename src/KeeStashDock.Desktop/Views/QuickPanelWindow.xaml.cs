@@ -86,6 +86,7 @@ public partial class QuickPanelWindow : Window
         _vm = new QuickPanelViewModel(snippets, search, categories);
         _vm.DraftChanged += _draft.OnTextChanged;
         DataContext = _vm;
+        InitializeSearch();
 
         // Drag-in: dropping text or files onto the panel stashes them instantly.
         AllowDrop = true;
@@ -127,7 +128,7 @@ public partial class QuickPanelWindow : Window
             if (_tintRebuild) { RebuildBgSampler(); _tintRebuild = false; }
             ApplyLocalTints();
         };
-        SizeChanged += (_, _) => ScheduleLocalTints(rebuild: true);
+        SizeChanged += (_, _) => { ApplyBackgroundCrop(); ScheduleLocalTints(rebuild: true); };
         CardList.AddHandler(ScrollViewer.ScrollChangedEvent,
             new ScrollChangedEventHandler((_, _) => ScheduleLocalTints()));
         ((System.Collections.Specialized.INotifyCollectionChanged)CardList.Items)
@@ -135,6 +136,7 @@ public partial class QuickPanelWindow : Window
 
         // Scrim color derives from the active palette - refresh on theme swap.
         ThemeManager.Changed += OnPanelThemeChanged;
+        TypographyManager.Changed += OnPanelTypographyChanged;
         // Hot-apply: picking an image / moving the opacity or frost
         // sliders takes effect immediately, no re-summon needed (the
         // signature guard below makes unrelated saves - e.g. geometry - free).
@@ -150,13 +152,16 @@ public partial class QuickPanelWindow : Window
             DisposeDepth();
             _settings.Changed -= OnPanelSettingsChanged;
             ThemeManager.Changed -= OnPanelThemeChanged;
+            TypographyManager.Changed -= OnPanelTypographyChanged;
             LocalizationService.Instance.LanguageChanged -= OnPanelLanguageChanged;
+            _vm.Dispose();
         };
     }
 
     /// <summary>Signature of the last applied visual settings; skips the
     /// (image-decoding) reapply when a Save() didn't touch anything visual.</summary>
     private string? _visualSig;
+    private Domain.Entities.ThemeBackground? _themePanelBackground;
 
     // ------------------------------------------------- custom background
 
@@ -169,8 +174,10 @@ public partial class QuickPanelWindow : Window
     private void ApplyBackground()
     {
         ApplyDepthSettings();
-        var cfg = _settings.Current;
-        string sig = $"{cfg.BackgroundImagePath}|{cfg.BackgroundOverlayOpacity:0.##}|" +
+        var cfg = ThemeManager.CreatePanelAppearanceSettings(_settings.Current);
+        _themePanelBackground = ThemeManager.GetPanelBackground(_settings.Current);
+        string sig = $"{ThemeManager.ActiveScheme?.Key}|{ThemeManager.IsDark}|{cfg.BackgroundImagePath}|{cfg.BackgroundOverlayOpacity:0.##}|" +
+                     $"{_themePanelBackground?.Opacity}|{_themePanelBackground?.FocalX}|{_themePanelBackground?.FocalY}|" +
                      $"{cfg.FrostedGlassEnabled}|{cfg.FrostedGlassRadius:0.#}|" +
                      $"{cfg.CardOpacity:0.##}|" +
                      $"{cfg.PanelTextColorMode}|{cfg.PanelTextCustomColor}";
@@ -185,20 +192,28 @@ public partial class QuickPanelWindow : Window
         {
             try
             {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(path, UriKind.Absolute);
-                bmp.CacheOption = BitmapCacheOption.OnLoad;   // release the file
-                bmp.DecodePixelWidth = 1600;                  // memory cap
-                bmp.EndInit();
-                bmp.Freeze();
+                BitmapSource? bmp = _themePanelBackground is null ? null : ThemeManager.GetBackgroundImage("quickPanel");
+                if (bmp is null)
+                {
+                    var decoded = new BitmapImage();
+                    decoded.BeginInit();
+                    decoded.UriSource = new Uri(path, UriKind.Absolute);
+                    decoded.CacheOption = BitmapCacheOption.OnLoad;   // release the file
+                    decoded.DecodePixelWidth = 1600;                  // memory cap
+                    decoded.EndInit();
+                    decoded.Freeze();
+                    bmp = decoded;
+                }
                 BgImage.Background = new ImageBrush(bmp)
-                { Stretch = Stretch.UniformToFill };
+                { Stretch = Stretch.UniformToFill, Opacity = _themePanelBackground?.Opacity ?? 1 };
+                ApplyBackgroundCrop();
                 BgImage.Effect = cfg.FrostedGlassEnabled
                     ? new BlurEffect
                       { Radius = Math.Clamp(cfg.FrostedGlassRadius, 1, 18) }
                     : null;
                 imageAvg = AverageColor(bmp);
+                if (_themePanelBackground is { } background)
+                    imageAvg = Over(imageAvg.Value, ((SolidColorBrush)FindResource("B.PanelBg")).Color, background.Opacity);
                 haveImage = true;
             }
             catch { /* unreadable image -> plain background below */ }
@@ -242,6 +257,19 @@ public partial class QuickPanelWindow : Window
         ApplyBackgroundDepth();
         ScheduleLocalTints(rebuild: true);
 
+    }
+
+    private void ApplyBackgroundCrop()
+    {
+        if (_themePanelBackground is not { } background || BgImage.Background is not ImageBrush { ImageSource: BitmapSource bitmap } brush ||
+            BgImage.ActualWidth <= 0 || BgImage.ActualHeight <= 0 || bitmap.PixelWidth <= 0 || bitmap.PixelHeight <= 0) return;
+        double imageAspect = (double)bitmap.PixelWidth / bitmap.PixelHeight;
+        double panelAspect = BgImage.ActualWidth / BgImage.ActualHeight;
+        double width = Math.Min(1, panelAspect / imageAspect);
+        double height = Math.Min(1, imageAspect / panelAspect);
+        brush.Stretch = Stretch.Fill;
+        brush.ViewboxUnits = BrushMappingMode.RelativeToBoundingBox;
+        brush.Viewbox = new Rect((1 - width) * background.FocalX, (1 - height) * background.FocalY, width, height);
     }
 
     // ------------------------------------------- auto-contrast foreground
@@ -415,13 +443,19 @@ public partial class QuickPanelWindow : Window
         int y0 = Math.Clamp((int)(r.Y * ky), 0, _bgH - 1);
         int y1 = Math.Clamp((int)Math.Ceiling(r.Bottom * ky), y0 + 1, _bgH);
 
+        Color panelColor = ((SolidColorBrush)FindResource("B.PanelBg")).Color;
         double sr = 0, sg = 0, sb = 0; int n = 0;
         for (int y = y0; y < y1; y++)
             for (int x = x0; x < x1; x++)
             {
                 int i = (y * _bgW + x) * 4;
                 if (_bgPixels[i + 3] < 40) continue;   // corner transparency
-                sb += _bgPixels[i]; sg += _bgPixels[i + 1]; sr += _bgPixels[i + 2];
+                // RenderTargetBitmap uses premultiplied channels. Include the
+                // panel beneath a partially transparent theme wallpaper.
+                double under = 1 - _bgPixels[i + 3] / 255d;
+                sb += _bgPixels[i] + panelColor.B * under;
+                sg += _bgPixels[i + 1] + panelColor.G * under;
+                sr += _bgPixels[i + 2] + panelColor.R * under;
                 n++;
             }
         if (n < 3) return null;
@@ -430,7 +464,7 @@ public partial class QuickPanelWindow : Window
 
     private void ApplyLocalTints()
     {
-        var cfg = _settings.Current;
+        var cfg = ThemeManager.CreatePanelAppearanceSettings(_settings.Current);
         bool eligible = _hasBgImage && _bgPixels is not null &&
                         !TextPalettes.TryResolve(cfg, out _, out _);
         if (!eligible)
@@ -745,8 +779,7 @@ public partial class QuickPanelWindow : Window
     private void ApplyStateVisuals()
     {
         bool expanded = _state == PanelState.Expanded;
-        InputRow.Visibility  = expanded ? Visibility.Visible : Visibility.Collapsed;
-        ExpireRow.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        RefreshSearchVisibility();
         ListArea.Visibility  = expanded ? Visibility.Visible : Visibility.Collapsed;
 
         TitleText.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
@@ -975,6 +1008,7 @@ public partial class QuickPanelWindow : Window
     /// <summary>Card list: Enter copies the selection, Esc hides.</summary>
     private void OnListKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.ImeProcessed || _searchComposing) return;
         switch (e.Key)
         {
             case Key.Enter when CardList.SelectedItem is SnippetItemViewModel item:
@@ -982,7 +1016,7 @@ public partial class QuickPanelWindow : Window
                 e.Handled = true;
                 break;
             case Key.Escape:
-                HidePanel();
+                if (_vm.IsSearchMode) CloseSearch(); else HidePanel();
                 e.Handled = true;
                 break;
         }
@@ -999,7 +1033,7 @@ public partial class QuickPanelWindow : Window
         // File-path cards open their target on click (copy stays available
         // via Enter in the keyboard flow); other cards copy as before.
         if (item.IsImage) _onImageRequested?.Invoke(item.Id);
-        else if (item.Model.Type == Domain.Entities.SnippetType.FilePath)
+        else if (!item.Model.IsTemplate && item.Model.Type == Domain.Entities.SnippetType.FilePath)
             TryOpenPath(item.Model.Content);
         else
             _vm.CopyCommand.Execute(item);
@@ -1090,14 +1124,16 @@ public partial class QuickPanelWindow : Window
         }
 
         var qr = new MenuItem { Header = loc["QuickPanel.Menu.Qr"] };
-        qr.Click += (_, _) =>
+        qr.Click += async (_, _) =>
         {
-            if (item.Model.Content.Length > QrWindow.MaxChars)
+            string? text = await _vm.PrepareQrTextAsync(item);
+            if (text is null) return;
+            if (text.Length > QrWindow.MaxChars)
             {
                 _vm.ShowToast("Qr.TooLong");
                 return;
             }
-            new QrWindow(item.Model.Content) { Owner = null, Topmost = true }.Show();
+            new QrWindow(text) { Owner = null, Topmost = true }.Show();
         };
 
         var copy = new MenuItem { Header = loc["QuickPanel.Menu.Copy"] };
@@ -1129,8 +1165,8 @@ public partial class QuickPanelWindow : Window
         _vm.ShowToast("QuickPanel.OpenFailed");
     }
 
-    /// <summary>Drag-out: dragging a card starts an OLE text drag so the user
-    /// can drop snippet content straight into any target application.</summary>
+    /// <summary>Dragging a text card creates a desktop note and hands over
+    /// the active pointer gesture without copying or removing the source item.</summary>
     private void OnCardMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed)
@@ -1163,12 +1199,21 @@ public partial class QuickPanelWindow : Window
         var ct = PresentationSource.FromVisual(this)?.CompositionTarget;
         if (ct is not null) dipTL = ct.TransformFromDevice.Transform(deviceTL);
 
-        ResetCardMotion(_pressContainer);
-        var note = new StickyNoteWindow(_pressItem, _settings.Current.CardOpacity,
-            _settings.Current.FloatingPanelEnabled, _settings);
-        _pressItem = null;
-        _pressContainer = null;
+        var note = CreateTornOutNote(_pressContainer, _pressItem);
         Mouse.Capture(null);   // the ListBoxItem must let go before DragMove
         note.ShowTornOutAt(dipTL.X, dipTL.Y);
+    }
+
+    internal StickyNoteWindow CreateTornOutNote(ListBoxItem source, SnippetItemViewModel noteItem)
+    {
+        ResetCardMotion(source);
+        // ListBox selects on press, but the note receives the drag's release.
+        // Clear only that source selection so its full-slot accent background
+        // cannot remain behind the translucent card after the pointer leaves.
+        source.IsSelected = false;
+        _pressItem = null;
+        _pressContainer = null;
+        return new StickyNoteWindow(noteItem, _settings.Current.CardOpacity,
+            _settings.Current.FloatingPanelEnabled, _settings, copyAsync: () => _vm.CopyNoteAsync(noteItem));
     }
 }

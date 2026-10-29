@@ -61,7 +61,8 @@ public partial class App
                 backup.BackupTo(Path.Combine(snapshot, Path.GetFileName(PortablePaths.DatabaseFile)));
                 UpdateDataSnapshot.CopyNonDatabaseFiles(PortablePaths.DataRoot, snapshot, Path.GetFileName(PortablePaths.DatabaseFile),
                     backup.BackupsDirectory, settings.Current.OcrInstallDirectory, settings.Current.OfflineTranslationInstallDirectory);
-                return DesktopUpdateCoordinator.Launch(staged, AppContext.BaseDirectory, out string directory) ? directory : null;
+                return DesktopUpdateCoordinator.Launch(staged, AppContext.BaseDirectory, out string directory,
+                    PortablePaths.DatabaseFile) ? directory : null;
             });
             if (recovery is null) return false;
             launched = true;

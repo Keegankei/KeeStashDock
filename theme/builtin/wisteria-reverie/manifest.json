@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "id": "wisteria-reverie",
+  "name": "Wisteria Reverie",
+  "version": "1.0.0",
+  "minimumAppVersion": "1.3.0",
+  "light": "variants/light.json",
+  "dark": "variants/dark.json",
+  "source": "SOURCE.md"
+}

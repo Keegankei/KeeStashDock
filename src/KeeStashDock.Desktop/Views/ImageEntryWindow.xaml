@@ -48,7 +48,7 @@
                TextChanged="OnTextChanged"/>
     </Grid>
     <TextBlock Grid.Row="2" Text="{loc:Tr Screenshot.OcrHint}" TextWrapping="Wrap"
-               Margin="0,10,0,8" FontSize="12" Foreground="{DynamicResource B.TextMuted}"/>
+               Margin="0,10,0,8" FontSize="{DynamicResource T.Font12}" Foreground="{DynamicResource B.TextMuted}"/>
     <DockPanel Grid.Row="3">
       <WrapPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
         <Button x:Name="CopyTextButton" Style="{StaticResource S.Button}" Content="{loc:Tr Screenshot.CopyText}"

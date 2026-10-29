@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
+using System.Windows.Data;
 using KeeStashDock.Core.Services;
 using Microsoft.Win32;
 using KeeStashDock.Desktop.Localization;
@@ -35,6 +36,7 @@ public partial class WorkbenchWindow : Window
                            Action? onDismissSelection = null, Action? onCaptureRequested = null)
     {
         InitializeComponent();
+        BindMetadataHeight();
         _groupIo = groupIo;
         _onImageRequested = onImageRequested;
         _onInternalSelection = onInternalSelection;
@@ -51,6 +53,14 @@ public partial class WorkbenchWindow : Window
             tags,
             PromptUnsavedChangesAsync);
         DataContext = _vm;
+        _vm.BatchSelectionCleared += () =>
+        {
+            bool wasHandlingSelection = _handlingSelection;
+            _handlingSelection = true;
+            try { ItemList.UnselectAll(); }
+            finally { _handlingSelection = wasHandlingSelection; }
+        };
+        ItemList.PreviewMouseUp += (_, _) => _batchCheckboxGesture = false;
 
         // Tray-resident app: closing the workbench only hides it.
         Closing += OnClosing;
@@ -62,6 +72,18 @@ public partial class WorkbenchWindow : Window
             _vm.ReloadNav();   // virtual nav entry names are localized
         };
         LocalizationService.Instance.ApplyFlowDirection(this);
+    }
+
+    private void BindMetadataHeight()
+    {
+        // Explicit sources survive both live theme wrapping and detached
+        // preview trees; forward ElementName references can lose their scope.
+        var height = new MultiBinding { Converter = new WorkbenchDetailsHeightConverter() };
+        height.Bindings.Add(new Binding(nameof(ActualHeight)) { Source = EditorPane });
+        height.Bindings.Add(new Binding(nameof(FontSize)) { Source = MetadataViewport });
+        foreach (FrameworkElement element in new FrameworkElement[] { EditorHeading, EditorActions, EditorStatus, ContentToolbar })
+            height.Bindings.Add(new Binding(nameof(ActualHeight)) { Source = element });
+        MetadataViewport.SetBinding(MaxHeightProperty, height);
     }
 
     private void OfferEditorSelection()
@@ -119,15 +141,22 @@ public partial class WorkbenchWindow : Window
         SelectionChangedEventArgs e)
     {
         if (_handlingSelection || _vm.IsRefreshingItems) return;
-        var requested = ItemList.SelectedItem as SnippetItemViewModel;
+        _vm.SetBatchSelection(ItemList.SelectedItems.Cast<SnippetItemViewModel>());
+        if (_batchCheckboxGesture || Keyboard.FocusedElement is CheckBox || Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ||
+            Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
+        var requested = e.AddedItems.Cast<SnippetItemViewModel>().LastOrDefault();
+        if (requested is null) return;
         if (requested?.Id == _vm.SelectedItem?.Id) return;
 
         _handlingSelection = true;
         try
         {
-            ItemList.SelectedItem = _vm.SelectedItem;
-            await _vm.RequestSelectionChangeAsync(requested);
-            ItemList.SelectedItem = _vm.SelectedItem;
+            if (!await _vm.RequestSelectionChangeAsync(requested))
+            {
+                ItemList.UnselectAll();
+                if (_vm.SelectedItem is { } previous && ItemList.Items.Contains(previous)) ItemList.SelectedItems.Add(previous);
+                _vm.SetBatchSelection(ItemList.SelectedItems.Cast<SnippetItemViewModel>());
+            }
         }
         finally
         {
@@ -155,11 +184,6 @@ public partial class WorkbenchWindow : Window
             _ => WorkbenchUnsavedChoice.Cancel,
         });
     }
-
-    // The workbench deliberately ignores the custom
-    // background image. Wallpapers belong to the quick panel; the workbench
-    // is the "get work done" surface and stays on the plain theme background
-    // for maximum readability of the three dense columns.
 
     // ------------------------------------------ group import / presets
 

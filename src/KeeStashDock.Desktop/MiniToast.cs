@@ -11,7 +11,7 @@ namespace KeeStashDock.Desktop;
 /// capture and copy. It is styled by the shared <see cref="GlassBubble"/>
 /// builder so it matches the selection bubble it usually follows:
 /// settings-driven text color,
-/// surface derived from it, crisp text over a blurred glow twin.
+/// surface derived from it and crisp text.
 /// Pure code - no XAML - lives outside any product window, never activates.
 /// </summary>
 public static class MiniToast
@@ -22,23 +22,23 @@ public static class MiniToast
 
     public static void Show(string message)
     {
-        TextBlock Make() => new()
+        TextBlock Make()
         {
-            Text = message,
-            FontSize = 12.5,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+            var label = new TextBlock { Text = message, VerticalAlignment = VerticalAlignment.Center };
+            TypographyManager.SetFontSize(label, 12.5);
+            return label;
+        }
         var crisp = Make();
-        var glow = Make();
+        TextOptions.SetTextFormattingMode(crisp, TextFormattingMode.Display);
 
         var surface = new Border
         {
             CornerRadius = new CornerRadius(14),
             Padding = new Thickness(14, 7, 14, 7),
-            Child = GlassBubble.LayerGlow(crisp, glow),
-            // Transparent room for the outer drop shadow to render into.
-            Margin = new Thickness(10),
+            Child = crisp,
+            Margin = new Thickness(12),
         };
+        BubbleChrome.Decorate(surface, surface.Child!);
 
         Color text;
         if (Settings is null)   // early boot: plain theme colors
@@ -49,13 +49,10 @@ public static class MiniToast
         }
         else
         {
-            text = GlassBubble.Apply(Settings.Current, surface);
+            text = BubbleChrome.Apply(surface, Settings.Current).Text;
         }
         var fg = new SolidColorBrush(text);
         crisp.Foreground = fg;
-        glow.Foreground = fg;
-        GlassBubble.SetGlowEnabled(glow,
-            Settings?.Current.BubbleTextGlow ?? true);
 
         var w = new Window
         {

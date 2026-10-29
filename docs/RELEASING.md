@@ -56,7 +56,7 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - `%AppData%` fallback from a non-writable application folder
 - Tray lifecycle and single-instance activation; launching again must keep an already visible panel open
 - Move the panel, exit and restart with its saved screen position; the first tray/hotkey summon must restore the position without an exception, and resizing/moving must still persist after another restart
-- Resize Standard and Spatial panels from all visible edges and corners, before and after inspection; verify saved dimensions, high-DPI grab areas and physical directions in right-to-left layouts
+- Resize Classic and Spatial panels from all visible edges and corners, before and after inspection; verify saved dimensions, high-DPI grab areas and physical directions in right-to-left layouts
 - Alt+Q and Alt+W registration, remapping, disable, and conflict handling
 - Screenshot cancellation, negative monitor coordinates, mixed display scales, and capture from both panel and workbench
 - Image preview/copy/save, local OCR success/cancel/timeout, editable text, and the shared translation bubble
@@ -84,13 +84,15 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - Duplicate group creation/rename, numeric suffix suggestions, and imports with whitespace/case name conflicts
 - Upgrade a copy of a v1/v2 database containing duplicate group names; verify group IDs, memberships, and snippet content remain intact
 - Theme switching, custom appearance, high DPI, and Arabic right-to-left layout
-- Standard/Spatial modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
+- Classic/Spatial modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
 - Screenshot Save / Extract / Extract and translate, transient text, source-copy after failure, cancellation and reselection; confirm the selection bubble resumes after save/cancel/error and stays disabled when configured off
 - Selection Copy / Translate / Both, Copy then Translate on the same source, history on/off and stale async results
 - Update check/download cancellation, same-path managed replacement, preserved custom/component/data files, denied elevation, interrupted helper and startup-health rollback
 - Manual migration to a new folder with Start with Windows previously enabled: disable and re-enable it in the new app, then verify the startup entry points to the new executable
 
-The current build upgrades databases to schema v4 on startup. Back up existing user data before an upgrade. Older binaries that support only v1-v3 cannot open a v4 database; testing an older binary requires a separate copy of a pre-upgrade backup. Version 2 group exports preserve image assets; version 1 text imports remain supported.
+The current build upgrades databases to schema v5 on startup after creating and verifying a pre-migration SQLite snapshot. Back up existing user data before an upgrade. Version 1.2.3 and earlier cannot open a v5 database; testing an older binary requires a separate copy of a pre-upgrade backup. Format 3 group packages preserve template identity, while formats 1 and 2 remain importable.
+
+For 1.3.0, also exercise mixed 10,000- and 50,000-item libraries, rapid search/filter changes, IME confirmation, draft preservation, loaded-row selection, all batch conflicts and undo, template copy failures, theme import/export/preview cancellation, missing artwork, high contrast and retained custom themes after an update. Verify Settings opacity and artwork blur, including disabled effects, high contrast and absent artwork. Check bubble styling, retained source-app focus and closing/reopening result windows, and confirm that obsolete bubble frosting, text glow and shadow preferences do not re-enable those effects. Record database-query measurements separately from full UI rendering; they are not frame-rate or physical-machine acceptance results.
 
 Before each release, inspect resolved dependency versions and known advisories:
 
@@ -105,24 +107,29 @@ replace the native OCR/runtime review.
 
 ## Acceptance records
 
-Keep versioned results in [docs/releases](releases/1.2.3.md). Each record identifies
+Keep versioned results in [docs/releases](releases/1.3.0.md). Each record identifies
 the release tag, build/test results, package checks, maintainer feedback, and
 remaining platform limitations. Do not convert broad user feedback into a claim
 that every hardware or provider combination was tested.
 
 ## 3. Package
 
-1. Publish into a fresh output directory. Never archive an existing user installation. Keep `KeeStashDock.exe`, `StartHere.md`, and `update-manifest.json` at the root. Keep `Docs`, `Licenses`, `Locales`, `OcrModels`, `OfflineTranslation`, and `NativeRuntime` beside them. Project `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` are under `Licenses`. The user's `Data` folder is created on first use and is never shipped.
+1. Publish into a fresh output directory. Never archive an existing user installation. Keep `KeeStashDock.exe`, `StartHere.md`, and `update-manifest.json` at the root. Keep `Docs`, `Licenses`, `Locales`, `OcrModels`, `OfflineTranslation`, `NativeRuntime`, and `theme/builtin` beside them. Project `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md` are under `Licenses`. The user's `Data`, `theme/custom`, theme cache and staging/recovery folders are never shipped.
 2. If a trusted code-signing process is configured, sign the executable before generating the final ownership manifest or archive. Any binary change after manifest generation requires regenerating and verifying the manifest. For an unsigned release, state that fact in the release notes; a checksum is an integrity check, not a signature.
 3. Generate the final manifest and run `tools/Verify-Publish.ps1` and `tools/Test-PackagedHost.ps1` as shown above. The package verifier checks the embedded runtime, component setup files, absence of preinstalled optional engines/models, documentation and notices, and rejects accidental private state, including database WAL/journal files, rotated logs, environment files, and signing keys. It checks names without opening personal files and refuses symbolic links or junctions. The host check then exercises the real runtime and native libraries.
 4. Archive the complete directory contents as `KeeStashDock-<version>-win-x64.zip`, with the executable and manifest directly at the ZIP root, without an extra containing folder. Save the ZIP outside the published directory. Standard packages include OCR and offline translation setup scripts and attribution, but no optional engine, model, or runtime binaries. Do not copy installed user components or development model caches into the release. Installed components retain their upstream licenses and are preserved by upgrades.
 5. Generate `KeeStashDock-<version>-win-x64.zip.sha256` from the final ZIP. Its single line must contain the 64-character SHA-256, two spaces, and the exact ZIP filename. Extract that ZIP into another fresh directory and repeat package and host verification against the extracted contents. Do not modify the archive after hashing.
 6. Run available security scans and record their scope and outcome. Do not describe an unperformed scan as passed.
 
+For 1.3.0, the exact public filenames are `KeeStashDock-1.3.0-win-x64.zip` and
+`KeeStashDock-1.3.0-win-x64.zip.sha256`. Do not promote an old r1–r5 ZIP by renaming
+it after documentation changes: the package includes the start and upgrade
+guides, and those must match the released source. Keep retained candidates local.
+
 ## 4. Publish
 
-1. Push the reviewed release commit and wait for its required CI checks. Follow the repository's branch policy; use a pull request when required.
-2. Create a signed or annotated Git tag matching the version, for example `v1.2.3`.
+1. Push the reviewed release commit and wait for its required CI checks. A failed test run or skipped publish check is not release approval. Follow the repository's branch policy; use a pull request when required, and verify the checks on the commit that will be tagged after merging.
+2. Create a signed or annotated Git tag matching the version, for example `v1.3.0`.
 3. Create a GitHub Release from the tag.
 4. Attach the archive and checksum.
 5. Use `docs/releases/<version>-notes.md` as the release description and confirm it matches the final changelog and acceptance record.
@@ -133,6 +140,7 @@ that every hardware or provider combination was tested.
 - Verify the uploaded checksum and start the downloaded artifact.
 - Mark the release as the latest stable release.
 - Confirm the changelog has the release version and date, then remove the temporary publication-preparation notice from all README languages only after the release assets are available.
+- Replace the preparation status in the release notes and validation record with the actual publication date, final source commit, successful CI run, final archive size and verified SHA-256. Keep any untested platform limits explicit.
 - Leave repository visibility changes to the owner when publication is staged in a private repository.
 - Monitor security reports, crash reports, and upgrade issues.
 
