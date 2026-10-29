@@ -56,7 +56,7 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - `%AppData%` fallback from a non-writable application folder
 - Tray lifecycle and single-instance activation; launching again must keep an already visible panel open
 - Move the panel, exit and restart with its saved screen position; the first tray/hotkey summon must restore the position without an exception, and resizing/moving must still persist after another restart
-- Resize Standard and Spatial panels from all visible edges and corners, before and after inspection; verify saved dimensions, high-DPI grab areas and physical directions in right-to-left layouts
+- Resize Classic and Spatial panels from all visible edges and corners, before and after inspection; verify saved dimensions, high-DPI grab areas and physical directions in right-to-left layouts
 - Alt+Q and Alt+W registration, remapping, disable, and conflict handling
 - Screenshot cancellation, negative monitor coordinates, mixed display scales, and capture from both panel and workbench
 - Image preview/copy/save, local OCR success/cancel/timeout, editable text, and the shared translation bubble
@@ -84,7 +84,7 @@ Run the Windows CI workflow for the release commit. Record local automation, mai
 - Duplicate group creation/rename, numeric suffix suggestions, and imports with whitespace/case name conflicts
 - Upgrade a copy of a v1/v2 database containing duplicate group names; verify group IDs, memberships, and snippet content remain intact
 - Theme switching, custom appearance, high DPI, and Arabic right-to-left layout
-- Standard/Spatial modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
+- Classic/Spatial modes, hollow shadows, proximity/press/drag feedback, reduced-animation and high-contrast fallback
 - Screenshot Save / Extract / Extract and translate, transient text, source-copy after failure, cancellation and reselection; confirm the selection bubble resumes after save/cancel/error and stays disabled when configured off
 - Selection Copy / Translate / Both, Copy then Translate on the same source, history on/off and stale async results
 - Update check/download cancellation, same-path managed replacement, preserved custom/component/data files, denied elevation, interrupted helper and startup-health rollback

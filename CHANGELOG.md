@@ -6,7 +6,7 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ## [Unreleased]
 
-## [1.3.0] - Pending release
+## [1.3.0] - 2026-10-29
 
 ### Added
 
@@ -39,9 +39,9 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 - Bubble frosted backgrounds, text glow and drop shadows, including their settings. Existing settings and theme files containing these fields remain loadable; the effects are not applied. Settings artwork blur and panel/sticky-note shadows remain available.
 
-Release preparation is in progress; a publication date will be recorded when
-the stable release is published. See the
-[release notes](docs/releases/1.3.0-notes.md) and [validation record](docs/releases/1.3.0.md).
+See the [release notes](docs/releases/1.3.0-notes.md) and
+[validation record](docs/releases/1.3.0.md) for upgrade guidance, verification
+results and platform coverage.
 
 ## [1.2.3] - 2026-10-19
 
@@ -203,8 +203,8 @@ First packaged release of the current feature set. Includes the fixes and valida
 - Quick-panel edge glow, its settings, and transparent geometry insets. Legacy settings fields are ignored; bubble text glow remains available.
 - User-specific Visual Studio publish metadata from the source tree.
 
-[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...HEAD
-[1.3.0]: docs/releases/1.3.0-notes.md
+[Unreleased]: https://github.com/Keegankei/KeeStashDock/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Keegankei/KeeStashDock/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.3
 [1.2.2]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/Keegankei/KeeStashDock/releases/tag/v1.2.1
