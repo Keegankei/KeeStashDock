@@ -30,8 +30,6 @@
 
 **Version 1.3.0** · [Release notes](docs/releases/1.3.0-notes.md) · [Validation and release status](docs/releases/1.3.0.md)
 
-**Release preparation:** this branch documents 1.3.0. Formal publication is pending; [Latest release](https://github.com/Keegankei/KeeStashDock/releases/latest) currently provides **1.2.3**. The validation record tracks the remaining release checks.
-
 New previews show the **1.3.0 English interface** with isolated sample data. Older screenshots and GIFs remain labeled **1.2.3**; illustrated themes and combined bubble actions are optional.
 
 [Get started](#get-started) · [Features](#features) · [Shortcuts](#shortcuts) · [Data and upgrades](#data-and-upgrades) · [Development](#development) · [License](#license)
@@ -39,16 +37,16 @@ New previews show the **1.3.0 English interface** with isolated sample data. Old
 <a id="get-started"></a>
 ## Get started
 
-**[Download the latest published release](https://github.com/Keegankei/KeeStashDock/releases/latest)**
+**[Download v1.3.0](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0)**
 
-The 1.3.0 release will provide `KeeStashDock-1.3.0-win-x64.zip` and `KeeStashDock-1.3.0-win-x64.zip.sha256` under **Assets**. These filenames describe the planned release files, not an already published download.
+**Files:** [KeeStashDock-1.3.0-win-x64.zip](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip) · [SHA-256 checksum](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip.sha256)
 
 1. Download the application ZIP under **Assets**, rather than GitHub's developer-oriented **Source code** archive.
 2. Extract the complete package into a writable folder and run `KeeStashDock.exe`. Keep all accompanying folders together.
 3. Press **Alt+Q** to show the quick panel. Type a snippet and press **Enter** to save it; click its card to copy it.
 4. Open **Settings** from the panel or system tray to select a language, theme, and optional components.
 
-The Windows x64 package includes .NET; a separate .NET installation is unnecessary. Windows 11 is the primary target, with best-effort Windows 10 22H2 compatibility. OCR and offline translation may need Microsoft's Visual C++ runtime, which the in-app component installer can install. See the [1.3.0 validation record](docs/releases/1.3.0.md) for tested coverage and outstanding checks.
+The Windows x64 package includes .NET; a separate .NET installation is unnecessary. Windows 11 is the primary target, with best-effort Windows 10 22H2 compatibility. OCR and offline translation may need Microsoft's Visual C++ runtime, which the in-app component installer can install. See the [1.3.0 validation record](docs/releases/1.3.0.md) for tested coverage and platform limits.
 
 <details>
 <summary>Verify the downloaded ZIP</summary>

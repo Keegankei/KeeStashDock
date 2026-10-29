@@ -30,8 +30,6 @@
 
 **Versión 1.3.0** · [Notas de la versión](docs/releases/1.3.0-notes.md) · [Validación y estado de publicación](docs/releases/1.3.0.md)
 
-**Preparación de la publicación:** esta rama documenta 1.3.0. La publicación oficial sigue pendiente; la [última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest) es actualmente **1.2.3**. El registro de validación detalla las comprobaciones pendientes.
-
 Las nuevas vistas previas muestran la **interfaz en inglés de 1.3.0** con datos de ejemplo aislados. Las capturas y GIF anteriores siguen identificados como **1.2.3**; los temas ilustrados y las acciones combinadas de las burbujas son opcionales.
 
 [Primeros pasos](#get-started) · [Funciones](#features) · [Atajos](#shortcuts) · [Datos y actualizaciones](#data-and-upgrades) · [Desarrollo](#development) · [Licencia](#license)
@@ -39,9 +37,9 @@ Las nuevas vistas previas muestran la **interfaz en inglés de 1.3.0** con datos
 <a id="get-started"></a>
 ## Primeros pasos
 
-**[Descargar la última versión publicada](https://github.com/Keegankei/KeeStashDock/releases/latest)**
+**[Descargar v1.3.0](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0)**
 
-La versión 1.3.0 ofrecerá `KeeStashDock-1.3.0-win-x64.zip` y `KeeStashDock-1.3.0-win-x64.zip.sha256` en **Assets**. Estos nombres describen los archivos previstos, no una descarga ya publicada.
+**Archivos:** [KeeStashDock-1.3.0-win-x64.zip](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip) · [Suma de comprobación SHA-256](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip.sha256)
 
 1. Descarga el ZIP de la aplicación en **Assets**, en lugar del archivo **Source code** de GitHub, destinado al desarrollo.
 2. Extrae el paquete completo en una carpeta con permisos de escritura y ejecuta `KeeStashDock.exe`. Mantén juntas todas las carpetas que lo acompañan.
