@@ -30,8 +30,6 @@
 
 **버전 1.3.0** · [릴리스 노트](docs/releases/1.3.0-notes.md) · [검증 및 출시 상태](docs/releases/1.3.0.md)
 
-**출시 준비 중:** 이 브랜치는 1.3.0을 설명합니다. 정식 출시는 아직 완료되지 않았으며 [최신 릴리스](https://github.com/Keegankei/KeeStashDock/releases/latest)는 현재 **1.2.3**을 제공합니다. 출시 전에 남은 확인 사항은 검증 기록에서 확인할 수 있습니다.
-
 새 미리보기는 격리된 예제 데이터로 **1.3.0 영어 화면**을 보여 줍니다. 기존 스크린샷과 GIF는 계속 **1.2.3**으로 표시합니다. 일러스트 테마와 복사／번역을 함께 표시하는 말풍선은 선택 사항입니다.
 
 [시작하기](#get-started) · [기능](#features) · [단축키](#shortcuts) · [데이터 및 업그레이드](#data-and-upgrades) · [개발](#development) · [라이선스](#license)
@@ -39,16 +37,16 @@
 <a id="get-started"></a>
 ## 시작하기
 
-**[최신 정식 출시 버전 다운로드](https://github.com/Keegankei/KeeStashDock/releases/latest)**
+**[v1.3.0 다운로드](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0)**
 
-1.3.0 릴리스는 **Assets**에 `KeeStashDock-1.3.0-win-x64.zip`과 `KeeStashDock-1.3.0-win-x64.zip.sha256`을 제공할 예정입니다. 이는 예정된 배포 파일명이며 이미 다운로드할 수 있다는 뜻은 아닙니다.
+**배포 파일:** [KeeStashDock-1.3.0-win-x64.zip](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip) · [SHA-256 체크섬](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip.sha256)
 
 1. GitHub의 개발자용 **Source code** 압축 파일이 아닌, **Assets** 아래의 앱 ZIP 파일을 다운로드하세요.
 2. 쓰기 가능한 폴더에 전체 압축을 풀고 `KeeStashDock.exe`를 실행하세요. 함께 제공되는 모든 폴더를 그대로 유지하세요.
 3. **Alt+Q**를 눌러 빠른 패널을 표시하세요. 텍스트 조각을 입력하고 **Enter**를 누르면 저장되며, 카드를 클릭하면 복사됩니다.
 4. 패널이나 시스템 트레이에서 **설정**을 열어 언어, 테마, 선택 구성 요소를 설정하세요.
 
-Windows x64 패키지에는 .NET이 포함되어 별도 설치가 필요하지 않습니다. Windows 11을 주 대상으로 하며 Windows 10 22H2는 가능한 범위에서 호환됩니다. OCR과 오프라인 번역에는 Microsoft Visual C++ 런타임이 필요할 수 있으며 앱 내 구성 요소 설치 과정에서 설치할 수 있습니다. 검증 범위와 남은 확인 사항은 [1.3.0 검증 기록](docs/releases/1.3.0.md)을 참고하세요.
+Windows x64 패키지에는 .NET이 포함되어 별도 설치가 필요하지 않습니다. Windows 11을 주 대상으로 하며 Windows 10 22H2는 가능한 범위에서 호환됩니다. OCR과 오프라인 번역에는 Microsoft Visual C++ 런타임이 필요할 수 있으며 앱 내 구성 요소 설치 과정에서 설치할 수 있습니다. 검증 범위와 플랫폼 제한은 [1.3.0 검증 기록](docs/releases/1.3.0.md)을 참고하세요.
 
 <details>
 <summary>다운로드한 ZIP 검증하기</summary>

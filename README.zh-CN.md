@@ -30,8 +30,6 @@
 
 **版本 1.3.0** · [发布说明](docs/releases/1.3.0-notes.md) · [验证与发布状态](docs/releases/1.3.0.md)
 
-**发布准备中：**本分支说明 1.3.0 的功能。正式发布尚未完成；[最新发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)目前提供 **1.2.3**。验证记录列出了发布前仍需完成的检查。
-
 新增预览使用隔离示例数据展示 **1.3.0 英文界面**。保留的旧截图和 GIF 仍标明 **1.2.3**；插画主题和同时显示复制／翻译的气泡均为可选设置。
 
 [快速开始](#get-started) · [功能介绍](#features) · [快捷操作](#shortcuts) · [数据与升级](#data-and-upgrades) · [开发](#development) · [许可证](#license)
@@ -39,16 +37,16 @@
 <a id="get-started"></a>
 ## 快速开始
 
-**[下载最新已发布版本](https://github.com/Keegankei/KeeStashDock/releases/latest)**
+**[下载 v1.3.0](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0)**
 
-1.3.0 正式发布时将在 **Assets** 中提供 `KeeStashDock-1.3.0-win-x64.zip` 和 `KeeStashDock-1.3.0-win-x64.zip.sha256`。这些是计划使用的发布文件名，不代表文件已经可供下载。
+**发布附件：**[KeeStashDock-1.3.0-win-x64.zip](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip) · [SHA-256 校验文件](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip.sha256)
 
 1. 在发布页的 **Assets** 中下载应用 ZIP；GitHub 的 **Source code** 压缩包面向开发者。
 2. 将完整软件包解压到可写文件夹，运行 `KeeStashDock.exe`。请保留所有附带文件夹。
 3. 按 **Alt+Q** 显示快速面板。输入文本片段后按 **Enter** 保存；点击卡片即可复制。
 4. 从面板或系统托盘打开**设置**，选择语言、主题和可选组件。
 
-Windows x64 软件包已包含 .NET，无需另外安装。主要支持 Windows 11，并尽力兼容 Windows 10 22H2。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过应用内组件安装流程安装。已验证范围与待完成检查见 [1.3.0 验证记录](docs/releases/1.3.0.md)。
+Windows x64 软件包已包含 .NET，无需另外安装。主要支持 Windows 11，并尽力兼容 Windows 10 22H2。OCR 和离线翻译可能需要 Microsoft Visual C++ 运行库，可通过应用内组件安装流程安装。已验证范围与平台限制见 [1.3.0 验证记录](docs/releases/1.3.0.md)。
 
 <details>
 <summary>校验下载的 ZIP</summary>

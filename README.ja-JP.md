@@ -30,8 +30,6 @@
 
 **バージョン 1.3.0** · [リリースノート](docs/releases/1.3.0-notes.md) · [検証と公開の状況](docs/releases/1.3.0.md)
 
-**リリース準備中：**このブランチでは 1.3.0 を説明しています。正式公開はまだ行われておらず、[最新リリース](https://github.com/Keegankei/KeeStashDock/releases/latest)では現在 **1.2.3** を配布しています。公開前に必要な残りの確認は検証記録に記載しています。
-
 新しいプレビューは、隔離されたサンプルデータを使った **1.3.0 の英語画面**です。既存の画像と GIF は引き続き **1.2.3** と明記しています。イラスト付きテーマとコピー／翻訳を併用するバブルは任意の設定です。
 
 [はじめに](#get-started) · [機能](#features) · [ショートカット](#shortcuts) · [データと更新](#data-and-upgrades) · [開発](#development) · [ライセンス](#license)
@@ -39,16 +37,16 @@
 <a id="get-started"></a>
 ## はじめに
 
-**[公開済みの最新リリースをダウンロード](https://github.com/Keegankei/KeeStashDock/releases/latest)**
+**[v1.3.0 をダウンロード](https://github.com/Keegankei/KeeStashDock/releases/tag/v1.3.0)**
 
-1.3.0 のリリースでは、**Assets** に `KeeStashDock-1.3.0-win-x64.zip` と `KeeStashDock-1.3.0-win-x64.zip.sha256` を用意する予定です。これは公開予定のファイル名であり、すでにダウンロード可能であることを示すものではありません。
+**配布ファイル：**[KeeStashDock-1.3.0-win-x64.zip](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip) · [SHA-256 チェックサム](https://github.com/Keegankei/KeeStashDock/releases/download/v1.3.0/KeeStashDock-1.3.0-win-x64.zip.sha256)
 
 1. リリースページの **Assets** からアプリの ZIP をダウンロードします。GitHub の **Source code** アーカイブは開発者向けです。
 2. パッケージ全体を書き込み可能なフォルダーに展開し、`KeeStashDock.exe` を起動します。付属フォルダーはすべて一緒に保管してください。
 3. **Alt+Q** でクイックパネルを表示します。文章を入力して **Enter** で保存し、カードをクリックするとコピーできます。
 4. パネルまたはシステムトレイから**設定**を開き、言語、テーマ、追加コンポーネントを選びます。
 
-Windows x64 パッケージには .NET が含まれているため、別途インストールする必要はありません。主な対象は Windows 11 で、Windows 10 22H2 は可能な範囲で互換性を維持します。OCR とオフライン翻訳には Microsoft Visual C++ ランタイムが必要になる場合があり、アプリ内のコンポーネントインストーラーから導入できます。検証済みの範囲と残りの確認事項は [1.3.0 の検証記録](docs/releases/1.3.0.md)をご覧ください。
+Windows x64 パッケージには .NET が含まれているため、別途インストールする必要はありません。主な対象は Windows 11 で、Windows 10 22H2 は可能な範囲で互換性を維持します。OCR とオフライン翻訳には Microsoft Visual C++ ランタイムが必要になる場合があり、アプリ内のコンポーネントインストーラーから導入できます。検証済みの範囲とプラットフォームの制限は [1.3.0 の検証記録](docs/releases/1.3.0.md)をご覧ください。
 
 <details>
 <summary>ダウンロードした ZIP を検証する</summary>
