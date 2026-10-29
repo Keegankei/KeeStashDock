@@ -87,11 +87,7 @@ public partial class SettingsWindow
     internal void RefreshConditionalOptions()
     {
         if (_settings is null || BackgroundOptions is null) return;
-        BackgroundOptions.Visibility = string.IsNullOrWhiteSpace(ThemeManager.CreatePanelAppearanceSettings(_settings.Current).BackgroundImagePath)
-            ? Visibility.Collapsed : Visibility.Visible;
-        RestoreBackgroundButton.Visibility = !_settings.Current.ThemeUseCustomBackground && !string.IsNullOrWhiteSpace(_settings.Current.BackgroundImagePath)
-            ? Visibility.Visible : Visibility.Collapsed;
-        FrostRadiusRow.Visibility = FrostCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        RefreshBackgroundControls();
         BackupScheduleOptions.Visibility = AutoBackupCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 

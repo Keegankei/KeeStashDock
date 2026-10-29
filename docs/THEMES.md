@@ -3,7 +3,7 @@
 KeeStashDock 1.3.0 includes four optional presets. A theme combines light/dark
 colors, portrait and landscape artwork, and appearance preferences across the
 quick panel, workbench, Settings and supported result windows. It does not change
-your entries, hotkeys, component installations or Standard/Spatial mode.
+your entries, hotkeys, component installations or Classic/Spatial mode.
 
 ## Included presets
 
@@ -31,12 +31,24 @@ time. Portrait artwork suits narrow panels; landscape artwork suits larger
 windows. A fresh installation uses no preset or background, and an upgrade
 preserves saved preferences.
 
+## Personal backgrounds
+
+Open **Settings > Appearance > Background image** and choose **Quick panel** or
+**Settings page** under **Customize background**. Select or clear a picture and
+adjust that area’s overlay opacity and blur independently. Clearing removes the
+image from that area; **Use theme background** restores its preset artwork. Other
+areas retain their own backgrounds.
+
+Theme export keeps the two areas separate in both light/dark variants. Including
+personal images requires explicit sharing confirmation; private source paths are
+not written into the theme package.
+
 ## Readability controls
 
 - **Text size:** 90–150%, default 100%; icons keep their intended size.
 - **Panel controls opacity:** independent from Settings, default 90%.
 - **Settings surface opacity:** 10–100%, default 100%; text and icons stay sharp.
-- **Frosted settings background:** optional blur of theme artwork, 1–18 px,
+- **Frosted settings background:** optional blur of the Settings background image, 1–18 px,
   off by default with a stored 8 px radius. It does not blur text or controls.
 - **Bubble style and opacity:** independent appearance controls for selection and
   result bubbles.
@@ -49,7 +61,7 @@ blur is independent and starts off with a stored 4 px radius.
 
 **Import theme** accepts a complete theme ZIP for preview or installation.
 **Export current appearance** saves both variants, their images and applicable
-appearance overrides. Including a personal background image requires an explicit
+appearance overrides. Including personal background images requires an explicit
 choice. Inspect the package before sharing: its artwork is included, whereas
 your entries, credentials and component paths are not.
 

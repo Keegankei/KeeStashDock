@@ -24,7 +24,7 @@ public partial class SettingsWindow
             if (!Dispatcher.HasShutdownStarted) Dispatcher.BeginInvoke(new Action(RefreshSurfaceOpacity));
             return;
         }
-        bool hasArtwork = !SystemParameters.HighContrast && ThemeManager.GetBackgroundImage("workspace") is not null;
+        bool hasArtwork = !SystemParameters.HighContrast && ThemeManager.GetBackgroundImage("settings") is not null;
         SettingsSurfaceOpacitySlider.IsEnabled = hasArtwork;
         var appearance = ThemeManager.CreatePanelAppearanceSettings(_settings.Current);
         double selected = appearance.SettingsSurfaceOpacity;
@@ -52,6 +52,7 @@ public partial class SettingsWindow
         SetSurfaceBrush("B.InputBg", "B.InputBg", opacity);
         ThemeWindowSurface.SetSettingsFrost(this, hasArtwork && appearance.SettingsFrostedGlassEnabled,
             SettingsFrostSlider.Value);
+        RefreshBackgroundControls();
     }
 
     private void SetSurfaceBrush(string key, string sourceKey, double opacity)
@@ -69,18 +70,23 @@ public partial class SettingsWindow
     private void OnSettingsSurfaceOpacityChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (_loading) return;
-        SettingsSurfaceOpacityValue.Text = $"{(int)e.NewValue}%";
-        _settings.Current.SettingsSurfaceOpacity = e.NewValue / 100;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
+        TryBackgroundChange(() => CommitBackgroundChange(cfg =>
+        {
+            CustomizeSettingsAppearance(cfg);
+            cfg.SettingsSurfaceOpacity = e.NewValue / 100;
+        }));
     }
 
     private void OnSettingsFrostChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        _settings.Current.SettingsFrostedGlassEnabled = SettingsFrostCheck.IsChecked == true;
-        _settings.Current.SettingsFrostedGlassRadius = SettingsFrostSlider.Value;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
+        bool enabled = SettingsFrostCheck.IsChecked == true;
+        double radius = SettingsFrostSlider.Value;
+        TryBackgroundChange(() => CommitBackgroundChange(cfg =>
+        {
+            CustomizeSettingsAppearance(cfg);
+            cfg.SettingsFrostedGlassEnabled = enabled;
+            cfg.SettingsFrostedGlassRadius = radius;
+        }));
     }
 }

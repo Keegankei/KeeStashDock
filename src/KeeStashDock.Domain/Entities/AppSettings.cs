@@ -93,6 +93,14 @@ public sealed class AppSettings
     /// panel. Null/missing file = plain themed background.</summary>
     public string? BackgroundImagePath { get; set; }
 
+    /// <summary>Independent user-chosen Settings artwork. A custom null path explicitly hides artwork.</summary>
+    public string? SettingsBackgroundImagePath { get; set; }
+    public double SettingsBackgroundOverlayOpacity { get; set; } = DefaultBackgroundOverlayOpacity;
+    /// <summary>Separately tracks a Settings scrim edit so old appearance overrides keep the theme's scrim.</summary>
+    public bool SettingsBackgroundOverlayCustomized { get; set; }
+    /// <summary>Independent Settings surface and blur edits; legacy global appearance overrides remain supported.</summary>
+    public bool SettingsAppearanceCustomized { get; set; }
+
     /// <summary>Opacity (0.2-1.0) of the theme-colored scrim laid OVER the
     /// background image. Lower = more image shows through ("see-through"),
     /// higher = closer to the plain theme. Default 0.20 lets the wallpaper
@@ -230,6 +238,9 @@ public sealed class AppSettings
 
     /// <summary>Preserves a user wallpaper independently of a preset. Applying a full preset disables this override without deleting its path.</summary>
     public bool ThemeUseCustomBackground { get; set; } = true;
+
+    /// <summary>Missing values preserve the theme's workspace artwork in Settings.</summary>
+    public bool ThemeUseCustomSettingsBackground { get; set; }
 
     /// <summary>Manual appearance edits override a selected preset while preserving its complete light/dark colors.</summary>
     public bool ThemeAppearanceCustomized { get; set; }

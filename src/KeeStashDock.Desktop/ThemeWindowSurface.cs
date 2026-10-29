@@ -36,13 +36,14 @@ public static class ThemeWindowSurface
                 if (name is "QuickPanelWindow" or "SelectionPopupWindow" or "TranslationResultWindow" or "PanelShadowWindow" or "CaptureOverlay" ||
                     name.Contains("Screenshot", StringComparison.Ordinal) || name.Contains("Region", StringComparison.Ordinal)) return;
                 if (window.GetType() == typeof(Window) && window.AllowsTransparency && !window.ShowActivated) return;
-                Track(window, name is "SettingsWindow" or "WorkbenchWindow" ? "workspace" : "smallWindow");
+                Track(window, name == "SettingsWindow" ? "settings" : name == "WorkbenchWindow" ? "workspace" : "smallWindow");
             }), true);
     }
 
     public static void Track(Window window, string role)
     {
         if (Surfaces.TryGetValue(window, out _) || window.Content is not UIElement content) return;
+        if (window.GetType().Name == "SettingsWindow") role = "settings";
         window.Content = null;
         var surface = new Surface(window, role, content);
         Surfaces.Add(window, surface);
@@ -71,7 +72,12 @@ public static class ThemeWindowSurface
             var root = new Grid(); root.Children.Add(_art); root.Children.Add(content);
             window.Content = root;
             ThemeManager.Changed += Apply;
-            window.Closed += (_, _) => ThemeManager.Changed -= Apply;
+            if (_role == "settings") ThemeManager.SettingsArtworkChanged += Apply;
+            window.Closed += (_, _) =>
+            {
+                ThemeManager.Changed -= Apply;
+                ThemeManager.SettingsArtworkChanged -= Apply;
+            };
             Apply();
         }
 
@@ -79,11 +85,15 @@ public static class ThemeWindowSurface
         {
             ThemeManager.ApplyWindowChrome(_window);
             var variant = ThemeManager.ActiveVariant;
-            if (variant?.Backgrounds.TryGetValue(_role, out var background) != true || background is null)
+            ThemeBackground? background = _role == "settings" ? ThemeManager.GetSettingsBackground()
+                : variant?.Backgrounds.GetValueOrDefault(_role);
+            if (background is null)
             { _art.Visibility = Visibility.Collapsed; _image.Background = null; _imageBrush = null; _background = null; _image.Effect = null; return; }
             BitmapSource? source = ThemeManager.GetBackgroundImage(_role);
             _background = background;
-            _imageBrush = source is null ? null : new ImageBrush(source) { Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.RelativeToBoundingBox };
+            if (source is null) _imageBrush = null;
+            else if (!ReferenceEquals(_imageBrush?.ImageSource, source))
+                _imageBrush = new ImageBrush(source) { Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.RelativeToBoundingBox };
             _image.Background = _imageBrush;
             _art.Visibility = source is null ? Visibility.Collapsed : Visibility.Visible;
             _image.Opacity = background.Opacity;

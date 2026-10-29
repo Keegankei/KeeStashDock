@@ -20,6 +20,8 @@ internal static class SettingsOpacityScenarios
         ThemeAppearanceSnapshot previous = ThemeAppearanceSnapshot.Capture(settings.Current);
         string source = Environment.GetEnvironmentVariable("KEESTASHDOCK_THEME_SOURCE") ?? Path.Combine(AppContext.BaseDirectory, "theme");
         var slider = (Slider)window.FindName("SettingsSurfaceOpacitySlider");
+        var backgroundTarget = (ComboBox)window.FindName("BackgroundTargetCombo");
+        object previousTarget = backgroundTarget.SelectedItem;
         try
         {
             ThemeManager.Initialize(settings, source);
@@ -31,6 +33,7 @@ internal static class SettingsOpacityScenarios
             settings.Current.Theme = "Light";
             settings.Save();
             ReloadControls(window);
+            backgroundTarget.SelectedItem = backgroundTarget.Items.OfType<ComboBoxItem>().Single(item => (string)item.Tag == "settings");
             ThemeWindowSurface.Track(window, "workspace");
             Assert.IsNotNull(ThemeManager.ActiveScheme);
             Assert.IsTrue(slider.IsEnabled);
@@ -121,6 +124,7 @@ internal static class SettingsOpacityScenarios
             ThemeManager.Initialize(settings, previousRoot);
             settings.Save();
             ReloadControls(window);
+            backgroundTarget.SelectedItem = previousTarget;
             window.SelectSettingsPage("General");
         }
     }

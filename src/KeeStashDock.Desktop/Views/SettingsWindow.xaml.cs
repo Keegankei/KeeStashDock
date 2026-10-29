@@ -153,11 +153,7 @@ public partial class SettingsWindow : Window
         SelectInspectionOption(InspectionModifiersCombo, cfg.FloatingInspectionModifiers, "Alt");
         RefreshInspectionGestureControls();
 
-        BgPathText.Text = ThemeManager.GetPanelBackground(_settings.Current) is not null
-            ? ThemeManager.ActiveScheme?.Manifest.Name + " / " + System.IO.Path.GetFileName(cfg.BackgroundImagePath)
-            : cfg.BackgroundImagePath ?? "—";
-        BgOpacitySlider.Value = Math.Clamp(cfg.BackgroundOverlayOpacity, 0.2, 1.0) * 100;
-        BgOpacityValue.Text = $"{(int)BgOpacitySlider.Value}%";
+        RefreshBackgroundControls();
         FrostCheck.IsChecked = cfg.FrostedGlassEnabled;
         FrostSlider.Value = Math.Clamp(cfg.FrostedGlassRadius, 1, 18);
         FrostValue.Text = $"{(int)FrostSlider.Value}px";
@@ -697,32 +693,31 @@ public partial class SettingsWindow : Window
             Filter = "Images (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp",
         };
         if (dlg.ShowDialog(this) != true) return;
-        _settings.Current.BackgroundImagePath = dlg.FileName;
-        _settings.Current.ThemeUseCustomBackground = true;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
-        BgPathText.Text = dlg.FileName;
-        RefreshConditionalOptions();
+        TrySetSelectedBackground(dlg.FileName);
     }
 
     private void OnClearBgClick(object sender, RoutedEventArgs e)
     {
-        _settings.Current.BackgroundImagePath = null;
-        _settings.Current.ThemeUseCustomBackground = true;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
-        BgPathText.Text = "—";
-        RefreshConditionalOptions();
+        TryBackgroundChange(() => SetSelectedBackground(null));
     }
 
     private void OnBgOpacityChanged(object sender,
         RoutedPropertyChangedEventArgs<double> e)
     {
         if (_loading) return;
-        _settings.Current.BackgroundOverlayOpacity = e.NewValue / 100.0;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save();
-        BgOpacityValue.Text = $"{(int)e.NewValue}%";
+        TryBackgroundChange(() => CommitBackgroundChange(cfg =>
+        {
+            if (IsSettingsBackgroundSelected)
+            {
+                cfg.SettingsBackgroundOverlayOpacity = e.NewValue / 100.0;
+                cfg.SettingsBackgroundOverlayCustomized = true;
+            }
+            else
+            {
+                cfg.BackgroundOverlayOpacity = e.NewValue / 100.0;
+                cfg.ThemeAppearanceCustomized = true;
+            }
+        }));
     }
 
     /// <summary>Frost and opacity controls share one handler;
@@ -730,15 +725,21 @@ public partial class SettingsWindow : Window
     private void OnEffectsChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        var cfg = _settings.Current;
-        cfg.FrostedGlassEnabled = FrostCheck.IsChecked == true;
-        cfg.FrostedGlassRadius = FrostSlider.Value;
-        cfg.CardOpacity = CardOpacitySlider.Value / 100.0;
-        cfg.ThemeAppearanceCustomized = true;
-        _settings.Save();
-        FrostValue.Text = $"{(int)FrostSlider.Value}px";
-        CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
-        RefreshConditionalOptions();
+        bool frost = FrostCheck.IsChecked == true;
+        double radius = FrostSlider.Value, opacity = CardOpacitySlider.Value / 100.0;
+        TryBackgroundChange(() =>
+        {
+            CommitBackgroundChange(cfg =>
+            {
+                cfg.FrostedGlassEnabled = frost;
+                cfg.FrostedGlassRadius = radius;
+                cfg.CardOpacity = opacity;
+                cfg.ThemeAppearanceCustomized = true;
+            });
+            FrostValue.Text = $"{(int)FrostSlider.Value}px";
+            CardOpacityValue.Text = $"{(int)CardOpacitySlider.Value}%";
+            RefreshConditionalOptions();
+        });
     }
 
     // -------------------------------------------------------------- data

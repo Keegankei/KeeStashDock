@@ -62,6 +62,176 @@ public sealed class ThemePackageStoreTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void IndependentSettingsArtworkExportRequiresConsentAndUsesPortablePaths(bool includePanel)
+    {
+        ThemePackageStore store = Store("source");
+        ThemeScheme scheme = store.Read(CreateDefinition("settings-art"));
+        string settingsImage = Path.Combine(_root, "private-settings-wallpaper.png");
+        string panelImage = Path.Combine(_root, "private-panel-wallpaper.png");
+        File.WriteAllBytes(settingsImage, Pixel); File.WriteAllBytes(panelImage, Pixel);
+        string output = Path.Combine(_root, "independent.zip");
+        File.WriteAllText(output, "preserve existing output");
+        var appearance = new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", includePanel ? panelImage : null,
+            .45, 0, false, SettingsBackgroundPath: settingsImage, OverrideSettingsBackground: true,
+            SettingsBackgroundOverlayOpacity: .32, SettingsFrostedGlassEnabled: true, SettingsFrostedGlassRadius: 9);
+        Assert.ThrowsExactly<InvalidOperationException>(() => store.Export(scheme, output, appearance));
+        Assert.AreEqual("preserve existing output", File.ReadAllText(output));
+        store.Export(scheme, output, appearance with { AllowBackgroundRedistribution = true });
+        using var stage = Store("target").StageImport(output);
+        foreach (ThemeVariant variant in new[] { stage.Scheme.Light, stage.Scheme.Dark })
+        {
+            Assert.IsFalse(variant.HideSettingsBackground);
+            ThemeBackground art = variant.Backgrounds["settings"];
+            Assert.AreEqual("assets/user-settings-background.png", art.Path);
+            Assert.AreEqual(.32, art.OverlayOpacity);
+            Assert.IsTrue(variant.SettingsFrostedGlassEnabled);
+            Assert.AreEqual(9d, variant.SettingsFrostedGlassRadius);
+            Assert.AreNotEqual(art.Path, variant.Backgrounds["quickPanel"].Path);
+            CollectionAssert.AreEqual(Pixel, File.ReadAllBytes(ThemePackageStore.Resolve(stage.Directory, art.Path)));
+        }
+        using var archive = ZipFile.OpenRead(output);
+        foreach (string variant in new[] { "light", "dark" })
+        {
+            using var reader = new StreamReader(archive.GetEntry("variants/" + variant + ".json")!.Open());
+            string json = reader.ReadToEnd();
+            Assert.IsFalse(json.Contains("private-", StringComparison.Ordinal));
+            Assert.IsFalse(json.Contains(_root, StringComparison.Ordinal));
+        }
+    }
+
+    [TestMethod]
+    public void SettingsArtworkClearAndOverlayExportLeaveWorkspaceArtworkIntact()
+    {
+        string definition = CreateDefinition("workspace-fallback");
+        foreach (string name in new[] { "light", "dark" })
+        {
+            ThemeVariant variant = Variant(name == "light" ? "#FFFFFF" : "#101010");
+            variant.Backgrounds["workspace"] = new() { Path = "assets/picture.png", OverlayOpacity = .75, FocalX = .3 };
+            Write(Path.Combine(definition, "variants", name + ".json"), variant);
+        }
+        ThemePackageStore store = Store("source");
+        ThemeScheme scheme = store.Read(definition);
+        var appearance = new ThemeExportOverrides(.9, 1, "Auto", "#FFFFFF", null, .5, 0, false,
+            SettingsBackgroundOverlayOpacity: .15, OverridePanelAppearance: false,
+            OverrideSettingsAppearance: false, SettingsBackgroundOverlayCustomized: true);
+        string output = Path.Combine(_root, "settings-overlay.zip");
+        store.Export(scheme, output, appearance);
+        using var overlay = Store("overlay").StageImport(output);
+        foreach (ThemeVariant variant in new[] { overlay.Scheme.Light, overlay.Scheme.Dark })
+        {
+            Assert.AreEqual(.75, variant.Backgrounds["workspace"].OverlayOpacity);
+            Assert.AreEqual(.15, variant.Backgrounds["settings"].OverlayOpacity);
+            Assert.AreEqual(.3, variant.Backgrounds["settings"].FocalX);
+        }
+        string cleared = Path.Combine(_root, "settings-cleared.zip");
+        store.Export(overlay.Scheme, cleared, appearance with { OverrideSettingsBackground = true });
+        using var hidden = Store("hidden").StageImport(cleared);
+        foreach (ThemeVariant variant in new[] { hidden.Scheme.Light, hidden.Scheme.Dark })
+        {
+            Assert.IsTrue(variant.HideSettingsBackground);
+            Assert.IsFalse(variant.Backgrounds.ContainsKey("settings"));
+            Assert.AreEqual(.75, variant.Backgrounds["workspace"].OverlayOpacity);
+            Assert.IsTrue(variant.Backgrounds.ContainsKey("quickPanel"));
+        }
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void PanelOnlyExportKeepsEachSettingsVariantAndItsOwnOverlay(bool explicitSettingsArtwork)
+    {
+        ThemePackageStore store = Store("source");
+        ThemeScheme original = store.Read(CreateContrastingAppearanceDefinition(explicitSettingsArtwork));
+        string output = Path.Combine(_root, "panel-only.zip");
+        // The current light appearance is not an explicit Settings override.
+        var appearance = new ThemeExportOverrides(.91, .86, "Auto", "#FFFFFF", null, .55, 1, false,
+            SettingsBackgroundOverlayOpacity: .65, OverrideSettingsAppearance: false);
+        store.Export(original, output, appearance);
+        using var imported = Store("target").StageImport(output);
+        foreach (var (before, after) in new[] { (original.Light, imported.Scheme.Light), (original.Dark, imported.Scheme.Dark) })
+        {
+            Assert.AreEqual(.91, after.CardOpacity);
+            Assert.AreEqual(.86, after.BubbleOpacity);
+            Assert.AreEqual(before.SettingsSurfaceOpacity, after.SettingsSurfaceOpacity);
+            Assert.AreEqual(before.SettingsFrostedGlassEnabled, after.SettingsFrostedGlassEnabled);
+            Assert.AreEqual(before.SettingsFrostedGlassRadius, after.SettingsFrostedGlassRadius);
+            Assert.AreEqual(explicitSettingsArtwork, after.Backgrounds.ContainsKey("settings"),
+                "Unedited fallback artwork must not be replaced with a manufactured Settings definition.");
+            string role = explicitSettingsArtwork ? "settings" : "workspace";
+            Assert.AreEqual(JsonSerializer.Serialize(before.Backgrounds[role], Json),
+                JsonSerializer.Serialize(after.Backgrounds[role], Json),
+                "Each appearance must keep its own unedited Settings scrim and crop.");
+        }
+    }
+
+    [TestMethod]
+    public void SettingsImageOnlyExportKeepsBothPresetPanelAndControlAppearances()
+    {
+        ThemePackageStore store = Store("source");
+        ThemeScheme original = store.Read(CreateContrastingAppearanceDefinition(true));
+        string image = Path.Combine(_root, "personal-settings.png");
+        File.WriteAllBytes(image, Pixel);
+        string output = Path.Combine(_root, "settings-image-only.zip");
+        var appearance = new ThemeExportOverrides(.99, 1, "Graphite", "#FFFFFF", null, .9, 16, true,
+            SettingsSurfaceOpacity: 1, SettingsFrostedGlassRadius: 18, SettingsBackgroundPath: image,
+            OverrideSettingsBackground: true, SettingsBackgroundOverlayOpacity: .32,
+            OverridePanelAppearance: false, OverrideSettingsAppearance: false);
+        store.Export(original, output, appearance);
+        using var imported = Store("target").StageImport(output);
+        foreach (var (before, after) in new[] { (original.Light, imported.Scheme.Light), (original.Dark, imported.Scheme.Dark) })
+        {
+            AssertUnchangedPanelAppearance(before, after);
+            Assert.AreEqual(before.SettingsSurfaceOpacity, after.SettingsSurfaceOpacity);
+            Assert.AreEqual(before.SettingsFrostedGlassEnabled, after.SettingsFrostedGlassEnabled);
+            Assert.AreEqual(before.SettingsFrostedGlassRadius, after.SettingsFrostedGlassRadius);
+            Assert.AreEqual(.32, after.Backgrounds["settings"].OverlayOpacity);
+            Assert.AreEqual("assets/user-settings-background.png", after.Backgrounds["settings"].Path);
+            Assert.AreEqual(JsonSerializer.Serialize(before.Backgrounds["workspace"], Json),
+                JsonSerializer.Serialize(after.Backgrounds["workspace"], Json));
+        }
+    }
+
+    [TestMethod]
+    public void SettingsSurfaceOnlyExportKeepsPanelAndUneditedBackgroundVariants()
+    {
+        ThemePackageStore store = Store("source");
+        ThemeScheme original = store.Read(CreateContrastingAppearanceDefinition(false));
+        string output = Path.Combine(_root, "settings-controls-only.zip");
+        var appearance = new ThemeExportOverrides(.99, 1, "Graphite", "#FFFFFF", null, .9, 16, false,
+            SettingsSurfaceOpacity: .6, SettingsFrostedGlassEnabled: true, SettingsFrostedGlassRadius: 9,
+            SettingsBackgroundOverlayOpacity: .65, OverridePanelAppearance: false);
+        store.Export(original, output, appearance);
+        using var imported = Store("target").StageImport(output);
+        foreach (var (before, after) in new[] { (original.Light, imported.Scheme.Light), (original.Dark, imported.Scheme.Dark) })
+        {
+            AssertUnchangedPanelAppearance(before, after);
+            Assert.AreEqual(.6, after.SettingsSurfaceOpacity);
+            Assert.IsTrue(after.SettingsFrostedGlassEnabled);
+            Assert.AreEqual(9d, after.SettingsFrostedGlassRadius);
+            Assert.IsFalse(after.Backgrounds.ContainsKey("settings"));
+            Assert.AreEqual(JsonSerializer.Serialize(before.Backgrounds["workspace"], Json),
+                JsonSerializer.Serialize(after.Backgrounds["workspace"], Json));
+        }
+    }
+
+    [TestMethod]
+    public void SettingsBackgroundDefinitionsStillRejectInvalidOrConflictingArtwork()
+    {
+        string definition = CreateDefinition("invalid-settings-art");
+        string path = Path.Combine(definition, "variants", "light.json");
+        ThemeVariant variant = Variant("#FFFFFF");
+        variant.Backgrounds["settings"] = new() { Path = "assets/missing.png" };
+        Write(path, variant);
+        Assert.ThrowsExactly<InvalidDataException>(() => Store("target").Read(definition));
+        variant.Backgrounds["settings"].Path = "assets/picture.png";
+        variant.HideSettingsBackground = true;
+        Write(path, variant);
+        Assert.ThrowsExactly<InvalidDataException>(() => Store("target").Read(definition));
+    }
+
+    [TestMethod]
     public void OptionalBubbleColorsRoundTripWithoutBecomingRequired()
     {
         string directory = CreateDefinition("bubble-colors");
@@ -497,6 +667,43 @@ public sealed class ThemePackageStoreTests
         Assert.AreEqual(1, decoded, "Cancellation must stop before decoding the next image.");
         Assert.ThrowsExactly<OperationCanceledException>(() => store.Discover(cancellation.Token));
         Assert.AreEqual(1, decoded);
+    }
+
+    private string CreateContrastingAppearanceDefinition(bool explicitSettingsArtwork)
+    {
+        string directory = CreateDefinition("contrasting-appearance");
+        foreach (string name in new[] { "light", "dark" })
+        {
+            bool dark = name == "dark";
+            ThemeVariant variant = Variant(dark ? "#101010" : "#FFFFFF");
+            variant.CardOpacity = dark ? .93 : .84;
+            variant.BubbleOpacity = dark ? .92 : .8;
+            variant.BubbleStyle = dark ? "Graphite" : "Ivory";
+            variant.PanelTextColorMode = dark ? "Ivory" : "Graphite";
+            variant.SettingsSurfaceOpacity = dark ? .82 : .68;
+            variant.SettingsFrostedGlassEnabled = dark;
+            variant.SettingsFrostedGlassRadius = dark ? 12 : 6;
+            variant.Backgrounds["quickPanel"].OverlayOpacity = dark ? .30 : .36;
+            variant.Backgrounds["quickPanel"].BlurRadius = dark ? 3 : 1;
+            variant.Backgrounds["workspace"] = new()
+            { Path = "assets/picture.png", OverlayOpacity = dark ? .45 : .65, FocalX = dark ? .7 : .3 };
+            if (explicitSettingsArtwork)
+                variant.Backgrounds["settings"] = new()
+                { Path = "assets/picture.png", OverlayOpacity = dark ? .41 : .61, FocalY = dark ? .6 : .4 };
+            Write(Path.Combine(directory, "variants", name + ".json"), variant);
+        }
+        return directory;
+    }
+
+    private static void AssertUnchangedPanelAppearance(ThemeVariant before, ThemeVariant after)
+    {
+        Assert.AreEqual(before.CardOpacity, after.CardOpacity);
+        Assert.AreEqual(before.BubbleOpacity, after.BubbleOpacity);
+        Assert.AreEqual(before.BubbleStyle, after.BubbleStyle);
+        Assert.AreEqual(before.PanelTextColorMode, after.PanelTextColorMode);
+        Assert.AreEqual(before.PanelTextCustomColor, after.PanelTextCustomColor);
+        Assert.AreEqual(JsonSerializer.Serialize(before.Backgrounds["quickPanel"], Json),
+            JsonSerializer.Serialize(after.Backgrounds["quickPanel"], Json));
     }
 
     private string CreateDefinition(string name)

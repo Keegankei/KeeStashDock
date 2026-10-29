@@ -232,6 +232,83 @@ public sealed class SettingsStoreTests
     }
 
     [TestMethod]
+    public void SettingsArtwork_IsIndependentAndLegacySettingsKeepThemeFallback()
+    {
+        File.WriteAllText(_settingsFile, """{"theme":"Dark","themeAppearanceCustomized":true,"backgroundImagePath":"C:\\Pictures\\panel.png","backgroundOverlayOpacity":0.7}""");
+        var store = new SettingsStore(_settingsFile); store.Load();
+        Assert.IsFalse(store.Current.ThemeUseCustomSettingsBackground);
+        Assert.IsNull(store.Current.SettingsBackgroundImagePath);
+        Assert.AreEqual(.2, store.Current.SettingsBackgroundOverlayOpacity);
+        Assert.IsFalse(store.Current.SettingsBackgroundOverlayCustomized,
+            "Legacy appearance customization must not become an explicit Settings scrim override.");
+        Assert.IsFalse(store.Current.SettingsAppearanceCustomized);
+        Assert.IsTrue(store.Current.ThemeAppearanceCustomized,
+            "The old global override must remain intact for previously saved Settings appearance.");
+        store.Current.ThemeUseCustomSettingsBackground = true;
+        store.Current.SettingsBackgroundImagePath = "C:\\Pictures\\settings.png";
+        store.Current.SettingsBackgroundOverlayOpacity = 0;
+        store.Current.SettingsBackgroundOverlayCustomized = true;
+        store.Save();
+        var loaded = new SettingsStore(_settingsFile); loaded.Load();
+        Assert.AreEqual("C:\\Pictures\\panel.png", loaded.Current.BackgroundImagePath);
+        Assert.AreEqual(.7, loaded.Current.BackgroundOverlayOpacity);
+        Assert.IsTrue(loaded.Current.ThemeUseCustomSettingsBackground);
+        Assert.AreEqual("C:\\Pictures\\settings.png", loaded.Current.SettingsBackgroundImagePath);
+        Assert.AreEqual(0d, loaded.Current.SettingsBackgroundOverlayOpacity);
+        Assert.IsTrue(loaded.Current.SettingsBackgroundOverlayCustomized);
+        loaded.Current.SettingsBackgroundImagePath = null;
+        loaded.Save();
+        store.Load();
+        Assert.IsTrue(store.Current.ThemeUseCustomSettingsBackground, "An explicit no-artwork choice must survive restart.");
+        Assert.IsNull(store.Current.SettingsBackgroundImagePath);
+        Assert.AreEqual("C:\\Pictures\\panel.png", store.Current.BackgroundImagePath);
+    }
+
+    [TestMethod]
+    public void MalformedSettingsArtworkPreferencesDoNotResetOtherSavedSettings()
+    {
+        File.WriteAllText(_settingsFile, """{"theme":"Dark","themeUseCustomSettingsBackground":"yes","settingsBackgroundImagePath":42,"settingsBackgroundOverlayOpacity":"opaque","settingsBackgroundOverlayCustomized":"yes","settingsAppearanceCustomized":"yes"}""");
+        var store = new SettingsStore(_settingsFile); store.Load();
+        Assert.AreEqual("Dark", store.Current.Theme);
+        Assert.IsFalse(store.Current.ThemeUseCustomSettingsBackground);
+        Assert.IsNull(store.Current.SettingsBackgroundImagePath);
+        Assert.AreEqual(.2, store.Current.SettingsBackgroundOverlayOpacity);
+        Assert.IsFalse(store.Current.SettingsBackgroundOverlayCustomized);
+        Assert.IsFalse(store.Current.SettingsAppearanceCustomized);
+        store.Current.SettingsBackgroundOverlayOpacity = double.NaN; store.Save();
+        Assert.AreEqual(.2, store.Current.SettingsBackgroundOverlayOpacity);
+        store.Current.SettingsBackgroundOverlayOpacity = 2; store.Save();
+        Assert.AreEqual(1d, store.Current.SettingsBackgroundOverlayOpacity);
+        store.Current.SettingsBackgroundOverlayOpacity = -1; store.Save();
+        Assert.AreEqual(0d, store.Current.SettingsBackgroundOverlayOpacity);
+    }
+
+    [TestMethod]
+    public void IndependentSettingsAppearancePersistsWithoutEnablingPanelOverrides()
+    {
+        var store = new SettingsStore(_settingsFile);
+        store.Load();
+        store.Current.CardOpacity = .84;
+        store.Current.BackgroundOverlayOpacity = .36;
+        store.Current.SettingsSurfaceOpacity = .62;
+        store.Current.SettingsFrostedGlassEnabled = true;
+        store.Current.SettingsFrostedGlassRadius = 11;
+        store.Current.SettingsAppearanceCustomized = true;
+        store.Save();
+
+        var loaded = new SettingsStore(_settingsFile);
+        loaded.Load();
+        Assert.IsTrue(loaded.Current.SettingsAppearanceCustomized);
+        Assert.IsFalse(loaded.Current.ThemeAppearanceCustomized,
+            "Saving Settings-only appearance must not enable the global panel override.");
+        Assert.AreEqual(.62, loaded.Current.SettingsSurfaceOpacity);
+        Assert.IsTrue(loaded.Current.SettingsFrostedGlassEnabled);
+        Assert.AreEqual(11d, loaded.Current.SettingsFrostedGlassRadius);
+        Assert.AreEqual(.84, loaded.Current.CardOpacity);
+        Assert.AreEqual(.36, loaded.Current.BackgroundOverlayOpacity);
+    }
+
+    [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
     public void FloatingPanel_LegacySettingsKeepModeAndUseSafeInspectionDefaults(bool floatingEnabled)

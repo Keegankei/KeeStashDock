@@ -65,7 +65,7 @@ Uma soma de verificação confirma a integridade do arquivo; ela não é uma ass
 
 **Configuração inicial · 1.3.0:** inglês; **Alt+Q** abre o painel e **Alt+W** inicia uma captura. OCR e tradução local não vêm pré-instalados. Atualizações preservam as preferências salvas.
 
-O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo de balão padrão. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Padrão**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
+O balão de seleção fica ativado em **Somente copiar**, com **Google** como tradutor. Estilo de balão padrão. Inicialização com o Windows, coleta automática da área de transferência e colagem direta ficam desativadas. Ocultação nas bordas ativada, com **2 s** para recolher e **0,1 s** para expandir. Tema do sistema, modo **Clássico**, **inspeção arrastando com o botão direito**, cores de texto automáticas e opacidade dos controles de **90%**. Sem imagem de fundo; sobreposição de **20%** e desfoque desativado, com raio salvo de **4 px**. Backups automáticos ativados a cada **24 horas**.
 
 O tamanho do texto e a opacidade das superfícies de Configurações começam em **100 %**. O vidro fosco de Configurações fica **desativado**. Os temas incluídos são opcionais e não são aplicados automaticamente.
 
@@ -86,13 +86,13 @@ O tamanho do texto e a opacidade das superfícies de Configurações começam em
 | Pesquisa no painel rápido | Com o painel ativo, pressione **Ctrl+F**. Pesquise títulos e texto salvo, incluindo resultados de OCR existentes, e combine filtros de grupo, tag e texto/imagem/modelo. Os resultados são carregados em páginas de 50. **Enter** copia o resultado selecionado e **Esc** volta à coleta, preservando o rascunho. |
 | Organização em lote | Selecione itens na área de trabalho para movê-los de grupo, adicionar/remover tags, fixar/desafixar, mover para a lixeira ou restaurar. **Ctrl+A seleciona apenas os resultados carregados.** Cada ação é aplicada por inteiro; em caso de conflito, nenhum item é alterado. É possível desfazer o envio à lixeira enquanto os itens não tiverem sido modificados. |
 | Modelos de texto | Marque explicitamente um item de texto como modelo. Use `{{date}}`, `{{time}}` e variáveis como `{{name}}`, preencha os valores e confira a prévia antes de copiar. O original é preservado e nenhum script ou expressão é executado. Pacotes de grupos com modelos usam o formato v3. |
-| Temas completos | Visualize e aplique cores e fundos claros/escuros harmonizados entre os painéis. Importe ou exporte as duas variantes e suas imagens em um único ZIP de tema. Os temas são independentes do modo Padrão/Espacial; cancelar a prévia restaura a aparência anterior. |
+| Temas completos | Visualize e aplique cores e fundos claros/escuros harmonizados entre os painéis. Importe ou exporte as duas variantes e suas imagens em um único ZIP de tema. Os temas são independentes do modo Clássico/Espacial; cancelar a prévia restaura a aparência anterior. |
 | Tamanho global do texto | Em **Configurações > Aparência > Tamanho do texto**, escolha entre **90% e 150%** para o painel rápido, a área de trabalho, as configurações e outros textos do aplicativo. **100%** restaura o tamanho original. |
 | Área de trabalho renovada | A navegação, a lista de itens e o editor seguem o visual das configurações. No modo escuro, listas e linhas de backup usam fundos harmonizados e texto legível. |
 | Balões compactos | Ações de cópia ao lado do original e do resultado, com um layout mais compacto para idioma de destino, grupo e salvamento. O estilo padrão e Wisteria Atelier usam os mesmos controles com paletas coordenadas. |
 | Opacidade e vidro fosco | Ajuste separadamente as superfícies de Configurações entre **10 % e 100 %**. O desfoque opcional de Configurações suaviza somente a imagem de fundo em **1–18 px**, mantendo o texto nítido. O estilo e a opacidade dos balões podem ser ajustados separadamente. |
 
-Novas instalações continuam usando inglês, tema do sistema, modo Padrão e nenhuma imagem de fundo. A atualização não aplica automaticamente um tema ilustrado nem redefine as preferências salvas.
+Novas instalações continuam usando inglês, tema do sistema, modo Clássico e nenhuma imagem de fundo. A atualização não aplica automaticamente um tema ilustrado nem redefine as preferências salvas.
 
 **Configurações:** navegue entre **Geral**, **Captura e tradução**, **Aparência**, **Componentes locais**, **Backup e dados** e **Sobre**. As opções dependentes aparecem quando necessárias; ocultá-las preserva os valores salvos.
 
@@ -127,16 +127,18 @@ Use o painel rápido para capturas pontuais e a **área de trabalho do aplicativ
 | Histórico da área de transferência | Colete automaticamente o **texto** copiado, se ativar essa opção; textos vazios ou grandes demais são ignorados e duplicatas não são adicionadas novamente. Desativado por padrão. |
 | Colagem direta | Cole uma entrada de texto copiada no aplicativo anterior, se ativar essa opção e a janela de destino puder ser confirmada com segurança. Desativado por padrão. |
 
-### 2. Painéis Padrão e Espacial
+### 2. Painéis Clássico e Espacial
+
+Na versão 1.3.0, Padrão passa a se chamar **Clássico**; Espacial mantém o nome. As capturas antigas da versão 1.2.3 preservam os rótulos originais.
 
 *As capturas do painel e o GIF de movimento desta seção mostram a versão 1.2.3.*
 
 Selecione **Configurações > Aparência > Modo do painel**. Os dois modos mantêm os mesmos controles, tipografia, cores e disposição dos cartões.
 
 <table>
-  <tr><th>Padrão</th><th>Espacial</th></tr>
+  <tr><th>Clássico</th><th>Espacial</th></tr>
   <tr>
-    <td><img src="docs/images/classic-panel.png" width="290" alt="Painel Padrão com visualização plana e sombras suaves"></td>
+    <td><img src="docs/images/classic-panel.png" width="290" alt="Painel Clássico com visualização plana e sombras suaves"></td>
     <td><img src="docs/images/floating-panel.png" width="290" alt="Painel Espacial com perspectiva, cartões em camadas e uma borda lateral fina"></td>
   </tr>
   <tr><td>Uma apresentação plana e estável com sombras suaves.</td><td>Perspectiva, respostas independentes dos cartões e profundidade visível entre as camadas.</td></tr>
@@ -163,6 +165,8 @@ As configurações também oferecem paletas de texto para o painel, uma cor de t
 <p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Configurações de aparência com modo Padrão e valores de uma nova instalação"></p>
 
 </details>
+Em **Configurações > Aparência > Imagem de fundo**, escolha **Painel rápido** ou **Página de configurações** em **Personalizar fundo**. Selecione ou remova uma imagem e ajuste a sobreposição e o desfoque de cada área separadamente. **Usar fundo do tema** restaura a imagem predefinida da área escolhida. A exportação do tema preserva os dois fundos separadamente e pede confirmação antes de incluir imagens pessoais.
+
 #### Temas de aparência completos
 
 Abra **Configurações > Aparência > Temas completos**, selecione um tema e escolha **Pré-visualizar e aplicar**. Selecione Claro, Escuro ou Sistema e escolha se os balões de seleção e os resultados acompanham o tema. **Cancelar** restaura a aparência anterior. No modo Sistema, a variante diurna ou noturna acompanha o tema claro ou escuro do Windows.
@@ -182,7 +186,7 @@ Todos os temas são opcionais. Novas instalações mantêm o tema do sistema sem
 
 Use **Importar tema** para carregar um ZIP de tema ou **Exportar aparência atual** para compartilhar as variantes clara e escura, as imagens e as configurações de aparência. A inclusão de fundos pessoais precisa ser escolhida explicitamente. Os temas não contêm entradas, chaves de API, atalhos nem instalações de componentes. Os arquivos ficam em `theme/`, ao lado do executável; atualizações preservam os temas importados em `theme/custom/`.
 
-A **opacidade das superfícies de Configurações** ajusta cartões, navegação e campos sem esmaecer o texto. O **fundo fosco de Configurações** desfoca apenas a imagem do tema e começa desativado. Configurações sem imagem ou com alto contraste usam superfícies opacas legíveis.
+A **opacidade das superfícies de Configurações** ajusta cartões, navegação e campos sem esmaecer o texto. O **fundo fosco de Configurações** desfoca apenas a imagem de fundo das configurações e começa desativado. Configurações sem imagem ou com alto contraste usam superfícies opacas legíveis.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Configurações de aparência da versão 1.3.0 com tema Wisteria escuro opcional, superfícies a 60 por cento e desfoque do fundo de 8px"></p>
 

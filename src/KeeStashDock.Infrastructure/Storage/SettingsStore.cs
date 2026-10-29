@@ -71,9 +71,15 @@ public sealed class SettingsStore
                     var normalized = System.Text.Json.Nodes.JsonNode.Parse(json)!;
                     if (document.RootElement.TryGetProperty("themePresetId", out JsonElement preset) && preset.ValueKind != JsonValueKind.String)
                         normalized["themePresetId"] = "";
-                    foreach (string name in new[] { "themeUseCustomBackground", "themeAppearanceCustomized" })
+                    foreach (string name in new[] { "themeUseCustomBackground", "themeUseCustomSettingsBackground", "themeAppearanceCustomized", "settingsBackgroundOverlayCustomized", "settingsAppearanceCustomized" })
                         if (document.RootElement.TryGetProperty(name, out JsonElement flag) && flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
                             normalized[name] = name == "themeUseCustomBackground";
+                    if (document.RootElement.TryGetProperty("settingsBackgroundImagePath", out JsonElement settingsImage) &&
+                        settingsImage.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+                        normalized["settingsBackgroundImagePath"] = null;
+                    if (document.RootElement.TryGetProperty("settingsBackgroundOverlayOpacity", out JsonElement settingsOverlay) &&
+                        (settingsOverlay.ValueKind != JsonValueKind.Number || !settingsOverlay.TryGetDouble(out _)))
+                        normalized["settingsBackgroundOverlayOpacity"] = AppSettings.DefaultBackgroundOverlayOpacity;
                     json = normalized.ToJsonString();
                 }
                 Current = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts) ?? new AppSettings();
@@ -161,6 +167,8 @@ public sealed class SettingsStore
         Current.PanelWidth = NormalizePositiveDouble(Current.PanelWidth, 320, 200, 2000);
         Current.BackgroundOverlayOpacity = NormalizePositiveDouble(
             Current.BackgroundOverlayOpacity, AppSettings.DefaultBackgroundOverlayOpacity, 0.20, 1.0);
+        Current.SettingsBackgroundOverlayOpacity = double.IsFinite(Current.SettingsBackgroundOverlayOpacity)
+            ? Math.Clamp(Current.SettingsBackgroundOverlayOpacity, 0, 1) : AppSettings.DefaultBackgroundOverlayOpacity;
         Current.FrostedGlassRadius = NormalizePositiveDouble(
             Current.FrostedGlassRadius, 4, 1, 18);
         Current.CardOpacity = NormalizePositiveDouble(Current.CardOpacity, 0.9, 0.1, 1.0);

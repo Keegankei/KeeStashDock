@@ -113,12 +113,19 @@ public sealed partial class ThemePreviewWindow : Window
         var old = ThemeAppearanceSnapshot.Capture(_settings.Current);
         var cfg = _settings.Current;
         cfg.ThemePresetId = _scheme?.Key ?? ""; cfg.Theme = mode;
-        cfg.ThemeUseCustomBackground = false; cfg.ThemeAppearanceCustomized = false;
+        cfg.ThemeUseCustomBackground = false; cfg.ThemeUseCustomSettingsBackground = false; cfg.ThemeAppearanceCustomized = false;
+        cfg.SettingsBackgroundOverlayCustomized = false;
+        cfg.SettingsAppearanceCustomized = false;
         ThemeVariant? variant = ThemeManager.IsDark ? _scheme?.Dark : _scheme?.Light;
         cfg.CardOpacity = variant?.CardOpacity ?? 0.9;
         cfg.SettingsSurfaceOpacity = variant?.SettingsSurfaceOpacity ?? 1;
         cfg.SettingsFrostedGlassEnabled = variant?.SettingsFrostedGlassEnabled ?? false;
         cfg.SettingsFrostedGlassRadius = variant?.SettingsFrostedGlassRadius ?? 8;
+        ThemeBackground? settingsArtwork = null;
+        if (variant?.HideSettingsBackground != true && variant is not null &&
+            !variant.Backgrounds.TryGetValue("settings", out settingsArtwork))
+            variant.Backgrounds.TryGetValue("workspace", out settingsArtwork);
+        cfg.SettingsBackgroundOverlayOpacity = settingsArtwork?.OverlayOpacity ?? .2;
         cfg.PanelTextColorMode = variant?.PanelTextColorMode ?? "Auto";
         cfg.PanelTextCustomColor = variant?.PanelTextCustomColor ?? "#FFFFFF";
         if (variant?.Backgrounds.TryGetValue("quickPanel", out ThemeBackground? background) == true)
@@ -145,18 +152,26 @@ public sealed partial class ThemePreviewWindow : Window
 internal sealed record ThemeAppearanceSnapshot(string Id, string Mode, bool CustomBackground, bool Customized,
     double CardOpacity, string TextMode, string TextColor, double Overlay, bool Frost, double Blur,
     string BubbleStyle, double BubbleOpacity, double SettingsSurfaceOpacity,
-    bool SettingsFrostedGlassEnabled, double SettingsFrostedGlassRadius)
+    bool SettingsFrostedGlassEnabled, double SettingsFrostedGlassRadius,
+    bool CustomSettingsBackground, string? SettingsBackgroundPath, double SettingsBackgroundOverlayOpacity,
+    bool SettingsBackgroundOverlayCustomized, bool SettingsAppearanceCustomized)
 {
     internal static ThemeAppearanceSnapshot Capture(AppSettings cfg) => new(cfg.ThemePresetId, cfg.Theme, cfg.ThemeUseCustomBackground,
         cfg.ThemeAppearanceCustomized, cfg.CardOpacity, cfg.PanelTextColorMode, cfg.PanelTextCustomColor, cfg.BackgroundOverlayOpacity,
         cfg.FrostedGlassEnabled, cfg.FrostedGlassRadius, cfg.SelectionBubbleStyle, cfg.BubbleOpacity,
-        cfg.SettingsSurfaceOpacity, cfg.SettingsFrostedGlassEnabled, cfg.SettingsFrostedGlassRadius);
+        cfg.SettingsSurfaceOpacity, cfg.SettingsFrostedGlassEnabled, cfg.SettingsFrostedGlassRadius,
+        cfg.ThemeUseCustomSettingsBackground, cfg.SettingsBackgroundImagePath, cfg.SettingsBackgroundOverlayOpacity,
+        cfg.SettingsBackgroundOverlayCustomized, cfg.SettingsAppearanceCustomized);
     internal void Restore(AppSettings cfg)
     {
         cfg.ThemePresetId = Id; cfg.Theme = Mode; cfg.ThemeUseCustomBackground = CustomBackground; cfg.ThemeAppearanceCustomized = Customized;
         cfg.CardOpacity = CardOpacity; cfg.PanelTextColorMode = TextMode; cfg.PanelTextCustomColor = TextColor;
         cfg.SettingsSurfaceOpacity = SettingsSurfaceOpacity;
         cfg.SettingsFrostedGlassEnabled = SettingsFrostedGlassEnabled; cfg.SettingsFrostedGlassRadius = SettingsFrostedGlassRadius;
+        cfg.ThemeUseCustomSettingsBackground = CustomSettingsBackground;
+        cfg.SettingsBackgroundImagePath = SettingsBackgroundPath; cfg.SettingsBackgroundOverlayOpacity = SettingsBackgroundOverlayOpacity;
+        cfg.SettingsBackgroundOverlayCustomized = SettingsBackgroundOverlayCustomized;
+        cfg.SettingsAppearanceCustomized = SettingsAppearanceCustomized;
         cfg.BackgroundOverlayOpacity = Overlay; cfg.FrostedGlassEnabled = Frost; cfg.FrostedGlassRadius = Blur;
         cfg.SelectionBubbleStyle = BubbleStyle; cfg.BubbleOpacity = BubbleOpacity;
     }

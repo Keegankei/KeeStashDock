@@ -582,23 +582,6 @@
                 </Grid>
               </Grid>
               <TextBlock Style="{StaticResource S.Caption}" Margin="0,8,0,0" Text="{loc:Tr Settings.SettingsSurfaceOpacityHint}" />
-              <CheckBox x:Name="SettingsFrostCheck" Margin="0,12,0,0" Content="{loc:Tr Settings.SettingsFrost}" Checked="OnSettingsFrostChanged" Unchecked="OnSettingsFrostChanged" />
-              <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,8" Text="{loc:Tr Settings.SettingsFrostHint}" />
-              <Grid x:Name="SettingsFrostRadiusRow" Margin="0,4,0,0" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.SettingsFrostRadius}" />
-                <Grid Grid.Column="1">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <Slider x:Name="SettingsFrostSlider" Minimum="1" Maximum="18" Value="8" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnSettingsFrostChanged" MinWidth="70" AutomationProperties.Name="{loc:Tr Settings.SettingsFrostRadius}" />
-                  <TextBlock x:Name="SettingsFrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
-                </Grid>
-              </Grid>
             </StackPanel>
           </Border>
           <Border Style="{StaticResource S.Section}">
@@ -715,12 +698,26 @@
           <Border Style="{StaticResource S.Section}">
             <StackPanel>
               <TextBlock Text="{loc:Tr Settings.Bg}" TextWrapping="Wrap" Style="{StaticResource S.SectionTitle}" />
+              <Grid Style="{StaticResource S.Row}">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.Bg.Target}" />
+                <ComboBox x:Name="BackgroundTargetCombo" Grid.Column="1" SelectedIndex="0" SelectionChanged="OnBackgroundTargetChanged" AutomationProperties.Name="{loc:Tr Settings.Bg.Target}">
+                  <ComboBoxItem Tag="quickPanel" Content="{loc:Tr Settings.Bg.Target.Panel}" />
+                  <ComboBoxItem Tag="settings" Content="{loc:Tr Settings.Bg.Target.Settings}" />
+                </ComboBox>
+              </Grid>
+              <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,12" Text="{loc:Tr Settings.Bg.Target.Hint}" />
               <WrapPanel>
                 <Button Style="{StaticResource S.Button}" Click="OnPickBgClick" Content="{loc:Tr Settings.Bg.Select}" />
                 <Button Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnClearBgClick" Content="{loc:Tr Settings.Bg.Clear}" />
                 <Button x:Name="RestoreBackgroundButton" Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnRestoreBackgroundClick" Content="{loc:Tr Theme.RestoreBackground}" />
+                <Button x:Name="UseThemeBackgroundButton" Style="{StaticResource S.Button}" Margin="8,0,0,0" Click="OnUseThemeBackgroundClick" Content="{loc:Tr Settings.Bg.UseTheme}" />
               </WrapPanel>
               <TextBlock x:Name="BgPathText" FontSize="{DynamicResource T.Font12}" Margin="0,6,0,12" Foreground="{DynamicResource B.TextMuted}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" />
+              <TextBlock x:Name="BackgroundStatusText" Style="{StaticResource S.Caption}" Margin="0,0,0,12" Visibility="Collapsed" />
               <StackPanel x:Name="BackgroundOptions">
                 <Grid Style="{StaticResource S.Row}">
                   <Grid.ColumnDefinitions>
@@ -737,15 +734,36 @@
                     <TextBlock x:Name="BgOpacityValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
                   </Grid>
                 </Grid>
-                <CheckBox x:Name="FrostCheck" VerticalAlignment="Center" Margin="0,3,0,10" Checked="OnEffectsChanged" Unchecked="OnEffectsChanged" Content="{loc:Tr Settings.Frost}" />
-                <Grid x:Name="FrostRadiusRow">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <Slider x:Name="FrostSlider" Minimum="1" Maximum="18" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnEffectsChanged" MinWidth="70" />
-                  <TextBlock x:Name="FrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
-                </Grid>
+                <StackPanel x:Name="QuickPanelFrostOptions">
+                  <CheckBox x:Name="FrostCheck" VerticalAlignment="Center" Margin="0,3,0,10" Checked="OnEffectsChanged" Unchecked="OnEffectsChanged" Content="{loc:Tr Settings.Frost}" />
+                  <Grid x:Name="FrostRadiusRow">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Slider x:Name="FrostSlider" Minimum="1" Maximum="18" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnEffectsChanged" MinWidth="70" />
+                    <TextBlock x:Name="FrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
+                  </Grid>
+                </StackPanel>
+                <StackPanel x:Name="SettingsBackgroundOptions" Visibility="Collapsed">
+                  <CheckBox x:Name="SettingsFrostCheck" Margin="0,12,0,0" Content="{loc:Tr Settings.SettingsFrost}" Checked="OnSettingsFrostChanged" Unchecked="OnSettingsFrostChanged" />
+                  <TextBlock Style="{StaticResource S.Caption}" Margin="0,0,0,8" Text="{loc:Tr Settings.SettingsFrostHint}" />
+                  <Grid x:Name="SettingsFrostRadiusRow" Margin="0,4,0,0" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource S.RowLabel}" Text="{loc:Tr Settings.SettingsFrostRadius}" />
+                    <Grid Grid.Column="1">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Slider x:Name="SettingsFrostSlider" Minimum="1" Maximum="18" Value="8" VerticalAlignment="Center" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="OnSettingsFrostChanged" MinWidth="70" AutomationProperties.Name="{loc:Tr Settings.SettingsFrostRadius}" />
+                      <TextBlock x:Name="SettingsFrostValue" Style="{StaticResource S.RowValue}" Grid.Column="1" />
+                    </Grid>
+                  </Grid>
+                </StackPanel>
               </StackPanel>
             </StackPanel>
           </Border>

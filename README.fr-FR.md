@@ -65,7 +65,7 @@ Une somme de contrôle vérifie l’intégrité du fichier ; ce n’est pas une 
 
 **Réglages initiaux · 1.3.0 :** anglais ; **Alt+Q** ouvre le panneau et **Alt+W** lance une capture. L’OCR et la traduction locale ne sont pas préinstallés. Les mises à niveau conservent les préférences enregistrées.
 
-La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Standard**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
+La bulle de sélection est activée en mode **Copier uniquement**, avec **Google** pour la traduction. Style de bulle par défaut. Le lancement au démarrage, la collecte automatique du presse-papiers et le collage direct sont désactivés. Le masquage au bord de l’écran est activé : délai de repli de **2 s**, de dépli de **0,1 s**. Thème système, mode **Classique**, **inspection en glissant avec le bouton droit**, couleurs de texte automatiques et opacité des contrôles de **90 %**. Aucune image de fond ; voile à **20 %**, flou désactivé, rayon enregistré de **4 px**. Les sauvegardes automatiques sont activées toutes les **24 heures**.
 
 La taille du texte et l’opacité des surfaces des paramètres commencent à **100 %**. L’effet de verre dépoli des paramètres est **désactivé**. Les thèmes fournis restent facultatifs et ne sont pas appliqués automatiquement.
 
@@ -86,13 +86,13 @@ La taille du texte et l’opacité des surfaces des paramètres commencent à **
 | Recherche dans le panneau rapide | Lorsque le panneau est actif, appuyez sur **Ctrl+F**. Recherchez les titres et le texte enregistré, y compris les résultats OCR existants, puis combinez les filtres de groupe, d’étiquette et de texte/image/modèle. Les résultats se chargent par pages de 50. **Entrée** copie le résultat sélectionné et **Échap** revient à la collecte en conservant le brouillon. |
 | Organisation groupée | Sélectionnez des éléments dans l’espace de travail pour les déplacer, ajouter/retirer des étiquettes, les épingler/désépingler, les mettre à la corbeille ou les restaurer. **Ctrl+A sélectionne uniquement les résultats chargés.** Chaque action est appliquée en entier ; en cas de conflit, rien n’est modifié. Le déplacement vers la corbeille peut être annulé tant que les éléments n’ont pas changé. |
 | Modèles de texte | Marquez explicitement un élément texte comme modèle. Utilisez `{{date}}`, `{{time}}` et des variables comme `{{name}}`, renseignez-les, puis vérifiez l’aperçu avant de copier. L’original est conservé et aucun script ni expression n’est exécuté. Les paquets de groupes contenant des modèles utilisent le format v3. |
-| Thèmes complets | Prévisualisez et appliquez des couleurs et fonds clairs/sombres harmonisés entre les panneaux. Importez ou exportez les deux variantes et leurs images dans un même ZIP de thème. Le thème est indépendant du mode Standard/Spatial ; annuler l’aperçu restaure l’apparence précédente. |
+| Thèmes complets | Prévisualisez et appliquez des couleurs et fonds clairs/sombres harmonisés entre les panneaux. Importez ou exportez les deux variantes et leurs images dans un même ZIP de thème. Le thème est indépendant du mode Classique/Spatial ; annuler l’aperçu restaure l’apparence précédente. |
 | Taille globale du texte | Dans **Paramètres > Apparence > Taille du texte**, choisissez **90 % à 150 %** pour le panneau rapide, l’espace de travail, les paramètres et les autres textes de l’application. **100 %** rétablit la taille d’origine. |
 | Espace de travail repensé | La navigation, la liste d’éléments et l’éditeur reprennent le style des paramètres. En mode sombre, les listes et lignes de sauvegarde utilisent des fonds harmonisés et du texte lisible. |
 | Bulles compactes | Actions de copie directement à côté de la source et du résultat, avec une disposition plus resserrée pour la langue cible, le groupe et l’enregistrement. Le style par défaut et Wisteria Atelier utilisent les mêmes commandes avec des palettes harmonisées. |
 | Opacité et verre dépoli | Réglez séparément les surfaces des paramètres de **10 % à 100 %**. Le flou facultatif des paramètres adoucit uniquement l’illustration de fond sur **1–18 px**, sans flouter le texte. Le style et l’opacité des bulles se règlent séparément. |
 
-Une nouvelle installation conserve l’anglais, le thème du système, le mode Standard et aucun fond d’écran. Une mise à niveau n’applique pas automatiquement de thème illustré et ne réinitialise pas les préférences enregistrées.
+Une nouvelle installation conserve l’anglais, le thème du système, le mode Classique et aucun fond d’écran. Une mise à niveau n’applique pas automatiquement de thème illustré et ne réinitialise pas les préférences enregistrées.
 
 **Paramètres :** naviguez entre **Général**, **Capture et traduction**, **Apparence**, **Composants locaux**, **Sauvegarde et données** et **À propos**. Les options dépendantes s’affichent lorsqu’elles sont utiles ; les masquer conserve leurs valeurs enregistrées.
 
@@ -127,16 +127,18 @@ Utilisez le panneau rapide pour les captures ponctuelles et l’**espace de trav
 | Historique du presse-papiers | Collectez automatiquement le **texte** copié si vous le souhaitez ; les textes vides ou trop volumineux sont ignorés et les doublons ne sont pas ajoutés. Désactivé par défaut. |
 | Collage direct | Collez une entrée de texte copiée dans l’application précédente, si vous activez cette option et si sa fenêtre cible peut être confirmée de manière sûre. Désactivé par défaut. |
 
-### 2. Panneaux Standard et Spatial
+### 2. Panneaux Classique et Spatial
+
+Dans la version 1.3.0, Standard devient **Classique** ; Spatial conserve son nom. Les anciennes captures de la version 1.2.3 gardent leurs libellés d’origine.
 
 *Les captures de panneau et le GIF animé de cette section montrent 1.2.3.*
 
 Accédez à **Paramètres > Apparence > Mode du panneau**. Les deux modes conservent les mêmes contrôles, la même typographie, les mêmes couleurs et la même disposition des cartes.
 
 <table>
-  <tr><th>Standard</th><th>Spatial</th></tr>
+  <tr><th>Classique</th><th>Spatial</th></tr>
   <tr>
-    <td><img src="docs/images/classic-panel.png" width="290" alt="Panneau Standard avec une vue plane et des ombres douces"></td>
+    <td><img src="docs/images/classic-panel.png" width="290" alt="Panneau Classique avec une vue plane et des ombres douces"></td>
     <td><img src="docs/images/floating-panel.png" width="290" alt="Panneau Spatial avec perspective, cartes superposées et fine tranche latérale"></td>
   </tr>
   <tr><td>Une présentation plane et stable, avec des ombres douces.</td><td>Une vue en perspective, des réactions propres à chaque carte et une profondeur visible entre les couches.</td></tr>
@@ -163,6 +165,8 @@ Les paramètres proposent aussi des palettes de texte pour le panneau, une coule
 <p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Réglages d’apparence avec le mode Standard et les valeurs d’une nouvelle installation"></p>
 
 </details>
+Dans **Paramètres > Apparence > Image de fond**, choisissez **Panneau rapide** ou **Page des paramètres** sous **Personnaliser le fond**. Sélectionnez ou effacez une image et réglez le voile et le flou indépendamment pour chaque zone. **Utiliser le fond du thème** restaure l’image prédéfinie de la zone choisie. L’export du thème conserve les deux fonds séparément et demande votre accord avant d’inclure des images personnelles.
+
 #### Thèmes d’apparence complets
 
 Ouvrez **Paramètres > Apparence > Thèmes complets**, choisissez un thème, puis **Prévisualiser et appliquer**. Choisissez Clair, Sombre ou Système, et indiquez si les bulles de sélection et les résultats suivent le thème. **Annuler** restaure l’apparence précédente. En mode Système, la variante jour/nuit suit le thème clair ou sombre de Windows.
@@ -182,7 +186,7 @@ Tous les thèmes sont facultatifs. Une nouvelle installation conserve le thème 
 
 **Importer un thème** charge un ZIP de thème. **Exporter l’apparence actuelle** partage les deux variantes claire/sombre, leurs images et les réglages d’apparence. L’inclusion d’une image de fond personnelle doit être explicitement choisie. Les thèmes ne contiennent ni entrées, ni clés API, ni raccourcis, ni installations de composants. Leurs fichiers résident dans `theme/` à côté de l’exécutable ; les mises à jour préservent les thèmes importés dans `theme/custom/`.
 
-L’**opacité des surfaces des paramètres** agit sur les cartes, la navigation et les champs sans estomper le texte. Le **fond dépoli des paramètres** floute seulement l’illustration du thème et est initialement désactivé. Sans image de fond ou en contraste élevé, les paramètres utilisent des surfaces opaques lisibles.
+L’**opacité des surfaces des paramètres** agit sur les cartes, la navigation et les champs sans estomper le texte. Le **fond dépoli des paramètres** floute seulement l’image de fond des paramètres et est initialement désactivé. Sans image de fond ou en contraste élevé, les paramètres utilisent des surfaces opaques lisibles.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Paramètres d’apparence 1.3.0 avec thème Wisteria sombre facultatif, opacité des surfaces à 60 pour cent et flou du fond de 8px"></p>
 

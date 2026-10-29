@@ -65,7 +65,7 @@ A checksum checks file integrity; it is not a publisher signature. The current p
 
 **Fresh-install defaults · 1.3.0:** English; **Alt+Q** opens the panel and **Alt+W** starts a screenshot. OCR and offline translation are not preinstalled. Existing saved preferences are preserved on upgrade.
 
-The selection bubble is enabled in **Copy only** mode with **Google** selected for translation and Default styling. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Standard** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
+The selection bubble is enabled in **Copy only** mode with **Google** selected for translation and Default styling. Startup launch, automatic clipboard collection and direct paste are off. Edge auto-hide is on, with **2 s** collapse and **0.1 s** expansion delays. Appearance starts with the system theme, **Classic** mode, right-button **Drag to inspect**, automatic text colors and **90%** panel-controls opacity. There is no background image; overlay opacity is **20%** and frosting is off with a stored **4 px** radius. Scheduled backups are enabled every **24 hours**.
 
 Text size starts at **100%**. Settings surface opacity is **100%** and Settings frosting is **off**. The bundled themes are optional and are not applied automatically.
 
@@ -86,13 +86,13 @@ Text size starts at **100%**. Settings surface opacity is **100%** and Settings 
 | Quick-panel search | With the panel active, press **Ctrl+F**. Search titles and stored text, including existing OCR text, and combine group, tag and text/image/template filters. Results load in pages of 50. Use **Enter** to copy a selected result and **Esc** to return to collecting; the input draft is preserved. |
 | Batch organization | Select workbench entries to move groups, add/remove tags, pin/unpin, move to Trash or restore. **Ctrl+A selects only loaded results.** Each batch commits together; conflicts leave every item unchanged. A move to Trash can be undone while its items remain unchanged. |
 | Text templates | Explicitly mark a text entry as a template. Use `{{date}}`, `{{time}}` and named variables such as `{{name}}`; fill in values, preview, then copy. The original stays intact, and no scripts or expressions run. Group packages containing templates use format v3. |
-| Complete themes | Preview and apply coordinated light/dark palettes and backgrounds across app panels. Import or export both variants and their assets as one theme ZIP. Themes are independent of Standard/Spatial mode; cancelling a preview restores the previous appearance. |
+| Complete themes | Preview and apply coordinated light/dark palettes and backgrounds across app panels. Import or export both variants and their assets as one theme ZIP. Themes are independent of Classic/Spatial mode; cancelling a preview restores the previous appearance. |
 | Global text size | Adjust **Settings > Appearance > Text size** from **90% to 150%** for the quick panel, workbench, Settings and other app text. **100%** restores the original size. |
 | Workbench appearance | Refreshed navigation, item list and editor surfaces follow the Settings design. Dark-mode list surfaces and backup rows use matching backgrounds and readable text. |
 | Compact bubbles | Inline source/result copy actions and a tighter target-language/group/save layout. Default styling and Wisteria Atelier use the same controls with coordinated palettes. |
-| Opacity and frosting | Adjust Settings surfaces independently from **10% to 100%**. Optional Settings frosting softens background artwork at **1–18 px** while text stays sharp. Bubble style and opacity are independently adjustable. |
+| Opacity and frosting | Adjust Settings surfaces independently from **10% to 100%**. Optional Settings frosting softens the background image at **1–18 px** while text stays sharp. Bubble style and opacity are independently adjustable. |
 
-Fresh installs still use English, the system theme, Standard mode and no background image. An upgrade does not automatically apply an illustrated theme or reset saved preferences.
+Fresh installs still use English, the system theme, Classic mode and no background image. An upgrade does not automatically apply an illustrated theme or reset saved preferences.
 
 **Settings:** use the category navigation for **General**, **Capture & translation**, **Appearance**, **Local components**, **Backup & data**, and **About**. Dependent options appear when relevant; hiding them preserves their saved values.
 
@@ -127,16 +127,18 @@ Use the quick panel for short captures and the **workbench** for managing your c
 | Clipboard history | Optionally collect copied **text** automatically; empty and oversized text is ignored and duplicates are not added again. Off by default. |
 | Direct paste | Optionally paste a copied text entry into the previous application when its target window can be safely confirmed. Off by default. |
 
-### 2. Standard and Spatial panels
+### 2. Classic and Spatial panels
+
+In 1.3.0, Standard is renamed **Classic**; Spatial keeps its name. The older 1.2.3 screenshots retain their original labels.
 
 *The panel screenshots and motion GIF in this section show 1.2.3.*
 
 Select **Settings > Appearance > Panel mode**. Both modes keep the same controls, typography, colors, and card layout.
 
 <table>
-  <tr><th>Standard</th><th>Spatial</th></tr>
+  <tr><th>Classic</th><th>Spatial</th></tr>
   <tr>
-    <td><img src="docs/images/classic-panel.png" width="290" alt="Standard panel with a flat view and soft shadows"></td>
+    <td><img src="docs/images/classic-panel.png" width="290" alt="Classic panel with a flat view and soft shadows"></td>
     <td><img src="docs/images/floating-panel.png" width="290" alt="Spatial panel with perspective, layered cards, and a thin side edge"></td>
   </tr>
   <tr><td>A steady, flat presentation with soft shadows.</td><td>Perspective, independent card feedback, and visible depth between layers.</td></tr>
@@ -164,6 +166,8 @@ Settings also offers panel text palettes, a custom text color, and automatic con
 
 </details>
 
+In **Settings > Appearance > Background image**, choose **Quick panel** or **Settings page** under **Customize background**. Choose or clear an image and adjust the overlay and blur for that area independently. **Use theme background** restores the selected area’s preset artwork. Theme export preserves both backgrounds separately and asks before including personal images.
+
 #### Complete appearance themes
 
 Open **Settings > Appearance > Complete themes**, select a preset, then choose **Preview and apply**. Switch between Light, Dark or System, and choose whether selection bubbles and result panels follow the theme. **Cancel** restores the previous appearance.
@@ -181,7 +185,7 @@ Each preset includes portrait and landscape artwork plus complete light/dark col
 
 Use **Import theme** to load a theme ZIP or **Export current appearance** to share both light/dark variants, images and appearance settings. Personal background images require explicit inclusion. Themes do not contain entries, API keys, hotkeys or component installations. Theme files live in `theme/` beside the executable; updates preserve imported themes in `theme/custom/`.
 
-**Settings surface opacity** adjusts cards, navigation and inputs without fading text. **Frosted settings background** blurs theme artwork only and starts off. Settings uses readable opaque surfaces when no artwork is selected or high contrast is active.
+**Settings surface opacity** adjusts cards, navigation and inputs without fading text. **Frosted settings background** blurs the Settings background image only and starts off. Settings uses readable opaque surfaces when no artwork is selected or high contrast is active.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="1.3.0 Appearance settings with optional Wisteria dark theme, 60 percent Settings surface opacity and 8px artwork frosting"></p>
 

@@ -33,13 +33,15 @@ no manual environment setup is needed. Keep the application entry point and
   inserts a new line. Click an entry to copy it.
 - Use **Alt+W** or a screenshot button, select a region, then choose **Save screenshot**, **Extract text**, or **Extract and translate**. **Enter** saves; **Esc** or right-click cancels. Extracting text alone creates no library entry and does not automatically copy text.
 - Open a saved image entry and use **Recognize text** to add editable, searchable text. OCR runs locally. Translation uses only your configured provider when explicitly requested; source text remains available after failure.
-- In **Settings > Appearance**, choose **Standard** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
+- In **Settings > Appearance**, choose **Classic** or **Spatial** panel mode. Spatial keeps the same controls with perspective, layered cards and a thin panel edge. Choose **Fixed** or **Drag to inspect**. Hold the right mouse button on a card body or panel background and drag to adjust the view; release to keep the angle. Settings can select the middle button or a custom button/modifier combination. Windows accessibility preferences can disable animation.
 - **Hide at desktop edge** is enabled by default to tuck the panel into a small handle when dragged to an edge. Hover over or click the handle to restore it. Ordinary collapse keeps only the six toolbar buttons.
 - Select **Copy and translate** for two independent selection-bubble buttons. Copy saves the selection to the dock; Translate uses the same source text without adding an entry.
 - Choose **Translation target language** independently of the interface language. The default is **Follow interface language**. A target selected in a result window applies only to that result; retry uses the retained source text.
 - In a temporary OCR or translation result, choose a group and **Save source**, **Save translation**, or **Save both**. Saving both creates one text entry. Saving is explicit and does not copy text or save the screenshot.
 - Under **Settings > Capture & translation**, independently show or hide the result's target selector and save controls. They appear after recognition or translation finishes. Hidden controls retain their saved values.
 - If a shortcut cannot be registered, click the tray notification to open Settings. Each shortcut has a persistent status there; tray actions remain usable. A failed replacement keeps the previous working shortcut.
+
+In **Settings > Appearance > Background image**, choose **Quick panel** or **Settings page** under **Customize background**. Select or clear an image, and adjust overlay opacity and blur for that area without changing the other area. **Use theme background** restores that area’s preset artwork. Theme export retains both backgrounds separately; including personal images requires confirmation.
 
 ## Search, organize and reuse
 
@@ -76,7 +78,7 @@ preferences, including language and shortcuts.
 | Automatic clipboard collection / direct paste | Off / Off |
 | Auto-hide when dragged to an edge | On |
 | Collapse / expand delay | 2 s / 0.1 s |
-| Theme / panel mode | Follow system / Standard |
+| Theme / panel mode | Follow system / Classic |
 | Complete theme / text size | Default, no artwork / 100% (adjustable from 90% to 150%) |
 | Spatial inspection / button | Drag to inspect / Right mouse button |
 | Panel text colors / controls opacity | Auto / 90% |

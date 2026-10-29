@@ -10,16 +10,18 @@ The format follows Keep a Changelog. Release numbers use semantic versioning.
 
 ### Added
 
+- Separate background customization for the quick panel and Settings, with per-area image selection, clearing, overlay opacity and blur. Restore the theme background for either area; theme export preserves both independently and confirms personal-image sharing.
 - Quick-panel search with a separate input, Ctrl+F, cancellable debouncing, group/tag/type filters and 50-item pages. Existing capture drafts remain intact when entering or leaving search.
 - Workbench multi-selection and transactional group, tag, pin, Trash and restore actions. Selection is separate from the editor; stale selections fail without partial changes. A move to Trash can be undone during the current session while its items remain unchanged.
 - Explicit text templates with named variables, a single date/time snapshot, literal-brace escaping and a preview before copying. Variable values are plain text and are never evaluated recursively. Ordinary snippets keep their existing behavior.
 - Complete importable/exportable light and dark themes under the application `theme` directory. Four optional presets appear in order: Sunlit Gallery, Twilight Study, Wisteria Atelier and Wisteria Reverie. Each has portrait/landscape day and night artwork, complete light/dark palettes, preview/cancel and separate personal-background export consent. System appearance switches both palette and artwork with Windows.
 - Global text-size adjustment from 90% to 150% in Settings > Appearance, with immediate preview, persistent preferences and a reset to 100%. Text in the quick panel, workbench, Settings, notes and result windows scales while icon glyphs keep their existing size.
 - Independent Settings surface opacity from 10% to 100% for theme artwork. Cards, navigation and input backgrounds adjust immediately while text, icons and dropdown menus stay opaque. Complete theme import/export preserves the setting; existing themes default to 100%.
-- Optional frosted backgrounds for Settings. Only the theme image is blurred, with adjustable strength; text and controls remain sharp. Complete themes retain the preference.
+- Optional frosted backgrounds for Settings. Only the Settings background image is blurred, with adjustable strength; text and controls remain sharp. Complete themes retain the preference.
 
 ### Changed
 
+- Renamed the panel modes to Classic / Spatial, with updated localized names and unchanged settings and behavior.
 - Made translation results more compact, with inline copy actions and a tighter language/group/save layout while retaining independent source and result actions.
 - Restyled theme preview/apply to match Settings, with grouped appearance controls, rounded artwork, readable sample controls and a fixed action footer. Narrow windows stack the cards while keeping Apply and Cancel visible.
 - Redesigned selection and translation bubbles with segmented icon actions, crisp layered surfaces, distinct result/source areas, an explicit result-copy action and grouped language/save controls. Wisteria Atelier adds coordinated pearl/lavender and deep-violet bubble palettes; older theme packages use compatible fallback colors.

@@ -92,6 +92,7 @@ public static class ThemeManager
         Application.Current.Dispatcher.Invoke(() =>
         {
             if (_settings.Current.ThemePresetId != _lastSelection || _settings.Current.Theme != _lastMode) Apply(_settings.Current.Theme);
+            else SettingsArtworkChanged?.Invoke();
         });
     }
 
@@ -115,6 +116,9 @@ public static class ThemeManager
 
     public static string? GetBackgroundPath(string role)
     {
+        if (SystemParameters.HighContrast) return null;
+        if (role == "settings")
+            return _settings is null ? null : GetSettingsBackgroundPath(_settings.Current);
         if (ActiveVariant?.Backgrounds.TryGetValue(role, out ThemeBackground? background) != true || background is null || ActiveScheme is null) return null;
         try { return ThemePackageStore.Resolve(ActiveScheme.Directory, background.Path); }
         catch (Exception ex) when (ThemePackageStore.IsPackageFailure(ex)) { return null; }
@@ -125,6 +129,46 @@ public static class ThemeManager
         (_previewActive || !saved.ThemeUseCustomBackground) && ActiveVariant?.Backgrounds.TryGetValue("quickPanel", out ThemeBackground? background) == true
             ? background : null;
 
+    /// <summary>Settings has an independent override; older themes inherit workspace artwork.</summary>
+    public static string? GetSettingsBackgroundPath(AppSettings saved)
+    {
+        if (SystemParameters.HighContrast) return null;
+        if (!_previewActive && saved.ThemeUseCustomSettingsBackground)
+            return string.IsNullOrWhiteSpace(saved.SettingsBackgroundImagePath) ? null : saved.SettingsBackgroundImagePath;
+        if (ActiveVariant?.HideSettingsBackground == true || ActiveScheme is null) return null;
+        string role = ActiveVariant?.Backgrounds.ContainsKey("settings") == true ? "settings" : "workspace";
+        if (ActiveVariant?.Backgrounds.TryGetValue(role, out ThemeBackground? background) != true || background is null) return null;
+        try { return ThemePackageStore.Resolve(ActiveScheme.Directory, background.Path); }
+        catch (Exception ex) when (ThemePackageStore.IsPackageFailure(ex)) { return null; }
+    }
+
+    internal static ThemeBackground? GetSettingsBackground() =>
+        _settings is null ? null : GetSettingsBackground(_settings.Current);
+
+    public static ThemeBackground? GetSettingsBackground(AppSettings saved)
+    {
+        if (SystemParameters.HighContrast) return null;
+        bool customized = !_previewActive && saved.SettingsBackgroundOverlayCustomized;
+        bool ownImage = !_previewActive && saved.ThemeUseCustomSettingsBackground;
+        ThemeBackground? original = null;
+        if (!ownImage)
+        {
+            if (ActiveVariant is not ThemeVariant variant || variant.HideSettingsBackground) return null;
+            if (!variant.Backgrounds.TryGetValue("settings", out original)) variant.Backgrounds.TryGetValue("workspace", out original);
+            if (original is null) return null;
+        }
+        else if (string.IsNullOrWhiteSpace(saved.SettingsBackgroundImagePath)) return null;
+        return new ThemeBackground
+        {
+            Path = ownImage ? saved.SettingsBackgroundImagePath! : original!.Path,
+            Opacity = original?.Opacity ?? 1,
+            OverlayOpacity = ownImage || customized ? saved.SettingsBackgroundOverlayOpacity : original!.OverlayOpacity,
+            BlurRadius = original?.BlurRadius ?? 0,
+            FocalX = original?.FocalX ?? .5,
+            FocalY = original?.FocalY ?? .5,
+        };
+    }
+
     /// <summary>Computes a disposable appearance snapshot; never rewrites the user's original wallpaper or layout.</summary>
     public static AppSettings CreatePanelAppearanceSettings(AppSettings saved)
     {
@@ -132,6 +176,7 @@ public static class ThemeManager
         {
             AppSettings accessible = saved.Copy();
             accessible.BackgroundImagePath = null; accessible.CardOpacity = 1; accessible.SettingsSurfaceOpacity = 1;
+            accessible.SettingsBackgroundImagePath = null;
             accessible.PanelTextColorMode = "Auto"; accessible.FrostedGlassEnabled = false;
             accessible.BubbleOpacity = 1;
             accessible.SettingsFrostedGlassEnabled = false;
@@ -142,15 +187,22 @@ public static class ThemeManager
             if (_previewActive)
             {
                 AppSettings preview = saved.Copy(); preview.BackgroundImagePath = null; preview.CardOpacity = .9; preview.SettingsSurfaceOpacity = 1;
+                preview.SettingsBackgroundImagePath = null;
                 preview.SettingsFrostedGlassEnabled = false; preview.SettingsFrostedGlassRadius = 8;
                 preview.PanelTextColorMode = "Auto"; preview.PanelTextCustomColor = "#FFFFFF";
                 return preview;
             }
-            if (saved.ThemeUseCustomBackground || string.IsNullOrEmpty(saved.BackgroundImagePath)) return saved;
-            AppSettings plain = saved.Copy(); plain.BackgroundImagePath = null; return plain;
+            AppSettings plain = saved.Copy();
+            if (!saved.ThemeUseCustomBackground) plain.BackgroundImagePath = null;
+            if (!saved.ThemeUseCustomSettingsBackground) plain.SettingsBackgroundImagePath = null;
+            return plain;
         }
         AppSettings effective = saved.Copy();
         bool custom = !_previewActive && saved.ThemeAppearanceCustomized;
+        bool settingsCustom = !_previewActive && (saved.ThemeAppearanceCustomized || saved.SettingsAppearanceCustomized);
+        effective.SettingsBackgroundImagePath = GetSettingsBackgroundPath(saved);
+        if (GetSettingsBackground(saved) is ThemeBackground settingsBackground)
+            effective.SettingsBackgroundOverlayOpacity = settingsBackground.OverlayOpacity;
         if (_previewActive || !saved.ThemeUseCustomBackground)
         {
             effective.BackgroundImagePath = GetBackgroundPath("quickPanel");
@@ -164,15 +216,18 @@ public static class ThemeManager
         if (!custom)
         {
             effective.CardOpacity = variant.CardOpacity;
-            effective.SettingsSurfaceOpacity = variant.SettingsSurfaceOpacity;
-            effective.SettingsFrostedGlassEnabled = variant.SettingsFrostedGlassEnabled;
-            effective.SettingsFrostedGlassRadius = variant.SettingsFrostedGlassRadius;
             if (saved.SelectionBubbleStyle == "FollowTheme")
             {
                 effective.BubbleOpacity = variant.BubbleOpacity;
             }
             effective.PanelTextColorMode = variant.PanelTextColorMode;
             effective.PanelTextCustomColor = variant.PanelTextCustomColor;
+        }
+        if (!settingsCustom)
+        {
+            effective.SettingsSurfaceOpacity = variant.SettingsSurfaceOpacity;
+            effective.SettingsFrostedGlassEnabled = variant.SettingsFrostedGlassEnabled;
+            effective.SettingsFrostedGlassRadius = variant.SettingsFrostedGlassRadius;
         }
         return effective;
     }
@@ -221,6 +276,9 @@ public static class ThemeManager
 
     /// <summary>Raised after every palette swap; chromed windows re-tint.</summary>
     public static event Action? Changed;
+
+    /// <summary>Refreshes artwork after saved preference changes without rebuilding the global palette.</summary>
+    internal static event Action? SettingsArtworkChanged;
 
     public static void Apply(string theme)
     {

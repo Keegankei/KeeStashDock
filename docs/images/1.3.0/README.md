@@ -5,14 +5,15 @@ interface, 100% text size, isolated settings and fictional sample content. They
 were selected from the local theme-dialog and r5 layout checks performed on
 2026-10-23 through 2026-10-25. All four selection/result previews were refreshed
 on 2026-10-28 after removing bubble frosting, text glow and shadows, before
-publication. They do not capture the user's desktop, clipboard, collection or
+publication. The Settings background-category preview was refreshed on
+2026-10-29. They do not capture the user's desktop, clipboard, collection or
 credentials.
 
 | File | View and deliberate settings |
 | --- | --- |
 | `workbench-light.png` | Template editor and collection, optional Wisteria Atelier Light |
 | `theme-preview-light.png` | Wisteria Atelier Light preview with fixed Apply/Cancel footer |
-| `settings-frosted-dark.png` | Scrolled Appearance page, optional Wisteria Dark, 60% Settings opacity and 8 px artwork blur |
+| `settings-frosted-dark.png` | Scrolled Appearance page with Settings background category selected, optional Wisteria Dark, 60% Settings opacity and 8 px artwork blur |
 | `selection-default.png` | Default bubble styling with optional combined Copy/Translate mode |
 | `selection-wisteria-dark.png` | The same optional combined actions in Wisteria Dark |
 | `translation-default.png` | Compact Default result, prefilled English/Chinese example text, language and save controls enabled |

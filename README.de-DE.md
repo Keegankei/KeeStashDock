@@ -65,7 +65,7 @@ Eine Prüfsumme prüft die Dateiintegrität; sie ist keine Herausgebersignatur. 
 
 **Voreinstellungen bei Neuinstallation · 1.3.0:** Englisch; **Alt+Q** öffnet das Panel, **Alt+W** startet einen Screenshot. OCR und lokale Übersetzung sind nicht vorinstalliert. Updates behalten gespeicherte Einstellungen bei.
 
-Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Standard**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
+Die Auswahlblase ist mit **Nur kopieren** aktiviert; Übersetzungsanbieter ist **Google**. Blasenstil: Standard. Autostart, automatische Zwischenablage-Erfassung und direktes Einfügen sind aus. Automatisches Ausblenden am Bildschirmrand ist an: **2 s** zum Einklappen, **0,1 s** zum Aufklappen. Systemdesign, **Klassisch**-Modus, **Ziehen mit gedrückter rechter Maustaste**, automatische Textfarben und **90 %** Deckkraft der Panel-Steuerelemente sind voreingestellt. Kein Hintergrundbild; Überlagerung **20 %**, Unschärfe aus, gespeicherter Radius **4 px**. Automatische Sicherungen sind alle **24 Stunden** aktiviert.
 
 Die Textgröße beginnt bei **100 %**, die Deckkraft der Einstellungsoberflächen bei **100 %**. Der Milchglaseffekt für Einstellungen ist **ausgeschaltet**. Die mitgelieferten Designs sind optional und werden nicht automatisch angewendet.
 
@@ -86,13 +86,13 @@ Die Textgröße beginnt bei **100 %**, die Deckkraft der Einstellungsoberfläche
 | Suche im Schnellpanel | Drücken Sie bei aktivem Panel **Strg+F**. Durchsuchen Sie Titel und gespeicherten Text einschließlich vorhandener OCR-Ergebnisse und kombinieren Sie Gruppen-, Tag- und Text/Bild/Vorlagenfilter. Ergebnisse werden in Seiten mit 50 Einträgen geladen. **Enter** kopiert das ausgewählte Ergebnis, **Esc** kehrt zur Erfassung zurück. Der Eingabeentwurf bleibt erhalten. |
 | Sammelaktionen | Wählen Sie Einträge im Arbeitsbereich, um sie in Gruppen zu verschieben, Tags hinzuzufügen/zu entfernen, anzuheften/zu lösen, in den Papierkorb zu verschieben oder wiederherzustellen. **Strg+A wählt nur geladene Ergebnisse aus.** Eine Aktion wird vollständig übernommen oder bei Konflikten ohne Änderungen abgebrochen. Das Verschieben in den Papierkorb lässt sich rückgängig machen, solange die Einträge unverändert sind. |
 | Textvorlagen | Kennzeichnen Sie einen Texteintrag ausdrücklich als Vorlage. Nutzen Sie `{{date}}`, `{{time}}` und Variablen wie `{{name}}`, füllen Sie sie aus und prüfen Sie die Vorschau vor dem Kopieren. Das Original bleibt erhalten; Skripte und Ausdrücke werden nicht ausgeführt. Gruppenpakete mit Vorlagen verwenden Format v3. |
-| Vollständige Designs | Zeigen Sie abgestimmte helle/dunkle Farben und Hintergründe für die App in der Vorschau an und wenden Sie sie an. Beide Varianten und Bilder lassen sich als gemeinsames Design-ZIP importieren/exportieren. Designs sind vom Standard-/Raummodus unabhängig. Abbrechen der Vorschau stellt das vorige Erscheinungsbild wieder her. |
+| Vollständige Designs | Zeigen Sie abgestimmte helle/dunkle Farben und Hintergründe für die App in der Vorschau an und wenden Sie sie an. Beide Varianten und Bilder lassen sich als gemeinsames Design-ZIP importieren/exportieren. Designs sind vom klassischen/räumlichen Modus unabhängig. Abbrechen der Vorschau stellt das vorige Erscheinungsbild wieder her. |
 | Globale Textgröße | Wählen Sie unter **Einstellungen > Erscheinungsbild > Textgröße** einen Wert von **90 % bis 150 %** für Schnellpanel, Arbeitsbereich, Einstellungen und weitere App-Texte. **100 %** stellt die ursprüngliche Größe wieder her. |
 | Neuer Arbeitsbereich | Navigation, Eintragsliste und Editor sind auf das Design der Einstellungen abgestimmt. Listen und Sicherungszeilen erhalten im dunklen Modus passende Hintergründe und gut lesbaren Text. |
 | Kompakte Blasen | Kopieraktionen direkt neben Original und Ergebnis sowie ein kompakteres Layout für Zielsprache, Gruppe und Speichern. Standardstil und Wisteria Atelier verwenden dieselben Bedienelemente mit abgestimmten Farben. |
 | Deckkraft und Milchglas | Die Einstellungsoberflächen lassen sich unabhängig auf **10 % bis 100 %** einstellen. Der optionale Milchglaseffekt zeichnet das Hintergrundbild der Einstellungen mit **1–18 px** weich; Text bleibt scharf. Stil und Deckkraft der Auswahlblase sind separat einstellbar. |
 
-Neuinstallationen starten weiterhin auf Englisch, mit dem Systemdesign, im Standardmodus und ohne Hintergrundbild. Ein Upgrade aktiviert kein illustriertes Design automatisch und setzt gespeicherte Einstellungen nicht zurück.
+Neuinstallationen starten weiterhin auf Englisch, mit dem Systemdesign, im klassischen Modus und ohne Hintergrundbild. Ein Upgrade aktiviert kein illustriertes Design automatisch und setzt gespeicherte Einstellungen nicht zurück.
 
 **Einstellungen:** Die Navigation gliedert sich in **Allgemein**, **Erfassen & Übersetzen**, **Darstellung**, **Lokale Komponenten**, **Sicherung & Daten** und **Über**. Abhängige Optionen erscheinen bei Bedarf; ausgeblendete Werte bleiben gespeichert.
 
@@ -127,16 +127,18 @@ Verwenden Sie das Schnellpanel für kurze Eingaben und die **Werkbank** zur Verw
 | Zwischenablageverlauf | Kopierten **Text** auf Wunsch automatisch sammeln; leere und zu große Texte werden ignoriert, Duplikate nicht erneut hinzugefügt. Standardmäßig deaktiviert. |
 | Direkt einfügen | Einen kopierten Texteintrag auf Wunsch in die vorherige Anwendung einfügen, wenn sich deren Zielfenster sicher bestätigen lässt. Standardmäßig deaktiviert. |
 
-### 2. Panelmodi Standard und Räumlich
+### 2. Panelmodi Klassisch und Räumlich
+
+Ab 1.3.0 heißt der bisherige Standardmodus **Klassisch**; Räumlich behält seinen Namen. Die älteren Screenshots aus 1.2.3 zeigen die bisherigen Bezeichnungen.
 
 *Die Panel-Screenshots und das Bewegungs-GIF in diesem Abschnitt zeigen 1.2.3.*
 
 Wählen Sie **Einstellungen > Darstellung > Panelmodus**. Beide Modi behalten dieselben Bedienelemente, Schriften, Farben und Kartenanordnungen bei.
 
 <table>
-  <tr><th>Standard</th><th>Räumlich</th></tr>
+  <tr><th>Klassisch</th><th>Räumlich</th></tr>
   <tr>
-    <td><img src="docs/images/classic-panel.png" width="290" alt="Standardpanel mit flacher Ansicht und weichen Schatten"></td>
+    <td><img src="docs/images/classic-panel.png" width="290" alt="Klassisches Panel mit flacher Ansicht und weichen Schatten"></td>
     <td><img src="docs/images/floating-panel.png" width="290" alt="Räumliches Panel mit Perspektive, gestaffelten Karten und einer dünnen Seitenkante"></td>
   </tr>
   <tr><td>Eine ruhige, flache Darstellung mit weichen Schatten.</td><td>Perspektive, unabhängige Kartenreaktionen und sichtbare Tiefe zwischen den Ebenen.</td></tr>
@@ -163,6 +165,8 @@ Die Einstellungen bieten außerdem Textfarbpaletten für das Panel, eine eigene 
 <p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Darstellungseinstellungen mit Standardmodus und den Voreinstellungen einer Neuinstallation"></p>
 
 </details>
+Wählen Sie unter **Einstellungen > Darstellung > Hintergrundbild > Hintergrund anpassen** das **Schnellpanel** oder die **Einstellungsseite**. Bilder lassen sich für jeden Bereich unabhängig auswählen oder entfernen; Überlagerung und Unschärfe sind ebenfalls getrennt einstellbar. **Designhintergrund verwenden** stellt das vorgegebene Bild des ausgewählten Bereichs wieder her. Der Designexport bewahrt beide Hintergründe getrennt und fragt nach, bevor eigene Bilder aufgenommen werden.
+
 #### Vollständige Erscheinungsbilder
 
 Öffnen Sie **Einstellungen > Darstellung > Vollständige Designs**, wählen Sie ein Design und dann **Vorschau und anwenden**. Wählen Sie Hell, Dunkel oder System und legen Sie fest, ob Auswahlblasen und Ergebnisfenster dem Design folgen. **Abbrechen** stellt die vorherige Darstellung wieder her. Im Systemmodus folgt die Tag-/Nachtvariante dem hellen oder dunklen Windows-Design.
@@ -182,7 +186,7 @@ Alle Designs sind optional. Neuinstallationen verwenden weiterhin das Systemdesi
 
 Mit **Design importieren** laden Sie ein Design-ZIP. **Aktuelles Erscheinungsbild exportieren** teilt beide hellen/dunklen Varianten einschließlich Bildern und Darstellungseinstellungen. Persönliche Hintergrundbilder müssen ausdrücklich eingeschlossen werden. Designs enthalten keine Einträge, API-Schlüssel, Tastenkürzel oder Komponenteninstallationen. Die Dateien liegen in `theme/` neben der Anwendung; Updates erhalten importierte Designs unter `theme/custom/`.
 
-Die **Deckkraft der Einstellungsoberflächen** verändert Karten, Navigation und Eingabefelder, ohne Text zu verblassen. **Milchglas-Hintergrund der Einstellungen** zeichnet nur das Designbild weich und ist zunächst ausgeschaltet. Ohne Einstellungsbild oder bei hohem Kontrast werden lesbare, undurchsichtige Oberflächen verwendet.
+Die **Deckkraft der Einstellungsoberflächen** verändert Karten, Navigation und Eingabefelder, ohne Text zu verblassen. **Milchglas-Hintergrund der Einstellungen** zeichnet nur das Hintergrundbild der Einstellungen weich und ist zunächst ausgeschaltet. Ohne Einstellungsbild oder bei hohem Kontrast werden lesbare, undurchsichtige Oberflächen verwendet.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Darstellungseinstellungen von 1.3.0 mit optionalem dunklem Wisteria-Design, 60 Prozent Oberflächendeckkraft und 8px Hintergrundunschärfe"></p>
 

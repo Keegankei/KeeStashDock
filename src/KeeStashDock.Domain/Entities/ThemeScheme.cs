@@ -17,6 +17,8 @@ public sealed class ThemeVariant
 {
     public Dictionary<string, string> Colors { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, ThemeBackground> Backgrounds { get; set; } = new(StringComparer.Ordinal);
+    /// <summary>Explicitly hides Settings artwork instead of falling back to workspace.</summary>
+    public bool HideSettingsBackground { get; set; }
     public double CardOpacity { get; set; } = 0.90;
     public double SettingsSurfaceOpacity { get; set; } = 1;
     public bool SettingsFrostedGlassEnabled { get; set; }

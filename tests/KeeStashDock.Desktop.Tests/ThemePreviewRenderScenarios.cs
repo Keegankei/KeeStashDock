@@ -123,12 +123,15 @@ internal static class ThemePreviewRenderScenarios
                 ((Slider)options.FindName("SettingsSurfaceOpacitySlider")).Value = 60;
                 Render(options, destination, "v130-theme-settings-opacity60-" + suffix + ".png", new Size(960, 780),
                     "SettingsSurfaceOpacitySlider");
+                var backgroundTarget = (ComboBox)options.FindName("BackgroundTargetCombo");
+                backgroundTarget.SelectedItem = backgroundTarget.Items.OfType<ComboBoxItem>().Single(item => (string)item.Tag == "settings");
                 ((CheckBox)options.FindName("SettingsFrostCheck")).IsChecked = true;
                 ((Slider)options.FindName("SettingsFrostSlider")).Value = 8;
                 Render(options, destination, "v130-theme-settings-opacity60-frost8-" + suffix + ".png", new Size(960, 780),
                     "SettingsFrostSlider");
                 ((CheckBox)options.FindName("SettingsFrostCheck")).IsChecked = false;
                 ((Slider)options.FindName("SettingsSurfaceOpacitySlider")).Value = 100;
+                backgroundTarget.SelectedIndex = 0;
                 settings.Current.ThemeAppearanceCustomized = false;
                 settings.Save();
             }
@@ -151,7 +154,7 @@ internal static class ThemePreviewRenderScenarios
 
     private static void MaskPaths(SettingsWindow window)
     {
-        foreach (string name in new[] { "OcrPathText", "OfflinePathText", "BackupPathText", "DataPathText" })
+        foreach (string name in new[] { "OcrPathText", "OfflinePathText", "BackupPathText", "DataPathText", "BgPathText" })
             switch (window.FindName(name))
             {
                 case TextBlock text: text.Text = "[Path hidden for privacy]"; break;
@@ -182,6 +185,7 @@ internal static class ThemePreviewRenderScenarios
 
     private static void Render(Window window, string destination, string name, Size size, string? revealControl = null)
     {
+        if (window is SettingsWindow settingsWindow) MaskPaths(settingsWindow);
         var content = (FrameworkElement)window.Content;
         window.Content = null;
         var frame = new Border { Child = content, DataContext = window.DataContext, FlowDirection = window.FlowDirection,

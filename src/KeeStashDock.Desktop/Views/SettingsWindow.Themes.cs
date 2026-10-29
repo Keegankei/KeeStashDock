@@ -81,7 +81,10 @@ public partial class SettingsWindow
         { if (!Dispatcher.HasShutdownStarted) Dispatcher.BeginInvoke(new Action(UpdateThemeStatus)); return; }
         if (_themeOperation || ThemePresetStatus is null) return;
         ThemePresetStatus.Text = ThemeManager.LoadError is not null ? LocalizationService.Instance[ThemeManager.LoadError] :
-            _settings.Current.ThemeAppearanceCustomized || _settings.Current.ThemeUseCustomBackground && !string.IsNullOrEmpty(_settings.Current.BackgroundImagePath)
+            _settings.Current.ThemeAppearanceCustomized || _settings.Current.SettingsAppearanceCustomized ||
+            _settings.Current.SettingsBackgroundOverlayCustomized ||
+            _settings.Current.ThemeUseCustomBackground && !string.IsNullOrEmpty(_settings.Current.BackgroundImagePath) ||
+            _settings.Current.ThemeUseCustomSettingsBackground && !string.IsNullOrEmpty(_settings.Current.SettingsBackgroundImagePath)
                 ? LocalizationService.Instance["Theme.Customized"] : LocalizationService.Instance["Theme.CompleteHint"];
     }
 
@@ -150,16 +153,23 @@ public partial class SettingsWindow
         ThemeScheme? active = ThemeManager.ActiveScheme;
         var cfg = _settings.Current;
         string? background = cfg.ThemeUseCustomBackground ? cfg.BackgroundImagePath : null;
-        if (!string.IsNullOrEmpty(background) && MessageBox.Show(this, LocalizationService.Instance["Theme.ExportBackgroundConfirm"],
+        string? settingsBackground = cfg.ThemeUseCustomSettingsBackground ? cfg.SettingsBackgroundImagePath : null;
+        if ((!string.IsNullOrEmpty(background) || !string.IsNullOrEmpty(settingsBackground)) && MessageBox.Show(this, LocalizationService.Instance["Theme.ExportBackgroundConfirm"],
                 "KeeStashDock", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
         var file = new SaveFileDialog { Filter = "Theme package (*.zip)|*.zip", FileName = (active?.Manifest.Id ?? "keestashdock-appearance") + "-theme.zip",
             Title = LocalizationService.Instance["Theme.Export"] };
         if (file.ShowDialog(this) != true) return;
-        ThemeExportOverrides? appearance = active is null || cfg.ThemeAppearanceCustomized || !string.IsNullOrEmpty(background)
+        ThemeExportOverrides? appearance = active is null || cfg.ThemeAppearanceCustomized || cfg.SettingsAppearanceCustomized ||
+            cfg.SettingsBackgroundOverlayCustomized || cfg.ThemeUseCustomBackground || cfg.ThemeUseCustomSettingsBackground
             ? new(cfg.CardOpacity, cfg.BubbleOpacity, cfg.PanelTextColorMode, cfg.PanelTextCustomColor,
                 background, cfg.BackgroundOverlayOpacity, cfg.FrostedGlassEnabled ? cfg.FrostedGlassRadius : 0, true,
                 cfg.SelectionBubbleStyle, cfg.ThemeUseCustomBackground, cfg.SettingsSurfaceOpacity,
-                SettingsFrostedGlassEnabled: cfg.SettingsFrostedGlassEnabled, SettingsFrostedGlassRadius: cfg.SettingsFrostedGlassRadius) : null;
+                SettingsFrostedGlassEnabled: cfg.SettingsFrostedGlassEnabled, SettingsFrostedGlassRadius: cfg.SettingsFrostedGlassRadius,
+                SettingsBackgroundPath: settingsBackground, OverrideSettingsBackground: cfg.ThemeUseCustomSettingsBackground,
+                SettingsBackgroundOverlayOpacity: ThemeManager.CreatePanelAppearanceSettings(cfg).SettingsBackgroundOverlayOpacity,
+                OverridePanelAppearance: active is null || cfg.ThemeAppearanceCustomized,
+                OverrideSettingsAppearance: active is null || cfg.ThemeAppearanceCustomized || cfg.SettingsAppearanceCustomized,
+                SettingsBackgroundOverlayCustomized: cfg.SettingsBackgroundOverlayCustomized) : null;
         _themeOperation = true; ThemePackageButtons.IsEnabled = false;
         try
         {
@@ -189,9 +199,8 @@ public partial class SettingsWindow
 
     private void OnRestoreBackgroundClick(object sender, RoutedEventArgs e)
     {
-        _settings.Current.ThemeUseCustomBackground = true;
-        _settings.Current.ThemeAppearanceCustomized = true;
-        _settings.Save(); ReloadAppearanceControls();
+        string? path = IsSettingsBackgroundSelected ? _settings.Current.SettingsBackgroundImagePath : _settings.Current.BackgroundImagePath;
+        if (path is not null) TrySetSelectedBackground(path);
     }
 
     private sealed record ThemeChoice(string Key, string Name, ThemeScheme? Scheme);

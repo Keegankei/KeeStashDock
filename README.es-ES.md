@@ -65,7 +65,7 @@ Una suma de comprobación verifica la integridad del archivo; no es una firma de
 
 **Valores iniciales · 1.3.0:** inglés; **Alt+Q** abre el panel y **Alt+W** inicia una captura. El OCR y la traducción local no vienen preinstalados. Las actualizaciones conservan las preferencias guardadas.
 
-La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo de burbuja predeterminado. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Estándar**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
+La burbuja de selección está activada en **Solo copiar**, con **Google** como traductor. Estilo de burbuja predeterminado. Inicio automático, recopilación del portapapeles y pegado directo desactivados. La ocultación en los bordes está activada, con **2 s** para contraer y **0,1 s** para expandir. Tema del sistema, modo **Clásico**, **inspección arrastrando con el botón derecho**, colores de texto automáticos y opacidad de los controles del **90 %**. Sin imagen de fondo; superposición al **20 %** y desenfoque desactivado, con radio guardado de **4 px**. Copias de seguridad automáticas activadas cada **24 horas**.
 
 El tamaño del texto y la opacidad de las superficies de Configuración empiezan en **100 %**. El vidrio esmerilado de Configuración está **desactivado**. Los temas incluidos son opcionales y no se aplican automáticamente.
 
@@ -86,13 +86,13 @@ El tamaño del texto y la opacidad de las superficies de Configuración empiezan
 | Búsqueda en el panel rápido | Con el panel activo, pulsa **Ctrl+F**. Busca títulos y texto guardado, incluidos resultados OCR existentes, y combina filtros de grupo, etiqueta y texto/imagen/plantilla. Los resultados se cargan en páginas de 50. **Intro** copia el resultado seleccionado y **Esc** vuelve a recopilar conservando el borrador. |
 | Organización por lotes | Selecciona elementos en el área de trabajo para moverlos de grupo, añadir/quitar etiquetas, fijarlos/desfijarlos, enviarlos a la papelera o restaurarlos. **Ctrl+A solo selecciona los resultados cargados.** Cada acción se aplica en su totalidad; si hay conflictos, no cambia ningún elemento. Puedes deshacer el envío a la papelera mientras los elementos no hayan cambiado. |
 | Plantillas de texto | Marca explícitamente un elemento de texto como plantilla. Usa `{{date}}`, `{{time}}` y variables como `{{name}}`; rellena los valores y revisa la vista previa antes de copiar. El original se conserva y no se ejecutan scripts ni expresiones. Los paquetes de grupos con plantillas usan el formato v3. |
-| Temas completos | Previsualiza y aplica colores y fondos claros/oscuros coordinados en los paneles. Importa o exporta ambas variantes y sus imágenes en un solo ZIP de tema. Los temas son independientes del modo Estándar/Espacial; cancelar la vista previa restaura la apariencia anterior. |
+| Temas completos | Previsualiza y aplica colores y fondos claros/oscuros coordinados en los paneles. Importa o exporta ambas variantes y sus imágenes en un solo ZIP de tema. Los temas son independientes del modo Clásico/Espacial; cancelar la vista previa restaura la apariencia anterior. |
 | Tamaño global del texto | En **Ajustes > Apariencia > Tamaño del texto**, elige entre **90 % y 150 %** para el panel rápido, el área de trabajo, los ajustes y otros textos de la aplicación. **100 %** restaura el tamaño original. |
 | Área de trabajo renovada | La navegación, la lista de elementos y el editor siguen el diseño de los ajustes. Las listas y las filas de copias de seguridad usan fondos coordinados y texto legible en modo oscuro. |
 | Burbujas compactas | Acciones de copia junto al original y al resultado, con una distribución más compacta del idioma de destino, el grupo y el guardado. El estilo predeterminado y Wisteria Atelier comparten controles con paletas coordinadas. |
 | Opacidad y vidrio esmerilado | Ajusta de forma independiente las superficies de Configuración entre **10 % y 100 %**. El desenfoque opcional de Configuración suaviza solo el fondo entre **1–18 px**; el texto permanece nítido. El estilo y la opacidad de las burbujas se ajustan por separado. |
 
-Las instalaciones nuevas mantienen el inglés, el tema del sistema, el modo Estándar y ningún fondo de imagen. La actualización no aplica automáticamente un tema ilustrado ni restablece las preferencias guardadas.
+Las instalaciones nuevas mantienen el inglés, el tema del sistema, el modo Clásico y ningún fondo de imagen. La actualización no aplica automáticamente un tema ilustrado ni restablece las preferencias guardadas.
 
 **Configuración:** navega entre **General**, **Captura y traducción**, **Apariencia**, **Componentes locales**, **Copias y datos** y **Acerca de**. Las opciones dependientes aparecen cuando corresponden; al ocultarlas se conservan sus valores guardados.
 
@@ -127,16 +127,18 @@ Utiliza el panel rápido para capturas breves y el **área de trabajo** para ges
 | Historial del portapapeles | Recopila automáticamente el **texto** copiado si activas esta opción; se ignoran los textos vacíos o demasiado grandes y no se añaden duplicados. Desactivado de forma predeterminada. |
 | Pegado directo | Pega una entrada de texto copiada en la aplicación anterior si activas esta opción y puede confirmarse de forma segura la ventana de destino. Desactivado de forma predeterminada. |
 
-### 2. Paneles Estándar y Espacial
+### 2. Paneles Clásico y Espacial
+
+En 1.3.0, Estándar pasa a llamarse **Clásico**; Espacial conserva su nombre. Las capturas antiguas de 1.2.3 mantienen las etiquetas originales.
 
 *Las capturas del panel y el GIF de movimiento de esta sección muestran 1.2.3.*
 
 Selecciona **Configuración > Apariencia > Modo del panel**. Ambos modos mantienen los mismos controles, tipografía, colores y distribución de tarjetas.
 
 <table>
-  <tr><th>Estándar</th><th>Espacial</th></tr>
+  <tr><th>Clásico</th><th>Espacial</th></tr>
   <tr>
-    <td><img src="docs/images/classic-panel.png" width="290" alt="Panel Estándar con vista plana y sombras suaves"></td>
+    <td><img src="docs/images/classic-panel.png" width="290" alt="Panel Clásico con vista plana y sombras suaves"></td>
     <td><img src="docs/images/floating-panel.png" width="290" alt="Panel Espacial con perspectiva, tarjetas en capas y un borde lateral fino"></td>
   </tr>
   <tr><td>Una presentación plana y estable con sombras suaves.</td><td>Perspectiva, respuesta independiente de las tarjetas y profundidad visible entre las capas.</td></tr>
@@ -163,6 +165,8 @@ La configuración también ofrece paletas de texto para el panel, un color de te
 <p align="center"><img src="docs/images/default-appearance.png" width="720" alt="Ajustes de apariencia con modo Estándar y valores de una instalación nueva"></p>
 
 </details>
+En **Ajustes > Apariencia > Imagen de fondo**, elige **Panel rápido** o **Página de ajustes** en **Personalizar fondo**. Selecciona o borra una imagen y ajusta la superposición y el desenfoque de cada área por separado. **Usar fondo del tema** restaura la imagen predefinida del área seleccionada. La exportación del tema conserva ambos fondos por separado y pide confirmación antes de incluir imágenes personales.
+
 #### Temas de apariencia completos
 
 Abre **Configuración > Apariencia > Temas completos**, selecciona un tema y elige **Vista previa y aplicar**. Selecciona Claro, Oscuro o Sistema, y decide si las burbujas de selección y los resultados siguen el tema. **Cancelar** restaura la apariencia anterior. En modo Sistema, la variante de día o noche sigue el tema claro u oscuro de Windows.
@@ -182,7 +186,7 @@ Todos los temas son opcionales. Las instalaciones nuevas mantienen el tema del s
 
 Usa **Importar tema** para cargar un ZIP de tema o **Exportar apariencia actual** para compartir las variantes clara y oscura, las imágenes y los ajustes. La inclusión de fondos personales debe elegirse explícitamente. Los temas no contienen entradas, claves API, atajos ni instalaciones de componentes. Los archivos están en `theme/`, junto al ejecutable; las actualizaciones conservan los temas importados en `theme/custom/`.
 
-La **opacidad de las superficies de Configuración** modifica tarjetas, navegación y campos sin atenuar el texto. El **fondo esmerilado de Configuración** desenfoca solo la imagen del tema y empieza desactivado. Configuración sin imagen o con contraste alto usa superficies opacas legibles.
+La **opacidad de las superficies de Configuración** modifica tarjetas, navegación y campos sin atenuar el texto. El **fondo esmerilado de Configuración** desenfoca solo la imagen de fondo de los ajustes y empieza desactivado. Configuración sin imagen o con contraste alto usa superficies opacas legibles.
 
 <p align="center"><img src="docs/images/1.3.0/settings-frosted-dark.png" width="760" alt="Configuración de apariencia 1.3.0 con tema Wisteria oscuro opcional, superficies al 60 por ciento y desenfoque del fondo de 8px"></p>
 

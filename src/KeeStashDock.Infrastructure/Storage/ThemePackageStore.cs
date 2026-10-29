@@ -215,27 +215,35 @@ public sealed class ThemePackageStore
                 manifest.Name = manifest.Name[..Math.Min(manifest.Name.Length, 85)] + " (custom)";
                 manifest.Version = "1.0.0";
             }
-            string? externalImage = overrides?.BackgroundPath;
-            string? packagedImage = null;
-            if (!string.IsNullOrEmpty(externalImage))
+            var externalImages = new List<(string Source, string Packaged)>();
+            var existingPaths = EnumerateSafeFiles(verified.Directory)
+                .Select(path => Path.GetRelativePath(verified.Directory, path).Replace('\\', '/'))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            string? PrepareBackground(string? externalImage, string assetName)
             {
+                if (string.IsNullOrEmpty(externalImage)) return null;
                 if (!overrides!.AllowBackgroundRedistribution) throw new InvalidOperationException("Background redistribution must be confirmed explicitly.");
                 EnsureNoLinks(externalImage);
                 ReadImageSize(externalImage); _decodeImage?.Invoke(externalImage);
-                packagedImage = "assets/user-background" + Path.GetExtension(externalImage).ToLowerInvariant();
+                string extension = Path.GetExtension(externalImage).ToLowerInvariant();
+                string packagedImage = "assets/" + assetName + extension;
                 if (!IsImage(packagedImage)) throw new InvalidDataException("Unsupported background image.");
-                var existingPaths = EnumerateSafeFiles(verified.Directory)
-                    .Select(path => Path.GetRelativePath(verified.Directory, path).Replace('\\', '/'))
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
                 if (existingPaths.Contains(packagedImage))
-                    packagedImage = "assets/user-background-" + Guid.NewGuid().ToString("N") + Path.GetExtension(externalImage).ToLowerInvariant();
+                    packagedImage = "assets/" + assetName + "-" + Guid.NewGuid().ToString("N") + extension;
+                existingPaths.Add(packagedImage);
+                externalImages.Add((externalImage, packagedImage));
+                return packagedImage;
             }
-            if (overrides is not null && (!InRange(overrides.OverlayOpacity, 0, 1) || !InRange(overrides.BlurRadius, 0, 18)))
+            string? packagedImage = PrepareBackground(overrides?.BackgroundPath, "user-background");
+            string? packagedSettingsImage = PrepareBackground(overrides?.SettingsBackgroundPath, "user-settings-background");
+            if (overrides is not null && (!InRange(overrides.OverlayOpacity, 0, 1) || !InRange(overrides.BlurRadius, 0, 18) ||
+                !InRange(overrides.SettingsBackgroundOverlayOpacity, 0, 1)))
                 throw new InvalidDataException("Exported background parameters are outside supported ranges.");
-            ApplyOverrides(light, overrides, packagedImage); ApplyOverrides(dark, overrides, packagedImage);
+            ApplyOverrides(light, overrides, packagedImage, packagedSettingsImage);
+            ApplyOverrides(dark, overrides, packagedImage, packagedSettingsImage);
             ValidateAppearance(light); ValidateAppearance(dark);
             long pixels = 0;
-            foreach (string asset in EnumerateSafeFiles(verified.Directory).Where(IsImage).Concat(externalImage is null ? [] : new[] { externalImage }))
+            foreach (string asset in EnumerateSafeFiles(verified.Directory).Where(IsImage).Concat(externalImages.Select(image => image.Source)))
             {
                 (int width, int height) = ReadImageSize(asset); pixels += (long)width * height;
                 if (pixels > 64_000_000) throw new InvalidDataException("Exported images exceed the pixel limit.");
@@ -254,7 +262,7 @@ public sealed class ThemePackageStore
                 WriteJsonEntry(archive, "manifest.json", manifest);
                 WriteJsonEntry(archive, verified.Manifest.Light, light);
                 WriteJsonEntry(archive, verified.Manifest.Dark, dark);
-                if (packagedImage is not null) archive.CreateEntryFromFile(externalImage!, packagedImage, CompressionLevel.Optimal);
+                foreach (var image in externalImages) archive.CreateEntryFromFile(image.Source, image.Packaged, CompressionLevel.Optimal);
             }
             using (var check = ZipFile.OpenRead(temporary))
                 if (check.Entries.Count > MaxFiles || check.Entries.Sum(entry => entry.Length) > MaxExpandedBytes)
@@ -354,8 +362,10 @@ public sealed class ThemePackageStore
             ("B.InputTextMuted", "B.InputBg"), ("B.OnAccent", "B.Accent") })
             if (!OpaqueColor(variant.Colors[text]) || !OpaqueColor(variant.Colors[surface]) || Contrast(variant.Colors[text], variant.Colors[surface]) < 4.5)
                 throw new InvalidDataException("Theme text colors do not meet the minimum readable contrast.");
-        if (variant.Backgrounds is null || variant.Backgrounds.Count > 3 || variant.Backgrounds.Keys.Any(role => role is not ("quickPanel" or "workspace" or "smallWindow")))
+        if (variant.Backgrounds is null || variant.Backgrounds.Count > 4 || variant.Backgrounds.Keys.Any(role => role is not ("quickPanel" or "workspace" or "settings" or "smallWindow")))
             throw new InvalidDataException("Unsupported theme background role.");
+        if (variant.HideSettingsBackground && variant.Backgrounds.ContainsKey("settings"))
+            throw new InvalidDataException("A hidden Settings background cannot also define artwork.");
         foreach (ThemeBackground background in variant.Backgrounds.Values)
         {
             if (background is null) throw new InvalidDataException("Empty theme background definition.");
@@ -543,24 +553,52 @@ public sealed class ThemePackageStore
         using var writer = new StreamWriter(archive.CreateEntry(name).Open()); writer.Write(JsonSerializer.Serialize(value, Json));
     }
 
-    private static void ApplyOverrides(ThemeVariant variant, ThemeExportOverrides? settings, string? background)
+    private static void ApplyOverrides(ThemeVariant variant, ThemeExportOverrides? settings, string? background, string? settingsBackground)
     {
         if (settings is null) return;
-        variant.CardOpacity = settings.CardOpacity;
-        variant.SettingsSurfaceOpacity = settings.SettingsSurfaceOpacity;
-        variant.SettingsFrostedGlassEnabled = settings.SettingsFrostedGlassEnabled;
-        variant.SettingsFrostedGlassRadius = settings.SettingsFrostedGlassRadius;
-        variant.BubbleOpacity = settings.BubbleOpacity;
-        variant.BubbleStyle = settings.BubbleStyle;
-        variant.PanelTextColorMode = settings.PanelTextColorMode;
-        variant.PanelTextCustomColor = settings.PanelTextCustomColor;
+        if (settings.OverridePanelAppearance)
+        {
+            variant.CardOpacity = settings.CardOpacity;
+            variant.BubbleOpacity = settings.BubbleOpacity;
+            variant.BubbleStyle = settings.BubbleStyle;
+            variant.PanelTextColorMode = settings.PanelTextColorMode;
+            variant.PanelTextCustomColor = settings.PanelTextCustomColor;
+        }
+        if (settings.OverrideSettingsAppearance)
+        {
+            variant.SettingsSurfaceOpacity = settings.SettingsSurfaceOpacity;
+            variant.SettingsFrostedGlassEnabled = settings.SettingsFrostedGlassEnabled;
+            variant.SettingsFrostedGlassRadius = settings.SettingsFrostedGlassRadius;
+        }
         if (background is not null) variant.Backgrounds["quickPanel"] = new ThemeBackground
         {
             Path = background, OverlayOpacity = settings.OverlayOpacity, BlurRadius = settings.BlurRadius,
         };
         else if (settings.OverrideQuickPanelBackground) variant.Backgrounds.Remove("quickPanel");
-        else if (variant.Backgrounds.TryGetValue("quickPanel", out ThemeBackground? original))
+        else if (settings.OverridePanelAppearance && variant.Backgrounds.TryGetValue("quickPanel", out ThemeBackground? original))
         { original.OverlayOpacity = settings.OverlayOpacity; original.BlurRadius = settings.BlurRadius; }
+        if (settingsBackground is not null)
+        {
+            variant.HideSettingsBackground = false;
+            variant.Backgrounds["settings"] = new ThemeBackground
+            { Path = settingsBackground, OverlayOpacity = settings.SettingsBackgroundOverlayOpacity };
+        }
+        else if (settings.OverrideSettingsBackground)
+        {
+            variant.HideSettingsBackground = true;
+            variant.Backgrounds.Remove("settings");
+        }
+        else if (!variant.HideSettingsBackground && settings.SettingsBackgroundOverlayCustomized)
+        {
+            if (!variant.Backgrounds.TryGetValue("settings", out ThemeBackground? settingsArt))
+                variant.Backgrounds.TryGetValue("workspace", out settingsArt);
+            if (settingsArt is not null)
+            {
+                ThemeBackground independent = Clone(settingsArt);
+                independent.OverlayOpacity = settings.SettingsBackgroundOverlayOpacity;
+                variant.Backgrounds["settings"] = independent;
+            }
+        }
     }
 
     private sealed class CurrentTheme { public string Path { get; set; } = ""; }
@@ -581,4 +619,7 @@ public sealed record ThemeExportOverrides(double CardOpacity, double BubbleOpaci
     double OverlayOpacity, double BlurRadius, bool AllowBackgroundRedistribution,
     string BubbleStyle = "FollowTheme", bool OverrideQuickPanelBackground = false,
     double SettingsSurfaceOpacity = 1.0, bool SettingsFrostedGlassEnabled = false,
-    double SettingsFrostedGlassRadius = 8);
+    double SettingsFrostedGlassRadius = 8, string? SettingsBackgroundPath = null,
+    bool OverrideSettingsBackground = false, double SettingsBackgroundOverlayOpacity = .2,
+    bool OverridePanelAppearance = true, bool OverrideSettingsAppearance = true,
+    bool SettingsBackgroundOverlayCustomized = false);
